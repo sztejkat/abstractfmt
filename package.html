@@ -1,0 +1,199 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>sztejkat.abstractfmt</title>
+      
+  <meta http-equiv="content-type"
+ content="text/html; charset=UTF-8">
+</head>
+<body>
+	This package defines basic contracts for signal based data format.
+
+	<h1>Definitions</h1>
+	<h2>Event base format</h1>
+	The data stream expressed in a form of an event based format consists 
+	of a sequence of possibly nested <a href="#event"><i>events</i></a>
+	interlaved with a non-interruptible 
+	sequence of <a href="#primitives"><i>primitive data</i></a>
+	
+	<a name="event"><h2>An event</h2></a>
+	An <a href="#event"><i>event</i></a> is a <i>named</i> block of possibly nested events
+	interlaved with a non-interruptible sequence of <a href="#primitives"><i>primitive data</i></a>.
+	<p>
+	A beginning of an event is indicated by <a href="#begin"><i>begin signal</i></a> and an end of
+	an event is indicated by <a href="#end"><i>end signal</i></a>.
+	
+	<a name="signal"><h2>Signals</h2></a>
+	By <a href="#signal"><i>signal</i></a> we do understand some means used to indicate beginning and
+	an end of an <a href="#event"><i>event</i></a>.
+	<p>
+	This is requied that a mechanism used for storig signals must be designed in such way,
+	that there must be a possibility to	iterate through the stream from signal to signal 
+	without the need of understanding anything of a stream content between signals.
+	
+	<a name="begin"><h3>Begin signal</h3></a>
+	A named <a href="#signal"><i>signal</i></a> which is carying a <a href="#name"><i>name</i></a>
+	and indicates the start of an <a href="#event"><i>event</i></a>.
+	
+	<a name="name"><h4>Name of signal</h4></a>
+	A text made of of full Java <tt>char</tt> characters space with no charset nor size restriction,
+	represented in API as <Tt>String</tt> object.
+	<p>
+	A formats are recommended to use as compact as possible mapping from <tt>String</tt> event representation
+	to internal one stored in a stream. The recommended policy is to assign a number to first (limited in count by size
+	of that number) few signals, store this information in stream and use assigned numbers later instead of full,
+	textual form. Notice, this policy must
+	not restrict the total number of supported signals. If more different signals is
+	to be written to a stream then the stream must write them directly,
+	in full textual form, without any mapping.
+	<p>
+	This mapping is not visible through API and handled transparently by formats.
+	<p>
+	The formats may limit the length of event to defend against "out-of-memory" attacks
+	but the limit may not be smaller than 8 characters and must be directly reported through API.
+	
+	<h4>Decodnig signals and acting according to the names</h4>
+	Strings do have all the required capactity and solves the problem with name clash through
+	different code using the same format, but at the cost of the inefficient comparison.
+	<p>
+	Since JDK 7 when <code>switch(String)</code> which is using <u>cached hash code</u> 
+	was introduced the:
+	<pre>
+		switch(<i>some string</i>)
+		{
+			case "one":
+			case "two":...
+		};
+	</pre>
+	is only three times slower than:
+	<pre>
+		switch(<i>some int</i>)
+		{
+			case 1:
+			case 2:...
+		};
+	</pre>	
+	which is using a low level JVM (or even native assembly) "computed goto" structure.
+	This way string driven deconding can be perfomed in an efficient way.
+	
+	
+	<a name="end"><h3>End signal</h3></a>
+	A plain signal, without a name, which indicates the end of a last event. This is an error when
+	<a href="#end"><i>end signal</i></a> appears without a matching <a href="#begin"><i>begin signal</i></a>.
+	
+	<a name="primitives"><h2>Primitive data</h2></a>
+	<p>
+	<i>Note: This part is JAVA specific.</i>
+	<p>
+	A sequence of <a href="#elementary"><i>elementary primitives</i></a>
+	and  <a href="#block"><i>block operations</i></a>.
+	Those operations are <a href="#uninterruptible"><i>un-interruptible</i></a>.
+	
+	<a name="elementary"><h3>An elementary primitive</h3></a>
+	Elementary primitive data consists of sequences of data representing following java data types:
+	<ul>
+			<li>boolean</li>
+			<li>byte</li>
+			<li>char</li>
+			<li>short</li>
+			<li>int</li>
+			<li>long</li>
+			<li>float</li>
+			<li>double</li>
+	</ul>
+	
+	<a name="block"><h3>A block operation</h3></a>
+	A block operation is a continous sequence of data taken from following java types:
+	<ul>
+			<li>boolean[]</li>
+			<li>byte[]</li>
+			<li>char[]</li>
+			<li>short[]</li>
+			<li>int[]</li>
+			<li>long[]</li>
+			<li>float[]</li>
+			<li>double[]</li>
+	</ul>
+	A block operation terminates with an <a href="#end"><i>end signal</i></a> of an enclosing 
+	<a href="#event"><i>event</i></a> or with <a href="#begin">begin signal</a> of next event.
+	<p>
+	Of them <code>byte[],boolean[],char[]</code> are <i>primary</i> block operations, which
+	must be always implemented in a compact way, and remaning are <i>secondary</i> which may
+	be implemented over <code>byte[]</code> providing that primitive block type is still
+	correctly recognized.
+	<p>
+	Use of primitive block operation indicates to format, that this operation
+	should be as compact as possible. On the contrary, use of sequence of elementary
+	primitives indicates that it should be written in as human friendly way as
+	possible in that format.
+	<p>
+	See also <a href="doc-files/block-operations.html">this document for some discussion.</a>
+	<p>
+	
+	
+	<a name="uninterruptible"><h3>Un-interruptible primitives</h3></a>
+	Each primitive operation is <i>un-interruptible</i> what means, that stream format requires that
+	primitive of a certain written type must be read by an operation of the same type. This has a side
+	effect prevents from fetching "long" by a sequence of "byte" fetches and etc.
+	<p>
+	For block operation  <i>un-interruptible</i> means additionally, that one cannot mix block operations
+	of different types nor introduce a non-block operation until the next <a href="#begin"><i>begin signal</i></a> 
+	or <a href="#end"><i>end signal</i></a>.
+	<p>
+	The format reaction on breaking this rule are different for <a href="#fullydescribed"><i>fully described</i></a>
+	formats and <a href="#nondescribed"><i>non-described</i></a> formats.
+	
+	<a name="nondescribed"><h2>Non described format</h2></a>
+	A non-described format is bound, in addition to stated generic requirements, to ensure that:
+	<ul>
+			<li>regardless of in what state it is, there is always a possibility to move to next signal
+			skipping the un-processed content without any complaints. This should be true
+			also if primitives are read with incorrect methods;</li>
+			<li>to ensure that if any <i>primitive operation</i> attempts to read more data than
+			it's available due to presence of a <a href="#signal"><i>signal</i></a> the <a href="ENoMoreData.html">ENoMoreData</a>
+			exception is thrown;</li>
+			<li>to ensure that if any <i>non-block primitive operation</i> encounters end-of-stream condition
+			the <a href="EUnexpectedEof.html">EUnexpectedEof</a> exception is thrown;</li>
+			<li>to ensure that <i>block operations</i> do detect end-of-stream condition by returning some
+			speciall values (ie. partial read followed by -1 in subsequent calls);</li>
+			<li>to ensure that initiated block operation is correctly used and not interrupted until the next signal;</li>
+	</ul>
+	
+	<a name="fullydescribed"><h2>Fully described formats</h2></a>
+	Fully described format extends functionality of <a href="#nondescribed"><i>non-described format</i></a> and
+	is bound to use means which can ensure that:
+	<ul>
+		<li>an attempt to read primitive data of non matching type (breaking the interruptibility)
+		results in <a href="EDataMissmatch.html">EDataMissmatch</a> exception;</li>
+		<li>user may ask stream format, while reading, if next stream content is a <a href="#signal"><i>signal</i></a> or
+		a <a href="#primititves"><i>primitive</i></a> and may get information what primitive type is is;</li>
+	</ul>
+	
+	<h1>Properties of an event based format</h1>
+	<ul>
+		<li>the set of operations necessary to write data is bound, known and simple;</li>
+		<li>operations which may benefit from a specific data packing are defined 
+		as <a href="#block"><i>block</i></a> operations;</li>
+		<li>the format does not know anything about objects, references and etc;</li>
+		<li>any binary or textual representation can be used;</li>
+	</ul>
+	Additionally the <a href="#fullydescribed"><i>fully described format</i></a> allows:
+	<ul>
+		<li>strong, type based validation;</li>
+		<li>format transcoding without the need of any additional knowledge about what data are contained in stream;</li>
+	</ul>
+	
+	<h1>Standards</h1>
+	<h2>Exceptions</h2>
+	In generic <code>AssertionError</code> is thrown by <code>assert</code> and is a required
+	mininum of defense against coder errors. The implementations are allowed to
+	use strictier, always enabled error testing and may throw any subclass of <Code>RuntimeException</code>.
+	
+	<h1>Ints instead of Enum</h1>
+	This API is using closed sets of <code>int</code> values instead of <code>Enum</code>
+	as ints are tiny bit faster in this use while still safe and easy to use enough. Plus
+	the <code>Enum</code> are closed sets and can't be extended by subclassing while
+	ints areo open.
+
+</body>
+</html>

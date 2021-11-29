@@ -1,0 +1,51 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>sztejkat.abstractfmt - block operations</title>
+      
+  <meta http-equiv="content-type"
+ content="text/html; charset=UTF-8">
+</head>
+<body>
+	In this chapter I will discuss some rationales behind block operations
+        <ul>
+            <li><code>byte[]</code>:
+                 <ul>
+                    <li>because almost all raw binary
+                     data (ie. images) are represented as byte-blocks;</li>
+                    <li>any binary data, if necessary can be turned to
+                    byte blocks;</li>
+                    <li>in XML like format encoding raw binary data
+                    as sequence of:
+                    <pre>
+                         &lt;byte&gt;0x34&lt;byte/&gt;
+                    </pre>
+                    is not only a waste of resources but also pointless since
+                    human may not benefit from reading raw binary data
+                    </li>
+                 </ul>
+            </li>
+            <li><code>char[]</code>:
+                 <ul>
+                 <li>because they are used in <code>Strings</code>
+                     and <code>Strings</code> may greatly benefit from UTF-8 encoding;</li>
+                 <li>because exactly the same primitive operation code may be used
+                 to write "signal names" and other data which are internal to format;</li>
+                 </ul>
+            </li>
+            <li><code>boolean[]</code> because they can be bit-packed,
+            but bit packing of sequences of bits into sequences of bytes is
+            not trivial when multiple writes are used.</li>
+            <li>other arrays:
+            <ul>
+            	 <li>they can be implemented either over primitive writes or
+            	 over <code>byte[]</code> at low overhead;</li>
+            	 <li>they are not used to represent raw data, so in XML like
+            	 format human may benefit from reading them and encoding
+            	 them in compact way may be not a best idea;</li>
+            </ul>
+            </li>
+        </ul>
+
+</body>
+</html>
