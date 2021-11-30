@@ -54,11 +54,11 @@ public interface IDescribedSignalReadFormat extends ISignalReadFormat
 				which should be processed by {@link #readDouble} */
 				public static final int ELEMENT_DOUBLE=8;
 				/** Indicates that next element in stream is a block operation
-				which should be processed by {@link #readByteBlock}. */
-				public static final int ELEMENT_BYTE_BLOCK=9;
+				which should be processed by {@link #readBooleanBlock}.*/
+				public static final int ELEMENT_BOOLEAN_BLOCK=9;
 				/** Indicates that next element in stream is a block operation
-				which should be processed by {@link #readBitBlock}.*/
-				public static final int ELEMENT_BIT_BLOCK=10;
+				which should be processed by {@link #readByteBlock}. */
+				public static final int ELEMENT_BYTE_BLOCK=10;				
 				/** Indicates that next element in stream is a block operation
 				which should be processed by {@link #readCharBlock}. */
 				public static final int ELEMENT_CHAR_BLOCK=11;
@@ -94,7 +94,7 @@ public interface IDescribedSignalReadFormat extends ISignalReadFormat
 					<li>{@link #ELEMENT_FLOAT};</li>
 					<li>{@link #ELEMENT_DOUBLE};</li>
 					<li>{@link #ELEMENT_BYTE_BLOCK};</li>
-					<li>{@link #ELEMENT_BIT_BLOCK};</li>
+					<li>{@link #ELEMENT_BOOLEAN_BLOCK};</li>
 					<li>{@link #ELEMENT_CHAR_BLOCK};</li>
 					<li>{@link #ELEMENT_SHORT_BLOCK};</li>
 					<li>{@link #ELEMENT_INT_BLOCK};</li>

@@ -155,6 +155,33 @@ public interface ISignalWriteFormat extends Closeable, Flushable
 		/* -----------------------------------------------------------
 			Primary
 		-----------------------------------------------------------*/
+		/** Writes a part of a byte-block consisting of a single byte.
+		<p>
+		This operation is usefull when implementing other raw block operations in per-byte basis.
+		<p>
+		An equivalent of 
+		<pre>
+		writeByteBlock(new byte[]{data},0,1)
+		</pre>
+		@param data data to write
+		@throws IllegalStateException if there is block operation of another type in progress
+								or there is no active event.
+		@throws IOException if low level i/o fails.
+		*/
+		public void writeByteBlock(byte data)throws IOException;
+		/** Writes a part of a bit-block.
+		<p>
+		Same rules applies as for byte-block.
+		@param buffer source of data, non-null.
+		@param offset first bit to write in <code>buffer</code>
+		@param length number of bytes to write
+		@throws IllegalStateException if there is block operation of another type in progress
+						or there is no active event.
+		@throws IOException if low level i/o fails.
+		@see #writeByteBlock
+		*/
+		public void writeBooleanBlock(boolean [] buffer, int offset, int length)throws IOException;
+		
 		/** Writes a part of a byte-block.
 		<p>
 		An initial byte block write may happen 
@@ -171,34 +198,11 @@ public interface ISignalWriteFormat extends Closeable, Flushable
 		@throws AssertionError if <code>buffer.length</code> with <code>offset</code> and <code>length</code>
 							   would result in {@link ArrayIndexOutOfBoundsException} exception;
 						
-		@throws IllegalStateException if there is block operation of another type in progress.  
+		@throws IllegalStateException if there is block operation of another type in progress
+										or there is no active event.
 		@throws IOException if low level i/o fails.
 		*/
 		public void writeByteBlock(byte [] buffer, int offset, int length)throws IOException;
-		/** Writes a part of a byte-block consisting of a single byte.
-		<p>
-		This operation is usefull when implementing other raw block operations in per-byte basis.
-		<p>
-		An equivalent of 
-		<pre>
-		writeByteBlock(new byte[]{data},0,1)
-		</pre>
-		@param data data to write
-		@throws IllegalStateException if there is block operation of another type in progress.  
-		@throws IOException if low level i/o fails.
-		*/
-		public void writeByteBlockByte(byte data)throws IOException;
-		/** Writes a part of a bit-block.
-		<p>
-		Same rules applies as for byte-block.
-		@param buffer source of data, non-null.
-		@param offset first bit to write in <code>buffer</code>
-		@param length number of bytes to write
-		@throws IllegalStateException if there is block operation of another type in progress.  
-		@throws IOException if low level i/o fails.
-		@see #writeByteBlock
-		*/
-		public void writeBitBlock(boolean [] buffer, int offset, int length)throws IOException;
 		/** Writes a part of a character-block
 		<p>
 		Same rules applies as for byte-block.
@@ -208,7 +212,8 @@ public interface ISignalWriteFormat extends Closeable, Flushable
 		@param characters source of data, non-null.
 		@param offset first bit to write in <code>buffer</code>
 		@param length number of bytes to write
-		@throws IllegalStateException if there is block operation of another type in progress.  
+		@throws IllegalStateException if there is block operation of another type in progress
+							or there is no active event.
 		@throws IOException if low level i/o fails.
 		@see #writeByteBlock
 		*/
@@ -273,4 +278,6 @@ public interface ISignalWriteFormat extends Closeable, Flushable
 		@throws IOException if low level i/o fails.
 		*/
 		public void flush()throws IOException;
+		/** Calls {@link #flush} */
+		public default void close()throws IOException{ flush(); };
 };

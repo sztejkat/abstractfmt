@@ -22,18 +22,59 @@ import java.io.IOException;
 	<p>
 	This class does not define any primitive write ops
 */
-public abstract class ASignalWriteFormat
+public abstract class ASignalWriteFormat implements ISignalWriteFormat
 {
+				/** See constructor */
+				private final int max_name_length;
+				/** See constructor */
+				private final int max_elements_recursion_depth;
+				
+				/** State indicating that elementary
+				primitive element was written. This is 
+				also an initial state of a stream */
+				private static final byte STATE_PRIMITIVE = 0;
+				/** State indicating that begin signal
+				was written */
+				private static final byte STATE_BEGIN = (byte)1;
+				/** State indicating that end signal
+				is pending for writing due to end-begin optimization
+				*/
+				private static final byte STATE_END_PENDING = (byte)2;
+				/** State indicating that end signal
+				was written */
+				private static final byte STATE_END = (byte)3;
+				/** State indicating that initial boolean block write
+				was written. Each type of lock has own state */
+				private static final byte STATE_BOOLEAN_BLOCK=(byte)4;
+				/** See {@link #STATE_BOOLEAN_BLOCK} */
+				private static final byte STATE_BYTE_BLOCK=(byte)5;
+				/** See {@link #STATE_BOOLEAN_BLOCK} */
+				private static final byte STATE_CHAR_BLOCK=(byte)6;
+				/** See {@link #STATE_BOOLEAN_BLOCK} */
+				private static final byte STATE_SHORT_BLOCK=(byte)7;
+				/** See {@link #STATE_BOOLEAN_BLOCK} */
+				private static final byte STATE_INT_BLOCK=(byte)8;
+				/** See {@link #STATE_BOOLEAN_BLOCK} */
+				private static final byte STATE_LONG_BLOCK=(byte)9;
+				/** See {@link #STATE_BOOLEAN_BLOCK} */
+				private static final byte STATE_FLOAT_BLOCK=(byte)10;
+				/** See {@link #STATE_BOOLEAN_BLOCK} */
+				private static final byte STATE_DOUBLE_BLOCK=(byte)11;
+				
+				
+				/** Keeps track of current events depth */
+				private int current_depth;
 				/** A names registry, filled up with names, first
 				null indicates end of used area. Null if registry is not used.*/
 				private final String [] names_registry;
 				/** A names registry, hash codes for registered names.
 				Null if registry is not used.*/
 				private final int [] names_registry_hash;
-				/** See constructor */
-				private final int max_name_length;
-				/** See constructor */
-				private final int max_elements_recursion_depth;
+				/** State variable, can take one of 
+				<code>STATE_xxx</code> constants.
+				Initially {@link #STATE_PRIMITIVE}*/
+				private byte state;
+				
 		/* *******************************************************
 		
 		
@@ -177,54 +218,127 @@ public abstract class ASignalWriteFormat
 		---------------------------------------------------------*/
 		/** Should write type indicator for {@link IDescribedSignalReadFormat#hasData}.
 		Un-described formats may implement is a no-op. Default is no-op. 
-		@throws IOException if low level i/o failed.*/
+		<p>
+		This type write operation will be always invoked in following sequence:
+		<pre>
+			writeBooleanType()
+			writeBooleanImpl(v)
+			writeBooleanTypeEnd()
+		</pre>
+		@throws IOException if low level i/o failed.
+		@see #writeBoolean
+		@see #writeBooleanImpl
+		*/
 		protected  void writeBooleanType()throws IOException{};
+		/** See {@link #writeBooleanType}. Default: no-op.
+		@throws IOException if low level i/o failed.*/
+		protected  void writeBooleanTypeEnd()throws IOException{};
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeByteType()throws IOException{};
+		/** See {@link #writeBooleanTypeEnd}
+		@throws IOException if low level i/o failed.*/
+		protected  void writeByteTypeEnd()throws IOException{};
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeCharType()throws IOException{};
+		/** See {@link #writeBooleanTypeEnd}
+		@throws IOException if low level i/o failed.*/
+		protected  void writeCharTypeEnd()throws IOException{};
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeShortType()throws IOException{};
+		/** See {@link #writeBooleanTypeEnd}
+		@throws IOException if low level i/o failed.*/
+		protected  void writeShortTypeEnd()throws IOException{};
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeIntType()throws IOException{};
+		/** See {@link #writeBooleanTypeEnd}
+		@throws IOException if low level i/o failed.*/
+		protected  void writeIntTypeEnd()throws IOException{};
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeLongType()throws IOException{};
+		/** See {@link #writeBooleanTypeEnd}
+		@throws IOException if low level i/o failed.*/
+		protected  void writeLongTypeEnd()throws IOException{};
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeFloatType()throws IOException{};
+		/** See {@link #writeBooleanTypeEnd}
+		@throws IOException if low level i/o failed.*/
+		protected  void writeFloatTypeEnd()throws IOException{};
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeDoubleType()throws IOException{};
-		
-		/** See {@link #writeBooleanType}
+		/** See {@link #writeBooleanTypeEnd}
 		@throws IOException if low level i/o failed.*/
+		protected  void writeDoubleTypeEnd()throws IOException{};
+		
+		
+		/** Should write type indicator for {@link IDescribedSignalReadFormat#hasData}.
+		Un-described formats may implement is a no-op. Default is no-op. 
+		<p>
+		This type write operation will be always invoked in following sequence:
+		<pre>
+			writeBooleanBlockType() //for initial write only
+			writeBooleanBlockImpl(....)
+			writeBooleanBlockImpl(....)
+			writeBooleanBlockImpl(....)
+			....
+			writeBooleanBlockTypeEnd()	//before writing signal terminating block.
+		</pre>
+		@throws IOException if low level i/o failed.
+		@see #writeBooleanBlock
+		@see #writeBooleanBlockImpl
+		*/
 		protected  void writeBooleanBlockType()throws IOException{};
+		/** See {@link #writeBooleanBlockType} and {@link #writeBooleanTypeEnd}
+		@throws IOException if low level i/o failed.*/
+		protected  void writeBooleanBlockTypeEnd()throws IOException{};
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeByteBlockType()throws IOException{};
+		/** See {@link #writeBooleanBlockType}
+		@throws IOException if low level i/o failed.*/
+		protected  void writeByteBlockTypeEnd()throws IOException{};
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeCharBlockType()throws IOException{};
+		/** See {@link #writeBooleanBlockType}
+		@throws IOException if low level i/o failed.*/
+		protected  void writeCharBlockTypeEnd()throws IOException{};
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeShortBlockType()throws IOException{};
+		/** See {@link #writeBooleanBlockType}
+		@throws IOException if low level i/o failed.*/
+		protected  void writeShortBlockTypeEnd()throws IOException{};
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeIntBlockType()throws IOException{};
+		/** See {@link #writeBooleanBlockType}
+		@throws IOException if low level i/o failed.*/
+		protected  void writeIntBlockTypeEnd()throws IOException{};
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeLongBlockType()throws IOException{};
+		/** See {@link #writeBooleanBlockType}
+		@throws IOException if low level i/o failed.*/
+		protected  void writeLongBlockTypeEnd()throws IOException{};
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeFloatBlockType()throws IOException{};
+		/** See {@link #writeBooleanBlockType}
+		@throws IOException if low level i/o failed.*/
+		protected  void writeFloatBlockTypeEnd()throws IOException{};
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeDoubleBlockType()throws IOException{};
+		/** See {@link #writeBooleanBlockType}
+		@throws IOException if low level i/o failed.*/
+		protected  void writeDoubleBlockTypeEnd()throws IOException{};
 		/*========================================================
 		
 				Names
@@ -242,7 +356,7 @@ public abstract class ASignalWriteFormat
 		protected abstract void writeDirectName()throws IOException;
 		/** Invoked only after {@link #writeDirectName} or {@link #writeRegisterName}
 		to specify the signal name.
-		@param name never null, always not longer than {@link ISignalWriteFormat#getSupportedSignalLength}.
+		@param name never null, always not longer than {@link ISignalWriteFormat#getMaxSignalNameLength}.
 		@throws IOException if low level i/o failed.*/
 		protected abstract void writeSignalNameData(String name)throws IOException;
 		/** Invoked only after {@link #writeBeginSignalIndicator} to
@@ -270,7 +384,250 @@ public abstract class ASignalWriteFormat
 				in apropriate {@link #writeRegisterName} call.
 		@throws IOException if low level i/o failed.*/
 		protected abstract void writeRegisterUse(int name_index)throws IOException;
+		/*========================================================
 		
+				primitive writes
+				
+				Core write methods invoked after state validation
+				and transition, type write (if necessary) and arguments
+				validation.
+		
+		=========================================================*/
+		/* -------------------------------------------------------
+				elementary primitives.
+		-------------------------------------------------------*/
+		/** Invoked in {@link #writeBoolean} after validation if it is
+		allowed and after writing a type indicator.
+		@param v as above
+		@throws IOException as above 
+		@see #writeBooleanType
+		*/
+		protected abstract void writeBooleanImpl(boolean v)throws IOException;
+		/** See {@link #writeBooleanImpl}
+		@param v --//--
+		@throws IOException --//--
+		*/
+		protected abstract void writeByteImpl(byte v)throws IOException;
+		/** See {@link #writeBooleanImpl}
+		@param v --//--
+		@throws IOException --//--
+		*/
+		protected abstract void writeCharImpl(char v)throws IOException;
+		/** See {@link #writeBooleanImpl}
+		@param v --//--
+		@throws IOException --//--
+		*/
+		protected abstract void writeShortImpl(short v)throws IOException;
+		/** See {@link #writeBooleanImpl}
+		@param v --//--
+		@throws IOException --//--
+		*/
+		protected abstract void writeIntImpl(int v)throws IOException;
+		/** See {@link #writeBooleanImpl}
+		@param v --//--
+		@throws IOException --//--
+		*/
+		protected abstract void writeLongImpl(long v)throws IOException;
+		/** See {@link #writeBooleanImpl}
+		@param v --//--
+		@throws IOException --//--
+		*/
+		protected abstract void writeFloatImpl(float v)throws IOException;
+		/** See {@link #writeBooleanImpl}
+		@param v --//--
+		@throws IOException --//--
+		*/
+		protected abstract void writeDoubleImpl(double v)throws IOException;
+		/* -------------------------------------------------------
+				Block primitives
+		-------------------------------------------------------*/
+		/** Invoked inside {@link #writeBooleanBlock} after
+		validating if it can be done, writing a type (for initial operation only)
+		and after validating arguments with assertions.
+		@param buffer --//--, validated
+		@param offset --//--
+		@param length --//--
+		@throws IOException --//--
+		*/
+		protected abstract void writeBooleanBlockImpl(boolean [] buffer, int offset, int length)throws IOException;
+		
+		/** Invoked inside {@link #writeByteBlock(byte[],int,int)} after
+		validating if it can be done, writing a type (for initial operation only)
+		and after validating arguments with assertions.
+		@param buffer --//--, validated
+		@param offset --//--
+		@param length --//--
+		@throws IOException --//--
+		*/
+		protected abstract void writeByteBlockImpl(byte [] buffer, int offset, int length)throws IOException;
+		
+		/** Invoked inside {@link #writeByteBlock(byte)} after
+		validating if it can be done, writing a type (for initial operation only)
+		and after validating arguments with assertions.
+		@param data --//--, validated
+		@throws IOException --//--
+		*/
+		protected abstract void writeByteBlockImpl(byte data)throws IOException;
+		
+		
+		/** Invoked inside {@link #writeCharBlock(char[],int,int)} after
+		validating if it can be done, writing a type (for initial operation only)
+		and after validating arguments with assertions.
+		@param buffer --//--, validated
+		@param offset --//--
+		@param length --//--
+		@throws IOException --//--
+		*/
+		protected abstract void writeCharBlockImpl(char [] buffer, int offset, int length)throws IOException;
+	
+		/** Invoked inside {@link #writeCharBlock(CharSequence,int,int)} after
+		validating if it can be done, writing a type (for initial operation only)
+		and after validating arguments with assertions.
+		@param characters --//--, validated
+		@param offset --//--
+		@param length --//--
+		@throws IOException --//--
+		*/
+		protected abstract void writeCharBlockImpl(CharSequence characters, int offset, int length)throws IOException;
+	
+		/** Invoked inside {@link #writeShortBlock(short[],int,int)} after
+		validating if it can be done, writing a type (for initial operation only)
+		and after validating arguments with assertions.
+		@param buffer --//--, validated
+		@param offset --//--
+		@param length --//--
+		@throws IOException --//--
+		*/
+		protected abstract void writeShortBlockImpl(short [] buffer, int offset, int length)throws IOException;
+	
+		/** Invoked inside {@link #writeIntBlock(int[],int,int)} after
+		validating if it can be done, writing a type (for initial operation only)
+		and after validating arguments with assertions.
+		@param buffer --//--, validated
+		@param offset --//--
+		@param length --//--
+		@throws IOException --//--
+		*/
+		protected abstract void writeIntBlockImpl(int [] buffer, int offset, int length)throws IOException;
+	
+		/** Invoked inside {@link #writeLongBlock(long[],int,int)} after
+		validating if it can be done, writing a type (for initial operation only)
+		and after validating arguments with assertions.
+		@param buffer --//--, validated
+		@param offset --//--
+		@param length --//--
+		@throws IOException --//--
+		*/
+		protected abstract void writeLongBlockImpl(long [] buffer, int offset, int length)throws IOException;
+	
+		/** Invoked inside {@link #writeFloatBlock(float[],int,int)} after
+		validating if it can be done, writing a type (for initial operation only)
+		and after validating arguments with assertions.
+		@param buffer --//--, validated
+		@param offset --//--
+		@param length --//--
+		@throws IOException --//--
+		*/
+		protected abstract void writeFloatBlockImpl(float [] buffer, int offset, int length)throws IOException;
+	
+		/** Invoked inside {@link #writeDoubleBlock(double[],int,int)} after
+		validating if it can be done, writing a type (for initial operation only)
+		and after validating arguments with assertions.
+		@param buffer --//--, validated
+		@param offset --//--
+		@param length --//--
+		@throws IOException --//--
+		*/
+		protected abstract void writeDoubleBlockImpl(double [] buffer, int offset, int length)throws IOException;
+	
+		
+		/* ********************************************************
+		
+		
+				State tracking support and validation
+				
+		
+		**********************************************************/
+		/** Checks if current state allows any elementary primitive write
+		and toggles state to {@link #STATE_PRIMITIVE}
+		@throws IllegalStateException if not.
+		@throws IOException if needed to flush pending end indicator and it failed.
+		*/
+		private void startElementaryPrimitiveWrite()throws IllegalStateException,IOException
+		{			
+			flushPendingEnd();//this might be pending.
+			
+			assert(STATE_DOUBLE_BLOCK>STATE_BYTE_BLOCK);//just to make sure that const assumptions are ok.
+			assert(STATE_BYTE_BLOCK>STATE_END);
+			assert(STATE_BYTE_BLOCK>STATE_BEGIN);
+			assert(STATE_BYTE_BLOCK>STATE_PRIMITIVE);
+			if (state>=STATE_BYTE_BLOCK) 
+				throw new IllegalStateException("Cannot do elementary primitive write when block write is in progress.");
+			state = STATE_PRIMITIVE;
+		};
+		/** If state is {@link #STATE_END_PENDING}
+		writes an end indicator and togles state to {@link #STATE_END}.
+		Used to optimize end-being sequence 
+		@throws IOException if idicator write failed
+		*/
+		private void flushPendingEnd()throws IOException
+		{
+			if (state==STATE_END_PENDING)
+			{
+				state=STATE_END;
+				writeEndSignalIndicator();
+			};
+		};
+		/** Checs if any block operation is pending and calls
+		their <code>writeXXXBlockTypeEnd</code>
+		@throws IOException if called method thrown 
+		*/
+		private void closePendingBlocks()throws IOException
+		{
+			switch(state)
+			{
+				case STATE_BOOLEAN_BLOCK: writeBooleanBlockTypeEnd(); break;
+				case STATE_BYTE_BLOCK: writeByteBlockTypeEnd(); break;
+				case STATE_CHAR_BLOCK: writeCharBlockTypeEnd(); break;
+				case STATE_SHORT_BLOCK: writeShortBlockTypeEnd(); break;
+				case STATE_INT_BLOCK: writeIntBlockTypeEnd(); break;
+				case STATE_LONG_BLOCK: writeLongBlockTypeEnd(); break;
+				case STATE_FLOAT_BLOCK: writeFloatBlockTypeEnd(); break;
+				case STATE_DOUBLE_BLOCK: writeDoubleBlockTypeEnd(); break;
+				//no default block.
+			};
+		};
+		/** Returns true if most recent operation has written a begin signal.
+		<p>
+		Specifically will be true inside 
+		{@link #writeBeginSignalIndicator},{@link #writeDirectName} and other
+		related to writing of begin signal.
+		@return true if yes
+		*/
+		protected final boolean wasBeginWritten(){ return state==STATE_BEGIN; };
+		/** Returns true if most recent operation has written an end signal.
+		<p>
+		Specifically will be true inside 
+		{@link #writeEndBeginSignalIndicator}
+		@return true if yes
+		*/
+		protected final boolean wasEndWritten(){ return state==STATE_END; };
+		/** Returns true if most recent operation has written an elementary primitive
+		or it is the beginning of a stream.
+		<p>
+		Specifically will be true inside all <code>writeXXXImpl</code> 
+		and <code>writeXXXType</code> elementary primitive operations.
+		@return true if yes
+		*/
+		protected final boolean wasElementaryPrimitiveWritten(){ return state==STATE_PRIMITIVE; };
+		/** Returns true if most recent operation has written a primitive block
+		or it is the beginning of a stream.
+		<p>
+		Specifically will be true inside all <code>writeXXXImpl</code> 
+		and <code>writeXXXType</code> primitive block operations.
+		@return true if yes
+		*/
+		protected final boolean wasBlockWritten(){ return state>=STATE_BYTE_BLOCK; };
 		
 		/* ********************************************************
 		
@@ -279,6 +636,507 @@ public abstract class ASignalWriteFormat
 				
 		
 		**********************************************************/
+		/*=============================================================
+	
+			Signal and events
+			
+		 =============================================================*/
+		@Override public final int getMaxSignalNameLength(){ return max_name_length; };
+		@Override public void begin(String signal,boolean do_not_optimize)throws IOException
+		{
+			assert(signal!=null):"null signal name";
+			//Validate length
+			if (signal.length()>max_name_length) 
+				throw new IllegalArgumentException("Signal name too long. \""+signal+"\", max="+max_name_length);
+			//validate depth
+			if ((max_elements_recursion_depth!=0)&&(max_elements_recursion_depth<=current_depth))
+				throw new IllegalStateException("Too deep events recursion, limit set to "+max_elements_recursion_depth);
+			
+			current_depth++;
+			
+			//Now we need to perform all pending actions.
+			//Especially we need to close pending blocks
+			closePendingBlocks();
+			
+			//We have to write an apropriate begin indicator
+			//to handle optimized out end indicator.
+			if (state==STATE_END_PENDING)
+			{
+					state=STATE_BEGIN;
+					writeEndBeginSignalIndicator();
+			}else
+			{
+					state=STATE_BEGIN;
+					writeBeginSignalIndicator();
+			};
+			
+			//now proceed with names registration
+			//even if user requested to not attempt to register name.
+			//it may however be already registered, so let us check.
+			
+			//attempt to use registered name
+			int registered_index = findInIndex(signal);
+			if (registered_index==-1)
+			{
+				//Name is not registered, try to register it.
+				if (do_not_optimize)
+				{
+					//Now always write direct.
+					writeDirectName();
+					writeSignalNameData(signal);
+				}else
+				{
+					registered_index = putToIndex(signal);
+					if (registered_index!=-1)
+					{
+						//name is registered.
+						writeRegisterName(registered_index);
+						writeSignalNameData(signal);
+					}else
+					{
+						//we failed to register, need to store it directly
+						writeDirectName();
+						writeSignalNameData(signal);
+					};
+				};
+			}else
+			{
+				//we have the name registered
+				writeRegisterUse(registered_index);
+			};
+		};
+		/** Implemented in such a way, that actuall writing of
+		{@link #writeEndSignalIndicator} is posponed till it
+		can be decided if it can be optimized to
+		{@link #writeEndBeginSignalIndicator}. Basically it is delayed till
+		nearest {@link #begin}, {@link #end} or any primitive write.
+		@see #flush
+		*/
+		@Override public void end()throws IOException
+		{
+			if (current_depth==0) throw new IllegalStateException("Can't do end(), no event is active");
+			current_depth--;
+			//Flush any pending end signal operation.
+			flushPendingEnd();
+			//We need to close pending blocks
+			closePendingBlocks();			
+			//and we need to put this operation on hold so end-begin can be optimized
+			state = STATE_END_PENDING;
+		};
 		
-		.... to be done ....
+		/*=============================================================
+	
+			Elementatry primitives.
+			
+			All primitives do validate if they can do it, write type 
+			and delegate to writeXXXImpl methods.
+		
+			
+		===============================================================*/
+		/** {@inheritDoc}
+		@see #startElementaryPrimitiveWrite
+		@see #writeBooleanType
+		@see #writeBooleanImpl
+		*/
+		@Override public final void writeBoolean(boolean v)throws IOException
+		{
+			startElementaryPrimitiveWrite();
+			writeBooleanType();
+			writeBooleanImpl(v);
+			writeBooleanTypeEnd();
+		};
+		/** {@inheritDoc}
+		@see #writeBoolean
+		*/
+		@Override public final void writeByte(byte v)throws IOException
+		{
+			startElementaryPrimitiveWrite();
+			writeByteType();
+			writeByteImpl(v);
+			writeByteTypeEnd();
+		};
+		/** {@inheritDoc}
+		@see #writeBoolean
+		*/
+		@Override public final void writeChar(char v)throws IOException
+		{
+			startElementaryPrimitiveWrite();
+			writeCharType();
+			writeCharImpl(v);
+			writeCharTypeEnd();
+		};
+		/** {@inheritDoc}
+		@see #writeBoolean
+		*/
+		@Override public final void writeShort(short v)throws IOException
+		{
+			startElementaryPrimitiveWrite();
+			writeShortType();
+			writeShortImpl(v);
+			writeShortTypeEnd();
+		};
+		/** {@inheritDoc}
+		@see #writeBoolean
+		*/
+		@Override public final void writeInt(int v)throws IOException
+		{
+			startElementaryPrimitiveWrite();
+			writeIntType();
+			writeIntImpl(v);
+			writeIntTypeEnd();
+		};
+		/** {@inheritDoc}
+		@see #writeBoolean
+		*/
+		@Override public final void writeLong(long v)throws IOException
+		{
+			startElementaryPrimitiveWrite();
+			writeLongType();
+			writeLongImpl(v);
+			writeLongTypeEnd();
+		};
+		/** {@inheritDoc}
+		@see #writeBoolean
+		*/
+		@Override public final void writeFloat(float v)throws IOException
+		{
+			startElementaryPrimitiveWrite();
+			writeFloatType();
+			writeFloatImpl(v);
+			writeFloatTypeEnd();
+		};
+		/** {@inheritDoc}
+		@see #writeBoolean
+		*/
+		@Override public final void writeDouble(double v)throws IOException
+		{
+			startElementaryPrimitiveWrite();
+			writeDoubleType();
+			writeDoubleImpl(v);
+			writeByteTypeEnd();
+		};
+		/*=============================================================
+	
+			Block primitives.
+			
+			All primitives do validate if they can do it, validate params,
+			write type and delegate to writeXXXImpl methods.		
+			
+		===============================================================*/
+		
+		/** Validates and changes state, checks arguments, calls {@link #writeBooleanBlockType}
+		and delegates writing to {@link #writeBooleanBlockImpl}
+		*/
+		@SuppressWarnings("fallthrough")
+		@Override public final void writeBooleanBlock(boolean [] buffer, int offset, int length)throws IOException
+		{			
+			flushPendingEnd();
+			switch(state)
+			{
+				case STATE_PRIMITIVE: 
+				case STATE_END:
+						if (current_depth==0)
+								throw new IllegalStateException("Can't start block write if there is no event active");
+						//fallthrough
+				case STATE_BEGIN:				
+						state = STATE_BOOLEAN_BLOCK;
+						writeBooleanBlockType();
+						break;
+				case STATE_BOOLEAN_BLOCK:
+						break;
+				default: throw new IllegalStateException("Can't do primitive block write if other type of block write is in progress");
+			}
+			assert(buffer!=null):"buffer==null";
+			assert(offset>=0):"offset="+offset+" is negative";
+			assert(length>=0):"length="+length+" is negative";
+			assert(offset+length<=buffer.length):"buffer.length="+buffer.length+" but offset="+offset+" length="+length+" do point outside buffer";
+				
+			writeBooleanBlockImpl(buffer,offset,length);
+		};
+		/** See {@link #writeBooleanBlock} */
+		@SuppressWarnings("fallthrough")
+		@Override public final void writeByteBlock(byte [] buffer, int offset, int length)throws IOException
+		{
+			flushPendingEnd();
+			switch(state)
+			{
+				case STATE_PRIMITIVE:
+				case STATE_END:
+						if (current_depth==0)
+								throw new IllegalStateException("Can't start block write if there is no event active");
+						//fallthrough
+				case STATE_BEGIN:				
+						state = STATE_BYTE_BLOCK;
+						writeByteBlockType();
+						break;
+				case STATE_BYTE_BLOCK:
+						break;
+				default: throw new IllegalStateException("Can't do primitive block write if other type of block write is in progress");
+			}
+			assert(buffer!=null):"buffer==null";
+			assert(offset>=0):"offset="+offset+" is negative";
+			assert(length>=0):"length="+length+" is negative";
+			assert(offset+length<=buffer.length):"buffer.length="+buffer.length+" but offset="+offset+" length="+length+" do point outside buffer";
+				
+			writeByteBlockImpl(buffer,offset,length);
+		};
+		
+		/** See {@link #writeBooleanBlock} */
+		@SuppressWarnings("fallthrough")
+		@Override public final void writeByteBlock(byte data)throws IOException
+		{
+			flushPendingEnd();
+			switch(state)
+			{
+				case STATE_PRIMITIVE:
+				case STATE_END:
+						if (current_depth==0)
+								throw new IllegalStateException("Can't start block write if there is no event active");
+						//fallthrough
+				case STATE_BEGIN:				
+						state = STATE_BYTE_BLOCK;
+						writeByteBlockType();
+						break;
+				case STATE_BYTE_BLOCK:
+						break;
+				default: throw new IllegalStateException("Can't do primitive block write if other type of block write is in progress");
+			}
+			
+			writeByteBlockImpl(data);
+		};
+		
+		/** See {@link #writeBooleanBlock} */
+		@SuppressWarnings("fallthrough")
+		@Override public final void writeCharBlock(char [] buffer, int offset, int length)throws IOException
+		{
+			flushPendingEnd();
+			switch(state)
+			{
+				case STATE_PRIMITIVE:
+				case STATE_END:
+						if (current_depth==0)
+								throw new IllegalStateException("Can't start block write if there is no event active");
+						//fallthrough
+				case STATE_BEGIN:				
+						state = STATE_CHAR_BLOCK;
+						writeCharBlockType();
+						break;
+				case STATE_CHAR_BLOCK:
+						break;
+				default: throw new IllegalStateException("Can't do primitive block write if other type of block write is in progress");
+			}
+			assert(buffer!=null):"buffer==null";
+			assert(offset>=0):"offset="+offset+" is negative";
+			assert(length>=0):"length="+length+" is negative";
+			assert(offset+length<=buffer.length):"buffer.length="+buffer.length+" but offset="+offset+" length="+length+" do point outside buffer";
+				
+			writeCharBlockImpl(buffer,offset,length);
+		};
+		
+		/** See {@link #writeBooleanBlock} */
+		@SuppressWarnings("fallthrough")
+		@Override public final void writeCharBlock(CharSequence characters, int offset, int length)throws IOException
+		{
+			flushPendingEnd();
+			switch(state)
+			{
+				case STATE_PRIMITIVE:
+				case STATE_END:
+						if (current_depth==0)
+								throw new IllegalStateException("Can't start block write if there is no event active");
+						//fallthrough
+				case STATE_BEGIN:				
+						state = STATE_CHAR_BLOCK;
+						writeCharBlockType();
+						break;
+				case STATE_CHAR_BLOCK:
+						break;
+				default: throw new IllegalStateException("Can't do primitive block write if other type of block write is in progress");
+			}
+			assert(characters!=null):"buffer==null";
+			assert(offset>=0):"offset="+offset+" is negative";
+			assert(length>=0):"length="+length+" is negative";
+			assert(offset+length<=characters.length()):"characters.length="+characters.length()+" but offset="+offset+" length="+length+" do point outside buffer";
+				
+			writeCharBlockImpl(characters,offset,length);
+		};
+		
+		/** See {@link #writeBooleanBlock} */
+		@SuppressWarnings("fallthrough")
+		@Override public final void writeShortBlock(short [] buffer, int offset, int length)throws IOException
+		{
+			flushPendingEnd();
+			switch(state)
+			{
+				case STATE_PRIMITIVE:
+				case STATE_END:
+						if (current_depth==0)
+								throw new IllegalStateException("Can't start block write if there is no event active");
+						//fallthrough
+				case STATE_BEGIN:				
+						state = STATE_SHORT_BLOCK;
+						writeShortBlockType();
+						break;
+				case STATE_SHORT_BLOCK:
+						break;
+				default: throw new IllegalStateException("Can't do primitive block write if other type of block write is in progress");
+			}
+			assert(buffer!=null):"buffer==null";
+			assert(offset>=0):"offset="+offset+" is negative";
+			assert(length>=0):"length="+length+" is negative";
+			assert(offset+length<=buffer.length):"buffer.length="+buffer.length+" but offset="+offset+" length="+length+" do point outside buffer";
+				
+			writeShortBlockImpl(buffer,offset,length);
+		};
+		
+		/** See {@link #writeBooleanBlock} */
+		@SuppressWarnings("fallthrough")
+		@Override public final void writeIntBlock(int [] buffer, int offset, int length)throws IOException
+		{
+			flushPendingEnd();
+			switch(state)
+			{
+				case STATE_PRIMITIVE:
+				case STATE_END:
+						if (current_depth==0)
+								throw new IllegalStateException("Can't start block write if there is no event active");
+						//fallthrough
+				case STATE_BEGIN:				
+						state = STATE_INT_BLOCK;
+						writeIntBlockType();
+						break;
+				case STATE_INT_BLOCK:
+						break;
+				default: throw new IllegalStateException("Can't do primitive block write if other type of block write is in progress");
+			}
+			assert(buffer!=null):"buffer==null";
+			assert(offset>=0):"offset="+offset+" is negative";
+			assert(length>=0):"length="+length+" is negative";
+			assert(offset+length<=buffer.length):"buffer.length="+buffer.length+" but offset="+offset+" length="+length+" do point outside buffer";
+				
+			writeIntBlockImpl(buffer,offset,length);
+		};
+		
+		/** See {@link #writeBooleanBlock} */
+		@SuppressWarnings("fallthrough")
+		@Override public final void writeLongBlock(long [] buffer, int offset, int length)throws IOException
+		{
+			flushPendingEnd();
+			switch(state)
+			{
+				case STATE_PRIMITIVE:
+				case STATE_END:
+						if (current_depth==0)
+								throw new IllegalStateException("Can't start block write if there is no event active");
+						//fallthrough
+				case STATE_BEGIN:				
+						state = STATE_LONG_BLOCK;
+						writeLongBlockType();
+						break;
+				case STATE_LONG_BLOCK:
+						break;
+				default: throw new IllegalStateException("Can't do primitive block write if other type of block write is in progress");
+			}
+			assert(buffer!=null):"buffer==null";
+			assert(offset>=0):"offset="+offset+" is negative";
+			assert(length>=0):"length="+length+" is negative";
+			assert(offset+length<=buffer.length):"buffer.length="+buffer.length+" but offset="+offset+" length="+length+" do point outside buffer";
+				
+			writeLongBlockImpl(buffer,offset,length);
+		};
+		
+		/** See {@link #writeBooleanBlock} */
+		@SuppressWarnings("fallthrough")
+		@Override public final void writeFloatBlock(float [] buffer, int offset, int length)throws IOException
+		{
+			flushPendingEnd();
+			switch(state)
+			{
+				case STATE_PRIMITIVE:
+				case STATE_END:
+						if (current_depth==0)
+								throw new IllegalStateException("Can't start block write if there is no event active");
+						//fallthrough
+				case STATE_BEGIN:				
+						state = STATE_FLOAT_BLOCK;
+						writeFloatBlockType();
+						break;
+				case STATE_FLOAT_BLOCK:
+						break;
+				default: throw new IllegalStateException("Can't do primitive block write if other type of block write is in progress");
+			}
+			assert(buffer!=null):"buffer==null";
+			assert(offset>=0):"offset="+offset+" is negative";
+			assert(length>=0):"length="+length+" is negative";
+			assert(offset+length<=buffer.length):"buffer.length="+buffer.length+" but offset="+offset+" length="+length+" do point outside buffer";
+				
+			writeFloatBlockImpl(buffer,offset,length);
+		};
+		
+		/** See {@link #writeBooleanBlock} */
+		@SuppressWarnings("fallthrough")
+		@Override public final void writeDoubleBlock(double [] buffer, int offset, int length)throws IOException
+		{
+			flushPendingEnd();
+			switch(state)
+			{
+				case STATE_PRIMITIVE:
+				case STATE_END:
+						if (current_depth==0)
+								throw new IllegalStateException("Can't start block write if there is no event active");
+						//fallthrough
+				case STATE_BEGIN:				
+						state = STATE_DOUBLE_BLOCK;
+						writeDoubleBlockType();
+						break;
+				case STATE_DOUBLE_BLOCK:
+						break;
+				default: throw new IllegalStateException("Can't do primitive block write if other type of block write is in progress");
+			}
+			assert(buffer!=null):"buffer==null";
+			assert(offset>=0):"offset="+offset+" is negative";
+			assert(length>=0):"length="+length+" is negative";
+			assert(offset+length<=buffer.length):"buffer.length="+buffer.length+" but offset="+offset+" length="+length+" do point outside buffer";
+				
+			writeDoubleBlockImpl(buffer,offset,length);
+		};
+		/*=============================================================
+		
+			Status
+			
+		=============================================================*/
+		/** Implemented to ensure that any pending optimized out end indicator
+		is flushed to underlying stream.
+		<p>
+		This means, that flushing may affect stream content in such a way,
+		that the:
+		<pre>
+			begin(...)
+			end()
+			begin(...)
+			end()
+		</pre>
+		results in following sequence of indicators:
+		<pre>
+			 begin indicator
+			 end-begin indicator
+			 end indicator
+		</pre>
+		while
+		<pre>
+			begin(...)
+			end()
+			flush()
+			begin(...)
+			end()
+		</pre>
+		will produce:
+		<pre>
+			 begin indicator
+			 end indicator
+			 begin indicator
+			 end indicator
+		</pre>
+		*/
+		@Override public void flush()throws IOException{ flushPendingEnd(); };
 };

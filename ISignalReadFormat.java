@@ -147,6 +147,18 @@ public interface ISignalReadFormat extends Closeable
 		/* -----------------------------------------------------------
 			Primary
 		-----------------------------------------------------------*/
+		/** Reads a part of bit-block
+		<br>
+		Same rules applies as for byte-block.
+		@param buffer buffer for read data, non-null.
+		@param offset where to save first bit in <code>buffer</code>
+		@param length number of bytes to read
+		@return as in byte-block, but returns number of boolean values regardless of how they
+				were encoded.
+		@throws IOException if failed at low level.
+		*/
+		public int readBooleanBlock(boolean [] buffer, int offset, int length)throws IOException;
+		
 		/** Reads a part of byte-block.
 		<br>
 		An initial byte block read may happen in any place <a href="package.html#event">event</a>.
@@ -183,18 +195,8 @@ public interface ISignalReadFormat extends Closeable
 		@throws IllegalStateException if there is block operation of another type in progress.  
 		@throws IOException if failed at low level.
 		*/			
-		public int readByteBlockByte()throws IOException;
-		/** Reads a part of bit-block
-		<br>
-		Same rules applies as for byte-block.
-		@param buffer buffer for read data, non-null.
-		@param offset where to save first bit in <code>buffer</code>
-		@param length number of bytes to read
-		@return as in byte-block, but returns number of boolean values regardless of how they
-				were encoded.
-		@throws IOException if failed at low level.
-		*/
-		public int readBitBlock(boolean [] buffer, int offset, int length)throws IOException;
+		public int readByteBlock()throws IOException;
+		
 		/** Reads a part of characters block
 		<br>
 		Same rules applies as for byte-block.
