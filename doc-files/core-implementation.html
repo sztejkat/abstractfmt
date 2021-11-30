@@ -22,22 +22,22 @@
 		without the need of understanding anything of a stream content between signals.(...)
 		</i>
 		<br><small>
-		See <a href="../package.html">package description.</a>.</small>
+		See <a href="../package-summary.html">package description.</a>.</small>
 		<p>
 		Due to this requirement we must be able to cleary say where the signal is
-		<u>regardless from which position in stream we do start looking for a signal.</u>.
+		<u>regardless from which position in stream we do start looking for a signal</u>.
 		<p>
 		We have two possiblities:
 		<ul>
 			<li>escape sequence;</li>
-			<li>data chunks;</li>
+			<li>data chunks.</li>
 		</ul>
 		
 		<h2>Escape sequence</h2>
 		Escape sequence is a sequence of raw data (chars or bytes) which absolutely under
 		no condition can appear in stream elsewhere except at the signal.
 		<p>
-		A good example of escape conditions are XML tags.
+		A good example of escape sequences are XML tags.
 		
 		<h2>Data chunks</h2>
 		Data chunks are fixed blocks of which size is given at the beginning of a block
@@ -51,7 +51,10 @@
 		    <td>
 			- escapes present in stream data must be escaped
 			so the stream size may be enlarged and will varry depending
-			on data carried in stream
+			on data carried in stream. For an example an XML file
+			which will carry in its body "&lt;&lt;&lt;&lt;&lt;....&lt;"
+			string will be tripple size than a file which is carying
+			the "aaaaa.....a" body of the same number of characters.
 			</td>
 			<td>
 			+ having few classes of chunks we may select compact
@@ -69,7 +72,7 @@
 			</td>
 		</tr>
 		<tr><td>scanning</td>
-			<td> - stream must be processed primitive-by-primitive to find 
+			<td> - stream must be processed char-by-char or byte-by-byte to find 
 			signals, so skipping remaning content of an event do require reading it,
 			altough without understanding
 			</td>
@@ -81,7 +84,7 @@
 		
 		<h2>Low level stream operations</h2>
 		
-		Regardless of what approach we do select we may divide to blocks:
+		Regardless of what approach we do select we may divide stream into blocks:
 		<pre>
 			begin-signal-indication
 			signal-name
@@ -112,14 +115,14 @@
 		Since we clearly said that all Java characters are allowed
 		then this is clear that any CR-LF or NULL-TERM methods are out of question.
 		<p>
-		Also we notices in <a href="security.html">notes about security</a> that
+		Also we noticed in <a href="security.html">notes about security</a> that
 		we need to limit name length.
 		<p>
 		Due to that it will be reasonable to write the size of name directly and then
 		the content of it. But it is a format implementation specific.
 		
 		<h3>Compact names</h3>
-		Since formats will be used in 90% of cases to store known data signal names
+		Since files will be used in 90% of cases to store known data signal names
 		will be used to indicate known, formally specified elements. This means
 		that the number of different names will be limited and that some of them
 		will appear very frequently.
@@ -133,21 +136,25 @@
 				signal-name-data
 		</pre>
 		The <code>register-indicator</code> may directly carry a number assigned to
-		the <code>signal-name-data</code> or this number may be deduces a'priori from
+		the <code>signal-name-data</code> or this number may be deduced a'priori from
 		the order of appearance of those indicators. For an example first indicator
-		means "name index 0" second "name index 1" and so on. With that it can
-		be compact.
+		means "name index 0" second "name index 1" and so on. This will help to keep
+		file compact.
 		<p>
-		On the other hand when the same name is used for a second and next times
+		On the other hand when the same name is used for a second and next time
 		following sequence can be used:
 		<pre>
 				register-use
 				signal-name-index
 		</pre>
-		and directly invoke a name "by the index".
+		and directly recall the name "by the index". The reading end of a stream
+		may transparently transform the index to a name in a string from since
+		it will remember all <code>register-indicator</code> data seen before.
 		<p>
 		This is the rationale behind <a href="../ISignalWriteFormat.html#BEGIN">ISignalWriteFormat.begin(String,boolean)</a>
-		second argument. 
+		second argument, which allows users to clearly indicate that some signals should not be optimized
+		by name registry, because they are used infrequently. The good example of infrequent signals are those
+		used in file headers.
 		
 		
 		<h1>Internal signals</h1>
@@ -159,10 +166,10 @@
 		<p>
 		This is wise then to have for them as compact indicators as possible.
 		<p>
-		We then assume that our stream must support, or at least declare support of, except of
+		We then assume that our stream must support, or at least declare support, for
 		<code>begin-signal-indication</code><code>end-signal-indication</code>
-		all the dedicated indicators for all that elements. They can be no-op for undescribed streams
-		but the should be declared at abstract level.
+		and all the dedicated indicators for all type information elements.
+		They can be no-op for undescribed streams but the should be declared and processed at abstract level
 		
 </body>
 </html>
