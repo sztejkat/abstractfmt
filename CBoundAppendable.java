@@ -1,5 +1,5 @@
 package sztejkat.abstractfmt;
-
+import java.io.IOException;
 /**
 	A string-builder like class which implements {@link Appendable}
 	contract which throws {@link EFormatBoundaryExceeded}
@@ -11,7 +11,7 @@ package sztejkat.abstractfmt;
 public class CBoundAppendable implements Appendable
 {
 				private final char [] buffer;
-				private final int at;
+				private int at;
 				
 	/* ********************************************************
 	
@@ -21,7 +21,7 @@ public class CBoundAppendable implements Appendable
 	/** Creates, pre allocating buffer of specified limit
 	@param limit non-negative
 	*/
-	public CBoundStringBuilder(int limit)
+	public CBoundAppendable(int limit)
 	{
 		assert(limit>0);
 		this.buffer = new char[limit];
@@ -32,13 +32,18 @@ public class CBoundAppendable implements Appendable
 			Access
 	
 	*********************************************************/
-	/** Returns length used in a buffer */
+	/** Returns length used in a buffer 
+	@return length of string in buffer */
 	public final int length(){return at; };
-	/** Capactiy of buffer */
+	/** Capactiy of buffer 
+	@return capacity of buffer, in chars
+	*/
 	public final int capacity(){ return buffer.length; };
 	/** Resets to zero size */
 	public final void reset(){ at = 0; };
-	/** Transforms to independent string */
+	/** Transforms to independent string 
+	@return string representation of collected chars
+	*/
 	public final String toString(){ return new String(buffer,0,at); };
 	
 	/* ********************************************************
@@ -70,7 +75,7 @@ public class CBoundAppendable implements Appendable
 	};
 	public Appendable append(CharSequence csq,
            			       int start,
-           			       int end)
+           			       int end)throws IOException
     {
     	if (csq==null)
 		{ 

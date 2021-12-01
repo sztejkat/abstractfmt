@@ -27,7 +27,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 				/** See constructor */
 				private final int max_name_length;
 				/** See constructor */
-				private final int max_elements_recursion_depth;
+				private final int max_events_recursion_depth;
 				
 				/** State indicating that elementary
 				primitive element was written. This is 
@@ -94,19 +94,19 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		@param max_name_length greater or equal to 8. Maximum length of names
 			to be accepted in {@link #begin(String, boolean)} and be passed to
 			{@link #writeSignalNameData}
-		@param max_elements_recursion_depth specifies the allowed depth of elements
+		@param max_events_recursion_depth specifies the allowed depth of elements
 			nesting. Zero disables limit, 1 sets limit to: "no nested elements allowed",
 			2 allows element within an element and so on. If this limit is exceed
 			the {@link #begin(String,boolean)} will throw <code>IllegalStateException</code>.
 		*/
 		protected ASignalWriteFormat(int names_registry_size,
 									 int max_name_length,
-									 int max_elements_recursion_depth
+									 int max_events_recursion_depth
 									 )
 		{
 			assert(names_registry_size>=0):"names_registry_size="+names_registry_size;
 			assert(max_name_length>=8):"max_name_length="+max_name_length;
-			assert(max_elements_recursion_depth>=0):"max_elements_recursion_depth="+max_elements_recursion_depth;
+			assert(max_events_recursion_depth>=0):"max_events_recursion_depth="+max_events_recursion_depth;
 			if (names_registry_size>0)
 			{
 				this.names_registry 	 = new String[names_registry_size];
@@ -117,7 +117,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 				this.names_registry_hash=null;
 			}
 			this.max_name_length=max_name_length;
-			this.max_elements_recursion_depth=max_elements_recursion_depth;
+			this.max_events_recursion_depth=max_events_recursion_depth;
 		};
 		
 		
@@ -185,6 +185,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		/** Should close low level operations.
 		This class ensured that this method is called only once
 		@see #close
+		@throws IOException if failed.
 		*/
 		protected abstract void closeImpl()throws IOException;
 		/*========================================================
@@ -675,8 +676,8 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			if (signal.length()>max_name_length) 
 				throw new IllegalArgumentException("Signal name too long. \""+signal+"\", max="+max_name_length);
 			//validate depth
-			if ((max_elements_recursion_depth!=0)&&(max_elements_recursion_depth<=current_depth))
-				throw new IllegalStateException("Too deep events recursion, limit set to "+max_elements_recursion_depth);
+			if ((max_events_recursion_depth!=0)&&(max_events_recursion_depth<=current_depth))
+				throw new IllegalStateException("Too deep events recursion, limit set to "+max_events_recursion_depth);
 			
 			current_depth++;
 			
