@@ -60,6 +60,8 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 				private static final byte STATE_FLOAT_BLOCK=(byte)10;
 				/** See {@link #STATE_BOOLEAN_BLOCK} */
 				private static final byte STATE_DOUBLE_BLOCK=(byte)11;
+				/** If closed */
+				private static final byte STATE_CLOSED = (byte)12;
 				
 				
 				/** Keeps track of current events depth */
@@ -177,6 +179,16 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		**********************************************************/
 		/*========================================================
 		
+				Low level I/O
+		
+		=========================================================*/
+		/** Should close low level operations.
+		This class ensured that this method is called only once
+		@see #close
+		*/
+		protected abstract void closeImpl()throws IOException;
+		/*========================================================
+		
 				Indicators
 		
 		=========================================================*/
@@ -225,6 +237,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			writeBooleanImpl(v)
 			writeBooleanTypeEnd()
 		</pre>
+		End indicators are allowed to be no-ops even for typed streams.
 		@throws IOException if low level i/o failed.
 		@see #writeBoolean
 		@see #writeBooleanImpl
@@ -289,6 +302,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			....
 			writeBooleanBlockTypeEnd()	//before writing signal terminating block.
 		</pre>
+		End indicators are allowed to be no-ops even for typed streams.
 		@throws IOException if low level i/o failed.
 		@see #writeBooleanBlock
 		@see #writeBooleanBlockImpl
@@ -373,7 +387,9 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			<ul>
 				<li><code>name_index</code> is zero for first call of this
 				method, 1 for next and so on, until stream is closed or
-				the name registry pool is full;</li>
+				the name registry pool is full. If stream is fine with
+				this method of numbers assignments it may avoid writing 
+				this number to a stream;</li>
 			</ul>
 		@throws IOException if low level i/o failed.*/
 		protected abstract void writeRegisterName(int name_index)throws IOException;
@@ -555,6 +571,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		*/
 		private void startElementaryPrimitiveWrite()throws IllegalStateException,IOException
 		{			
+			validateNotClosed();
 			flushPendingEnd();//this might be pending.
 			
 			assert(STATE_DOUBLE_BLOCK>STATE_BYTE_BLOCK);//just to make sure that const assumptions are ok.
@@ -572,6 +589,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		*/
 		private void flushPendingEnd()throws IOException
 		{
+			validateNotClosed();
 			if (state==STATE_END_PENDING)
 			{
 				state=STATE_END;
@@ -583,7 +601,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		@throws IOException if called method thrown 
 		*/
 		private void closePendingBlocks()throws IOException
-		{
+		{			
 			switch(state)
 			{
 				case STATE_BOOLEAN_BLOCK: writeBooleanBlockTypeEnd(); break;
@@ -628,7 +646,13 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		@return true if yes
 		*/
 		protected final boolean wasBlockWritten(){ return state>=STATE_BYTE_BLOCK; };
-		
+		/** Throws if closed
+		@throws EClosed if closed
+		*/
+		protected final void validateNotClosed()throws EClosed
+		{
+			if (state==STATE_CLOSED) throw new EClosed("Already closed");
+		};
 		/* ********************************************************
 		
 		
@@ -644,6 +668,8 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		@Override public final int getMaxSignalNameLength(){ return max_name_length; };
 		@Override public void begin(String signal,boolean do_not_optimize)throws IOException
 		{
+			validateNotClosed();
+			
 			assert(signal!=null):"null signal name";
 			//Validate length
 			if (signal.length()>max_name_length) 
@@ -714,6 +740,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		*/
 		@Override public void end()throws IOException
 		{
+			validateNotClosed();
 			if (current_depth==0) throw new IllegalStateException("Can't do end(), no event is active");
 			current_depth--;
 			//Flush any pending end signal operation.
@@ -1139,4 +1166,17 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		</pre>
 		*/
 		@Override public void flush()throws IOException{ flushPendingEnd(); };
+		
+		/** Overriden to toggle state to closed.
+		Calls {@link closeImpl}
+		*/
+		@Override public final void close()throws IOException
+		{ 
+			if (state!=STATE_CLOSED)
+			{
+				try{
+					flush(); 					
+				}finally{ state=STATE_CLOSED; closeImpl(); };
+			};
+		};
 };

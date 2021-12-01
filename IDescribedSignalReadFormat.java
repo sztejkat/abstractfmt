@@ -31,52 +31,52 @@ public interface IDescribedSignalReadFormat extends ISignalReadFormat
 				
 				/** Indicates that next element in stream is an elementary primitive
 				which should be processed by {@link #readBoolean} */
-				public static final int ELEMENT_BOOLEAN=1;
-				/** Indicates that next element in stream is an elementary primitive
+				public static final int PRMTV_BOOLEAN=1;
+				/** Indicates that next PRMTV in stream is an PRMTVary primitive
 				which should be processed by {@link #readByte} */
-				public static final int ELEMENT_BYTE=2;
-				/** Indicates that next element in stream is an elementary primitive
+				public static final int PRMTV_BYTE=2;
+				/** Indicates that next PRMTV in stream is an PRMTVary primitive
 				which should be processed by {@link #readChar} */
-				public static final int ELEMENT_CHAR=3;
-				/** Indicates that next element in stream is an elementary primitive
+				public static final int PRMTV_CHAR=3;
+				/** Indicates that next PRMTV in stream is an PRMTVary primitive
 				which should be processed by {@link #readShort} */
-				public static final int ELEMENT_SHORT=4;
-				/** Indicates that next element in stream is an elementary primitive
+				public static final int PRMTV_SHORT=4;
+				/** Indicates that next PRMTV in stream is an PRMTVary primitive
 				which should be processed by {@link #readInt} */
-				public static final int ELEMENT_INT=5;
-				/** Indicates that next element in stream is an elementary primitive
+				public static final int PRMTV_INT=5;
+				/** Indicates that next PRMTV in stream is an PRMTVary primitive
 				which should be processed by {@link #readLong} */
-				public static final int ELEMENT_LONG=6;
-				/** Indicates that next element in stream is an elementary primitive
+				public static final int PRMTV_LONG=6;
+				/** Indicates that next PRMTV in stream is an PRMTVary primitive
 				which should be processed by {@link #readFloat} */
-				public static final int ELEMENT_FLOAT=7;
-				/** Indicates that next element in stream is an elementary primitive
+				public static final int PRMTV_FLOAT=7;
+				/** Indicates that next PRMTV in stream is an PRMTVary primitive
 				which should be processed by {@link #readDouble} */
-				public static final int ELEMENT_DOUBLE=8;
-				/** Indicates that next element in stream is a block operation
+				public static final int PRMTV_DOUBLE=8;
+				/** Indicates that next PRMTV in stream is a block operation
 				which should be processed by {@link #readBooleanBlock}.*/
-				public static final int ELEMENT_BOOLEAN_BLOCK=9;
-				/** Indicates that next element in stream is a block operation
+				public static final int PRMTV_BOOLEAN_BLOCK=9;
+				/** Indicates that next PRMTV in stream is a block operation
 				which should be processed by {@link #readByteBlock}. */
-				public static final int ELEMENT_BYTE_BLOCK=10;				
-				/** Indicates that next element in stream is a block operation
+				public static final int PRMTV_BYTE_BLOCK=10;				
+				/** Indicates that next PRMTV in stream is a block operation
 				which should be processed by {@link #readCharBlock}. */
-				public static final int ELEMENT_CHAR_BLOCK=11;
-				/** Indicates that next element in stream is a block operation
+				public static final int PRMTV_CHAR_BLOCK=11;
+				/** Indicates that next PRMTV in stream is a block operation
 				which should be processed by {@link #readShortBlock}. */
-				public static final int ELEMENT_SHORT_BLOCK=12;
-				/** Indicates that next element in stream is a block operation
+				public static final int PRMTV_SHORT_BLOCK=12;
+				/** Indicates that next PRMTV in stream is a block operation
 				which should be processed by {@link #readIntBlock}. */
-				public static final int ELEMENT_INT_BLOCK=13;
-				/** Indicates that next element in stream is a block operation
+				public static final int PRMTV_INT_BLOCK=13;
+				/** Indicates that next PRMTV in stream is a block operation
 				which should be processed by {@link #readLongBlock}.*/
-				public static final int ELEMENT_LONG_BLOCK=14;
-				/** Indicates that next element in stream is a block operation
+				public static final int PRMTV_LONG_BLOCK=14;
+				/** Indicates that next PRMTV in stream is a block operation
 				which should be processed by {@link #readFloatBlock}.*/
-				public static final int ELEMENT_FLOAT_BLOCK=15;
-				/** Indicates that next element in stream is a block operation
+				public static final int PRMTV_FLOAT_BLOCK=15;
+				/** Indicates that next PRMTV in stream is a block operation
 				which should be processed by {@link #readDoubleBlock}.*/
-				public static final int ELEMENT_DOUBLE_BLOCK=16;
+				public static final int PRMTV_DOUBLE_BLOCK=16;
 		/** 
 			Extends the details returned from {@link ISignalReadFormat#hasData}
 			to provide detailed informations about if has data to skip then
@@ -84,23 +84,23 @@ public interface IDescribedSignalReadFormat extends ISignalReadFormat
 			@return one of:
 				<ul>
 					<li>{@link #EOF};</li>
-					<li>{@link #NO_DATA};</li>
-					<li>{@link #ELEMENT_BOOLEAN};</li>
-					<li>{@link #ELEMENT_BYTE};</li>
-					<li>{@link #ELEMENT_CHAR};</li>
-					<li>{@link #ELEMENT_SHORT};</li>
-					<li>{@link #ELEMENT_INT};</li>
-					<li>{@link #ELEMENT_LONG};</li>
-					<li>{@link #ELEMENT_FLOAT};</li>
-					<li>{@link #ELEMENT_DOUBLE};</li>
-					<li>{@link #ELEMENT_BYTE_BLOCK};</li>
-					<li>{@link #ELEMENT_BOOLEAN_BLOCK};</li>
-					<li>{@link #ELEMENT_CHAR_BLOCK};</li>
-					<li>{@link #ELEMENT_SHORT_BLOCK};</li>
-					<li>{@link #ELEMENT_INT_BLOCK};</li>
-					<li>{@link #ELEMENT_LONG_BLOCK};</li>
-					<li>{@link #ELEMENT_FLOAT_BLOCK};</li>
-					<li>{@link #ELEMENT_DOUBLE_BLOCK};</li>
+					<li>{@link #SIGNAL};</li>
+					<li>{@link #PRMTV_BOOLEAN};</li>
+					<li>{@link #PRMTV_BYTE};</li>
+					<li>{@link #PRMTV_CHAR};</li>
+					<li>{@link #PRMTV_SHORT};</li>
+					<li>{@link #PRMTV_INT};</li>
+					<li>{@link #PRMTV_LONG};</li>
+					<li>{@link #PRMTV_FLOAT};</li>
+					<li>{@link #PRMTV_DOUBLE};</li>
+					<li>{@link #PRMTV_BYTE_BLOCK};</li>
+					<li>{@link #PRMTV_BOOLEAN_BLOCK};</li>
+					<li>{@link #PRMTV_CHAR_BLOCK};</li>
+					<li>{@link #PRMTV_SHORT_BLOCK};</li>
+					<li>{@link #PRMTV_INT_BLOCK};</li>
+					<li>{@link #PRMTV_LONG_BLOCK};</li>
+					<li>{@link #PRMTV_FLOAT_BLOCK};</li>
+					<li>{@link #PRMTV_DOUBLE_BLOCK};</li>
 				</ul>
 				The effect should be such, that calling a read method which is
 				apropriate to returned code must not throw any data-match or end-of-event

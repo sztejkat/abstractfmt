@@ -41,25 +41,24 @@ public interface ISignalReadFormat extends Closeable
 		public String next()throws IOException;
 		
 				/** See {@link #hasData} */
-				public static final int HAS_DATA=0x0FFF;
-				/** See {@link #hasData} */
-				public static final int NO_DATA=0;
+				public static final int SIGNAL=0;
 				/** See {@link #hasData} */
 				public static final int EOF=-1;
 		/** 
-			Tests if {@link #next} would skip anything or not or would throw.
+			Tests what kind of information is under a cursor.
+			<p>
 			Subsequent calls to this method must return the same value and must not 
 			affect the stream or move stream cursor. They may however cause
 			some data to be read from a low level stream.
 		@return <ul>
-					<li>{@link #HAS_DATA} or anything &gt;0
-					if {@link #next} would skip something.
-					This means that there are some primitive data which were not
-					read yet.
+					<li>anything &gt;0	if there are some un-read data 
+					and {@link #next} would skip something.
 					<p>
 					See also {@link IDescribedSignalReadFormat#hasData};</li>
-					<li>{@link #NO_DATA} if {@link #next} would not have to skip
-					anything and cursor it is at the next signal;</li>
+					
+					<li>{@link #SIGNAL} if {@link #next} would not have to skip
+					anything and cursor it is at the next signal, either;</li>
+					
 					<li>{@link #EOF}  if {@link #next} would have thrown {@link EUnexpectedEof}
 					if called right now. This condition may change if stream is
 					a network connection or other produced-on-demand stream. This condition
@@ -94,6 +93,7 @@ public interface ISignalReadFormat extends Closeable
 				is in progress.
 		@throws IOException if low level i/o failed
 		@throws ENoMoreData if stream cursor is at the signal
+		@throws EDataMissmatch if detected signal inside a body of primitive
 		@throws EUnexpectedEof if read resulted in end-of-file condition
 		*/
 		public boolean readBoolean()throws IOException;

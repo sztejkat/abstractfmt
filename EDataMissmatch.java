@@ -2,6 +2,9 @@ package sztejkat.abstractfmt;
 /**
 	An exception thrown when a primitive data encountered in stream
 	do not match requested data.
+	<p>
+	Stream may recover from this condition by skipping the primitive 
+	block.
 */
 public class EDataMissmatch extends ECorruptedFormat
 {

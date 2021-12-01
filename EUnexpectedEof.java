@@ -4,8 +4,10 @@ package sztejkat.abstractfmt;
 	A generic exception indicating that there is something 
 	wrong with a stream because we did encounter a physical
 	end-of-file when not allowed.
+	<p>
+	Stream may recover from this error by re-trying.
 */
-public class EUnexpectedEof extends java.io.IOException
+public class EUnexpectedEof extends ECorruptedFormat
 {
 		private static final long serialVersionUID=1L;
 	public EUnexpectedEof(){};
