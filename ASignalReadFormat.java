@@ -1540,4 +1540,151 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 				closeImpl();
 			};
 		};
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		/* *****************************************************************************
+		
+		
+				Junit test area (junit 4 style)
+		
+				
+				This test is intendend to test private routines.
+		
+		* *****************************************************************************/	
+		/** Routine for internal tests */
+		public static final class Test extends sztejkat.utils.test.ATest
+		{
+				/** Test bed device, throws on almost all methods */
+				private static final class DUT extends ASignalReadFormat
+				{
+						int next_indicator_to_return;
+						int count;
+					DUT(int names_registry_size,
+									 int max_name_length,
+									 int max_events_recursion_depth,
+									 boolean strict_described_types)
+					{
+						super(names_registry_size,max_name_length,max_events_recursion_depth,strict_described_types);
+					};
+					protected int readIndicator()
+					{
+						System.out.println("readIndicator()="+next_indicator_to_return);
+						count++;
+						return next_indicator_to_return;
+					};
+					protected void skip()throws IOException,EUnexpectedEof{ throw new AbstractMethodError(); };
+					protected void readSignalNameData(Appendable a, int limit)throws IOException{ throw new AbstractMethodError(); };
+					protected int readRegisterIndex()throws IOException{ throw new AbstractMethodError(); };
+					protected int readRegisterUse()throws IOException{ throw new AbstractMethodError(); };
+					protected void closeImpl()throws IOException{ throw new AbstractMethodError(); };;
+					protected boolean readBooleanImpl()throws IOException{ throw new AbstractMethodError(); };;
+					protected byte readByteImpl()throws IOException{ throw new AbstractMethodError(); };;
+					protected char readCharImpl()throws IOException{ throw new AbstractMethodError(); };;
+					protected short readShortImpl()throws IOException{ throw new AbstractMethodError(); };;
+					protected int readIntImpl()throws IOException{ throw new AbstractMethodError(); };;
+					protected long readLongImpl()throws IOException{ throw new AbstractMethodError(); };;
+					protected float readFloatImpl()throws IOException{ throw new AbstractMethodError(); };;
+					protected double readDoubleImpl()throws IOException{ throw new AbstractMethodError(); };;
+					protected int readBooleanBlockImpl(boolean [] buffer, int offset, int length)throws IOException{ throw new AbstractMethodError(); };;
+					protected int readByteBlockImpl(byte [] buffer, int offset, int length)throws IOException{ throw new AbstractMethodError(); };;
+					protected int readByteBlockImpl()throws IOException{ throw new AbstractMethodError(); };;
+					protected int readCharBlockImpl(char [] buffer, int offset, int length)throws IOException{ throw new AbstractMethodError(); };;
+					protected int readCharBlockImpl(Appendable buffer, int length)throws IOException{ throw new AbstractMethodError(); };;
+					protected int readShortBlockImpl(short [] buffer, int offset, int length)throws IOException{ throw new AbstractMethodError(); };;
+					protected int readIntBlockImpl(int [] buffer, int offset, int length)throws IOException{ throw new AbstractMethodError(); };;
+					protected int readLongBlockImpl(long [] buffer, int offset, int length)throws IOException{ throw new AbstractMethodError(); };;
+					protected int readFloatBlockImpl(float [] buffer, int offset, int length)throws IOException{ throw new AbstractMethodError(); };;
+					protected int readDoubleBlockImpl(double [] buffer, int offset, int length)throws IOException{ throw new AbstractMethodError(); };;
+					
+				}
+				
+				@org.junit.Test public void test_get_consumeIndicator()throws IOException
+				{
+					enter();
+					/*
+						In this test we check, if getIndicator() do fetch 
+						indicator and if consuming works.
+					*/
+					DUT D = new DUT(5,10,10,true);
+					ASignalReadFormat A = D;					
+					{
+						D.next_indicator_to_return = TYPE_BOOLEAN;
+						int i = A.getIndicator();
+						org.junit.Assert.assertTrue(D.count==1);
+						org.junit.Assert.assertTrue(i==TYPE_BOOLEAN);
+						D.next_indicator_to_return = TYPE_INT;
+						i  = A.getIndicator();						
+						i  = A.getIndicator();
+						org.junit.Assert.assertTrue(D.count==1);
+						org.junit.Assert.assertTrue(i==TYPE_BOOLEAN);
+					};
+					{
+						D.next_indicator_to_return = TYPE_INT;
+						int i = A.consumeIndicator();
+						org.junit.Assert.assertTrue(D.count==1);
+						org.junit.Assert.assertTrue(i==TYPE_BOOLEAN);
+						    i = A.getIndicator();
+						org.junit.Assert.assertTrue(D.count==2);
+						org.junit.Assert.assertTrue(i==TYPE_INT);
+					};
+					leave();
+				};
+				
+				@org.junit.Test public void test_get_consumeIndicator2()throws IOException
+				{
+					enter();
+					/*
+						In this test we check, if getIndicator() do fetch 
+						indicator and if consuming works if EOF_INDICATOR
+						is returned.
+					*/
+					DUT D = new DUT(5,10,10,true);
+					ASignalReadFormat A = D;					
+					{
+						D.next_indicator_to_return = EOF_INDICATOR;
+						int i = A.getIndicator();
+						org.junit.Assert.assertTrue(D.count==1);
+						org.junit.Assert.assertTrue(i==EOF_INDICATOR);
+							i = A.getIndicator();
+						org.junit.Assert.assertTrue(D.count==2);
+						org.junit.Assert.assertTrue(i==EOF_INDICATOR);
+							i = A.getIndicator();
+						org.junit.Assert.assertTrue(D.count==3);
+						org.junit.Assert.assertTrue(i==EOF_INDICATOR);
+					};
+					leave();
+				};
+				
+				@org.junit.Test public void test_getAndConsumeIndicator()throws IOException
+				{
+					enter();
+					/*
+						In this test we check, if getAndConsumeIndicator() do fetch 
+						and consume indicator.
+					*/
+					DUT D = new DUT(5,10,10,true);
+					ASignalReadFormat A = D;					
+					{
+						D.next_indicator_to_return = TYPE_BOOLEAN;
+						int i = A.getAndConsumeIndicator();
+						org.junit.Assert.assertTrue(D.count==1);
+						org.junit.Assert.assertTrue(i==TYPE_BOOLEAN);
+						D.next_indicator_to_return = TYPE_INT;
+						i  = A.getAndConsumeIndicator();
+						org.junit.Assert.assertTrue(D.count==2);
+						org.junit.Assert.assertTrue(i==TYPE_INT);
+					};
+					leave();
+				};
+		};
 };

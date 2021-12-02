@@ -1,3 +1,8 @@
+#Generated documentation package
 package-doc
+#Backup files from JEDIT
 *.*~
+#Compilation logs
 *.javaclog
+#Junit test logs
+TEST-sztejkat.abstractfmt.*.txt

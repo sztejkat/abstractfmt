@@ -1180,4 +1180,140 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 				}finally{ state=STATE_CLOSED; closeImpl(); };
 			};
 		};
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		/* *****************************************************************************
+		
+		
+				Junit test area (junit 4 style)
+		
+				
+				This test is intendend to test private routines.
+		
+		* *****************************************************************************/	
+		/** Routine for internal tests */
+		public static final class Test extends sztejkat.utils.test.ATest
+		{
+				/** Test bed device, throws on almost all methods */
+				private static final class DUT extends ASignalWriteFormat
+				{
+					DUT(int names_registry_size,
+						int max_name_length,
+						int max_events_recursion_depth)
+					{
+						super(names_registry_size,max_name_length,max_events_recursion_depth);
+					};
+					protected void closeImpl()throws IOException{ throw new AbstractMethodError(); }
+					protected void writeBeginSignalIndicator()throws IOException{ throw new AbstractMethodError(); }
+					protected void writeEndSignalIndicator()throws IOException{ throw new AbstractMethodError(); }
+					protected void writeDirectName()throws IOException{ throw new AbstractMethodError(); }
+					protected void writeSignalNameData(String name)throws IOException{ throw new AbstractMethodError(); }
+					protected void writeRegisterName(int name_index)throws IOException{ throw new AbstractMethodError(); }
+					protected void writeRegisterUse(int name_index)throws IOException{ throw new AbstractMethodError(); }
+					protected  void writeBooleanImpl(boolean v)throws IOException{ throw new AbstractMethodError(); };;
+					protected  void writeByteImpl(byte v)throws IOException{ throw new AbstractMethodError(); };;
+					protected  void writeCharImpl(char v)throws IOException{ throw new AbstractMethodError(); };;
+					protected  void writeShortImpl(short v)throws IOException{ throw new AbstractMethodError(); };;
+					protected  void writeIntImpl(int v)throws IOException{ throw new AbstractMethodError(); };;
+					protected  void writeLongImpl(long v)throws IOException{ throw new AbstractMethodError(); };;
+					protected  void writeFloatImpl(float v)throws IOException{ throw new AbstractMethodError(); };;
+					protected  void writeDoubleImpl(double v)throws IOException{ throw new AbstractMethodError(); };;
+					protected  void writeBooleanBlockImpl(boolean [] buffer, int offset, int length)throws IOException{ throw new AbstractMethodError(); };;
+					protected  void writeByteBlockImpl(byte [] buffer, int offset, int length)throws IOException{ throw new AbstractMethodError(); };;
+					protected  void writeByteBlockImpl(byte data)throws IOException{ throw new AbstractMethodError(); };;
+					protected  void writeCharBlockImpl(char [] buffer, int offset, int length)throws IOException{ throw new AbstractMethodError(); };;
+					protected  void writeCharBlockImpl(CharSequence characters, int offset, int length)throws IOException{ throw new AbstractMethodError(); };;
+					protected  void writeShortBlockImpl(short [] buffer, int offset, int length)throws IOException{ throw new AbstractMethodError(); };;
+					protected  void writeIntBlockImpl(int [] buffer, int offset, int length)throws IOException{ throw new AbstractMethodError(); };;
+					protected  void writeLongBlockImpl(long [] buffer, int offset, int length)throws IOException{ throw new AbstractMethodError(); };;
+					protected  void writeFloatBlockImpl(float [] buffer, int offset, int length)throws IOException{ throw new AbstractMethodError(); };;
+					protected  void writeDoubleBlockImpl(double [] buffer, int offset, int length)throws IOException{ throw new AbstractMethodError(); };;
+				
+		
+				};
+			@org.junit.Test public void testNameResistry()
+			{
+				enter();
+				/*
+					In this test we check if we can put a name to a registry
+					and if indexes are returned in proper order.
+				*/
+					ASignalWriteFormat D = 
+							new DUT(3,//int names_registry_size,
+									45,//int max_name_length,
+									0//int max_events_recursion_depth
+									);
+					{
+						int i = D.putToIndex("SPAMMER");
+						org.junit.Assert.assertTrue(i==0);
+					};
+					{
+						int i = D.putToIndex("GRONK");
+						org.junit.Assert.assertTrue(i==1);
+					};
+					{
+						int i = D.putToIndex("PARABOOM");
+						org.junit.Assert.assertTrue(i==2);
+					};
+					{
+						int i = D.putToIndex("KABOOM");
+						org.junit.Assert.assertTrue(i==-1);
+					};
+				
+				leave();
+			};
+			
+			@org.junit.Test public void testNameResistry2()
+			{
+				enter();
+				/*
+					In this test we check if we can put a name to a registry
+					and find it.
+				*/
+					ASignalWriteFormat D = 
+							new DUT(3,//int names_registry_size,
+									45,//int max_name_length,
+									0//int max_events_recursion_depth
+									);
+					{
+						int i = D.putToIndex("SPAMMER");
+						org.junit.Assert.assertTrue(i==0);
+					};
+					{
+						int i = D.putToIndex("GRONK");
+						org.junit.Assert.assertTrue(i==1);
+					};
+					{
+						int i = D.findInIndex("PARABOOM");
+						org.junit.Assert.assertTrue(i==-1);
+					};
+					{
+						int i = D.findInIndex("SPAMMER");
+						org.junit.Assert.assertTrue(i==0);
+					};
+					{
+						int i = D.findInIndex("GRONK");
+						org.junit.Assert.assertTrue(i==1);
+					};
+				
+				leave();
+			};
+		};
 };
