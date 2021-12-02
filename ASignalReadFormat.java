@@ -599,6 +599,60 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 				
 				The pending_indicator
 		-----------------------------------------------------------------*/
+		/** Converts indicator type to String form, as if it would be enum
+		@param indicator one of indicator constants.
+		@return string form or "unknown(<i>indicator</i>)"
+		*/
+		public static String indicatorToString(int indicator)
+		{
+			switch(indicator)
+			{
+					case EOF_INDICATOR: return "EOF_INDICATOR";
+					case NO_INDICATOR: return "NO_INDICATOR";
+					case BEGIN_INDICATOR: return "BEGIN_INDICATOR";		
+					case END_INDICATOR: return "END_INDICATOR";
+					case END_BEGIN_INDICATOR: return "END_BEGIN_INDICATOR";
+					case DIRECT_INDICATOR: return "DIRECT_INDICATOR";
+					case REGISTER_INDICATOR: return "REGISTER_INDICATOR";
+					case REGISTER_USE_INDICATOR: return "REGISTER_USE_INDICATOR";
+				
+					case TYPE_BOOLEAN: 			return "TYPE_BOOLEAN";	
+					case TYPE_BYTE: 			return "TYPE_BYTE";
+					case TYPE_CHAR: 			return "TYPE_CHAR";
+					case TYPE_SHORT: 			return "TYPE_SHORT";
+					case TYPE_INT: 				return "TYPE_INT";
+					case TYPE_LONG: 			return "TYPE_LONG";
+					case TYPE_FLOAT: 			return "TYPE_FLOAT";
+					case TYPE_DOUBLE: 			return "TYPE_DOUBLE";
+					case TYPE_BOOLEAN_BLOCK: 	return "TYPE_BOOLEAN_BLOCK";	
+					case TYPE_BYTE_BLOCK: 		return "TYPE_BYTE_BLOCK";
+					case TYPE_CHAR_BLOCK: 		return "TYPE_CHAR_BLOCK";
+					case TYPE_SHORT_BLOCK: 		return "TYPE_SHORT_BLOCK";
+					case TYPE_INT_BLOCK: 		return "TYPE_INT_BLOCK";
+					case TYPE_LONG_BLOCK: 		return "TYPE_LONG_BLOCK";
+					case TYPE_FLOAT_BLOCK: 		return "TYPE_FLOAT_BLOCK";
+					case TYPE_DOUBLE_BLOCK: 	return "TYPE_DOUBLE_BLOCK";
+						
+					case TYPE_BOOLEAN_END: 			return "TYPE_BOOLEAN_END";	
+					case TYPE_BYTE_END: 			return "TYPE_BYTE_END";
+					case TYPE_CHAR_END: 			return "TYPE_CHAR_END";
+					case TYPE_SHORT_END: 			return "TYPE_SHORT_END";
+					case TYPE_INT_END: 				return "TYPE_INT_END";
+					case TYPE_LONG_END: 			return "TYPE_LONG_END";
+					case TYPE_FLOAT_END: 			return "TYPE_FLOAT_END";
+					case TYPE_DOUBLE_END: 			return "TYPE_DOUBLE_END";
+					case TYPE_BOOLEAN_BLOCK_END: 	return "TYPE_BOOLEAN_BLOCK_END";	
+					case TYPE_BYTE_BLOCK_END: 		return "TYPE_BYTE_BLOCK_END";
+					case TYPE_CHAR_BLOCK_END: 		return "TYPE_CHAR_BLOCK_END";
+					case TYPE_SHORT_BLOCK_END: 		return "TYPE_SHORT_BLOCK_END";
+					case TYPE_INT_BLOCK_END: 		return "TYPE_INT_BLOCK_END";
+					case TYPE_LONG_BLOCK_END: 		return "TYPE_LONG_BLOCK_END";
+					case TYPE_FLOAT_BLOCK_END: 		return "TYPE_FLOAT_BLOCK_END";
+					case TYPE_DOUBLE_BLOCK_END: 	return "TYPE_DOUBLE_BLOCK_END";	
+						
+					default: return "unknown("+indicator+")";
+			}
+		};
 		/** Converts <code>TYPE_xxx</code> and <code>TYPE_xxx_END</code>
 		to string representation
 		@param type_indicator indicator to convert
