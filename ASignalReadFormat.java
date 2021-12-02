@@ -439,10 +439,38 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 		@throws EBrokenStream if it is broken beyond repair.		
 		*/
 		protected abstract boolean readBooleanImpl()throws IOException;
+		/** See {@link #readBooleanImpl}
+		@return value
+		@throws IOException --//-- */
+		protected abstract byte readByteImpl()throws IOException;
+		/** See {@link #readBooleanImpl}
+		@return value
+		@throws IOException --//-- */
+		protected abstract char readCharImpl()throws IOException;
+		/** See {@link #readBooleanImpl}
+		@return value
+		@throws IOException --//-- */
+		protected abstract short readShortImpl()throws IOException;
+		/** See {@link #readBooleanImpl}
+		@return value
+		@throws IOException --//-- */
+		protected abstract int readIntImpl()throws IOException;
+		/** See {@link #readBooleanImpl}
+		@return value
+		@throws IOException --//-- */
+		protected abstract long readLongImpl()throws IOException;
+		/** See {@link #readBooleanImpl}
+		@return value
+		@throws IOException --//-- */
+		protected abstract float readFloatImpl()throws IOException;
+		/** See {@link #readBooleanImpl}
+		@return value
+		@throws IOException --//-- */
+		protected abstract double readDoubleImpl()throws IOException;
 		/* -------------------------------------------------------
 				Blocks
 		-------------------------------------------------------*/
-		/** Invoked inside {@link #readBooleanBlock} when this operation
+		/** Invoked inside {@link #readBooleanBlock(boolean[],int,int)} when this operation
 		is allowed. All arguments are validated and if stream is described type
 		is checked.
 		@param buffer --//--
@@ -455,6 +483,78 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 		*/
 		protected abstract int readBooleanBlockImpl(boolean [] buffer, int offset, int length)throws IOException;
 	
+		/** See {@link #readBooleanBlockImpl}
+		@param buffer --//--
+		@param offset --//--
+		@param length --//--
+		@return --//--
+		@throws IOException --//--
+		*/
+		protected abstract int readByteBlockImpl(byte [] buffer, int offset, int length)throws IOException;
+		/** Invoked inside {@link #readByteBlock()} when this operation
+		is allowed. All arguments are validated and if stream is described type
+		is checked.
+		@return as {@link #readBooleanBlock}
+		@throws IOException if failed at low level
+		@throws EBrokenStream if it is broken beyond repair.
+		*/
+		protected abstract int readByteBlockImpl()throws IOException;
+		/** See {@link #readBooleanBlockImpl}
+		@param buffer --//--
+		@param offset --//--
+		@param length --//--
+		@return --//--
+		@throws IOException --//--
+		*/
+		protected abstract int readCharBlockImpl(char [] buffer, int offset, int length)throws IOException;
+		/** See {@link #readBooleanBlockImpl}
+		@param buffer --//--
+		@param length --//--
+		@return --//--
+		@throws IOException --//--
+		*/
+		protected abstract int readCharBlockImpl(Appendable buffer, int length)throws IOException;
+		
+		/** See {@link #readBooleanBlockImpl}
+		@param buffer --//--
+		@param offset --//--
+		@param length --//--
+		@return --//--
+		@throws IOException --//--
+		*/
+		protected abstract int readShortBlockImpl(short [] buffer, int offset, int length)throws IOException;
+		/** See {@link #readBooleanBlockImpl}
+		@param buffer --//--
+		@param offset --//--
+		@param length --//--
+		@return --//--
+		@throws IOException --//--
+		*/
+		protected abstract int readIntBlockImpl(int [] buffer, int offset, int length)throws IOException;
+		/** See {@link #readBooleanBlockImpl}
+		@param buffer --//--
+		@param offset --//--
+		@param length --//--
+		@return --//--
+		@throws IOException --//--
+		*/
+		protected abstract int readLongBlockImpl(long [] buffer, int offset, int length)throws IOException;
+		/** See {@link #readBooleanBlockImpl}
+		@param buffer --//--
+		@param offset --//--
+		@param length --//--
+		@return --//--
+		@throws IOException --//--
+		*/
+		protected abstract int readFloatBlockImpl(float [] buffer, int offset, int length)throws IOException;
+		/** See {@link #readBooleanBlockImpl}
+		@param buffer --//--
+		@param offset --//--
+		@param length --//--
+		@return --//--
+		@throws IOException --//--
+		*/
+		protected abstract int readDoubleBlockImpl(double [] buffer, int offset, int length)throws IOException;
 		
 		/* ***************************************************************
 		
@@ -997,6 +1097,89 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 					return v;
 				}catch(EBrokenStream ex){ throw breakStream(ex); }
 		};
+		/** see {@link #readBoolean}
+		*/
+		@Override public final byte readByte()throws IOException
+		{
+				startElementaryPrimitive(TYPE_BYTE);
+				try{
+					byte v = readByteImpl();
+					endElementaryPrimitive(TYPE_BYTE);
+					return v;
+				}catch(EBrokenStream ex){ throw breakStream(ex); }
+		};
+		/** see {@link #readBoolean}
+		*/
+		@Override public final char readChar()throws IOException
+		{
+				startElementaryPrimitive(TYPE_CHAR);
+				try{
+					char v = readCharImpl();
+					endElementaryPrimitive(TYPE_CHAR);
+					return v;
+				}catch(EBrokenStream ex){ throw breakStream(ex); }
+		};
+		/** see {@link #readBoolean}
+		*/
+		@Override public final short readShort()throws IOException
+		{
+				startElementaryPrimitive(TYPE_SHORT);
+				try{
+					short v = readShortImpl();
+					endElementaryPrimitive(TYPE_SHORT);
+					return v;
+				}catch(EBrokenStream ex){ throw breakStream(ex); }
+		};
+		/** see {@link #readBoolean}
+		*/
+		@Override public final int readInt()throws IOException
+		{
+				startElementaryPrimitive(TYPE_INT);
+				try{
+					int v = readIntImpl();
+					endElementaryPrimitive(TYPE_INT);
+					return v;
+				}catch(EBrokenStream ex){ throw breakStream(ex); }
+		};
+		/** see {@link #readBoolean}
+		*/
+		@Override public final long readLong()throws IOException
+		{
+				startElementaryPrimitive(TYPE_LONG);
+				try{
+					long v = readLongImpl();
+					endElementaryPrimitive(TYPE_LONG);
+					return v;
+				}catch(EBrokenStream ex){ throw breakStream(ex); }
+		};
+		/** see {@link #readBoolean}
+		*/
+		@Override public final float readFloat()throws IOException
+		{
+				startElementaryPrimitive(TYPE_FLOAT);
+				try{
+					float v = readFloatImpl();
+					endElementaryPrimitive(TYPE_FLOAT);
+					return v;
+				}catch(EBrokenStream ex){ throw breakStream(ex); }
+		};
+		/** see {@link #readBoolean}
+		*/
+		@Override public final double readDouble()throws IOException
+		{
+				startElementaryPrimitive(TYPE_DOUBLE);
+				try{
+					double v = readDoubleImpl();
+					endElementaryPrimitive(TYPE_DOUBLE);
+					return v;
+				}catch(EBrokenStream ex){ throw breakStream(ex); }
+		};
+		
+		/* ---------------------------------------------------------------
+		
+				blocks
+		
+		---------------------------------------------------------------*/
 		/** Overriden to test initial conditions, check types (if present), state and arguments 
 		and call {@link #readBooleanBlockImpl}
 		*/
@@ -1029,6 +1212,314 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 			{
 				try{
 					return readBooleanBlockImpl(buffer,offset,length);
+				}catch(EBrokenStream ex){ throw breakStream(ex); } 
+			}else
+				return 0;
+		}
+		/** See {@link #readBooleanBlock}
+		*/
+		@Override public final int readByteBlock(byte [] buffer, int offset, int length)throws IOException
+		{
+			//check boundary conditions
+			validateNotBroken();
+			validateNotClosed();
+			//check state and type
+			switch(state)
+			{
+				case STATE_PRIMITIVE:
+						//We can initiate block operation?
+						startPrimitiveBlockType(TYPE_BYTE_BLOCK);
+						state=STATE_BYTE_BLOCK;
+						break;
+				case STATE_BYTE_BLOCK:
+						break;
+				default: throw new IllegalStateException("Block operation of different type in progress");
+			};
+			assert(buffer!=null):"buffer==null";
+			assert(offset>=0):"offset="+offset+" is negative";
+			assert(length>=0):"length="+length+" is negative";
+			assert(offset+length<=buffer.length):"buffer.length="+buffer.length+" but offset="+offset+" length="+length+" do point outside buffer";
+		
+			//pass to low level routine, but only if there is no signal blocking
+			//it. Notice, without this check we might initialize operation with zero size
+			//by reading from low stream the END signal and thous request reading data after this signal.
+			if (continuePrimitiveBlockType(TYPE_BYTE_BLOCK))
+			{
+				try{
+					return readByteBlockImpl(buffer,offset,length);
+				}catch(EBrokenStream ex){ throw breakStream(ex); } 
+			}else
+				return 0;
+		}
+		/** See {@link #readBooleanBlock}
+		*/
+		@Override public final int readByteBlock()throws IOException
+		{
+			//check boundary conditions
+			validateNotBroken();
+			validateNotClosed();
+			//check state and type
+			switch(state)
+			{
+				case STATE_PRIMITIVE:
+						//We can initiate block operation?
+						startPrimitiveBlockType(TYPE_BYTE_BLOCK);
+						state=STATE_BYTE_BLOCK;
+						break;
+				case STATE_BYTE_BLOCK:
+						break;
+				default: throw new IllegalStateException("Block operation of different type in progress");
+			};
+			//pass to low level routine, but only if there is no signal blocking
+			//it. Notice, without this check we might initialize operation with zero size
+			//by reading from low stream the END signal and thous request reading data after this signal.
+			if (continuePrimitiveBlockType(TYPE_BYTE_BLOCK))
+			{
+				try{
+					return readByteBlockImpl();
+				}catch(EBrokenStream ex){ throw breakStream(ex); } 
+			}else
+				return 0;
+		}
+		/** See {@link #readBooleanBlock}
+		*/
+		@Override public final int readCharBlock(char [] buffer, int offset, int length)throws IOException
+		{
+			//check boundary conditions
+			validateNotBroken();
+			validateNotClosed();
+			//check state and type
+			switch(state)
+			{
+				case STATE_PRIMITIVE:
+						//We can initiate block operation?
+						startPrimitiveBlockType(TYPE_CHAR_BLOCK);
+						state=STATE_CHAR_BLOCK;
+						break;
+				case STATE_CHAR_BLOCK:
+						break;
+				default: throw new IllegalStateException("Block operation of different type in progress");
+			};
+			assert(buffer!=null):"buffer==null";
+			assert(offset>=0):"offset="+offset+" is negative";
+			assert(length>=0):"length="+length+" is negative";
+			assert(offset+length<=buffer.length):"buffer.length="+buffer.length+" but offset="+offset+" length="+length+" do point outside buffer";
+		
+			//pass to low level routine, but only if there is no signal blocking
+			//it. Notice, without this check we might initialize operation with zero size
+			//by reading from low stream the END signal and thous request reading data after this signal.
+			if (continuePrimitiveBlockType(TYPE_CHAR_BLOCK))
+			{
+				try{
+					return readCharBlockImpl(buffer,offset,length);
+				}catch(EBrokenStream ex){ throw breakStream(ex); } 
+			}else
+				return 0;
+		}
+		/** See {@link #readBooleanBlock}
+		*/
+		@Override public final int readCharBlock(Appendable buffer, int length)throws IOException
+		{
+			//check boundary conditions
+			validateNotBroken();
+			validateNotClosed();
+			//check state and type
+			switch(state)
+			{
+				case STATE_PRIMITIVE:
+						//We can initiate block operation?
+						startPrimitiveBlockType(TYPE_CHAR_BLOCK);
+						state=STATE_CHAR_BLOCK;
+						break;
+				case STATE_CHAR_BLOCK:
+						break;
+				default: throw new IllegalStateException("Block operation of different type in progress");
+			};
+			assert(buffer!=null):"buffer==null";
+			assert(length>=0):"length="+length+" is negative";
+		
+			//pass to low level routine, but only if there is no signal blocking
+			//it. Notice, without this check we might initialize operation with zero size
+			//by reading from low stream the END signal and thous request reading data after this signal.
+			if (continuePrimitiveBlockType(TYPE_CHAR_BLOCK))
+			{
+				try{
+					return readCharBlockImpl(buffer,length);
+				}catch(EBrokenStream ex){ throw breakStream(ex); } 
+			}else
+				return 0;
+		}
+		/** See {@link #readBooleanBlock}
+		*/
+		@Override public final int readShortBlock(short [] buffer, int offset, int length)throws IOException
+		{
+			//check boundary conditions
+			validateNotBroken();
+			validateNotClosed();
+			//check state and type
+			switch(state)
+			{
+				case STATE_PRIMITIVE:
+						//We can initiate block operation?
+						startPrimitiveBlockType(TYPE_SHORT_BLOCK);
+						state=STATE_SHORT_BLOCK;
+						break;
+				case STATE_SHORT_BLOCK:
+						break;
+				default: throw new IllegalStateException("Block operation of different type in progress");
+			};
+			assert(buffer!=null):"buffer==null";
+			assert(offset>=0):"offset="+offset+" is negative";
+			assert(length>=0):"length="+length+" is negative";
+			assert(offset+length<=buffer.length):"buffer.length="+buffer.length+" but offset="+offset+" length="+length+" do point outside buffer";
+		
+			//pass to low level routine, but only if there is no signal blocking
+			//it. Notice, without this check we might initialize operation with zero size
+			//by reading from low stream the END signal and thous request reading data after this signal.
+			if (continuePrimitiveBlockType(TYPE_SHORT_BLOCK))
+			{
+				try{
+					return readShortBlockImpl(buffer,offset,length);
+				}catch(EBrokenStream ex){ throw breakStream(ex); } 
+			}else
+				return 0;
+		}
+		/** See {@link #readBooleanBlock}
+		*/
+		@Override public final int readIntBlock(int [] buffer, int offset, int length)throws IOException
+		{
+			//check boundary conditions
+			validateNotBroken();
+			validateNotClosed();
+			//check state and type
+			switch(state)
+			{
+				case STATE_PRIMITIVE:
+						//We can initiate block operation?
+						startPrimitiveBlockType(TYPE_INT_BLOCK);
+						state=STATE_INT_BLOCK;
+						break;
+				case STATE_INT_BLOCK:
+						break;
+				default: throw new IllegalStateException("Block operation of different type in progress");
+			};
+			assert(buffer!=null):"buffer==null";
+			assert(offset>=0):"offset="+offset+" is negative";
+			assert(length>=0):"length="+length+" is negative";
+			assert(offset+length<=buffer.length):"buffer.length="+buffer.length+" but offset="+offset+" length="+length+" do point outside buffer";
+		
+			//pass to low level routine, but only if there is no signal blocking
+			//it. Notice, without this check we might initialize operation with zero size
+			//by reading from low stream the END signal and thous request reading data after this signal.
+			if (continuePrimitiveBlockType(TYPE_INT_BLOCK))
+			{
+				try{
+					return readIntBlockImpl(buffer,offset,length);
+				}catch(EBrokenStream ex){ throw breakStream(ex); } 
+			}else
+				return 0;
+		}
+		/** See {@link #readBooleanBlock}
+		*/
+		@Override public final int readLongBlock(long [] buffer, int offset, int length)throws IOException
+		{
+			//check boundary conditions
+			validateNotBroken();
+			validateNotClosed();
+			//check state and type
+			switch(state)
+			{
+				case STATE_PRIMITIVE:
+						//We can initiate block operation?
+						startPrimitiveBlockType(TYPE_LONG_BLOCK);
+						state=STATE_LONG_BLOCK;
+						break;
+				case STATE_LONG_BLOCK:
+						break;
+				default: throw new IllegalStateException("Block operation of different type in progress");
+			};
+			assert(buffer!=null):"buffer==null";
+			assert(offset>=0):"offset="+offset+" is negative";
+			assert(length>=0):"length="+length+" is negative";
+			assert(offset+length<=buffer.length):"buffer.length="+buffer.length+" but offset="+offset+" length="+length+" do point outside buffer";
+		
+			//pass to low level routine, but only if there is no signal blocking
+			//it. Notice, without this check we might initialize operation with zero size
+			//by reading from low stream the END signal and thous request reading data after this signal.
+			if (continuePrimitiveBlockType(TYPE_LONG_BLOCK))
+			{
+				try{
+					return readLongBlockImpl(buffer,offset,length);
+				}catch(EBrokenStream ex){ throw breakStream(ex); } 
+			}else
+				return 0;
+		}
+		/** See {@link #readBooleanBlock}
+		*/
+		@Override public final int readFloatBlock(float [] buffer, int offset, int length)throws IOException
+		{
+			//check boundary conditions
+			validateNotBroken();
+			validateNotClosed();
+			//check state and type
+			switch(state)
+			{
+				case STATE_PRIMITIVE:
+						//We can initiate block operation?
+						startPrimitiveBlockType(TYPE_FLOAT_BLOCK);
+						state=STATE_FLOAT_BLOCK;
+						break;
+				case STATE_FLOAT_BLOCK:
+						break;
+				default: throw new IllegalStateException("Block operation of different type in progress");
+			};
+			assert(buffer!=null):"buffer==null";
+			assert(offset>=0):"offset="+offset+" is negative";
+			assert(length>=0):"length="+length+" is negative";
+			assert(offset+length<=buffer.length):"buffer.length="+buffer.length+" but offset="+offset+" length="+length+" do point outside buffer";
+		
+			//pass to low level routine, but only if there is no signal blocking
+			//it. Notice, without this check we might initialize operation with zero size
+			//by reading from low stream the END signal and thous request reading data after this signal.
+			if (continuePrimitiveBlockType(TYPE_FLOAT_BLOCK))
+			{
+				try{
+					return readFloatBlockImpl(buffer,offset,length);
+				}catch(EBrokenStream ex){ throw breakStream(ex); } 
+			}else
+				return 0;
+		}
+		/** See {@link #readBooleanBlock}
+		*/
+		@Override public final int readDoubleBlock(double [] buffer, int offset, int length)throws IOException
+		{
+			//check boundary conditions
+			validateNotBroken();
+			validateNotClosed();
+			//check state and type
+			switch(state)
+			{
+				case STATE_PRIMITIVE:
+						//We can initiate block operation?
+						startPrimitiveBlockType(TYPE_DOUBLE_BLOCK);
+						state=STATE_DOUBLE_BLOCK;
+						break;
+				case STATE_DOUBLE_BLOCK:
+						break;
+				default: throw new IllegalStateException("Block operation of different type in progress");
+			};
+			assert(buffer!=null):"buffer==null";
+			assert(offset>=0):"offset="+offset+" is negative";
+			assert(length>=0):"length="+length+" is negative";
+			assert(offset+length<=buffer.length):"buffer.length="+buffer.length+" but offset="+offset+" length="+length+" do point outside buffer";
+		
+			//pass to low level routine, but only if there is no signal blocking
+			//it. Notice, without this check we might initialize operation with zero size
+			//by reading from low stream the END signal and thous request reading data after this signal.
+			if (continuePrimitiveBlockType(TYPE_DOUBLE_BLOCK))
+			{
+				try{
+					return readDoubleBlockImpl(buffer,offset,length);
 				}catch(EBrokenStream ex){ throw breakStream(ex); } 
 			}else
 				return 0;
