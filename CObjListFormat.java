@@ -16,7 +16,9 @@ import java.util.LinkedList;
 		array for each block write operations. No write collation happens on writing side
 		and it is up to reading side to collate operations;</li>
 		<li>String for event name data written with {@link ASignalWriteFormat#writeSignalNameData};</li>
-		<li>{@link INDICATOR} instances for indicators</li>
+		<li>{@link INDICATOR} instances for indicators taken from <code>static final INDICATOR xx_INDICATOR</code>
+		fields of this class</li>
+		<li>{@link REGISTER_USE_INDICATOR} or {@link REGISTER_INDICATOR} instances;</li>
 	</ul>
 */
 public final class CObjListFormat extends LinkedList<Object>

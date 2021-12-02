@@ -387,8 +387,10 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 		---------------------------------------------------------*/
 		/** Should read characters representing name of a signal after a direct or
 		register name indicators.
-		@param a where to append characters
-		@param limit up to how many characters append.
+		@param a where to append characters. This appendable is such, that 
+				if more characters than limit is added to it then it throws
+				{@link EFormatBoundaryExceeded}.		
+		@param limit up to how many characters append. 
 		@throws IOException if failed at low level
 		@throws EFormatBoundaryExceeded if found in stream was longer than <code>limit</code>
 		@throws EBrokenStream if it is broken beyond repair.

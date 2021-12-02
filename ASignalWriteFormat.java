@@ -697,39 +697,46 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 					writeBeginSignalIndicator();
 			};
 			
-			//now proceed with names registration
-			//even if user requested to not attempt to register name.
-			//it may however be already registered, so let us check.
-			
-			//attempt to use registered name
-			int registered_index = findInIndex(signal);
-			if (registered_index==-1)
+			//now proceed with names registration, if registry is enabled.
+			if (names_registry!=null)
 			{
-				//Name is not registered, try to register it.
-				if (do_not_optimize)
+				//even if user requested to not attempt to register name.
+				//it may however be already registered, so let us check.
+				
+				//attempt to use registered name
+				int registered_index = findInIndex(signal);
+				if (registered_index==-1)
 				{
-					//Now always write direct.
-					writeDirectName();
-					writeSignalNameData(signal);
-				}else
-				{
-					registered_index = putToIndex(signal);
-					if (registered_index!=-1)
+					//Name is not registered, try to register it.
+					if (do_not_optimize)
 					{
-						//name is registered.
-						writeRegisterName(registered_index);
+						//Now always write direct.
+						writeDirectName();
 						writeSignalNameData(signal);
 					}else
 					{
-						//we failed to register, need to store it directly
-						writeDirectName();
-						writeSignalNameData(signal);
+						registered_index = putToIndex(signal);
+						if (registered_index!=-1)
+						{
+							//name is registered.
+							writeRegisterName(registered_index);
+							writeSignalNameData(signal);
+						}else
+						{
+							//we failed to register, need to store it directly
+							writeDirectName();
+							writeSignalNameData(signal);
+						};
 					};
+				}else
+				{
+					//we have the name registered
+					writeRegisterUse(registered_index);
 				};
 			}else
 			{
-				//we have the name registered
-				writeRegisterUse(registered_index);
+					writeDirectName();
+					writeSignalNameData(signal);
 			};
 		};
 		/** Implemented in such a way, that actuall writing of
