@@ -155,20 +155,6 @@ public interface ISignalWriteFormat extends Closeable, Flushable
 		/* -----------------------------------------------------------
 			Primary
 		-----------------------------------------------------------*/
-		/** Writes a part of a byte-block consisting of a single byte.
-		<p>
-		This operation is usefull when implementing other raw block operations in per-byte basis.
-		<p>
-		An equivalent of 
-		<pre>
-		writeByteBlock(new byte[]{data},0,1)
-		</pre>
-		@param data data to write
-		@throws IllegalStateException if there is block operation of another type in progress
-								or there is no active event.
-		@throws IOException if low level i/o fails.
-		*/
-		public void writeByteBlock(byte data)throws IOException;
 		/** Writes a part of a bit-block.
 		<p>
 		Same rules applies as for byte-block.
@@ -181,6 +167,17 @@ public interface ISignalWriteFormat extends Closeable, Flushable
 		@see #writeByteBlock
 		*/
 		public void writeBooleanBlock(boolean [] buffer, int offset, int length)throws IOException;
+		
+		/** Falls back to {@link #writeBooleanBlock(boolean[],int,int)}
+		@param buffer  data write, non null
+		@throws AssertionError if s is null
+		@throws IOException if called method thrown.
+		*/
+		public default void writeBooleanBlock(boolean [] buffer)throws IOException
+		{
+				assert(buffer!=null);
+				writeBooleanBlock(buffer,0,buffer.length);
+		}
 		
 		/** Writes a part of a byte-block.
 		<p>
@@ -203,6 +200,34 @@ public interface ISignalWriteFormat extends Closeable, Flushable
 		@throws IOException if low level i/o fails.
 		*/
 		public void writeByteBlock(byte [] buffer, int offset, int length)throws IOException;
+		
+		/** Falls back to {@link #writeByteBlock(byte[],int,int)}
+		@param buffer data write, non null
+		@throws AssertionError if s is null
+		@throws IOException if called method thrown.
+		*/
+		public default void writeByteBlock(byte [] buffer)throws IOException
+		{
+				assert(buffer!=null);
+				writeByteBlock(buffer,0,buffer.length);
+		}
+		
+		/** Writes a part of a byte-block consisting of a single byte.
+		<p>
+		This operation is usefull when implementing other raw block operations in per-byte basis.
+		<p>
+		An equivalent of 
+		<pre>
+		writeByteBlock(new byte[]{data},0,1)
+		</pre>
+		@param data data to write
+		@throws IllegalStateException if there is block operation of another type in progress
+								or there is no active event.
+		@throws IOException if low level i/o fails.
+		*/
+		public void writeByteBlock(byte data)throws IOException;
+		
+		
 		/** Writes a part of a character-block
 		<p>
 		Same rules applies as for byte-block.
@@ -219,6 +244,17 @@ public interface ISignalWriteFormat extends Closeable, Flushable
 		*/
 		public void writeCharBlock(CharSequence characters, int offset, int length)throws IOException;
 		
+		/** Falls back to {@link #writeCharBlock(CharSequence,int,int)}
+		@param s text to write, non null
+		@throws AssertionError if s is null
+		@throws IOException if {@link #writeCharBlock(CharSequence,int,int)} thrown.
+		*/
+		public default void writeCharBlock(CharSequence s)throws IOException
+		{
+				assert(s!=null);
+				writeCharBlock(s,0,s.length());
+		}
+		
 		/* -----------------------------------------------------------
 			Secondary
 		-----------------------------------------------------------*/
@@ -229,6 +265,19 @@ public interface ISignalWriteFormat extends Closeable, Flushable
 		@throws IOException if low level i/o fails.
 		*/
 		public void writeCharBlock(char [] buffer, int offset, int length)throws IOException;
+		
+		/** Falls back to {@link #writeCharBlock(char[],int,int)}
+		@param buffer data write, non null
+		@throws AssertionError if s is null
+		@throws IOException if called method thrown.
+		*/
+		public default void writeCharBlock(char [] buffer)throws IOException
+		{
+				assert(buffer!=null);
+				writeCharBlock(buffer,0,buffer.length);
+		}
+		
+		
 		/** As {@link #writeByteBlock}
 		@param buffer source of data, non-null.
 		@param offset first position to write in <code>buffer</code>
@@ -236,6 +285,18 @@ public interface ISignalWriteFormat extends Closeable, Flushable
 		@throws IOException if low level i/o fails.
 		*/
 		public void writeShortBlock(short [] buffer, int offset, int length)throws IOException;
+		
+		/** Falls back to {@link #writeShortBlock(short[],int,int)}
+		@param buffer data write, non null
+		@throws AssertionError if s is null
+		@throws IOException if called method thrown.
+		*/
+		public default void writeShortBlock(short [] buffer)throws IOException
+		{
+				assert(buffer!=null);
+				writeShortBlock(buffer,0,buffer.length);
+		}
+		
 		/** As {@link #writeByteBlock}
 		@param buffer source of data, non-null.
 		@param offset first position to write in <code>buffer</code>
@@ -243,6 +304,19 @@ public interface ISignalWriteFormat extends Closeable, Flushable
 		@throws IOException if low level i/o fails.
 		*/
 		public void writeIntBlock(int [] buffer, int offset, int length)throws IOException;
+		
+		/** Falls back to {@link #writeIntBlock(int[],int,int)}
+		@param buffer  data write, non null
+		@throws AssertionError if s is null
+		@throws IOException if called method thrown.
+		*/
+		public default void writeIntBlock(int [] buffer)throws IOException
+		{
+				assert(buffer!=null);
+				writeIntBlock(buffer,0,buffer.length);
+		}
+		
+		
 		/** As {@link #writeByteBlock}
 		@param buffer source of data, non-null.
 		@param offset first position to write in <code>buffer</code>
@@ -250,6 +324,19 @@ public interface ISignalWriteFormat extends Closeable, Flushable
 		@throws IOException if low level i/o fails.
 		*/
 		public void writeLongBlock(long [] buffer, int offset, int length)throws IOException;
+		
+		/** Falls back to {@link #writeLongBlock(long[],int,int)}
+		@param buffer  data write, non null
+		@throws AssertionError if s is null
+		@throws IOException if called method thrown.
+		*/
+		public default void writeLongBlock(long [] buffer)throws IOException
+		{
+				assert(buffer!=null);
+				writeLongBlock(buffer,0,buffer.length);
+		}
+		
+		
 		/** As {@link #writeByteBlock}
 		@param buffer source of data, non-null.
 		@param offset first position to write in <code>buffer</code>
@@ -257,6 +344,20 @@ public interface ISignalWriteFormat extends Closeable, Flushable
 		@throws IOException if low level i/o fails.
 		*/
 		public void writeFloatBlock(float [] buffer, int offset, int length)throws IOException;
+		
+		/** Falls back to {@link #writeFloatBlock(float[],int,int)}
+		@param buffer  data write, non null
+		@throws AssertionError if s is null
+		@throws IOException if called method thrown.
+		*/
+		public default void writeFloatBlock(float [] buffer)throws IOException
+		{
+				assert(buffer!=null);
+				writeFloatBlock(buffer,0,buffer.length);
+		}
+		
+		
+		
 		/** As {@link #writeByteBlock}
 		@param buffer source of data, non-null.
 		@param offset first position to write in <code>buffer</code>
@@ -264,6 +365,18 @@ public interface ISignalWriteFormat extends Closeable, Flushable
 		@throws IOException if low level i/o fails.
 		*/
 		public void writeDoubleBlock(double [] buffer, int offset, int length)throws IOException;
+		
+		/** Falls back to {@link #writeDoubleBlock(double[],int,int)}
+		@param buffer  data write, non null
+		@throws AssertionError if s is null
+		@throws IOException if called method thrown.
+		*/
+		public default void writeDoubleBlock(double [] buffer)throws IOException
+		{
+				assert(buffer!=null);
+				writeDoubleBlock(buffer,0,buffer.length);
+		}
+		
 		
 		/*=============================================================
 		
