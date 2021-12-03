@@ -48,6 +48,7 @@ public class TestASignalWriteFormat_Opt extends sztejkat.utils.test.ATest
 										 m //CObjListFormat media
 										 );
 			f.begin("SPAMERKA");
+			f.writeByteBlock(new byte[0]);
 			f.end();
 			f.begin("LYET");
 			f.end();
@@ -58,6 +59,7 @@ public class TestASignalWriteFormat_Opt extends sztejkat.utils.test.ATest
 			org.junit.Assert.assertTrue(m.pollFirst()==CObjListFormat.BEGIN_INDICATOR);
 			org.junit.Assert.assertTrue(m.pollFirst()==CObjListFormat.DIRECT_INDICATOR);
 			org.junit.Assert.assertTrue("SPAMERKA".equals(m.pollFirst()));
+			org.junit.Assert.assertTrue(m.pollFirst() instanceof byte[]);
 			org.junit.Assert.assertTrue(m.pollFirst()==CObjListFormat.END_BEGIN_INDICATOR);
 			org.junit.Assert.assertTrue(m.pollFirst()==CObjListFormat.DIRECT_INDICATOR);
 			org.junit.Assert.assertTrue("LYET".equals(m.pollFirst()));
@@ -81,6 +83,7 @@ public class TestASignalWriteFormat_Opt extends sztejkat.utils.test.ATest
 										 m //CObjListFormat media
 										 );
 			f.begin("SPAMERKA");
+			f.writeByteBlock(new byte[0]);
 			f.end();
 			f.writeByte((byte)0);
 			f.begin("LYET");
@@ -92,6 +95,7 @@ public class TestASignalWriteFormat_Opt extends sztejkat.utils.test.ATest
 			org.junit.Assert.assertTrue(m.pollFirst()==CObjListFormat.BEGIN_INDICATOR);
 			org.junit.Assert.assertTrue(m.pollFirst()==CObjListFormat.DIRECT_INDICATOR);
 			org.junit.Assert.assertTrue("SPAMERKA".equals(m.pollFirst()));
+			org.junit.Assert.assertTrue(m.pollFirst() instanceof byte[]);
 			org.junit.Assert.assertTrue(m.pollFirst()==CObjListFormat.END_INDICATOR);
 			org.junit.Assert.assertTrue(m.pollFirst() instanceof Byte);
 			org.junit.Assert.assertTrue(m.pollFirst()==CObjListFormat.BEGIN_INDICATOR);
