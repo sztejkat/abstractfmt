@@ -575,11 +575,12 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			validateNotClosed();
 			flushPendingEnd();//this might be pending.
 			
-			assert(STATE_DOUBLE_BLOCK>STATE_BYTE_BLOCK);//just to make sure that const assumptions are ok.
-			assert(STATE_BYTE_BLOCK>STATE_END);
-			assert(STATE_BYTE_BLOCK>STATE_BEGIN);
-			assert(STATE_BYTE_BLOCK>STATE_PRIMITIVE);
-			if (state>=STATE_BYTE_BLOCK) 
+			assert(STATE_DOUBLE_BLOCK>STATE_BOOLEAN_BLOCK);//just to make sure that const assumptions are ok.
+			assert(STATE_BOOLEAN_BLOCK>STATE_END);
+			assert(STATE_BOOLEAN_BLOCK>STATE_BEGIN);
+			assert(STATE_BOOLEAN_BLOCK>STATE_PRIMITIVE);
+			
+			if (state>=STATE_BOOLEAN_BLOCK) 
 				throw new IllegalStateException("Cannot do elementary primitive write when block write is in progress.");
 			state = STATE_PRIMITIVE;
 		};
@@ -749,10 +750,16 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		@Override public void end()throws IOException
 		{
 			validateNotClosed();
+			//Flush any pending end signal operation.
+			//This operation should be done prior to depth
+			//test, because in end();end() sequence first end
+			//is valid, but pending. It should reach stream, even
+			//if we barf later.
+			flushPendingEnd();
+			
 			if (current_depth==0) throw new IllegalStateException("Can't do end(), no event is active");
 			current_depth--;
-			//Flush any pending end signal operation.
-			flushPendingEnd();
+		
 			//We need to close pending blocks
 			closePendingBlocks();			
 			//and we need to put this operation on hold so end-begin can be optimized

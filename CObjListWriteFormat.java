@@ -47,7 +47,7 @@ public class CObjListWriteFormat extends ASignalWriteFormat
 		};		
 		/* *************************************************************
 		
-				Services required from subclasses.
+				Services required by superclass.
 		
 		
 		***************************************************************/
