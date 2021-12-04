@@ -588,6 +588,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 				throw new IllegalStateException("Cannot do elementary primitive write when block write is in progress.");
 			state = STATE_PRIMITIVE;
 		};
+		
 		/** If state is {@link #STATE_END_PENDING}
 		writes an end indicator and togles state to {@link #STATE_END}.
 		Used to optimize end-being sequence 
@@ -595,7 +596,6 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		*/
 		private void flushPendingEnd()throws IOException
 		{
-			validateNotClosed();
 			if (state==STATE_END_PENDING)
 			{
 				state=STATE_END;
@@ -754,18 +754,20 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		@Override public void end()throws IOException
 		{
 			validateNotClosed();
+			
 			//Flush any pending end signal operation.
 			//This operation should be done prior to depth
 			//test, because in end();end() sequence first end
 			//is valid, but pending. It should reach stream, even
 			//if we barf later.
-			flushPendingEnd();
+			flushPendingEnd();	
+			
+			//We need to close pending blocks.
+			closePendingBlocks();
 			
 			if (current_depth==0) throw new IllegalStateException("Can't do end(), no event is active");
-			current_depth--;
-		
-			//We need to close pending blocks
-			closePendingBlocks();			
+			current_depth--;		
+				
 			//and we need to put this operation on hold so end-begin can be optimized
 			state = STATE_END_PENDING;
 		};
@@ -859,7 +861,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			startElementaryPrimitiveWrite();
 			writeDoubleType();
 			writeDoubleImpl(v);
-			writeByteTypeEnd();
+			writeDoubleTypeEnd();
 		};
 		/*=============================================================
 	
@@ -875,7 +877,8 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		*/
 		@SuppressWarnings("fallthrough")
 		@Override public final void writeBooleanBlock(boolean [] buffer, int offset, int length)throws IOException
-		{			
+		{		
+			validateNotClosed();
 			flushPendingEnd();
 			switch(state)
 			{
@@ -903,6 +906,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		@SuppressWarnings("fallthrough")
 		@Override public final void writeByteBlock(byte [] buffer, int offset, int length)throws IOException
 		{
+			validateNotClosed();
 			flushPendingEnd();
 			switch(state)
 			{
@@ -911,7 +915,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 						if (current_depth==0)
 								throw new IllegalStateException("Can't start block write if there is no event active");
 						//fallthrough
-				case STATE_BEGIN:				
+				case STATE_BEGIN:						
 						state = STATE_BYTE_BLOCK;
 						writeByteBlockType();
 						break;
@@ -931,6 +935,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		@SuppressWarnings("fallthrough")
 		@Override public final void writeByteBlock(byte data)throws IOException
 		{
+			validateNotClosed();
 			flushPendingEnd();
 			switch(state)
 			{
@@ -955,6 +960,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		@SuppressWarnings("fallthrough")
 		@Override public final void writeCharBlock(char [] buffer, int offset, int length)throws IOException
 		{
+			validateNotClosed();
 			flushPendingEnd();
 			switch(state)
 			{
@@ -983,6 +989,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		@SuppressWarnings("fallthrough")
 		@Override public final void writeCharBlock(CharSequence characters, int offset, int length)throws IOException
 		{
+			validateNotClosed();
 			flushPendingEnd();
 			switch(state)
 			{
@@ -1011,6 +1018,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		@SuppressWarnings("fallthrough")
 		@Override public final void writeShortBlock(short [] buffer, int offset, int length)throws IOException
 		{
+			validateNotClosed();
 			flushPendingEnd();
 			switch(state)
 			{
@@ -1039,6 +1047,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		@SuppressWarnings("fallthrough")
 		@Override public final void writeIntBlock(int [] buffer, int offset, int length)throws IOException
 		{
+			validateNotClosed();
 			flushPendingEnd();
 			switch(state)
 			{
@@ -1067,6 +1076,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		@SuppressWarnings("fallthrough")
 		@Override public final void writeLongBlock(long [] buffer, int offset, int length)throws IOException
 		{
+			validateNotClosed();
 			flushPendingEnd();
 			switch(state)
 			{
@@ -1095,6 +1105,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		@SuppressWarnings("fallthrough")
 		@Override public final void writeFloatBlock(float [] buffer, int offset, int length)throws IOException
 		{
+			validateNotClosed();
 			flushPendingEnd();
 			switch(state)
 			{
@@ -1123,6 +1134,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		@SuppressWarnings("fallthrough")
 		@Override public final void writeDoubleBlock(double [] buffer, int offset, int length)throws IOException
 		{
+			validateNotClosed();
 			flushPendingEnd();
 			switch(state)
 			{
@@ -1184,7 +1196,11 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			 end indicator
 		</pre>
 		*/
-		@Override public void flush()throws IOException{ flushPendingEnd(); };
+		@Override public void flush()throws IOException
+		{
+			validateNotClosed();
+			flushPendingEnd(); 
+		};
 		
 		/** Overriden to toggle state to closed.
 		Calls {@link closeImpl}

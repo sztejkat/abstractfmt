@@ -10,7 +10,7 @@ import java.util.Arrays;
 		<p>
 		Absolutely not thread safe.
 */
-public class CObjListReadFormat extends ASignalReadFormat
+public abstract class CObjListReadFormat extends ASignalReadFormat
 {
 					/** A media to which this class writes. */
 					public final CObjListFormat media;

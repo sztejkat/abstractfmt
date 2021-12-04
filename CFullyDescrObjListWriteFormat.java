@@ -8,7 +8,7 @@ import java.util.Arrays;
 		This class DOES write the optimized end-begin indicator
 		and DOES write start-type and end-type indicators
 */
-public class CFullyDescrObjListWriteFormat extends COptObjListWriteFormat
+public class CFullyDescrObjListWriteFormat extends CDescrObjListWriteFormat
 {
 		/* *************************************************************
 		
