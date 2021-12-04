@@ -1,7 +1,6 @@
 package sztejkat.abstractfmt.xml;
 import sztejkat.abstractfmt.*;
 import java.io.IOException;
-import java.io.Writer;
 
 /**
 	A writer which is writing data to a stream using XML

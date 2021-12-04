@@ -61,7 +61,8 @@
 		%xxxx;
 		%%;
 	</pre>
-	where <code>x</code> is a hex code of character (upper case) and <code>%%;</code> represents
+	where <code>x</code> is a hex code of character (upper case, most significant digit on left) 
+	and <code>%%;</code> represents
 	escaped <code>%</code> character;
 	
 	<h2>Escaped content inside char []</h2>
@@ -113,11 +114,11 @@
 		<li>does not equal to any element names specified in this format;</li>
 	</ul>
 	then begin signal is written as:
-	<pre>
+	<pre id="short_signal_form">
 		&lt;<i>signal_name</i>&gt;
 	</pre>
 	otherwise it is written as
-	<pre>
+	<pre id="long_signal_form">
 		&lt;evt name="<i>encoded_signal_name</i>"&gt;
 	</pre>
 	
@@ -134,7 +135,7 @@
 	
 	<h1>Elementary primitives</h1>
 	If primitive is to be followed by next primitive without any
-	XML element, then <code>;</code> (semicolon) is used
+	XML element, then <code id="primitive_separator">;</code> (semicolon) is used
 	as an inter-primitive separator.
 	
 	<h2>byte, short, int, long, float, double</h2>
@@ -151,7 +152,7 @@
 	so it can be used to separate characters one of the another as if they
 	were numbers.
 	
-	<h2>Described format</h2>
+	<h2 id="primitive_elements">Described format</h2>
 	Following elements are used to enclose each elementary primitive in
 	described format:
 	<ul>
@@ -176,7 +177,7 @@
 	<h2>byte []</h2>
 	Since byte blocks will be most frequently used to store raw data they do not
 	have to be human readable. Instead they are represented as a sequence
-	of hex digits pairs, most significant first, without any separator.
+	of hex digits pairs, most significant on left, upper case, without any separator.
 	
 	<h2>char []</h2>
 	Character blocks are represented as encoded texts.
