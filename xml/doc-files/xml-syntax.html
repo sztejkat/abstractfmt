@@ -1,0 +1,219 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>sztejkat.abstractfmt.xml - XML format definition</title>
+      
+  <meta http-equiv="content-type"
+ content="text/html; charset=UTF-8">
+</head>
+<body>
+	This document carries a definition of XML format used by 
+	classes in this package.
+	
+	<h1>Deviations from XML standard</h1>
+	
+	<h2>Bare XML format</h2>
+	The bare XML format implementation in this package
+	does not contain neither XML <i>prolog</i> nor <i>root</i> XML element which is
+	enclosing every data within. 
+	<p>
+	Instead it is assumed to be a plain sequence of XML elements
+	designed in such a way, that in any moment next element may
+	be appended at the end of stream.
+	<p>
+	Bare XML format is <u>not well formed</u>.
+	
+	
+	<h2>Full XML format</h2>
+	The full XML format carries following prolog:
+	<pre>
+		&lt;?xml version="1.0" encoding="xxxx" ?&gt; &lt;!-- <i>writer class name</i> --&lt; 
+		&lt;root&gt;
+		....
+		&lt;/root&gt;
+	</pre>
+	where <i>xxx</i> is a name of an encoding used. 
+	and <i>writer class name</i> is a name of a class which written the XML.
+	<p>
+	See <A href="example.xml">example.xml</a>.
+	
+	<h1 id="escaped">Escaped characters</h1>
+	<h2>Escape sequence</h2>
+	Note: Usually XML escaping deals with <code>&amp;#XX;</code> escaping and people
+	are silent about the fact, that this type of escaping is processed after XML entities
+	are detected, but before they are processed. This means that this kind of escaping
+	will be understood by XML parsers, transformed, and then characters which can't be
+	used in that location won't be allowed.
+	<p>
+	Since we need to support the whole UTF16 (java <code>char</code>) space we can't
+	use standard escapes.
+	<p>
+	Second the XML parsers do treat text in both elements and attributes as if
+	spaces and EOL were something that has no meaning and are basically replacing all
+	white space sequences with a single white space and all line ends with 
+	no line end.
+	<p>
+	We then define an escape sequence as:
+	<pre>
+		%x;
+		%xx;
+		%xxx;
+		%xxxx;
+		%%;
+	</pre>
+	where <code>x</code> is a hex code of character (upper case) and <code>%%;</code> represents
+	escaped <code>%</code> character;
+	
+	<h2>Escaped content inside char []</h2>
+	The body of of any <code>char []</code> block is written in such a way
+	that if character is:
+	<ol>
+			<li>Not within:
+			<pre>
+			[#x20-#xD7FF] | [#xE000-#xFFFD]
+			</pre>
+			or</li>
+			<li>Within:
+			<pre>
+				[#x7F-#x84], [#x86-#x9F], [#xFDD0-#xFDDF],
+				[#x1FFFE-#x1FFFF], [#x2FFFE-#x2FFFF], [#x3FFFE-#x3FFFF],
+				[#x4FFFE-#x4FFFF], [#x5FFFE-#x5FFFF], [#x6FFFE-#x6FFFF],
+				[#x7FFFE-#x7FFFF], [#x8FFFE-#x8FFFF], [#x9FFFE-#x9FFFF],
+				[#xAFFFE-#xAFFFF], [#xBFFFE-#xBFFFF], [#xCFFFE-#xCFFFF],
+				[#xDFFFE-#xDFFFF], [#xEFFFE-#xEFFFF], [#xFFFFE-#xFFFFF]
+			</pre>
+			</li>
+			or
+		</li>
+		<li>Is <code> &gt;&lt;&amp;</code></li>
+		<li>Is Java white-space (inclues eol, page feed, tabs, etc)</li>
+	</ol>
+	then it is escaped.
+	
+	<h2>Escaped signal name attribute</h2>
+	Additionally <code>"'</code> are escaped.
+	
+	
+	<h1>Begin signal</h1>
+	XML format does not support <i>names registry</i> provided by <code>ASignalWriteFormat</code>
+	and is always using directly stored signal names.
+	<p>
+	<i>Note: Altough XML definition says that valid element name
+	is <code>	Name	   ::=   	(Letter | '_' | ':') (NameChar)*</code>
+	the Firefox and others do intensively use : as a name-space separator and
+	do intensively complain if something is wrong with namespaces.
+	This terribly restricts the possible range of allowed XML names.
+	Due to this restriction I can't effectively handle encoded signal
+	names as direct xml entities</i>
+	<p>
+	If the begin signal name:
+	<ul>
+		<li>starts with java letter;</li>
+		<li>contains only letters, digits or <code>_-.</code>;</li>
+		<li>does not equal to any element names specified in this format;</li>
+	</ul>
+	then begin signal is written as:
+	<pre>
+		&lt;<i>signal_name</i>&gt;
+	</pre>
+	otherwise it is written as
+	<pre>
+		&lt;evt name="<i>encoded_signal_name</i>"&gt;
+	</pre>
+	
+	<h1>End signal</h1>
+	End signal is written, accordingly to signal name used in begin form as:
+	<pre>
+		&lt;/<i>signal_name</i>&gt;
+	</pre>
+	or
+	<pre>
+		&lt;/evt&gt;
+	</pre>
+	
+	
+	<h1>Elementary primitives</h1>
+	If primitive is to be followed by next primitive without any
+	XML element, then <code>;</code> (semicolon) is used
+	as an inter-primitive separator.
+	
+	<h2>byte, short, int, long, float, double</h2>
+	Since XML must be human readable all primitives are coded as decimal numbers
+	with optional negative sign and dot as decimal separator. Scientific format
+	can be used for floating points.
+	
+	<h2>boolean</h2>
+	Boolean is represented as <code>t</code> (true) or <code>f</code> (false).
+	This is case sensitive.
+	
+	<h2>Characters</h2>
+	Are escaped. The <code>;</code> is included in set of escaped characters
+	so it can be used to separate characters one of the another as if they
+	were numbers.
+	
+	<h2>Described format</h2>
+	Following elements are used to enclose each elementary primitive in
+	described format:
+	<ul>
+		<li><code>&lt;o&gt;</code> for boolean;</li>
+		<li><code>&lt;b&gt;</code> for bytes;</li>
+		<li><code>&lt;c&gt;</code> for chars;</li>
+		<li><code>&lt;s&gt;</code> for short;</li>
+		<li><code>&lt;i&gt;</code> for integers;</li>
+		<li><code>&lt;l&gt;</code> for long;</li>
+		<li><code>&lt;f&gt;</code> for float;</li>
+		<li><code>&lt;d&gt;</code> for doubles;</li>
+	</ul>
+	
+	<h1>Blocks of primitives</h1>
+	Blocks of primitives are used to carry a tightly packed content but 
+	most of them must be human readable.
+	
+	<h2>boolean []</h2>
+	Boolean blocks are represented as a continous sequence of <code>t</code> or <code>f</code>
+	without any separators.	
+	
+	<h2>byte []</h2>
+	Since byte blocks will be most frequently used to store raw data they do not
+	have to be human readable. Instead they are represented as a sequence
+	of hex digits pairs, most significant first, without any separator.
+	
+	<h2>char []</h2>
+	Character blocks are represented as encoded texts.
+	
+	<h3>short [], int[], long [],float[], double[]</h3>
+	Due to necessary readability they are stored as if were written with
+	a sequence of un-described elementary primitive writes.
+	
+	<h2>Described format</h2>
+	Following elements are used to enclose each primitive block in
+	described format:
+	<ul>
+		<li><code>&lt;oa&gt;</code> for boolean [];</li>
+		<li><code>&lt;ba&gt;</code> for bytes [];</li>
+		<li><code>&lt;ca&gt;</code> for chars [];</li>
+		<li><code>&lt;sa&gt;</code> for short [];</li>
+		<li><code>&lt;ia&gt;</code> for integers [];</li>
+		<li><code>&lt;la&gt;</code> for long [];</li>
+		<li><code>&lt;fa&gt;</code> for float [];</li>
+		<li><code>&lt;da&gt;</code> for doubles [];</li>
+	</ul>
+	
+	
+	<h1>Decoding process</h1>
+	Decoding process will ignore:
+	<ul>
+		<li>all white spaces and line spearators between before
+		a primitive when primitive read is requested;</li>
+	</ul>
+	but will not ignore it when reading <code>char[]</code>.
+	<p>
+	If inside <code>char[]</code> the deconding process will 
+	find an un-escaped character which should be escaped it
+	should treat it as a correct character. 
+	<p>
+	Those should allow manual edit of files and generation
+	of "beautified files".
+	
+</body>
+</html>

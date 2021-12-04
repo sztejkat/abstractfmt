@@ -1,5 +1,6 @@
 #Generated documentation package
-package-doc
+package-doc/**
+lib-doc/**
 #Backup files from JEDIT
 *.*~
 #Compilation logs
