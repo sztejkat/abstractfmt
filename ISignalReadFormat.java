@@ -52,12 +52,16 @@ public interface ISignalReadFormat extends Closeable
 			some data to be read from a low level stream.
 		@return <ul>
 					<li>anything &gt;0	if there are some un-read data 
-					and {@link #next} would skip something.
+					and {@link #next} would skip something.		
 					<p>
-					See also {@link IDescribedSignalReadFormat#hasData};</li>
-					
+					This value may be also returned when all
+					block data were read but no partial read condition
+					was returned.
+					<p>
+					See also {@link IDescribedSignalReadFormat#hasData};
+					</li>					
 					<li>{@link #SIGNAL} if {@link #next} would not have to skip
-					anything and cursor it is at the next signal, either;</li>
+					anything and cursor it is at the next signal, either begin or end;</li>
 					
 					<li>{@link #EOF}  if {@link #next} would have thrown {@link EUnexpectedEof}
 					if called right now. This condition may change if stream is
@@ -192,11 +196,11 @@ public interface ISignalReadFormat extends Closeable
 		<p>
 		This operation is usefull when implementing other raw block operations in per-byte basis.
 		<p>
-		@return -1 if could not read because "end" signal was reached, -2 if physical eof,
+		@return -1 if could not read because signal was reached, 
 				otherwise a positive 0...255 number representing a byte.
 		@throws IllegalStateException if call is made outside of an event.
 		@throws IllegalStateException if there is block operation of another type in progress.  
-		@throws IOException if failed at low level.
+		@throws IOException if failed at low level. All other like {@link #readByteBlock(byte[],int,int)}.
 		*/			
 		public int readByteBlock()throws IOException;
 		

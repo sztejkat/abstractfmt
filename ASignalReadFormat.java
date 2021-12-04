@@ -12,6 +12,9 @@ import java.io.IOException;
 	which is a facility necessary to provide informations
 	about <i>indicators</i> written to stream by {@link ASignalWriteFormat}
 	
+	<h1>Thread safety</h1>
+	NOT thread safe, uses instance variables to provide buffers.
+	
 	<h1>Stream syntax</h1>
 	The stream syntax is built by {@link ASignalWriteFormat} and is 
 	made around <i>indicators</i> and primitive data.
@@ -98,26 +101,29 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 				private static final byte STATE_PRIMITIVE = 0;			
 				
 				/** State indicating that initial boolean block write
-				was written. Each type of lock has own state */
-				private static final byte STATE_BOOLEAN_BLOCK=(byte)2;
+				was read. Each type of block has own state and 
+				state indicating that block reached end-of-data*/
+				private static final byte STATE_BOOLEAN_BLOCK=(byte)1;
+				private static final byte STATE_FIRST_BLOCK=STATE_BOOLEAN_BLOCK;
 				/** See {@link #STATE_BOOLEAN_BLOCK} */
-				private static final byte STATE_BYTE_BLOCK=(byte)3;
+				private static final byte STATE_BYTE_BLOCK=(byte)2;				
 				/** See {@link #STATE_BOOLEAN_BLOCK} */
-				private static final byte STATE_CHAR_BLOCK=(byte)4;
+				private static final byte STATE_CHAR_BLOCK=(byte)3;				
 				/** See {@link #STATE_BOOLEAN_BLOCK} */
-				private static final byte STATE_SHORT_BLOCK=(byte)5;
+				private static final byte STATE_SHORT_BLOCK=(byte)4;
 				/** See {@link #STATE_BOOLEAN_BLOCK} */
-				private static final byte STATE_INT_BLOCK=(byte)6;
+				private static final byte STATE_INT_BLOCK=(byte)5;				
 				/** See {@link #STATE_BOOLEAN_BLOCK} */
-				private static final byte STATE_LONG_BLOCK=(byte)7;
+				private static final byte STATE_LONG_BLOCK=(byte)6;				
 				/** See {@link #STATE_BOOLEAN_BLOCK} */
-				private static final byte STATE_FLOAT_BLOCK=(byte)8;
+				private static final byte STATE_FLOAT_BLOCK=(byte)7;				
 				/** See {@link #STATE_BOOLEAN_BLOCK} */
-				private static final byte STATE_DOUBLE_BLOCK=(byte)9;
+				private static final byte STATE_DOUBLE_BLOCK=(byte)8;
+				private static final byte STATE_LAST_BLOCK=STATE_DOUBLE_BLOCK;
 				/** If closed */
-				private static final byte STATE_CLOSED = (byte)10;
+				private static final byte STATE_CLOSED = (byte)9;
 				/** If broken */
-				private static final byte STATE_BROKEN = (byte)11;
+				private static final byte STATE_BROKEN = (byte)10;
 				/** State variable, can take one of 
 				<code>STATE_xxx</code> constants.
 				Initially {@link #STATE_PRIMITIVE}*/
@@ -768,6 +774,33 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 		/* ........................................................................
 					Commons.
 		........................................................................*/
+		/** Called in {@link #validatePrimitiveType} to ensure that there are primitive data to read
+		so that implementation <code>readXXXImpl</code> could ignore tests in most cases.
+		@throws EUnexpectedEof if found it
+		@throws IOException if failed at low level
+		@throws ENoMoreData if found it
+		@throws ECorruptedFormat if found it
+		*/
+		private void validateAreData()throws IOException, EUnexpectedEof,ENoMoreData,ECorruptedFormat
+		{
+			//Ensure there are data.
+			int indicator;
+			switch(indicator=getIndicator())
+			{
+				case EOF_INDICATOR: throw new EUnexpectedEof();
+				case NO_INDICATOR: 
+									//This indicator must not be preserved
+									//since primitives reads must trigger
+									//indicator fetch afterwards
+									consumeIndicator();
+									return;
+				case BEGIN_INDICATOR:
+				case END_INDICATOR:
+				case END_BEGIN_INDICATOR: throw new ENoMoreData("Signal reached");
+				default:
+					throw new ECorruptedFormat("Unexpected indicator "+indicatorToString(indicator)+" while data were expected");
+			}
+		};
 		/** Checks if stream indicators do point to the fact, that a primitive
 		operation of specified type can be performed.
 		@param expected_type_indicator one of <code>TYPE_xxxx</code> indicators 
@@ -775,23 +808,15 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 		*/
 		private void validatePrimitiveType(int expected_type_indicator)throws IOException
 		{
+			System.out.println("validatePrimitiveType("+expected_type_indicator+")");
 			//check what indicator is under cursor?
 			int indicator = getIndicator();
 			if (indicator==expected_type_indicator)
 			{
 					//ideal type match, consume it.
-					consumeIndicator();
-					//Ensure there are data.
-					switch(getIndicator())
-					{
-						case EOF_INDICATOR: throw new EUnexpectedEof();
-						case NO_INDICATOR: return;
-						case BEGIN_INDICATOR:
-						case END_INDICATOR:
-						case END_BEGIN_INDICATOR: throw new ENoMoreData("Signal reached");
-						default:
-							throw new ECorruptedFormat("Unexpected indicator "+indicator+" while data were expected");
-					}
+					consumeIndicator();				
+					validateAreData();
+					return;
 			};
 			//Handle non-ideal matches and end/begin signals.
 			switch(indicator)
@@ -801,8 +826,8 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 						//Undescribed streams do allow operation, but strict described do not
 						//allow it.
 						if (strict_described_types)
-							throw new EDataMissmatch("Type information was expected but nothing was found");
-						consumeIndicator();
+							throw new ECorruptedFormat("Type information was expected but nothing was found");
+						validateAreData();
 						return;
 				//rest is not consumed.
 				case BEGIN_INDICATOR:
@@ -826,7 +851,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 				case TYPE_DOUBLE_BLOCK: 	throw new EDataMissmatch("Expected "+typeIndicatorToString(expected_type_indicator)+
 																 " but found type in stream is "+typeIndicatorToString(indicator));
 				default:
-										throw new ECorruptedFormat("Unexpected indicator "+indicator);		
+										throw new ECorruptedFormat("Unexpected indicator "+indicatorToString(indicator));		
 			}
 		};
 		/** Checks if stream indicators do point to the fact, that a primitive
@@ -839,7 +864,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 		private void validatePrimitiveTypeEnd(int expected_type_end_indicator)throws IOException	
 		{
 			//check what indicator is under cursor?
-			int indicator = getIndicator();
+			int indicator = getIndicator();			
 			if (indicator==expected_type_end_indicator)
 			{
 					//ideal type match, consume it.
@@ -849,18 +874,16 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 			//Handle non-ideal matches and end/begin signals.
 			switch(indicator)
 			{
-				case EOF_INDICATOR: throw new EUnexpectedEof();
-				case NO_INDICATOR:
-						//Undescribed streams do allow operation, but strict described do not
-						//allow it.
-						if (strict_described_types)
-							throw new EDataMissmatch("Type information was expected but nothing was found");
-						consumeIndicator();
-						return;
-				//The end indicator is optional, so we may also expect begin type indicator here.
+				case EOF_INDICATOR: 
+							//since primitive type end is optional it is allowed.
+				case NO_INDICATOR:	//data. In strict mode theoretically next indicator
+									//should be non-data, but read attempts will validate it,
+									//so we do not have to do it here to not mess up end with begin. 
 				case BEGIN_INDICATOR:
 				case END_INDICATOR:
-				case END_BEGIN_INDICATOR: throw new ENoMoreData("Signal reached");
+				case END_BEGIN_INDICATOR:
+							//since primitive type end is optional, even if in strict mode it is allowed.
+							return;
 				case TYPE_BOOLEAN: 			
 				case TYPE_BYTE: 			
 				case TYPE_CHAR: 			
@@ -898,7 +921,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 				case TYPE_DOUBLE_BLOCK_END: 	throw new EDataMissmatch("Expected "+typeIndicatorToString(expected_type_end_indicator)+
 																 " but found type in stream is "+typeIndicatorToString(indicator));
 				default:
-										throw new ECorruptedFormat("Unexpected indicator "+indicator);		
+										throw new ECorruptedFormat("Unexpected indicator "+indicatorToString(indicator));		
 			}
 		}
 		
@@ -907,7 +930,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 		........................................................................*/
 		private void validateNoBlockOperationInProgress()throws IllegalStateException
 		{
-			if ((state>=STATE_BOOLEAN_BLOCK)&&(state<=STATE_DOUBLE_BLOCK)) 
+			if ((state>=STATE_FIRST_BLOCK)&&(state<=STATE_LAST_BLOCK)) 
 					throw new IllegalStateException("Block operation in progress"); 
 		};
 		/** Starts elementary primitive read operation of specified <code>TYPE_xxx</code>
@@ -956,6 +979,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 		{
 			//check what indicator is under cursor?
 			int indicator = getIndicator();
+			System.out.println("continuePrimitiveBlockType "+indicatorToString(indicator));
 			if (indicator==expected_type_indicator+0x100)
 			{
 					//ideal type match, ending indicator, consume it.
@@ -971,10 +995,44 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 				case END_INDICATOR:
 				case END_BEGIN_INDICATOR: return false; //end of block
 				default:
-										throw new ECorruptedFormat("Unexpected indicator "+indicator);		
+										throw new ECorruptedFormat("Unexpected indicator "+indicatorToString(indicator));		
 			}
 		};
-		
+		/** Invoked when block read returned partial read, processes indicators
+		so that {@link #hasData} see that block was terminated.
+		@param expected_type_indicator one of <code>TYPE_xxxx_BLOCK</code> indicators
+		@throws IOException if failed, including type and syntax validation.
+		*/
+		private void onPartialBlockRead(int expected_type_indicator)throws IOException
+		{
+			//check what indicator is under cursor?
+			int indicator = getIndicator();
+			System.out.println("continuePrimitiveBlockType "+indicatorToString(indicator));
+			if (indicator==expected_type_indicator+0x100)
+			{
+					//ideal type match, ending indicator, consume it.
+					consumeIndicator();
+			}else
+			{
+				//Handle non-ideal matches and end/begin signals.
+				switch(indicator)
+				{
+					case EOF_INDICATOR: throw new EUnexpectedEof();
+					case NO_INDICATOR: //consume pending data indicator.
+									   //This type of "pending" indicator will
+									   //be present only if hasData was called inside block processing
+									   //and did update indicator cache.
+										consumeIndicator();
+										return;	
+					case BEGIN_INDICATOR:
+					case END_INDICATOR:
+					case END_BEGIN_INDICATOR: return; //end of block, leave it untouched.
+					default:
+				
+						throw new ECorruptedFormat("Unexpected indicator "+indicatorToString(indicator));		
+				}
+			};
+		};
 		
 		
 		/* ****************************************************************
@@ -1065,7 +1123,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 												}
 										default: 
 											//we have set of not allowed indicators. Throw, but allow to recover.
-											throw new ECorruptedFormat("Unexpected indicator "+begin_style_indicator);
+											throw new ECorruptedFormat("Unexpected indicator "+indicatorToString(begin_style_indicator));
 										}
 								} //no break, unreachable.
 							case END_BEGIN_INDICATOR:
@@ -1098,13 +1156,32 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 				final int indicator = getIndicator();
 				switch(getIndicator())
 				{
-						case EOF_INDICATOR: 		return ISignalReadFormat.EOF;
-							//Note: No indicator is returned by un-described streams
-							//inside a data stream.
+						case EOF_INDICATOR: 		return ISignalReadFormat.EOF;							
 						case NO_INDICATOR:		
+								//Note: No indicator is returned by un-described streams
+								//inside a data stream and for both types
+								//of streams inside a block.
+								if ((state>=STATE_FIRST_BLOCK)&&(state<=STATE_LAST_BLOCK))
+								{
+									switch(state)
+									{
+										case STATE_BOOLEAN_BLOCK: return IDescribedSignalReadFormat.PRMTV_BOOLEAN_BLOCK;
+										case STATE_BYTE_BLOCK: return IDescribedSignalReadFormat.PRMTV_BYTE_BLOCK;
+										case STATE_SHORT_BLOCK: return IDescribedSignalReadFormat.PRMTV_SHORT_BLOCK;
+										case STATE_CHAR_BLOCK: return IDescribedSignalReadFormat.PRMTV_CHAR_BLOCK;
+										case STATE_INT_BLOCK: return IDescribedSignalReadFormat.PRMTV_INT_BLOCK;
+										case STATE_LONG_BLOCK: return IDescribedSignalReadFormat.PRMTV_LONG_BLOCK;
+										case STATE_FLOAT_BLOCK: return IDescribedSignalReadFormat.PRMTV_FLOAT_BLOCK;
+										case STATE_DOUBLE_BLOCK: return IDescribedSignalReadFormat.PRMTV_DOUBLE_BLOCK;
+										default: throw new AssertionError();
+									}
+								}else
+								{
+									//not in block operation.
 									if (strict_described_types) 
-										throw new ECorruptedFormat("This is un-described stream or some errors broken stream to miss descriptions");
+										throw new ECorruptedFormat("Strict typed stream is expected, but type information is missing.");
 									return 0xFFFF;	//<-- as generic, non typed indicator.
+								}
 						case BEGIN_INDICATOR:		//fallthrough
 						case END_INDICATOR:			//fallthrough
 						case END_BEGIN_INDICATOR: 	return ISignalReadFormat.SIGNAL;
@@ -1129,7 +1206,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 						case REGISTER_USE_INDICATOR:
 						default:					//fallthrough
 								//we have set of not allowed indicators.
-								throw new ECorruptedFormat("Unexpected indicator "+indicator);
+								throw new ECorruptedFormat("Unexpected indicator "+indicatorToString(indicator));
 				}
 		};
 		/* =================================================================
@@ -1268,7 +1345,9 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 			if (continuePrimitiveBlockType(TYPE_BOOLEAN_BLOCK))
 			{
 				try{
-					return readBooleanBlockImpl(buffer,offset,length);
+					final int r= readBooleanBlockImpl(buffer,offset,length);
+					if (r<length) onPartialBlockRead(TYPE_BOOLEAN_BLOCK);
+					return r;
 				}catch(EBrokenStream ex){ throw breakStream(ex); } 
 			}else
 				return 0;
@@ -1303,7 +1382,9 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 			if (continuePrimitiveBlockType(TYPE_BYTE_BLOCK))
 			{
 				try{
-					return readByteBlockImpl(buffer,offset,length);
+					final int r= readByteBlockImpl(buffer,offset,length);
+					if (r<length) onPartialBlockRead(TYPE_BYTE_BLOCK);
+					return r;
 				}catch(EBrokenStream ex){ throw breakStream(ex); } 
 			}else
 				return 0;
@@ -1333,10 +1414,14 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 			if (continuePrimitiveBlockType(TYPE_BYTE_BLOCK))
 			{
 				try{
-					return readByteBlockImpl();
+					final int r= readByteBlockImpl();
+					assert(r>=-1);
+					assert(r<=255);
+					if (r==-1)  onPartialBlockRead(TYPE_BYTE_BLOCK);
+					return r;
 				}catch(EBrokenStream ex){ throw breakStream(ex); } 
 			}else
-				return 0;
+				return -1;
 		}
 		/** See {@link #readBooleanBlock}
 		*/
@@ -1368,7 +1453,9 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 			if (continuePrimitiveBlockType(TYPE_CHAR_BLOCK))
 			{
 				try{
-					return readCharBlockImpl(buffer,offset,length);
+					final int r= readCharBlockImpl(buffer,offset,length);
+					if (r<length) onPartialBlockRead(TYPE_CHAR_BLOCK);
+					return r;
 				}catch(EBrokenStream ex){ throw breakStream(ex); } 
 			}else
 				return 0;
@@ -1401,7 +1488,9 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 			if (continuePrimitiveBlockType(TYPE_CHAR_BLOCK))
 			{
 				try{
-					return readCharBlockImpl(buffer,length);
+					final int r= readCharBlockImpl(buffer,length);
+					if (r<length) onPartialBlockRead(TYPE_CHAR_BLOCK);
+					return r;
 				}catch(EBrokenStream ex){ throw breakStream(ex); } 
 			}else
 				return 0;
@@ -1436,7 +1525,9 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 			if (continuePrimitiveBlockType(TYPE_SHORT_BLOCK))
 			{
 				try{
-					return readShortBlockImpl(buffer,offset,length);
+					final int r= readShortBlockImpl(buffer,offset,length);
+					if (r<length) onPartialBlockRead(TYPE_SHORT_BLOCK);
+					return r;
 				}catch(EBrokenStream ex){ throw breakStream(ex); } 
 			}else
 				return 0;
@@ -1471,7 +1562,9 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 			if (continuePrimitiveBlockType(TYPE_INT_BLOCK))
 			{
 				try{
-					return readIntBlockImpl(buffer,offset,length);
+					final int r= readIntBlockImpl(buffer,offset,length);
+					if (r<length) onPartialBlockRead(TYPE_INT_BLOCK);
+					return r;
 				}catch(EBrokenStream ex){ throw breakStream(ex); } 
 			}else
 				return 0;
@@ -1506,7 +1599,9 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 			if (continuePrimitiveBlockType(TYPE_LONG_BLOCK))
 			{
 				try{
-					return readLongBlockImpl(buffer,offset,length);
+					final int r= readLongBlockImpl(buffer,offset,length);
+					if (r<length) onPartialBlockRead(TYPE_LONG_BLOCK);
+					return r;
 				}catch(EBrokenStream ex){ throw breakStream(ex); } 
 			}else
 				return 0;
@@ -1541,7 +1636,9 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 			if (continuePrimitiveBlockType(TYPE_FLOAT_BLOCK))
 			{
 				try{
-					return readFloatBlockImpl(buffer,offset,length);
+					final int r= readFloatBlockImpl(buffer,offset,length);
+					if (r<length) onPartialBlockRead(TYPE_FLOAT_BLOCK);
+					return r;
 				}catch(EBrokenStream ex){ throw breakStream(ex); } 
 			}else
 				return 0;
@@ -1576,7 +1673,9 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 			if (continuePrimitiveBlockType(TYPE_DOUBLE_BLOCK))
 			{
 				try{
-					return readDoubleBlockImpl(buffer,offset,length);
+					final int r= readDoubleBlockImpl(buffer,offset,length);
+					if (r<length) onPartialBlockRead(TYPE_DOUBLE_BLOCK);
+					return r;
 				}catch(EBrokenStream ex){ throw breakStream(ex); } 
 			}else
 				return 0;
