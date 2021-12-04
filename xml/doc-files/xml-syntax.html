@@ -65,7 +65,7 @@
 	and <code>%%;</code> represents
 	escaped <code>%</code> character;
 	
-	<h2>Escaped content inside char []</h2>
+	<h2 id="escape_in_char">Escaped content inside char []</h2>
 	The body of of any <code>char []</code> block is written in such a way
 	that if character is:
 	<ol>
@@ -77,6 +77,7 @@
 			<li>Within:
 			<pre>
 				[#x7F-#x84], [#x86-#x9F], [#xFDD0-#xFDDF],
+				//Note: below are surogate pairs which we do not support.
 				[#x1FFFE-#x1FFFF], [#x2FFFE-#x2FFFF], [#x3FFFE-#x3FFFF],
 				[#x4FFFE-#x4FFFF], [#x5FFFE-#x5FFFF], [#x6FFFE-#x6FFFF],
 				[#x7FFFE-#x7FFFF], [#x8FFFE-#x8FFFF], [#x9FFFE-#x9FFFF],
@@ -86,7 +87,7 @@
 			</li>
 			or
 		</li>
-		<li>Is <code> &gt;&lt;&amp;</code></li>
+		<li>Is <code> &gt;&lt;&amp;%</code></li>
 		<li>Is Java white-space (inclues eol, page feed, tabs, etc)</li>
 	</ol>
 	then it is escaped.
