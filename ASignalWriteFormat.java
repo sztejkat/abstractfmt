@@ -230,7 +230,9 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 				Types of primitives for described streams		
 		---------------------------------------------------------*/
 		/** Should write type indicator for {@link IDescribedSignalReadFormat#hasData}.
-		Un-described formats may implement is a no-op. Default is no-op. 
+		Un-described formats may implement is a no-op. 
+		<p>
+		This implementation is no-op. 
 		<p>
 		This type write operation will be always invoked in following sequence:
 		<pre>
@@ -292,7 +294,9 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		
 		
 		/** Should write type indicator for {@link IDescribedSignalReadFormat#hasData}.
-		Un-described formats may implement is a no-op. Default is no-op. 
+		Un-described formats may implement is a no-op.
+		<p>
+		This implementation is no-op. 
 		<p>
 		This type write operation will be always invoked in following sequence:
 		<pre>

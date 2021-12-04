@@ -149,39 +149,42 @@ public interface ISignalReadFormat extends Closeable
 		-----------------------------------------------------------*/
 		/** Reads a part of bit-block
 		<br>
-		Same rules applies as for byte-block.
-		@param buffer buffer for read data, non-null.
-		@param offset where to save first bit in <code>buffer</code>
-		@param length number of bytes to read
-		@return as in byte-block, but returns number of boolean values regardless of how they
-				were encoded.
-		@throws IOException if failed at low level.
-		*/
-		public int readBooleanBlock(boolean [] buffer, int offset, int length)throws IOException;
-		
-		/** Reads a part of byte-block.
+		An initial read block read may happen in any place <a href="package.html#event">event</a>.
+		and after any <i>elementary</i> primitive read, or after any block read of the same type.
 		<br>
-		An initial byte block read may happen in any place <a href="package.html#event">event</a>.
-		and after any <i>elementary</i> primitive read, or after any byte block read.
-		<br>
-		A byte-block read may be followed <u>only</u> by other byte-block read
-		or by reading of an "end" signal with {@link #next}.
+		A block read may be followed <u>only</u> by other block read of the same type
+		or by reading of an "end" or "begin" signal with {@link #next}.
 		<br>
 		@param buffer buffer for read data, non-null.
-		@param offset where to save first byte in <code>buffer</code>
+		@param offset where to save first data element in <code>buffer</code>
 		@param length number of bytes to read
-		@return number of actually read bytes, 0 if could not read anything because
-				"end" signal was reached, -1 if could not read anything because physical end of
-				stream was reached.
-				<br>
-				This method may <u>not</u> return partial read 
-				(less that <code>length</code>) unless "end" signal or end of stream were reached.
+		@return <ul>
+					<li>number of bytes read, which can be less that <code>length</code>
+					only if signal was reached or;</li>
+					<li>0 if could not read anything because signal was reached;</li>
+				</ul>
+				
 		@throws AssertionError if <code>buffer</code> is null
 		@throws AssertionError if <code>offset</code> or <code>length</code> are negative
 		@throws AssertionError if <code>buffer.length</code> with <code>offset</code> and <code>length</code>
 							   would result in {@link ArrayIndexOutOfBoundsException} exception;
 		@throws IllegalStateException if call is made outside of an event.
 		@throws IllegalStateException if there is block operation of another type in progress.  
+		@throws IOException if failed at low level.
+		@throws ENoMoreData if it was a first read in block reading sequence and it could not
+						start because cursor is already at signal.
+		@throws EUnexpectedEof if physical end of stream was reached.
+		*/
+		public int readBooleanBlock(boolean [] buffer, int offset, int length)throws IOException;
+		
+		/** Reads a part of byte-block.
+		<p>
+		Operates like {@link #readBooleanBlock}.
+		@param buffer buffer for read data, non-null.
+		@param offset where to save first bit in <code>buffer</code>
+		@param length number of bytes to read
+		@return as in byte-block, but returns number of boolean values regardless of how they
+				were encoded.
 		@throws IOException if failed at low level.
 		*/				    
 		public int readByteBlock(byte [] buffer, int offset, int length)throws IOException;

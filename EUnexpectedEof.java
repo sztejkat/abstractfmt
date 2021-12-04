@@ -5,7 +5,9 @@ package sztejkat.abstractfmt;
 	wrong with a stream because we did encounter a physical
 	end-of-file when not allowed.
 	<p>
-	Stream may recover from this error by re-trying.
+	Stream may recover from this error by re-trying, however
+	an operation which was broken due to this exception may
+	be lost and unrecoverable.
 */
 public class EUnexpectedEof extends ECorruptedFormat
 {

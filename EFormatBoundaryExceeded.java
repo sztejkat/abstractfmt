@@ -6,6 +6,8 @@ package sztejkat.abstractfmt;
 	<p>
 	For an example a name of a signal is too long or recursion
 	is too deep and etc.
+	<p>
+	If stream can recover from this error is not specified.
 */
 public class EFormatBoundaryExceeded extends ECorruptedFormat
 {

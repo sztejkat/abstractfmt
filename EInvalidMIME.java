@@ -2,7 +2,10 @@ package sztejkat.abstractfmt;
 
 /**
 	A generic exception indicating that there is something 
-	wrong with a stream because it's MIME type is incorrect.
+	wrong with a stream because its MIME type is incorrect.
+	<p>
+	This exception is thrown when automatic stream recognition
+	is used.
 */
 public class EInvalidMIME extends java.io.IOException
 {

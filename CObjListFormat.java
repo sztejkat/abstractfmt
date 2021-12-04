@@ -26,7 +26,13 @@ public final class CObjListFormat extends LinkedList<Object>
 					private static final long serialVersionUID=1L;	//for -Xlint only.
 					
 					
-				/** Indicator type classes */
+				/** Indicator type classes.
+				<p>
+				Instances of this class cannot be created directly
+				and static constant fields of {@link CObjListFormat}
+				must be used. As a benefit == can be used to detect
+				an indicator type.
+				*/
 				public static class INDICATOR
 				{
 						/** One of {@link ASignalReadFormat}

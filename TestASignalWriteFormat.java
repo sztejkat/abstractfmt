@@ -893,7 +893,7 @@ public class TestASignalWriteFormat extends sztejkat.utils.test.ATest
 		f.begin("sss");
 		f.writeByteBlock(new byte[7]);				
 		f.writeByteBlock(new byte[3]);
-		
+		f.writeByteBlock((byte)5);
 		try{
 			f.writeByte((byte)7);
 			org.junit.Assert.fail("should have thrown");
@@ -903,6 +903,37 @@ public class TestASignalWriteFormat extends sztejkat.utils.test.ATest
 		};
 		leave();
 	};       
+	
+	@org.junit.Test public void testBlocksRejectsPrimitives_2a()throws IOException
+	{
+		enter();
+		/*
+			In this test we check if stream allows writing 
+			two blocks of same type end then rejects primitive write,
+			even if same elementary type.
+		*/
+		final CObjListFormat m = new CObjListFormat();
+			ISignalWriteFormat f = new CObjListWriteFormat(
+										 0,//int names_registry_size,
+										 9,//int max_name_length,
+										 2,//int max_events_recursion_depth,
+										 m //CObjListFormat media
+										 );
+		f.begin("sss");
+		f.writeByteBlock((byte)5);
+		f.writeByteBlock(new byte[7]);				
+		f.writeByteBlock(new byte[3]);
+		
+		try{
+			f.writeByte((byte)7);
+			org.junit.Assert.fail("should have thrown");
+		}catch(IllegalStateException ex)
+		{
+			System.out.println(ex);
+		};
+		leave();
+	};    
+	
 	
 	
 	@org.junit.Test public void testBlocksRejectsPrimitives_3()throws IOException
@@ -1079,7 +1110,230 @@ public class TestASignalWriteFormat extends sztejkat.utils.test.ATest
 		leave();
 	};
 	
+	@org.junit.Test public void testBlocksRejectsBlocks1()throws IOException
+	{
+		enter();
+		/*
+			In this test we check if stream allows writing 
+			two blocks of same type end then rejects block write
+		*/
+		final CObjListFormat m = new CObjListFormat();
+			ISignalWriteFormat f = new CObjListWriteFormat(
+										 0,//int names_registry_size,
+										 9,//int max_name_length,
+										 2,//int max_events_recursion_depth,
+										 m //CObjListFormat media
+										 );
+		f.begin("sss");
+		f.writeBooleanBlock(new boolean[7]);				
+		f.writeBooleanBlock(new boolean[3]);
+		
+		try{
+			f.writeByteBlock(new byte[3]);
+			org.junit.Assert.fail("should have thrown");
+		}catch(IllegalStateException ex)
+		{
+			System.out.println(ex);
+		};
+		leave();
+	};
 	
+	@org.junit.Test public void testBlocksRejectsBlocks2()throws IOException
+	{
+		enter();
+		/*
+			In this test we check if stream allows writing 
+			two blocks of same type end then rejects block write
+		*/
+		final CObjListFormat m = new CObjListFormat();
+			ISignalWriteFormat f = new CObjListWriteFormat(
+										 0,//int names_registry_size,
+										 9,//int max_name_length,
+										 2,//int max_events_recursion_depth,
+										 m //CObjListFormat media
+										 );
+		f.begin("sss");
+		f.writeByteBlock(new byte[7]);				
+		f.writeByteBlock(new byte[3]);
+		
+		try{
+			f.writeBooleanBlock(new boolean[3]);
+			org.junit.Assert.fail("should have thrown");
+		}catch(IllegalStateException ex)
+		{
+			System.out.println(ex);
+		};
+		leave();
+	};       
+	
+	
+	@org.junit.Test public void testBlocksRejectsBlocks3()throws IOException
+	{
+		enter();
+		/*
+			In this test we check if stream allows writing 
+			two blocks of same type end then rejects block write
+		*/
+		final CObjListFormat m = new CObjListFormat();
+			ISignalWriteFormat f = new CObjListWriteFormat(
+										 0,//int names_registry_size,
+										 9,//int max_name_length,
+										 2,//int max_events_recursion_depth,
+										 m //CObjListFormat media
+										 );
+		f.begin("sss");
+		f.writeCharBlock(new char[7]);				
+		f.writeCharBlock(new char[3]);
+		
+		try{
+			f.writeByteBlock(new byte[3]);
+			org.junit.Assert.fail("should have thrown");
+		}catch(IllegalStateException ex)
+		{
+			System.out.println(ex);
+		};
+		leave();
+	};
+	
+	@org.junit.Test public void testBlocksRejectsBlocks4()throws IOException
+	{
+		enter();
+		/*
+			In this test we check if stream allows writing 
+			two blocks of same type end then rejects block write
+		*/
+		final CObjListFormat m = new CObjListFormat();
+			ISignalWriteFormat f = new CObjListWriteFormat(
+										 0,//int names_registry_size,
+										 9,//int max_name_length,
+										 2,//int max_events_recursion_depth,
+										 m //CObjListFormat media
+										 );
+		f.begin("sss");
+		f.writeShortBlock(new short[7]);				
+		f.writeShortBlock(new short[3]);
+		
+		try{
+			f.writeCharBlock(new char[3]);
+			org.junit.Assert.fail("should have thrown");
+		}catch(IllegalStateException ex)
+		{
+			System.out.println(ex);
+		};
+		leave();
+	};
+	
+	@org.junit.Test public void testBlocksRejectsBlocks5()throws IOException
+	{
+		enter();
+		/*
+			In this test we check if stream allows writing 
+			two blocks of same type end then rejects block write
+		*/
+		final CObjListFormat m = new CObjListFormat();
+			ISignalWriteFormat f = new CObjListWriteFormat(
+										 0,//int names_registry_size,
+										 9,//int max_name_length,
+										 2,//int max_events_recursion_depth,
+										 m //CObjListFormat media
+										 );
+		f.begin("sss");
+		f.writeIntBlock(new int[7]);				
+		f.writeIntBlock(new int[3]);
+		
+		try{
+			f.writeShortBlock(new short[3]);
+			org.junit.Assert.fail("should have thrown");
+		}catch(IllegalStateException ex)
+		{
+			System.out.println(ex);
+		};
+		leave();
+	};
+	
+	@org.junit.Test public void testBlocksRejectsBlocks6()throws IOException
+	{
+		enter();
+		/*
+			In this test we check if stream allows writing 
+			two blocks of same type end then rejects block write
+		*/
+		final CObjListFormat m = new CObjListFormat();
+			ISignalWriteFormat f = new CObjListWriteFormat(
+										 0,//int names_registry_size,
+										 9,//int max_name_length,
+										 2,//int max_events_recursion_depth,
+										 m //CObjListFormat media
+										 );
+		f.begin("sss");
+		f.writeLongBlock(new long[7]);				
+		f.writeLongBlock(new long[3]);
+		
+		try{
+			f.writeIntBlock(new int[3]);
+			org.junit.Assert.fail("should have thrown");
+		}catch(IllegalStateException ex)
+		{
+			System.out.println(ex);
+		};
+		leave();
+	};
+	
+	@org.junit.Test public void testBlocksRejectsBlocks7()throws IOException
+	{
+		enter();
+		/*
+			In this test we check if stream allows writing 
+			two blocks of same type end then rejects block write
+		*/
+		final CObjListFormat m = new CObjListFormat();
+			ISignalWriteFormat f = new CObjListWriteFormat(
+										 0,//int names_registry_size,
+										 9,//int max_name_length,
+										 2,//int max_events_recursion_depth,
+										 m //CObjListFormat media
+										 );
+		f.begin("sss");
+		f.writeFloatBlock(new float[7]);				
+		f.writeFloatBlock(new float[3]);
+		
+		try{
+			f.writeLongBlock(new long[3]);
+			org.junit.Assert.fail("should have thrown");
+		}catch(IllegalStateException ex)
+		{
+			System.out.println(ex);
+		};
+		leave();
+	};
+	
+	@org.junit.Test public void testBlocksRejectsBlocks8()throws IOException
+	{
+		enter();
+		/*
+			In this test we check if stream allows writing 
+			two blocks of same type end then rejects block write
+		*/
+		final CObjListFormat m = new CObjListFormat();
+			ISignalWriteFormat f = new CObjListWriteFormat(
+										 0,//int names_registry_size,
+										 9,//int max_name_length,
+										 2,//int max_events_recursion_depth,
+										 m //CObjListFormat media
+										 );
+		f.begin("sss");
+		f.writeDoubleBlock(new double[7]);				
+		f.writeDoubleBlock(new double[3]);
+		
+		try{
+			f.writeFloatBlock(new float[3]);
+			org.junit.Assert.fail("should have thrown");
+		}catch(IllegalStateException ex)
+		{
+			System.out.println(ex);
+		};
+		leave();
+	};
 	
 					int close_cnt;
 	@org.junit.Test public void testCloseJustOnce()throws IOException
