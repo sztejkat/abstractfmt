@@ -808,7 +808,6 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 		*/
 		private void validatePrimitiveType(int expected_type_indicator)throws IOException
 		{
-			System.out.println("validatePrimitiveType("+expected_type_indicator+")");
 			//check what indicator is under cursor?
 			int indicator = getIndicator();
 			if (indicator==expected_type_indicator)
@@ -1686,7 +1685,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 		
 		=================================================================*/
 		/** Overriden to toggle state to closed.
-		Calls {@link closeImpl}
+		Calls {@link #closeImpl}
 		*/
 		@Override public final void close()throws IOException
 		{ 

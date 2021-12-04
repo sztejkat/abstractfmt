@@ -12,7 +12,7 @@ import java.io.IOException;
 		{@link #writeBeginSignalIndicator},{@link #writeEndSignalIndicator}
 		{@link #writeEndBeginSignalIndicator};</li>
 		<li>types indicators for describes streams,
-		{@link writeBooleanType} and ect, {@link #writeBooleanBlockType} and etc.
+		{@link #writeBooleanType} and ect, {@link #writeBooleanBlockType} and etc.
 		All implemented as no-operation, as expected for un-described streams;</li>
 		<li>event names handling
 		{@link #writeDirectName},{@link #writeSignalNameData},{@link #writeRegisterName}
@@ -1203,7 +1203,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		};
 		
 		/** Overriden to toggle state to closed.
-		Calls {@link closeImpl}
+		Calls {@link #closeImpl}
 		*/
 		@Override public final void close()throws IOException
 		{ 

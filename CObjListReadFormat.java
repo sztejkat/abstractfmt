@@ -3,7 +3,7 @@ import java.io.IOException;
 import java.util.Arrays;
 /**
 		Primarily a test bed for {@link ASignalReadFormat} which
-		writes signals and data to {@link CObjListFormat}.
+		reads signals and data from {@link CObjListFormat}.
 		<p>
 		Intended to be used in tests, but users may look at it as
 		on a base, primitive implementation.
