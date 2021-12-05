@@ -120,7 +120,7 @@
 	</pre>
 	otherwise it is written as
 	<pre id="long_signal_form">
-		&lt;evt name="<i>encoded_signal_name</i>"&gt;
+		&lt;e n="<i>encoded_signal_name</i>"&gt;
 	</pre>
 	
 	<h1>End signal</h1>
@@ -130,25 +130,24 @@
 	</pre>
 	or
 	<pre>
-		&lt;/evt&gt;
+		&lt;/e&gt;
 	</pre>
 	
 	
 	<h1>Elementary primitives</h1>
-	If primitive is to be followed by next primitive without any
-	XML element, then <code id="primitive_separator">;</code> (semicolon) is used
-	as an inter-primitive separator.
+	The <code id="primitive_separator">;</code> (semicolon) is used
+	as an inter-primitive separator and terminates every primitive.
 	
-	<h2>byte, short, int, long, float, double</h2>
+	<h2 id="enc_numeric">byte, short, int, long, float, double</h2>
 	Since XML must be human readable all primitives are coded as decimal numbers
 	with optional negative sign and dot as decimal separator. Scientific format
 	can be used for floating points.
 	
-	<h2>boolean</h2>
+	<h2 id="enc_boolean">boolean</h2>
 	Boolean is represented as <code>t</code> (true) or <code>f</code> (false).
 	This is case sensitive.
 	
-	<h2>Characters</h2>
+	<h2 id="enc_char">Characters</h2>
 	Are escaped. The <code>;</code> is included in set of escaped characters
 	so it can be used to separate characters one of the another as if they
 	were numbers.
@@ -171,19 +170,19 @@
 	Blocks of primitives are used to carry a tightly packed content but 
 	most of them must be human readable.
 	
-	<h2>boolean []</h2>
+	<h2 id="enc_boolean_blk">boolean []</h2>
 	Boolean blocks are represented as a continous sequence of <code>t</code> or <code>f</code>
 	without any separators.	
 	
-	<h2>byte []</h2>
+	<h2 id="enc_byte_blk">byte []</h2>
 	Since byte blocks will be most frequently used to store raw data they do not
 	have to be human readable. Instead they are represented as a sequence
 	of hex digits pairs, most significant on left, upper case, without any separator.
 	
-	<h2>char []</h2>
+	<h2 id="enc_char_blk">char []</h2>
 	Character blocks are represented as encoded texts.
 	
-	<h3>short [], int[], long [],float[], double[]</h3>
+	<h3 id="end_numeric_blk">short [], int[], long [],float[], double[]</h3>
 	Due to necessary readability they are stored as if were written with
 	a sequence of un-described elementary primitive writes.
 	
@@ -217,5 +216,28 @@
 	Those should allow manual edit of files and generation
 	of "beautified files".
 	
+	
+	<h1>Extended format</h1>
+	The extended format is using more readable, but longer element names:
+	<ul>
+		<li>e &rarr; event</li>
+		<li>attribute n &rarr; name;</li>
+		<li>o &rarr; boolean</li>
+		<li>b &rarr; byte</li>
+		<li>c &rarr; char</li>
+		<li>s &rarr; short</li>
+		<li>i &rarr; int</li>
+		<li>l &rarr; long</li>
+		<li>f &rarr; float</li>
+		<li>d &rarr; double</li>
+		<li>oa &rarr; boolean_array</li>
+		<li>ba &rarr; byte_array</li>
+		<li>ca &rarr; string</li>
+		<li>sa &rarr; short_array</li>
+		<li>ia &rarr; int_array</li>
+		<li>la &rarr; long_array</li>
+		<li>fa &rarr; float_array</li>
+		<li>da &rarr; double_array</li>
+	</ul>
 </body>
 </html>

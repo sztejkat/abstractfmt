@@ -227,6 +227,51 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			writeBeginSignalIndicator();
 		};
 		/* -------------------------------------------------------
+				Names in signals.		
+		---------------------------------------------------------*/
+		/** Invoked only after {@link #writeBeginSignalIndicator} to
+		indicate that signal name will be encoded directly.
+		<p>
+		Once this method is called only following calls
+		can be made:
+		<ul>
+			<li>{@link #writeSignalNameData};</li>
+		</ul>
+		@throws IOException if low level i/o failed.*/
+		protected abstract void writeDirectName()throws IOException;
+		/** Invoked only after {@link #writeDirectName} or {@link #writeRegisterName}
+		to specify the signal name.
+		@param name never null, always not longer than {@link ISignalWriteFormat#getMaxSignalNameLength}.
+		@throws IOException if low level i/o failed.*/
+		protected abstract void writeSignalNameData(String name)throws IOException;
+		/** Invoked only after {@link #writeBeginSignalIndicator} to
+		indicate that signal name will be encoded directly AND that this signal
+		is used to indicate what index is assigned to a name.		
+		<p>
+		Once this method is called only following calls
+		can be made:
+		<ul>
+			<li>{@link #writeSignalNameData};</li>
+		</ul>
+		@param name_index the non-negative name index assigned to name which will
+			follow. This class ensures that:
+			<ul>
+				<li><code>name_index</code> is zero for first call of this
+				method, 1 for next and so on, until stream is closed or
+				the name registry pool is full. If stream is fine with
+				this method of numbers assignments it may avoid writing 
+				this number to a stream;</li>
+			</ul>
+		@throws IOException if low level i/o failed.*/
+		protected abstract void writeRegisterName(int name_index)throws IOException;
+		/** Invoked only after {@link #writeBeginSignalIndicator} to
+		indicate that signal name will be passes as a number only and won't be written
+		directly.
+		@param name_index the non-negative name index assigned to name
+				in apropriate {@link #writeRegisterName} call.
+		@throws IOException if low level i/o failed.*/
+		protected abstract void writeRegisterUse(int name_index)throws IOException;
+		/* -------------------------------------------------------
 				Types of primitives for described streams		
 		---------------------------------------------------------*/
 		/** Should write type indicator for {@link IDescribedSignalReadFormat#hasData}.
@@ -358,53 +403,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		/** See {@link #writeBooleanBlockType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeDoubleBlockTypeEnd()throws IOException{};
-		/*========================================================
 		
-				Names
-		
-		=========================================================*/
-		/** Invoked only after {@link #writeBeginSignalIndicator} to
-		indicate that signal name will be encoded directly.
-		<p>
-		Once this method is called only following calls
-		can be made:
-		<ul>
-			<li>{@link #writeSignalNameData};</li>
-		</ul>
-		@throws IOException if low level i/o failed.*/
-		protected abstract void writeDirectName()throws IOException;
-		/** Invoked only after {@link #writeDirectName} or {@link #writeRegisterName}
-		to specify the signal name.
-		@param name never null, always not longer than {@link ISignalWriteFormat#getMaxSignalNameLength}.
-		@throws IOException if low level i/o failed.*/
-		protected abstract void writeSignalNameData(String name)throws IOException;
-		/** Invoked only after {@link #writeBeginSignalIndicator} to
-		indicate that signal name will be encoded directly AND that this signal
-		is used to indicate what index is assigned to a name.		
-		<p>
-		Once this method is called only following calls
-		can be made:
-		<ul>
-			<li>{@link #writeSignalNameData};</li>
-		</ul>
-		@param name_index the non-negative name index assigned to name which will
-			follow. This class ensures that:
-			<ul>
-				<li><code>name_index</code> is zero for first call of this
-				method, 1 for next and so on, until stream is closed or
-				the name registry pool is full. If stream is fine with
-				this method of numbers assignments it may avoid writing 
-				this number to a stream;</li>
-			</ul>
-		@throws IOException if low level i/o failed.*/
-		protected abstract void writeRegisterName(int name_index)throws IOException;
-		/** Invoked only after {@link #writeBeginSignalIndicator} to
-		indicate that signal name will be passes as a number only and won't be written
-		directly.
-		@param name_index the non-negative name index assigned to name
-				in apropriate {@link #writeRegisterName} call.
-		@throws IOException if low level i/o failed.*/
-		protected abstract void writeRegisterUse(int name_index)throws IOException;
 		/*========================================================
 		
 				primitive writes
