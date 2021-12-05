@@ -10,8 +10,14 @@ import java.io.IOException;
 */
 public class CBoundAppendable implements Appendable
 {
+				/** Buffer */
 				private final char [] buffer;
+				/** Where to put char and length of buffer */
 				private int at;
+				/** Hash code 
+				@see #hashCode
+				*/
+				private int hash;
 				
 	/* ********************************************************
 	
@@ -40,7 +46,7 @@ public class CBoundAppendable implements Appendable
 	*/
 	public final int capacity(){ return buffer.length; };
 	/** Resets to zero size */
-	public final void reset(){ at = 0; };
+	public final void reset(){ at = 0; hash =0;};
 	/** Transforms to independent string 
 	@return string representation of collected chars
 	*/
@@ -93,5 +99,40 @@ public class CBoundAppendable implements Appendable
 		buffer[at]=c;
 		at++;
 		return this;
+    };
+    /** Copied from JDK8 String.hashCode
+    to match standard.
+    @return hashCode.
+    */
+    public final int hashCode()
+    {
+        int h = hash;
+        final int L = length();
+        if (h == 0 && L > 0) {
+            final char val[] = buffer;
+
+            for (int i = 0; i < L; i++) {
+                h = 31 * h + val[i];
+            }
+            hash = h;
+        }
+        return h;
+    }
+    /** A quick test, faster than 
+    <code>s.equals(this.toString)</code>
+    because it avoids creation of a temporary object
+    */
+    public boolean equalsString(String s)
+    {
+    	//Note: Objects with different hashes can't be 
+    	//the same.
+    	if (hashCode()!=s.hashCode()) return false;
+    	int L = length();
+    	if (length()!=s.length()) return false;
+    	for(int i=L;--i>=0;)
+    	{
+    		if (buffer[i]!=s.charAt(i)) return false;
+    	};
+    	return true;
     };
 };
