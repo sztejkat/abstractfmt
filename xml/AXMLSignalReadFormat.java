@@ -190,7 +190,7 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 				for(;;)
 				{
 					digit = read();
-					if (digit==ESCAPE_CHAR) return (char)unescaped;
+					if (digit==ESCAPE_CHAR_END) return (char)unescaped;
 					else
 					{
 						if ((--i)==0) throw new ECorruptedFormat("Escape sequence too long");
@@ -731,7 +731,7 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 				return (char)r;
 			}else
 			{
-				final char c = unread[i];
+				final char c = unread[i-1];
 				i--;
 				this.unread_at=i;
 				return c;
@@ -839,6 +839,12 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 								4 //final int max_type_tag_length
 								); 
 					};
+					DUT(String s)
+					{
+						this();
+						open(s);
+					};
+					void open(String s){ in = new java.io.StringReader(s); };
 					@Override protected int readImpl()throws IOException
 					{
 						return in.read();
@@ -856,11 +862,172 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 					@Override protected void closeImpl()throws IOException{ throw new AbstractMethodError(); };;
 	
 				};
+				
+			@org.junit.Test public void testHex()throws ECorruptedFormat
+			{
+				enter();
+				/* Check elementary HEX->int conversion */
+				{
+					org.junit.Assert.assertTrue(HEX('0')==0);
+					org.junit.Assert.assertTrue(HEX('A')==10);
+					org.junit.Assert.assertTrue(HEX('a')==10);
+					org.junit.Assert.assertTrue(HEX('F')==15);
+					org.junit.Assert.assertTrue(HEX('f')==15);
+				};
+				leave();
+			};
+			
+			@org.junit.Test public void testReadEscaped()throws IOException
+			{
+				enter();
+				/*
+						Check readEscaped(), what basically will also test
+						unescape(), positive tests.
+				*/
+				DUT d = new DUT();
+				d.open("a");
+				org.junit.Assert.assertTrue(d.readEscaped()=='a');
+				d.open("%%;");
+				org.junit.Assert.assertTrue(d.readEscaped()=='%');
+				d.open("%3;");
+				org.junit.Assert.assertTrue(d.readEscaped()=='\u0003');
+				d.open("%31;");
+				org.junit.Assert.assertTrue(d.readEscaped()=='\u0031');
+				d.open("%312;");
+				org.junit.Assert.assertTrue(d.readEscaped()=='\u0312');
+				d.open("%AfBc;");
+				org.junit.Assert.assertTrue(d.readEscaped()=='\uafbc');
+				leave();
+			};
+			
+			@org.junit.Test public void testReadEscapedErr()throws IOException
+			{
+				enter();
+				/*
+						Check readEscaped(), what basically will also test
+						unescape(), error detection tests.
+				*/
+				DUT d = new DUT();
+				d.open("%u");
+				try{
+					d.readEscaped(); org.junit.Assert.fail();
+				}catch(ECorruptedFormat ex){};
+				
+				d.open("%%%");
+				try{
+					d.readEscaped(); org.junit.Assert.fail();
+				}catch(ECorruptedFormat ex){};
+				
+				d.open("%;");
+				try{
+					d.readEscaped(); org.junit.Assert.fail();
+				}catch(ECorruptedFormat ex){};   
+				
+				d.open("%0");
+				try{
+					d.readEscaped(); org.junit.Assert.fail();
+				}catch(EUnexpectedEof ex){};
+				
+				d.open("%0994898;");
+				try{
+					d.readEscaped(); org.junit.Assert.fail();
+				}catch(ECorruptedFormat ex){};
+				
+				d.open("%09-;");
+				try{
+					d.readEscaped(); org.junit.Assert.fail();
+				}catch(ECorruptedFormat ex){};
+				
+				leave();
+			};
+			
+			
+			@org.junit.Test public void testReadingAndUnReading()throws IOException
+			{
+				enter();
+				/*
+						Check if we can read, un-read 
+				*/
+				DUT d = new DUT();
+				d.open("abcdef");
+				
+				org.junit.Assert.assertTrue(d.read()=='a');
+				org.junit.Assert.assertTrue(d.read()=='b');
+				d.unread('x');
+				d.unread('y');
+				org.junit.Assert.assertTrue(d.read()=='y');
+				org.junit.Assert.assertTrue(d.read()=='x');
+				org.junit.Assert.assertTrue(d.read()=='c');
+				org.junit.Assert.assertTrue(d.read()=='d');
+				
+				leave();
+			};
+			
+			@org.junit.Test public void testReadingAndUnReadingPeeking()throws IOException
+			{
+				enter();
+				/*
+						Check if we can read, un-read 
+				*/
+				DUT d = new DUT();
+				d.open("abcdef");
+				org.junit.Assert.assertTrue(d.peek()=='a');
+				org.junit.Assert.assertTrue(d.read()=='a');
+				org.junit.Assert.assertTrue(d.read()=='b');
+				d.unread('x');
+				d.unread('y');
+				org.junit.Assert.assertTrue(d.peek()=='y');
+				org.junit.Assert.assertTrue(d.read()=='y');
+				org.junit.Assert.assertTrue(d.read()=='x');
+				org.junit.Assert.assertTrue(d.peek()=='c');
+				org.junit.Assert.assertTrue(d.read()=='c');
+				org.junit.Assert.assertTrue(d.read()=='d');
+				
+				leave();
+			};
+			
+			@org.junit.Test public void testReadingAndUnReadingEof()throws IOException
+			{
+				enter();
+				/*
+						Check if we can read, un-read 
+				*/
+				DUT d = new DUT();
+				d.open("abcdef");
+				org.junit.Assert.assertTrue(d.peek()=='a');
+				org.junit.Assert.assertTrue(d.read()=='a');
+				org.junit.Assert.assertTrue(d.read()=='b');
+				org.junit.Assert.assertTrue(d.read()=='c');
+				org.junit.Assert.assertTrue(d.read()=='d');
+				org.junit.Assert.assertTrue(d.read()=='e');
+				org.junit.Assert.assertTrue(!d.isEof());
+				org.junit.Assert.assertTrue(d.read()=='f');
+				org.junit.Assert.assertTrue(d.isEof());
+				org.junit.Assert.assertTrue(d.isEof());
+				org.junit.Assert.assertTrue(d.isEof());
+				d.unread('x');
+				org.junit.Assert.assertTrue(!d.isEof());
+				d.unread('y');
+				org.junit.Assert.assertTrue(!d.isEof());
+				org.junit.Assert.assertTrue(d.peek()=='y');
+				org.junit.Assert.assertTrue(d.read()=='y');
+				org.junit.Assert.assertTrue(d.read()=='x');
+				org.junit.Assert.assertTrue(d.isEof());
+				
+				try{
+					d.peek();
+					org.junit.Assert.fail();
+				}catch(EUnexpectedEof x){};
+				
+				try{
+					d.read();
+					org.junit.Assert.fail();
+				}catch(EUnexpectedEof x){};
+				
+				d.unread('z');
+				org.junit.Assert.assertTrue(d.read()=='z');
+				
+				leave();
+			};
 		};
-		
-		
-		
-		
-		
-		
 };
