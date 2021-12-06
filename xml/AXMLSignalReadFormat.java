@@ -274,9 +274,10 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 							};
 							//this is a non-space, put it back
 							unread(c);
-						};
+						};						
 						break; 
-					case STATE_CHARACTER_BLOCK: 
+					case STATE_CHARACTER_BLOCK:
+						state = STATE_NONE;		// no more if it, we are skipping the rest of the content.
 						break;
 					case STATE_DIRECT_INDICATOR: 
 						state = STATE_NONE;
@@ -289,16 +290,6 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 				if (c=='<') 
 				{	
 					//detected tag. Let us chew on it.
-					//Note: The buffer will take care of testing for maximum XML element size
-					//Note: During space skipping and first fetches we tested for eof.
-					//	    Once however element is detected we no longer test 
-					//		and throw EUnexepectedEof instread. Doing it otherwise
-					//		would require un-reading the buffer, what is inconvinient
-					//		and does not give significant benefits if thanks to
-					//		that we will re-try reading after a some time.
-					//		This is simply bad to start supplying XML content and then
-					//		pause for so long that EOF is returned.
-					
 					//Now check what kind of tag it is?			
 					c = read();
 					switch(c)
@@ -319,6 +310,44 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 				{
 					unread(c);	//put it back, we can't move cursor.
 					return NO_INDICATOR;
+				}
+			}
+		};
+		@Override protected void skip()throws IOException,EUnexpectedEof
+		{
+			//A bit more complex due to faked state.
+			switch(state)
+			{
+				case STATE_NONE:
+					break; 
+				case STATE_CHARACTER_BLOCK: 
+					break;
+				case STATE_DIRECT_INDICATOR: 
+					return;			//this is a case when we need to ignore skipping because we
+									//are at faked indicator.
+			};				
+			state = STATE_NONE;		//we skipped all
+			again:
+			for(;;)
+			{
+				char c = read();
+				if (c=='<') 
+				{	
+					//detected tag, but it may be a comment or processing command.
+					c = read();
+					switch(c)
+					{
+							case '!':  //comment tag 
+									skipCommentElement();
+									continue again;
+							case '?':	//processing tag
+									skipProcessingCommand();
+									continue again;
+							default: //begin tag.
+									unread(c); //unread first tag character.
+									unread('<'); //unread tag, so next can detect it.
+									return;
+					}
 				}
 			}
 		};
@@ -783,8 +812,51 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 		
 		
 		
+		/* ***********************************************************************
 		
 		
+				Junit.org (4.2 style) test arena for private operations
+		
+		
+		
+		
+		
+		* ***********************************************************************/
+		public static final class Test extends sztejkat.utils.test.ATest
+		{
+				private static final class DUT extends AXMLSignalReadFormat
+				{
+						java.io.StringReader in; 
+					DUT()
+					{
+						super(
+								8,//final int max_name_length,
+								16,// final int max_events_recursion_depth,
+								false,//final boolean strict_described_types,
+								'%',';',//final char ESCAPE_CHAR, final char ESCAPE_CHAR_END, 
+								';',//final char PRIMITIVES_SEPARATOR_CHAR,
+								"e","n",//final String LONG_SIGNAL_ELEMENT,final String LONG_SIGNAL_ELEMENT_ATTR,
+								4 //final int max_type_tag_length
+								); 
+					};
+					@Override protected int readImpl()throws IOException
+					{
+						return in.read();
+					};
+					@Override protected int readBooleanBlockImpl(boolean [] buffer, int offset, int length)throws IOException{ throw new AbstractMethodError(); };
+					@Override protected int readByteBlockImpl(byte [] buffer, int offset, int length)throws IOException{ throw new AbstractMethodError(); };
+					@Override protected int readByteBlockImpl()throws IOException{ throw new AbstractMethodError(); };
+					@Override protected int readCharBlockImpl(char [] buffer, int offset, int length)throws IOException{ throw new AbstractMethodError(); };
+					@Override protected int readCharBlockImpl(Appendable buffer, int length)throws IOException{ throw new AbstractMethodError(); };
+					@Override protected int readShortBlockImpl(short [] buffer, int offset, int length)throws IOException{ throw new AbstractMethodError(); };
+					@Override protected int readIntBlockImpl(int [] buffer, int offset, int length)throws IOException{ throw new AbstractMethodError(); };
+					@Override protected int readLongBlockImpl(long [] buffer, int offset, int length)throws IOException{ throw new AbstractMethodError(); };
+					@Override protected int readFloatBlockImpl(float [] buffer, int offset, int length)throws IOException{ throw new AbstractMethodError(); };
+					@Override protected int readDoubleBlockImpl(double [] buffer, int offset, int length)throws IOException{ throw new AbstractMethodError(); };
+					@Override protected void closeImpl()throws IOException{ throw new AbstractMethodError(); };;
+	
+				};
+		};
 		
 		
 		
