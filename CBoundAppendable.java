@@ -8,7 +8,7 @@ import java.io.IOException;
 	This class may be used when You do not trust the char processing 
 	stream routines to trully obey string size limits.
 */
-public class CBoundAppendable implements Appendable
+public class CBoundAppendable implements Appendable,CharSequence
 {
 				/** Buffer */
 				private final char [] buffer;
@@ -38,9 +38,6 @@ public class CBoundAppendable implements Appendable
 			Access
 	
 	*********************************************************/
-	/** Returns length used in a buffer 
-	@return length of string in buffer */
-	public final int length(){return at; };
 	/** Capactiy of buffer 
 	@return capacity of buffer, in chars
 	*/
@@ -51,7 +48,24 @@ public class CBoundAppendable implements Appendable
 	@return string representation of collected chars
 	*/
 	public final String toString(){ return new String(buffer,0,at); };
+	/* ********************************************************
 	
+			CharSequence	
+	
+	*********************************************************/
+	/** Returns length used in a buffer 
+	@return length of string in buffer */
+	public final int length(){return at; };
+	
+	public final char charAt(int index)
+	{
+		if (index>=at) throw new IndexOutOfBoundsException(index+" is not in 0..."+at+"-1");
+		return buffer[at];
+	};
+	public final CharSequence subSequence(int start,int end)
+	{
+		return toString().subSequence(start,end);
+	};
 	/* ********************************************************
 	
 			Appendable	
@@ -95,7 +109,7 @@ public class CBoundAppendable implements Appendable
     };
     public Appendable append(char c)throws IOException
     {
-    	if (at>=buffer.length) throw new EFormatBoundaryExceeded("String capacity "+at+" is already used up. Some string in stream is too long");
+    	if (at>=buffer.length) throw new EFormatBoundaryExceeded("String capacity "+at+" is already used up. The string \""+this.toString()+""+c+"\" is too long");
 		buffer[at]=c;
 		at++;
 		return this;
