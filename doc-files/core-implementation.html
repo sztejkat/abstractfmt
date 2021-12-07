@@ -7,7 +7,8 @@
  content="text/html; charset=UTF-8">
 </head>
 <body>
-		This chapter is about means of implementing event/signal formats.
+		This chapter is about different 
+		means of implementing event/signal and indicators.
 		
 		<h1>Signal</h1>
 		A primary means which are necessary to handle signals in stream
@@ -82,8 +83,12 @@
 		</tr>
 		</table>
 		
-		<h2>Low level stream operations</h2>
 		
+		
+		<h2>Low level stream operations</h2>
+		<i>Note: See <a href="../package-summary.html">package description</a> for
+		more formal approach.</i>
+		<p>
 		Regardless of what approach we do select we may divide stream into blocks:
 		<pre>
 			begin-signal-indication
@@ -157,7 +162,7 @@
 		used in file headers.
 		
 		
-		<h1>Internal signals</h1>
+		<h1>Type indicators</h1>
 		The <a href="../IDescribedSignalReadFormat.html">IDescribedSignalReadFormat</a>
 		declares 16 codes which are to be returned to indicate certain primitive data.
 		<p>
@@ -165,11 +170,6 @@
 		surround practically every data.
 		<p>
 		This is wise then to have for them as compact indicators as possible.
-		<p>
-		We then assume that our stream must support, or at least declare support, for
-		<code>begin-signal-indication</code><code>end-signal-indication</code>
-		and all the dedicated indicators for all type information elements.
-		They can be no-op for undescribed streams but the should be declared and processed at abstract level
 		
 </body>
 </html>

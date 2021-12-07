@@ -37,44 +37,125 @@ public interface ISignalReadFormat extends Closeable
 		@throws EFormatBoundaryExceeded if events recursion depth control is enabled
 		and this limit is exceeded.
 		See <a href="doc-files/security.html#STACK_OVERFLOW_ATTACK">"stack overflow"</a> attack.
+		@see #whatNext
 		*/
 		public String next()throws IOException;
 		
-				/** See {@link #hasData} */
+				/** Indicates that {@link #next} would not skip anything
+				and would return a signal.*/
 				public static final int SIGNAL=0;
-				/** See {@link #hasData} */
-				public static final int EOF=-1;
+				/** Indicates that {@link #next} would have thrown {@link EUnexpectedEof}
+				if called right now. This condition may change if stream is
+				a network connection or other produced-on-demand stream. This condition
+				<u>must</u> appear if no data about next signal is present in stream, but
+				is not expected to detect the possibility of an EOF inside a begin
+				signal itself, ie. when reading a name of a signal*/
+				public static final int EOF=-1;				
+				/** Indicates that next element in stream is an elementary primitive
+				which should be processed by {@link #readBoolean} */
+				public static final int PRMTV_BOOLEAN=1;
+				/** Indicates that next element in stream is an elementary primitive
+				which should be processed by {@link #readByte} */
+				public static final int PRMTV_BYTE=2;
+				/** Indicates that next element in stream is an elementary primitive
+				which should be processed by {@link #readChar} */
+				public static final int PRMTV_CHAR=3;
+				/** Indicates that next element in stream is an elementary primitive
+				which should be processed by {@link #readShort} */
+				public static final int PRMTV_SHORT=4;
+				/** Indicates that next element in stream is an elementary primitive
+				which should be processed by {@link #readInt} */
+				public static final int PRMTV_INT=5;
+				/** Indicates that next element in stream is an elementary primitive
+				which should be processed by {@link #readLong} */
+				public static final int PRMTV_LONG=6;
+				/** Indicates that next element in stream is an elementary primitive
+				which should be processed by {@link #readFloat} */
+				public static final int PRMTV_FLOAT=7;
+				/** Indicates that next element in stream is an elementary primitive
+				which should be processed by {@link #readDouble} */
+				public static final int PRMTV_DOUBLE=8;
+				/** Indicates that next PRMTV in stream is a block operation
+				which should be processed by {@link #readBooleanBlock}.*/
+				public static final int PRMTV_BOOLEAN_BLOCK=9;
+				/** Indicates that next PRMTV in stream is a block operation
+				which should be processed by {@link #readByteBlock}. */
+				public static final int PRMTV_BYTE_BLOCK=10;				
+				/** Indicates that next PRMTV in stream is a block operation
+				which should be processed by {@link #readCharBlock}. */
+				public static final int PRMTV_CHAR_BLOCK=11;
+				/** Indicates that next PRMTV in stream is a block operation
+				which should be processed by {@link #readShortBlock}. */
+				public static final int PRMTV_SHORT_BLOCK=12;
+				/** Indicates that next PRMTV in stream is a block operation
+				which should be processed by {@link #readIntBlock}. */
+				public static final int PRMTV_INT_BLOCK=13;
+				/** Indicates that next PRMTV in stream is a block operation
+				which should be processed by {@link #readLongBlock}.*/
+				public static final int PRMTV_LONG_BLOCK=14;
+				/** Indicates that next PRMTV in stream is a block operation
+				which should be processed by {@link #readFloatBlock}.*/
+				public static final int PRMTV_FLOAT_BLOCK=15;
+				/** Indicates that next PRMTV in stream is a block operation
+				which should be processed by {@link #readDoubleBlock}.*/
+				public static final int PRMTV_DOUBLE_BLOCK=16;
+				/** Indicates stread carries no type information about what
+				is under cursor, but surely this is not a signal.*/
+				public static final int PRMTV_UNTYPED=0xFFFF;
 		/** 
 			Tests what kind of information is under a cursor.
 			<p>
 			Subsequent calls to this method must return the same value and must not 
 			affect the stream or move stream cursor. They may however cause
 			some data to be read from a low level stream.
-		@return <ul>
-					<li>anything &gt;0	if there are some un-read data 
-					and {@link #next} would skip something.		
-					<p>
-					This value may be also returned when all
-					block data were read but no partial read condition
-					was returned.
-					<p>
-					See also {@link IDescribedSignalReadFormat#hasData};
-					</li>					
-					<li>{@link #SIGNAL} if {@link #next} would not have to skip
-					anything and cursor it is at the next signal, either begin or end;</li>
-					
-					<li>{@link #EOF}  if {@link #next} would have thrown {@link EUnexpectedEof}
-					if called right now. This condition may change if stream is
-					a network connection or other produced-on-demand stream. This condition
-					<u>must</u> appear if no data about next signal is present in stream, but
-					is not expected to detect the possibility of an EOF inside a begin
-					signal itself, ie. when reading a name of a signal;</li>
+		@return one of:
+				<ul>
+					<li>{@link #EOF};</li>
+					<li>{@link #SIGNAL};</li>
+					<li>if stream is {@link #isDescribed}:
+							<ul>
+								<li>{@link #PRMTV_BOOLEAN};</li>
+								<li>{@link #PRMTV_BYTE};</li>
+								<li>{@link #PRMTV_CHAR};</li>
+								<li>{@link #PRMTV_SHORT};</li>
+								<li>{@link #PRMTV_INT};</li>
+								<li>{@link #PRMTV_LONG};</li>
+								<li>{@link #PRMTV_FLOAT};</li>
+								<li>{@link #PRMTV_DOUBLE};</li>
+								<li>{@link #PRMTV_BYTE_BLOCK};</li>
+								<li>{@link #PRMTV_BOOLEAN_BLOCK};</li>
+								<li>{@link #PRMTV_CHAR_BLOCK};</li>
+								<li>{@link #PRMTV_SHORT_BLOCK};</li>
+								<li>{@link #PRMTV_INT_BLOCK};</li>
+								<li>{@link #PRMTV_LONG_BLOCK};</li>
+								<li>{@link #PRMTV_FLOAT_BLOCK};</li>
+								<li>{@link #PRMTV_DOUBLE_BLOCK};</li>
+							</ul>
+					<li>
+					<li>if stream is not {@link #isDescribed}:
+							<ul>
+								<li>{@link #PRMTV_UNTYPED};</li>
+							</ul>
+					</li>
 				</ul>
 		@throws IOException if low level i/o failed, except of end-of-stream condition
 							which is indicated by a dedicated return value.
 		@throws ECorruptedFormat if could not decode content due to other errors.
+		@see #isDescribed
 		*/
-		public int hasData()throws IOException;
+		public int whatNext()throws IOException;
+		/** True if stream implementation is "described".
+		A described implementation <u>do require</u> type information
+		and <u>do validate</u> type information. They must throw
+		{@link EDataMissmatch} if type validation failed and 
+		must throw {@link EDataTypeRequired} if there is no required type information.
+		<p>
+		A "non-described" implementation <u>must not</u> provide type information,
+		<u>must not</u> validate it and <u>must complain</u> if stream do contain
+		type information with {@link EDataTypeNotSupported}.
+		@return true if described. A life time constant.		
+		*/
+		public boolean isDescribed();
 	
 	/* *************************************************************
 	
@@ -99,6 +180,10 @@ public interface ISignalReadFormat extends Closeable
 		@throws ENoMoreData if stream cursor is at the signal
 		@throws EDataMissmatch if detected signal inside a body of primitive
 		@throws EUnexpectedEof if read resulted in end-of-file condition
+		@throws EDataMissmatch if format is {@link #isDescribed} and the type information
+				found in stream is not matching type.
+		@throws EDataTypeRequired if format is {@link #isDescribed} and there is no data type information
+		@throws EDataTypeNotSupported if format is NOT {@link #isDescribed} but there is data type information
 		*/
 		public boolean readBoolean()throws IOException;
 		/**  An elementary  primitive read 
@@ -176,8 +261,13 @@ public interface ISignalReadFormat extends Closeable
 		@throws IllegalStateException if there is block operation of another type in progress.  
 		@throws IOException if failed at low level.
 		@throws ENoMoreData if it was a first read in block reading sequence and it could not
-						start because cursor is already at signal.
+						start because cursor is already at signal. Notice this exception is not
+						thrown if reading reaches a signal. In such case a partial read is returned.
 		@throws EUnexpectedEof if physical end of stream was reached.
+		@throws EDataMissmatch if format is {@link #isDescribed} and the type information
+				found in stream is not matching type.
+		@throws EDataTypeRequired if format is {@link #isDescribed} and there is no data type information
+		@throws EDataTypeNotSupported if format is NOT {@link #isDescribed} but there is data type information		
 		*/
 		public int readBooleanBlock(boolean [] buffer, int offset, int length)throws IOException;
 		

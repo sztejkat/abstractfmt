@@ -2,68 +2,19 @@ package sztejkat.abstractfmt;
 import java.io.IOException;
 
 /**
-	A core, elementary implementation.
+	A core, elementary implementation for {@link ISignalReadFormat}
 	<p>
-	This class is actually providing all services necessary for
-	{@link IDescribedSignalReadFormat} but does not implement it.
-	Subclasses are allowed to implement it if necessary.
+	This class is a reading counterpart for {@link ASignalWriteFormat}
+	and is also based on a concept of 
+	<a href="package-description.html#indicators">indicators</a>.
 	<p>
-	The entire process is made around {@link #readIndicator}
-	which is a facility necessary to provide informations
-	about <i>indicators</i> written to stream by {@link ASignalWriteFormat}
+	This class is build around {@link #readIndicator} which provides
+	an entry point to "indicators".
 	
-	<h1>Thread safety</h1>
-	NOT thread safe, uses instance variables to provide buffers.
-	
-	<h1>Stream syntax</h1>
-	The stream syntax is built by {@link ASignalWriteFormat} and is 
-	made around <i>indicators</i> and primitive data.
-	<p>
-	The event inside a stream follows, rougly speaking, following
-	structure, which can be represented by sequence of calls presented 
-	below.
-	
-	<h2>Begin signal, directly encoded name</h2>
-	<pre>
-			{@link #readIndicator()}=={@link #BEGIN_INDICATOR}
-			{@link #readIndicator()}=={@link #DIRECT_INDICATOR}
-			{@link #readSignalNameData}
-	</pre>
-	<h2>Begin signal, registration of name</h2>
-	<pre>
-			{@link #readIndicator()}=={@link #BEGIN_INDICATOR}
-			{@link #readIndicator()}=={@link #REGISTER_INDICATOR}
-			{@link #readRegisterIndex}
-			{@link #readSignalNameData}
-	</pre>
-	<h2>Begin signal, use of registered</h2>
-	<pre>
-			{@link #readIndicator()}=={@link #BEGIN_INDICATOR}
-			{@link #readIndicator()}=={@link #REGISTER_USE_INDICATOR}
-			{@link #readRegisterUse}
-	</pre>
-	
-	<h2>Body, un-described</h2>
-	<pre>
-			{@link #readIndicator()}=={@link #NO_INDICATOR}
-			<i>primitive read of any kind</i>
-			{@link #readIndicator()}=={@link #NO_INDICATOR}
-			<i>primitive read of any kind</i>
-			...
-			{@link #readIndicator()}=={@link #END_INDICATOR} or {@link #END_BEGIN_INDICATOR}
-	</pre>
-	
-	<h2>Body, described</h2>
-	<pre>
-			{@link #readIndicator()}==TYPE_XXXX
-			<i>primitive read of requested kind</i>
-			{@link #readIndicator()}==TYPE_XXX_END //optionally
-			{@link #readIndicator()}==TYPE_XXXX
-			<i>primitive read of requested kind</i>
-			...
-			{@link #readIndicator()}=={@link #END_INDICATOR} or {@link #END_BEGIN_INDICATOR}
-	</pre>
-	
+	<h2>Described vs un-described formats</h2>
+	This class calls {@link #isDescribed} to validate how it
+	should treat indicators returned by {@link #readIndicator}
+	and what conditions should be checked.	
 */
 public abstract class ASignalReadFormat implements ISignalReadFormat
 {
@@ -1149,7 +1100,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 		Subclasses which are implementing {@link IDescribedSignalReadFormat} should
 		set <code>strict_described_types</code> to true in constructor.
 		*/
-		public int hasData()throws IOException
+		public int whatNext()throws IOException
 		{
 				final int indicator = getIndicator();
 				switch(getIndicator())
@@ -1163,14 +1114,14 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 								{
 									switch(state)
 									{
-										case STATE_BOOLEAN_BLOCK: return IDescribedSignalReadFormat.PRMTV_BOOLEAN_BLOCK;
-										case STATE_BYTE_BLOCK: return IDescribedSignalReadFormat.PRMTV_BYTE_BLOCK;
-										case STATE_SHORT_BLOCK: return IDescribedSignalReadFormat.PRMTV_SHORT_BLOCK;
-										case STATE_CHAR_BLOCK: return IDescribedSignalReadFormat.PRMTV_CHAR_BLOCK;
-										case STATE_INT_BLOCK: return IDescribedSignalReadFormat.PRMTV_INT_BLOCK;
-										case STATE_LONG_BLOCK: return IDescribedSignalReadFormat.PRMTV_LONG_BLOCK;
-										case STATE_FLOAT_BLOCK: return IDescribedSignalReadFormat.PRMTV_FLOAT_BLOCK;
-										case STATE_DOUBLE_BLOCK: return IDescribedSignalReadFormat.PRMTV_DOUBLE_BLOCK;
+										case STATE_BOOLEAN_BLOCK: return PRMTV_BOOLEAN_BLOCK;
+										case STATE_BYTE_BLOCK: return PRMTV_BYTE_BLOCK;
+										case STATE_SHORT_BLOCK: return PRMTV_SHORT_BLOCK;
+										case STATE_CHAR_BLOCK: return PRMTV_CHAR_BLOCK;
+										case STATE_INT_BLOCK: return PRMTV_INT_BLOCK;
+										case STATE_LONG_BLOCK: return PRMTV_LONG_BLOCK;
+										case STATE_FLOAT_BLOCK: return PRMTV_FLOAT_BLOCK;
+										case STATE_DOUBLE_BLOCK: return PRMTV_DOUBLE_BLOCK;
 										default: throw new AssertionError();
 									}
 								}else
@@ -1178,27 +1129,27 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 									//not in block operation.
 									if (strict_described_types) 
 										throw new ECorruptedFormat("Strict typed stream is expected, but type information is missing.");
-									return 0xFFFF;	//<-- as generic, non typed indicator.
+									return PRMTV_UNTYPED;	//<-- as generic, non typed indicator.
 								}
 						case BEGIN_INDICATOR:		//fallthrough
 						case END_INDICATOR:			//fallthrough
-						case END_BEGIN_INDICATOR: 	return ISignalReadFormat.SIGNAL;
-						case TYPE_BOOLEAN: 			return IDescribedSignalReadFormat.PRMTV_BOOLEAN;
-						case TYPE_BYTE: 			return IDescribedSignalReadFormat.PRMTV_BYTE;
-						case TYPE_CHAR: 			return IDescribedSignalReadFormat.PRMTV_CHAR;
-						case TYPE_SHORT: 			return IDescribedSignalReadFormat.PRMTV_SHORT;
-						case TYPE_INT: 				return IDescribedSignalReadFormat.PRMTV_INT;
-						case TYPE_LONG: 			return IDescribedSignalReadFormat.PRMTV_LONG;
-						case TYPE_FLOAT: 			return IDescribedSignalReadFormat.PRMTV_FLOAT;
-						case TYPE_DOUBLE: 			return IDescribedSignalReadFormat.PRMTV_DOUBLE;
-						case TYPE_BOOLEAN_BLOCK: 	return IDescribedSignalReadFormat.PRMTV_BOOLEAN_BLOCK;
-						case TYPE_BYTE_BLOCK: 		return IDescribedSignalReadFormat.PRMTV_BYTE_BLOCK;
-						case TYPE_CHAR_BLOCK: 		return IDescribedSignalReadFormat.PRMTV_CHAR_BLOCK;
-						case TYPE_SHORT_BLOCK: 		return IDescribedSignalReadFormat.PRMTV_SHORT_BLOCK;
-						case TYPE_INT_BLOCK: 		return IDescribedSignalReadFormat.PRMTV_INT_BLOCK;
-						case TYPE_LONG_BLOCK: 		return IDescribedSignalReadFormat.PRMTV_LONG_BLOCK;
-						case TYPE_FLOAT_BLOCK: 		return IDescribedSignalReadFormat.PRMTV_FLOAT_BLOCK;
-						case TYPE_DOUBLE_BLOCK: 	return IDescribedSignalReadFormat.PRMTV_DOUBLE_BLOCK;
+						case END_BEGIN_INDICATOR: 	return SIGNAL;
+						case TYPE_BOOLEAN: 			return PRMTV_BOOLEAN;
+						case TYPE_BYTE: 			return PRMTV_BYTE;
+						case TYPE_CHAR: 			return PRMTV_CHAR;
+						case TYPE_SHORT: 			return PRMTV_SHORT;
+						case TYPE_INT: 				return PRMTV_INT;
+						case TYPE_LONG: 			return PRMTV_LONG;
+						case TYPE_FLOAT: 			return PRMTV_FLOAT;
+						case TYPE_DOUBLE: 			return PRMTV_DOUBLE;
+						case TYPE_BOOLEAN_BLOCK: 	return PRMTV_BOOLEAN_BLOCK;
+						case TYPE_BYTE_BLOCK: 		return PRMTV_BYTE_BLOCK;
+						case TYPE_CHAR_BLOCK: 		return PRMTV_CHAR_BLOCK;
+						case TYPE_SHORT_BLOCK: 		return PRMTV_SHORT_BLOCK;
+						case TYPE_INT_BLOCK: 		return PRMTV_INT_BLOCK;
+						case TYPE_LONG_BLOCK: 		return PRMTV_LONG_BLOCK;
+						case TYPE_FLOAT_BLOCK: 		return PRMTV_FLOAT_BLOCK;
+						case TYPE_DOUBLE_BLOCK: 	return PRMTV_DOUBLE_BLOCK;
 						case DIRECT_INDICATOR:
 						case REGISTER_INDICATOR:
 						case REGISTER_USE_INDICATOR:

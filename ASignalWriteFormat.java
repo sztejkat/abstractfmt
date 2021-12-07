@@ -1,26 +1,18 @@
 package sztejkat.abstractfmt;
 import java.io.IOException;
 /**
-	A core, elementary implementation.
+	A core, elementary implementation of {@link ISignalWriteFormat}
 	<p>
-	This implementation is based on what is discussed in
-	<a href="doc-files/core-implementation.html">this document</a>.
-	<p>
-	This class divides support methods into three groups:
-	<ul>
-		<li>signal indicators
-		{@link #writeBeginSignalIndicator},{@link #writeEndSignalIndicator}
-		{@link #writeEndBeginSignalIndicator};</li>
-		<li>types indicators for describes streams,
-		{@link #writeBooleanType} and ect, {@link #writeBooleanBlockType} and etc.
-		All implemented as no-operation, as expected for un-described streams;</li>
-		<li>event names handling
-		{@link #writeDirectName},{@link #writeSignalNameData},{@link #writeRegisterName}
-		{@link #writeRegisterUse};</li>
-	</ul>
-	This class provides all necessary defensive layers and names registry.
-	<p>
-	This class does not define any primitive write ops
+	This implementation is based on concept of 
+	<a href="package-description.html#indicators">indicators</a>
+	and provides base for both described and un-described formats.
+	
+	<h2>Described formats</h2>
+	This class provides a no-operation set of methods
+	<code>writeTypeXXX</code> which are invoked in every place
+	in which type information must be written. The described
+	formats should override those methods (see their description)
+	and override {@link #isDescribed} to return true.
 */
 public abstract class ASignalWriteFormat implements ISignalWriteFormat
 {
@@ -770,7 +762,8 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			//and we need to put this operation on hold so end-begin can be optimized
 			state = STATE_END_PENDING;
 		};
-		
+		/** Always returns false. See class description for implementing "described" subclasses */
+		@Override public boolean isDescribed(){ return false; };
 		/*=============================================================
 	
 			Elementatry primitives.

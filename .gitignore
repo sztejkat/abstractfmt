@@ -7,3 +7,5 @@ lib-doc/**
 *.javaclog
 #Junit test logs
 TEST-sztejkat.abstractfmt.*.txt
+# Temporary rejected/removed data.
+.rejected/**

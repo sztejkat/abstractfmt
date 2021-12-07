@@ -78,6 +78,17 @@ public interface ISignalWriteFormat extends Closeable, Flushable
 		*/
 		public void end()throws IOException;
 		
+		
+		/** True if stream implementation is "described".
+		A described implementation <u>must</u> write type information for each primitive
+		operation.
+		<p>
+		A "non-described" implementation <u>must not</u> write type information for any
+		primitive operation.
+		@return true if described. A life time constant.		
+		*/
+		public boolean isDescribed();
+		
 	/* *************************************************************
 	
 			Primitives	
