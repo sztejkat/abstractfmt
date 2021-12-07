@@ -264,12 +264,15 @@
 	Indicators can be also use to provide informations about
 	primitives if format is to be described.
 	<p>
-	Following indicators are used:
+	Following indicators are used in following sequence.
 	<pre>
 		type-indicator <i>separate for each elementary and array primitive</i>
 		<i>actual primitive data</i>
-		type-indicator-end <i>optional, also separate for each of types</i>
 	</pre>
+	Note: There is no type-end indicator, as elementary primitives are always
+	read as a whole and blocks are terminated by a signal.
+	
+	
 	
 	
 	

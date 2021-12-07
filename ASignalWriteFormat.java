@@ -275,7 +275,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		<pre>
 			writeBooleanType()
 			writeBooleanImpl(v)
-			writeBooleanTypeEnd()
+			flushBoolean()
 		</pre>
 		End indicators are allowed to be no-ops even for typed streams.
 		@throws IOException if low level i/o failed.
@@ -283,52 +283,63 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		@see #writeBooleanImpl
 		*/
 		protected  void writeBooleanType()throws IOException{};
-		/** See {@link #writeBooleanType}. Default: no-op.
-		@throws IOException if low level i/o failed.*/
-		protected  void writeBooleanTypeEnd()throws IOException{};
+		/** An entry point to make it easier to add type information
+		for un-typed stream implementation if primitives must
+		be surrounded by some data
+		@see #writeBooleanType
+		@throws IOException if low level i/o failed.
+		*/
+		protected  void flushBoolean()throws IOException{};
+		
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeByteType()throws IOException{};
-		/** See {@link #writeBooleanTypeEnd}
+		/** See {@link #flushBoolean}
 		@throws IOException if low level i/o failed.*/
-		protected  void writeByteTypeEnd()throws IOException{};
+		protected  void flushByte()throws IOException{};
+		
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeCharType()throws IOException{};
-		/** See {@link #writeBooleanTypeEnd}
+		/** See {@link #flushBoolean}
 		@throws IOException if low level i/o failed.*/
-		protected  void writeCharTypeEnd()throws IOException{};
+		protected  void flushChar()throws IOException{};
+		
+		
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
-		protected  void writeShortType()throws IOException{};
-		/** See {@link #writeBooleanTypeEnd}
+		protected  void writeShortType()throws IOException{};		
+		/** See {@link #flushBoolean}
 		@throws IOException if low level i/o failed.*/
-		protected  void writeShortTypeEnd()throws IOException{};
+		protected  void flushShort()throws IOException{};
+		
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeIntType()throws IOException{};
-		/** See {@link #writeBooleanTypeEnd}
+		/** See {@link #flushBoolean}
 		@throws IOException if low level i/o failed.*/
-		protected  void writeIntTypeEnd()throws IOException{};
+		protected  void flushInt()throws IOException{};
+		
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeLongType()throws IOException{};
-		/** See {@link #writeBooleanTypeEnd}
+		/** See {@link #flushBoolean}
 		@throws IOException if low level i/o failed.*/
-		protected  void writeLongTypeEnd()throws IOException{};
+		protected  void flushLong()throws IOException{};
+		
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeFloatType()throws IOException{};
-		/** See {@link #writeBooleanTypeEnd}
+		/** See {@link #flushBoolean}
 		@throws IOException if low level i/o failed.*/
-		protected  void writeFloatTypeEnd()throws IOException{};
+		protected  void flushFloat()throws IOException{};
+		
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeDoubleType()throws IOException{};
-		/** See {@link #writeBooleanTypeEnd}
+		/** See {@link #flushBoolean}
 		@throws IOException if low level i/o failed.*/
-		protected  void writeDoubleTypeEnd()throws IOException{};
-		
+		protected  void flushDouble()throws IOException{};
 		
 		/** Should write type indicator for {@link IDescribedSignalReadFormat#hasData}.
 		Un-described formats may implement is a no-op.
@@ -341,8 +352,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			writeBooleanBlockImpl(....)
 			writeBooleanBlockImpl(....)
 			writeBooleanBlockImpl(....)
-			....
-			writeBooleanBlockTypeEnd()	//before writing signal terminating block.
+			flushBooleanBlock()
 		</pre>
 		End indicators are allowed to be no-ops even for typed streams.
 		@throws IOException if low level i/o failed.
@@ -350,51 +360,66 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		@see #writeBooleanBlockImpl
 		*/
 		protected  void writeBooleanBlockType()throws IOException{};
-		/** See {@link #writeBooleanBlockType} and {@link #writeBooleanTypeEnd}
-		@throws IOException if low level i/o failed.*/
-		protected  void writeBooleanBlockTypeEnd()throws IOException{};
+		/** This method is invoked when block write operation is 
+		terminated becaue the signal is written. This is an entry
+		point for "flushig" operations which may be necessary
+		if blocks are using "packing" what will be typical for
+		bit-encoded boolean blocks.
+		
+		@throws IOException if low level i/o failed.
+		@see #writeBooleanBlockType
+		*/
+		protected  void flushBooleanBlock()throws IOException{};
+		
+		
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeByteBlockType()throws IOException{};
-		/** See {@link #writeBooleanBlockType}
+		/** See {@link #flushBooleanBlock}
 		@throws IOException if low level i/o failed.*/
-		protected  void writeByteBlockTypeEnd()throws IOException{};
+		protected  void flushByteBlock()throws IOException{};
+		
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeCharBlockType()throws IOException{};
-		/** See {@link #writeBooleanBlockType}
+		/** See {@link #flushBooleanBlock}
 		@throws IOException if low level i/o failed.*/
-		protected  void writeCharBlockTypeEnd()throws IOException{};
+		protected  void flushCharBlock()throws IOException{};
+		
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeShortBlockType()throws IOException{};
-		/** See {@link #writeBooleanBlockType}
+		/** See {@link #flushBooleanBlock}
 		@throws IOException if low level i/o failed.*/
-		protected  void writeShortBlockTypeEnd()throws IOException{};
+		protected  void flushShortBlock()throws IOException{};
+		
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeIntBlockType()throws IOException{};
-		/** See {@link #writeBooleanBlockType}
+		/** See {@link #flushBooleanBlock}
 		@throws IOException if low level i/o failed.*/
-		protected  void writeIntBlockTypeEnd()throws IOException{};
+		protected  void flushIntBlock()throws IOException{};
+		
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeLongBlockType()throws IOException{};
-		/** See {@link #writeBooleanBlockType}
+		/** See {@link #flushBooleanBlock}
 		@throws IOException if low level i/o failed.*/
-		protected  void writeLongBlockTypeEnd()throws IOException{};
+		protected  void flushLongBlock()throws IOException{};
+		
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeFloatBlockType()throws IOException{};
-		/** See {@link #writeBooleanBlockType}
+		/** See {@link #flushBooleanBlock}
 		@throws IOException if low level i/o failed.*/
-		protected  void writeFloatBlockTypeEnd()throws IOException{};
+		protected  void flushFloatBlock()throws IOException{};
+		
 		/** See {@link #writeBooleanType}
 		@throws IOException if low level i/o failed.*/
 		protected  void writeDoubleBlockType()throws IOException{};
-		/** See {@link #writeBooleanBlockType}
+		/** See {@link #flushBooleanBlock}
 		@throws IOException if low level i/o failed.*/
-		protected  void writeDoubleBlockTypeEnd()throws IOException{};
+		protected  void flushDoubleBlock()throws IOException{};
 		
 		/*========================================================
 		
@@ -601,14 +626,14 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		{			
 			switch(state)
 			{
-				case STATE_BOOLEAN_BLOCK: writeBooleanBlockTypeEnd(); break;
-				case STATE_BYTE_BLOCK: writeByteBlockTypeEnd(); break;
-				case STATE_CHAR_BLOCK: writeCharBlockTypeEnd(); break;
-				case STATE_SHORT_BLOCK: writeShortBlockTypeEnd(); break;
-				case STATE_INT_BLOCK: writeIntBlockTypeEnd(); break;
-				case STATE_LONG_BLOCK: writeLongBlockTypeEnd(); break;
-				case STATE_FLOAT_BLOCK: writeFloatBlockTypeEnd(); break;
-				case STATE_DOUBLE_BLOCK: writeDoubleBlockTypeEnd(); break;
+				case STATE_BOOLEAN_BLOCK: 	flushBooleanBlock(); break;
+				case STATE_BYTE_BLOCK:	 	flushByteBlock(); break;
+				case STATE_CHAR_BLOCK: 		flushCharBlock(); break;
+				case STATE_SHORT_BLOCK: 	flushShortBlock(); break;
+				case STATE_INT_BLOCK: 		flushIntBlock(); break;
+				case STATE_LONG_BLOCK: 		flushLongBlock(); break;
+				case STATE_FLOAT_BLOCK: 	flushFloatBlock(); break;
+				case STATE_DOUBLE_BLOCK: 	flushDoubleBlock(); break;
 				//no default block.
 			};
 		};
@@ -783,7 +808,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			startElementaryPrimitiveWrite();
 			writeBooleanType();
 			writeBooleanImpl(v);
-			writeBooleanTypeEnd();
+			flushBoolean();
 		};
 		/** {@inheritDoc}
 		@see #writeBoolean
@@ -793,7 +818,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			startElementaryPrimitiveWrite();
 			writeByteType();
 			writeByteImpl(v);
-			writeByteTypeEnd();
+			flushByte();
 		};
 		/** {@inheritDoc}
 		@see #writeBoolean
@@ -803,7 +828,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			startElementaryPrimitiveWrite();
 			writeCharType();
 			writeCharImpl(v);
-			writeCharTypeEnd();
+			flushChar();
 		};
 		/** {@inheritDoc}
 		@see #writeBoolean
@@ -813,7 +838,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			startElementaryPrimitiveWrite();
 			writeShortType();
 			writeShortImpl(v);
-			writeShortTypeEnd();
+			flushShort();
 		};
 		/** {@inheritDoc}
 		@see #writeBoolean
@@ -823,7 +848,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			startElementaryPrimitiveWrite();
 			writeIntType();
 			writeIntImpl(v);
-			writeIntTypeEnd();
+			flushInt();
 		};
 		/** {@inheritDoc}
 		@see #writeBoolean
@@ -833,7 +858,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			startElementaryPrimitiveWrite();
 			writeLongType();
 			writeLongImpl(v);
-			writeLongTypeEnd();
+			flushLong();
 		};
 		/** {@inheritDoc}
 		@see #writeBoolean
@@ -843,7 +868,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			startElementaryPrimitiveWrite();
 			writeFloatType();
 			writeFloatImpl(v);
-			writeFloatTypeEnd();
+			flushFloat();
 		};
 		/** {@inheritDoc}
 		@see #writeBoolean
@@ -853,7 +878,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			startElementaryPrimitiveWrite();
 			writeDoubleType();
 			writeDoubleImpl(v);
-			writeDoubleTypeEnd();
+			flushDouble();
 		};
 		/*=============================================================
 	
