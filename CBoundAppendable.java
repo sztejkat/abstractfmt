@@ -60,7 +60,7 @@ public class CBoundAppendable implements Appendable,CharSequence
 	public final char charAt(int index)
 	{
 		if (index>=at) throw new IndexOutOfBoundsException(index+" is not in 0..."+at+"-1");
-		return buffer[at];
+		return buffer[index];
 	};
 	public final CharSequence subSequence(int start,int end)
 	{

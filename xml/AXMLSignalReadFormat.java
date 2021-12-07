@@ -81,13 +81,17 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 				/** Indicates that we are inside a character block
 				and no character is "void". */
 				private static final byte STATE_CHARACTER_BLOCK = (byte)1;
-				/** If needs to return {@link #DIRECT_INDICATOR} */
+				/** If needs to return {@link #DIRECT_INDICATOR} 
+				@see #begin_name*/
 				private static final byte STATE_DIRECT_INDICATOR = (byte)2;
 				/** Processing state */
 				private byte state;
 				/** A stack of xml begin-end elements.
 				Carries element actually sent to XML */
 				private final ArrayList<String> signal_stack;
+				/** A name of a begin signal to be returned from 
+				{@link #readSignalNameData} */
+				private String begin_name;
 	
 		/* ********************************************************************
 		
@@ -212,7 +216,7 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 		*/
 		protected int processClosingTag(String tag)throws IOException
 		{
-			throw new ECorruptedFormat("Unexpected closing tag "+tag);
+			throw new ECorruptedFormat("Unexpected closing tag \""+tag+"\"");
 		};
 		/** Invoked from {@link #next} via {@link processOpeningTag()}
 		once tag is fetched.
@@ -412,8 +416,20 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 			for(;;)
 			{
 				char c=read();
-				if (c=='>') break;
+				if ((c=='>') || (Character.isWhitespace(c)))
+				{
+					unread(c);	//so we know what to purge till end of element.
+					break;
+				};
 				xml_element_buffer.append(c);	//this internally takes control of length limit.
+			};
+			//Now skip till >
+			for(;;)
+			{
+				char c=read();
+				if (c=='>') break;
+				if (!Character.isWhitespace(c))
+					throw new ECorruptedFormat("Unexpected \'"+c+"\' in closing tag");
 			};
 			//The name of closing tag may be
 			//	- the closing event, which is on events stack or
@@ -446,10 +462,8 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 					unread(c);	//so we know what to purge till end of element.
 					break;
 				};
-				//early length check.
-				if (xml_element_buffer.length()>=max_name_length)
-					throw new EFormatBoundaryExceeded("Signal name "+xml_element_buffer+""+c+" too long");
-				xml_element_buffer.append(c);	//this internally takes control of length limit, additional to above.
+				xml_element_buffer.append(c);	//this internally takes control of length limit. Notice, we need to honour
+												//internal tags longer than names, so no name length control here is allowed.
 			};
 			//Now buffer is carying a name. Let's check if it is a long or short signal name
 			if (xml_element_buffer.equalsString(LONG_SIGNAL_ELEMENT))
@@ -469,14 +483,14 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 					for(;;)
 					{
 						c = read();
-						if (c=='>') throw new ECorruptedFormat("Expected "+LONG_SIGNAL_ELEMENT_ATTR+" attribute, found none");
+						if (c=='>') throw new ECorruptedFormat("Expected attribute "+LONG_SIGNAL_ELEMENT_ATTR+"=\"some name\", found no value");
 						if (c=='=') break;
 						if (Character.isWhitespace(c)) continue;
 						xml_element_buffer.append(c);
 					};
 					//we collected name.
 					if (!xml_element_buffer.equalsString(LONG_SIGNAL_ELEMENT_ATTR))
-						throw new ECorruptedFormat("Expected "+LONG_SIGNAL_ELEMENT_ATTR+" attribute but found "+xml_element_buffer.toString());
+						throw new ECorruptedFormat("Expected "+LONG_SIGNAL_ELEMENT_ATTR+" attribute but found \""+xml_element_buffer.toString()+"\"");
 					//now consume till "
 					for(;;)
 					{
@@ -494,7 +508,11 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 						if (c=='"') break;
 						//early length check.
 						if (xml_element_buffer.length()>=max_name_length)
-							throw new EFormatBoundaryExceeded("Signal name "+xml_element_buffer+""+c+" too long");
+							throw new EFormatBoundaryExceeded("Signal name \""+xml_element_buffer+""+c+"\" too long");
+						if (c==ESCAPE_CHAR)
+						{
+							c = unescape();
+						};
 						xml_element_buffer.append(c);
 					};	
 					//We just need to purge till > or complain if there
@@ -504,11 +522,15 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 						c=read();
 						if (c=='>') break;
 						if (!Character.isWhitespace(c))
-							throw new ECorruptedFormat("Unexpected character after <"+xml_element_buffer.toString());
+							throw new ECorruptedFormat("Unexpected character after \'"+c+"\' after \"<"+xml_element_buffer.toString()+"\"");
 					};
-					//and put it on elements stack.
-					signal_stack.add(xml_element_buffer.toString());
-					return STATE_DIRECT_INDICATOR;
+					//and put it on elements stack. Notice, we do put a found tag, not begin name..
+					signal_stack.add(LONG_SIGNAL_ELEMENT);
+					//and keep as direct name to return.
+					this.begin_name=xml_element_buffer.toString();
+					//and make sure we will return this fake state later.
+					this.state = STATE_DIRECT_INDICATOR;
+					return BEGIN_INDICATOR;
 			}else
 			{
 				//We just need to purge till > or complain if there
@@ -518,7 +540,7 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 					char c=read();
 					if (c=='>') break;
 					if (!Character.isWhitespace(c))
-						throw new ECorruptedFormat("Unexpected character after <"+xml_element_buffer.toString());
+						throw new ECorruptedFormat("Unexpected character after \'"+c+"\' after \"<"+xml_element_buffer.toString()+"\"");
 				};
 				//Now the tag is identified. We assume, that writer is expected to
 				//avoid tags clash between signals or type tags, so we ask subclass
@@ -529,6 +551,8 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 				{
 					//name is identified, we put it on stack
 					signal_stack.add(tag);
+					//and keep as direct name to return.
+					this.begin_name = tag;
 					//and at last we fake a state to enforce 
 					this.state = STATE_DIRECT_INDICATOR;
 				};
@@ -539,11 +563,9 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 		
 		@Override protected void readSignalNameData(Appendable a, int limit)throws IOException
 		{
-			//we take it from stack as processBeginTag put it there.
-			assert(!signal_stack.isEmpty());
-			//we do rely on a limiting and the fact, that we had limitied it earlier 
-			//to reasonable value.
-			a.append(signal_stack.get(signal_stack.size()-1));
+			assert(begin_name!=null):"this should not be invoked, no name is preserved"; 
+			a.append(this.begin_name);
+			this.begin_name=begin_name;
 		};
 		@Override protected int readRegisterIndex()throws IOException
 		{
@@ -575,17 +597,19 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 			for(;;)
 			{
 				c = read();
-				if ((c=='<')||(c=='>')) 
-						throw new ECorruptedFormat("Unexpected "+c+" in a numeric primitive");
 				if (c==PRIMITIVES_SEPARATOR_CHAR) return xml_element_buffer;	//empty primitive.
-				if (!Character.isWhitespace(c)) break; 
+				if (!Character.isWhitespace(c)) 
+				{
+					unread(c);
+					break;
+				};
 			};
 			//read till separator.
 			for(;;)
 			{
 				c = read();
 				if ((c=='<')||(c=='>')||( Character.isWhitespace(c)))
-						throw new ECorruptedFormat("Unexpected "+c+" in numeric primitive");
+						throw new ECorruptedFormat("Unexpected \'"+c+"\' inside a body a numeric primitive");
 				if (c==PRIMITIVES_SEPARATOR_CHAR) break;
 				xml_element_buffer.append(c);
 			};
@@ -597,7 +621,7 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 			//Now we may safely assume, that if type tag was present
 			//it was fetched. So cursor may be at some white-space characters
 			CharSequence s = readNumericPrimitive();
-			if (s.length()!=-1) throw new ECorruptedFormat(s+" does not represent boolean, \"f\" or \"t\" expected");
+			if (s.length()!=1) throw new ECorruptedFormat("Text \""+s+"\" does not represent boolean, \"f\",\"F\",\"0\",\"1\",\"t\" or \"T\" is expected.");
 			char c = s.charAt(0);
 			switch(c)
 			{
@@ -607,7 +631,7 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 				case 'f':
 				case 'F':
 				case '0': return false;
-				default: throw new ECorruptedFormat("The "+s+" is not representing a boolean value");
+				default: throw new ECorruptedFormat("Character \""+c+"\" in \""+s+"\" in does not represent boolean, \"f\",\"F\",\"0\",\"1\",\"t\" or \"T\" is expected.");
 			}
 		};
 		@Override protected byte readByteImpl()throws IOException
@@ -626,13 +650,23 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 			xml_element_buffer.reset();
 			char c = read();
 			if ((c=='<')||(c=='>')) 
-					throw new ECorruptedFormat("Unexpected "+c+" in a numeric primitive");
+					throw new ECorruptedFormat("Unexpected \'"+c+"\' in a character primitive");
 			if (c==ESCAPE_CHAR)
 			{
-				c = unescape();
-			};
-			//check if there is a trailing ;
+				c = unescape(); //unescape is consuming trailing ;
+				//Now be leninet and allow missing ; which should appear after %0;
+				//ie it should be %0;; in primitives.
+				//Notice this leninecy will have troubles with understanding
+				//	%20;;;a; as " ;a" which should be %20;;;;a;
+				if (PRIMITIVES_SEPARATOR_CHAR==ESCAPE_CHAR_END)	//
+				{
+					 char v = read();
+					 if (v!=PRIMITIVES_SEPARATOR_CHAR)
+					 	unread(v);
+				};
+			}else
 			{
+				//check if there is a trailing ; which is now bligatory.			
 				char v = read();
 				if (v!=PRIMITIVES_SEPARATOR_CHAR)
 				{
