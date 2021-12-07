@@ -72,6 +72,13 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 				private final CBoundAppendable xml_element_buffer;
 				/** As specified in constructor. */
 				private final int max_name_length;
+				/** A maximum size of XML element.
+				If 0 there is no boundary. The positive value sets
+				how many characters can be read from stream between
+				calls to {@link #nextIndicator} before
+				{@link EFormatBoundaryExceeded} is thrown
+				@see #current_xml_element_size*/
+				private final int max_inter_signal_chars;
 				/* ****************************************************
 						State
 				* ***************************************************/
@@ -92,6 +99,9 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 				/** A name of a begin signal to be returned from 
 				{@link #readSignalNameData} */
 				private String begin_name;
+				/** Used by {@link #read}/{@link #unread} to control
+				{@link #max_xml_element_size} */
+				private int current_inter_signal_chars;
 	
 		/* ********************************************************************
 		
@@ -116,6 +126,10 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 				There is a warranty that syntax elements up to this limit will not cause
 				{@link EFormatBoundaryExceeded}, but there is no warranty that
 				longer will throw.
+		@param max_inter_signal_chars a maximum size of characters in stream 
+				between calls to {@link #nextIndicator} before
+				{@link EFormatBoundaryExceeded} is thrown. Zero disables this check.
+				This is a defense against streams of infinite size.
 		*/
 		protected AXMLSignalReadFormat(
 									 final int max_name_length,
@@ -124,12 +138,15 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 									 final char ESCAPE_CHAR, final char ESCAPE_CHAR_END, 
 									 final char PRIMITIVES_SEPARATOR_CHAR,
 									 final String LONG_SIGNAL_ELEMENT,final String LONG_SIGNAL_ELEMENT_ATTR,
-									 final int max_type_tag_length
+									 final int max_type_tag_length,
+									 final int max_inter_signal_chars
 									 )
 		{
 			super(0, max_name_length, max_events_recursion_depth,strict_described_types);//no names registry!
 			assert(LONG_SIGNAL_ELEMENT!=null);
 			assert(LONG_SIGNAL_ELEMENT_ATTR!=null);
+			assert(max_inter_signal_chars>=0);
+			assert(max_type_tag_length>=0);
 			this.max_name_length=max_name_length;
 			this.ESCAPE_CHAR=ESCAPE_CHAR;
 			this.ESCAPE_CHAR_END=ESCAPE_CHAR_END;
@@ -146,6 +163,7 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 												32 //guess we need for Double.toString and etc.
 												)
 									)));
+			this.max_inter_signal_chars=max_inter_signal_chars;
 			this.unread = new char[max_length];
 			this.xml_element_buffer = new CBoundAppendable(max_length);
 		};
@@ -251,7 +269,7 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 		=========================================================*/
 		@Override protected int readIndicator()throws IOException
 		{						
-			
+			resetInterSignalLimit();
 			again:
 			for(;;) //due to comments.
 			{
@@ -319,6 +337,7 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 		};
 		@Override protected void skip()throws IOException,EUnexpectedEof
 		{
+			resetInterSignalLimit();
 			//A bit more complex due to faked state.
 			switch(state)
 			{
@@ -585,9 +604,9 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 		-------------------------------------------------------*/
 		/** Reads a numeric primitive, that is a sequence down to ;
 		into a {@link #xml_element_buffer} 
-		@return xml_element_buffer
+		@return xml_element_buffer or null if reached XML token.
 		*/
-		private CharSequence readNumericPrimitive()throws IOException
+		private CharSequence tryReadNumericPrimitive()throws IOException
 		{
 			//skip leading white-spaces.
 			//Notice, we should detected primitives separator as the end
@@ -608,21 +627,40 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 			for(;;)
 			{
 				c = read();
-				if ((c=='<')||(c=='>')||( Character.isWhitespace(c)))
+				if (c=='<')
+				{
+						unread(c);	//need to detect this element indicator.
+									//because we use it in blocks too.
+						return null;
+				};
+				if ((c=='>')||( Character.isWhitespace(c)))
+				{	
+						unread(c);
 						throw new ECorruptedFormat("Unexpected \'"+c+"\' inside a body a numeric primitive");
+				};
 				if (c==PRIMITIVES_SEPARATOR_CHAR) break;
 				xml_element_buffer.append(c);
 			};
 			return xml_element_buffer;
 		};
-		/** This method is lenient and recognized tT1 and fF0 as true and false accordingly */
-		@Override protected boolean readBooleanImpl()throws IOException
+		/** Reads a numeric primitive, that is a sequence down to ;
+		into a {@link #xml_element_buffer} 
+		@return xml_element_buffer
+		@throws ENoMoreData if reached XML token
+		*/
+		private CharSequence readNumericPrimitive()throws IOException
 		{
-			//Now we may safely assume, that if type tag was present
-			//it was fetched. So cursor may be at some white-space characters
-			CharSequence s = readNumericPrimitive();
-			if (s.length()!=1) throw new ECorruptedFormat("Text \""+s+"\" does not represent boolean, \"f\",\"F\",\"0\",\"1\",\"t\" or \"T\" is expected.");
-			char c = s.charAt(0);
+			CharSequence s = tryReadNumericPrimitive();
+			if (s==null) throw new ENoMoreData();
+			return s;
+		};
+		/** Converts boolean char representation to boolean
+		@param c char, 0,1,f,F,t,T
+		@return boolean value
+		@throws ECorruptedFormat if not known char.
+		*/
+		private static boolean charToBoolean(char c)throws ECorruptedFormat
+		{
 			switch(c)
 			{
 				case 't': 
@@ -631,15 +669,24 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 				case 'f':
 				case 'F':
 				case '0': return false;
-				default: throw new ECorruptedFormat("Character \""+c+"\" in \""+s+"\" in does not represent boolean, \"f\",\"F\",\"0\",\"1\",\"t\" or \"T\" is expected.");
+				default: throw new ECorruptedFormat("Character \""+c+"\" does not represent boolean, \"f\",\"F\",\"0\",\"1\",\"t\" or \"T\" is expected.");
 			}
+		};
+		/** This method is lenient and recognized tT1 and fF0 as true and false accordingly */
+		@Override protected boolean readBooleanImpl()throws IOException
+		{
+			//Now we may safely assume, that if type tag was present
+			//it was fetched. So cursor may be at some white-space characters
+			CharSequence s = readNumericPrimitive();
+			if (s.length()!=1) throw new ECorruptedFormat("Text \""+s+"\" does not represent boolean, \"f\",\"F\",\"0\",\"1\",\"t\" or \"T\" is expected.");
+			return charToBoolean(s.charAt(0));
 		};
 		@Override protected byte readByteImpl()throws IOException
 		{
 			String s = readNumericPrimitive().toString();
 			try{
 				return Byte.parseByte(s);
-			}catch(NumberFormatException ex){ throw new ECorruptedFormat("\""+s+"\" is not a byte ",ex); }
+			}catch(NumberFormatException ex){ throw new ECorruptedFormat("\""+s+"\" is not a byte "+ex.getMessage(),ex); }
 		};
 		
 		
@@ -649,8 +696,18 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 			//and tested for trailing ;
 			xml_element_buffer.reset();
 			char c = read();
-			if ((c=='<')||(c=='>')) 
-					throw new ECorruptedFormat("Unexpected \'"+c+"\' in a character primitive");
+			if (c=='<')
+			{
+				unread(c);	//need to detect this element indicator.
+							//Note: If we would not allow spaces we would not have to
+							//do it.
+				throw new ENoMoreData();
+			};
+			if (c=='>')
+			{
+				unread(c);
+				throw new ECorruptedFormat("Unexpected \'"+c+"\' in a character primitive");
+			};
 			if (c==ESCAPE_CHAR)
 			{
 				c = unescape(); //unescape is consuming trailing ;
@@ -682,36 +739,219 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 			String s = readNumericPrimitive().toString();
 			try{
 				return Short.parseShort(s);
-			}catch(NumberFormatException ex){ throw new ECorruptedFormat("\""+s+"\" is not a short ",ex); }
+			}catch(NumberFormatException ex){ throw new ECorruptedFormat("\""+s+"\" is not a short "+ex.getMessage(),ex); }
 		};
 		@Override protected int readIntImpl()throws IOException
 		{
 			String s = readNumericPrimitive().toString();
 			try{
 				return Integer.parseInt(s);
-			}catch(NumberFormatException ex){ throw new ECorruptedFormat("\""+s+"\" is not an integer ",ex); }
+			}catch(NumberFormatException ex){ throw new ECorruptedFormat("\""+s+"\" is not an integer "+ex.getMessage(),ex); }
 		};
 		@Override protected long readLongImpl()throws IOException
 		{
 			String s = readNumericPrimitive().toString();
 			try{
 				return Long.parseLong(s);
-			}catch(NumberFormatException ex){ throw new ECorruptedFormat("\""+s+"\" is not a long ",ex); }
+			}catch(NumberFormatException ex){ throw new ECorruptedFormat("\""+s+"\" is not a long "+ex.getMessage(),ex); }
 		};
 		@Override protected float readFloatImpl()throws IOException
 		{
 			String s = readNumericPrimitive().toString();
 			try{
 				return Float.parseFloat(s);
-			}catch(NumberFormatException ex){ throw new ECorruptedFormat("\""+s+"\" is not a float ",ex); }
+			}catch(NumberFormatException ex){ throw new ECorruptedFormat("\""+s+"\" is not a float "+ex.getMessage(),ex); }
 		};
 		@Override protected double readDoubleImpl()throws IOException
 		{
 			String s = readNumericPrimitive().toString();				
 			try{
 				return Double.parseDouble(s);
-			}catch(NumberFormatException ex){ throw new ECorruptedFormat("\""+s+"\" is not a double ",ex); }
+			}catch(NumberFormatException ex){ throw new ECorruptedFormat("\""+s+"\" is not a double "+ex.getMessage(),ex); }
 		};
+		
+		/*-------------------------------------------------------
+					Blocks
+		-------------------------------------------------------*/
+		@Override protected int readBooleanBlockImpl(boolean [] buffer, int offset, int length)throws IOException
+		{
+			//Boolean blocks are chains of 0,1,t,T,f,F followed by XML tag.
+			//In leninent mode we allow white-spaces (which include EOL)
+			char c;
+			int readen = 0;
+			while(length>0)
+			{
+				c = read();
+				if (Character.isWhitespace(c)) continue;
+				if (c=='<') { unread(c); break; }
+				buffer[offset++] = charToBoolean(c);
+				readen++;
+				length--;
+			};
+			return readen;
+		};
+		@Override protected int readByteBlockImpl(byte [] buffer, int offset, int length)throws IOException
+		{
+			//Byte blocks are chains of XX hex pairs followed by XML tag.
+			//In leninent mode we allow white-spaces (which include EOL) but only
+			//between bytes.			
+			int readen = 0;
+			while(length>0)
+			{
+				char d1 = read();
+				if (Character.isWhitespace(d1)) continue;
+				if (d1=='<') { unread(d1); break; }
+				char d0 = read();
+				buffer[offset++] = (byte)((HEX(d1)<<4)+(HEX(d0)));
+				readen++;
+				length--;
+			};
+			return readen;
+		};
+		@Override protected int readByteBlockImpl()throws IOException
+		{
+			//Byte blocks are chains of XX hex pairs followed by XML tag.
+			//In leninent mode we allow white-spaces (which include EOL) but only
+			//between bytes.			
+			for(;;)
+			{
+				char d1 = read();
+				if (Character.isWhitespace(d1)) continue;
+				if (d1=='<') { unread(d1); return -1; }
+				char d0 = read();
+				return ((HEX(d1)<<4)+(HEX(d0)));
+			}
+		};
+		@Override protected int readCharBlockImpl(char [] buffer, int offset, int length)throws IOException
+		{
+			//Char blocks are chains of char or escapes followed by XML tag.
+			//This time we do not allow spaces.	
+			state=STATE_CHARACTER_BLOCK;	//to control space skipping in nextIndicator()
+			int readen = 0;
+			while(length>0)
+			{
+				char c = read();
+				if (c=='<') { unread(c); break; }
+				if (c==ESCAPE_CHAR)
+						c = unescape();
+				buffer[offset++] = c;
+				readen++;
+				length--;
+			};
+			return readen;
+		};
+		@Override protected int readCharBlockImpl(Appendable a, int length)throws IOException
+		{
+			//Char blocks are chains of char or escapes followed by XML tag.
+			//This time we do not allow spaces.		
+			state=STATE_CHARACTER_BLOCK;	//to control space skipping in nextIndicator()
+			int readen = 0;
+			while(length>0)
+			{
+				char c = read();
+				if (c=='<') { unread(c); break; }
+				if (c==ESCAPE_CHAR)
+						c = unescape();
+				a.append(c);
+				readen++;
+				length--;
+			};
+			return readen;
+		};
+		
+		@Override protected int readShortBlockImpl(short [] buffer, int offset, int length)throws IOException
+		{
+			//Short blocks are chains short primitive elements.	
+			//We can't however use readShortImpl because it would throw ENoMoreData.
+			int readen = 0;
+			while(length>0)
+			{
+				CharSequence s = tryReadNumericPrimitive();
+				if (s==null) break;
+				try{
+					buffer[offset++] = Short.parseShort(s.toString());
+					readen++;
+					length--; 
+				}catch(NumberFormatException ex){ throw new ECorruptedFormat("\""+s+"\" is not a short "+ex.getMessage(),ex); }
+			};
+			return readen;
+		};
+		@Override protected int readIntBlockImpl(int [] buffer, int offset, int length)throws IOException
+		{
+			//Int blocks are chains int primitive elements.	
+			//We can't however use readIntImpl because it would throw ENoMoreData.
+			int readen = 0;
+			while(length>0)
+			{
+				CharSequence s = tryReadNumericPrimitive();
+				if (s==null) break;
+				try{
+					buffer[offset++] = Integer.parseInt(s.toString());
+					readen++;
+					length--; 
+				}catch(NumberFormatException ex){ throw new ECorruptedFormat("\""+s+"\" is not a int "+ex.getMessage(),ex); }
+			};
+			return readen;
+		};
+		@Override protected int readLongBlockImpl(long [] buffer, int offset, int length)throws IOException
+		{
+			//Long blocks are chains long primitive elements.	
+			//We can't however use readLongImpl because it would throw ENoMoreData.
+			int readen = 0;
+			while(length>0)
+			{
+				CharSequence s = tryReadNumericPrimitive();
+				if (s==null) break;
+				try{
+					buffer[offset++] = Long.parseLong(s.toString());
+					readen++;
+					length--; 
+				}catch(NumberFormatException ex){ throw new ECorruptedFormat("\""+s+"\" is not a long "+ex.getMessage(),ex); }
+			};
+			return readen;
+		};
+		@Override protected int readFloatBlockImpl(float [] buffer, int offset, int length)throws IOException
+		{
+			//Float blocks are chains float primitive elements.	
+			//We can't however use readFloatImpl because it would throw ENoMoreData.
+			int readen = 0;
+			while(length>0)
+			{
+				CharSequence s = tryReadNumericPrimitive();
+				if (s==null) break;
+				try{
+					buffer[offset++] = Float.parseFloat(s.toString());
+					readen++;
+					length--; 
+				}catch(NumberFormatException ex){ throw new ECorruptedFormat("\""+s+"\" is not a float "+ex.getMessage(),ex); }
+			};
+			return readen;
+		};
+		@Override protected int readDoubleBlockImpl(double [] buffer, int offset, int length)throws IOException
+		{
+			//Double blocks are chains double primitive elements.	
+			//We can't however use readDoubleImpl because it would throw ENoMoreData.
+			int readen = 0;
+			while(length>0)
+			{
+				CharSequence s = tryReadNumericPrimitive();
+				if (s==null) break;
+				try{
+					buffer[offset++] = Double.parseDouble(s.toString());
+					readen++;
+					length--; 
+				}catch(NumberFormatException ex){ throw new ECorruptedFormat("\""+s+"\" is not a double "+ex.getMessage(),ex); }
+			};
+			return readen;
+		};
+		
+		
+		
+		
+		
+		
+		
+		
 		
 		/* ******************************************************
 		
@@ -720,6 +960,31 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 				Basically a simplified push-back reader.
 		
 		* *******************************************************/
+		/** Handles {@link #current_inter_signal_chars} in {@link #read}
+		@throws EFormatBoundaryExceeded if inter-signal space is too long.
+		*/
+		private void incrInterSignalLimit()throws EFormatBoundaryExceeded
+		{
+			if(max_inter_signal_chars!=0)
+			{
+				if (current_inter_signal_chars==max_inter_signal_chars)
+					throw new EFormatBoundaryExceeded("Too many characters between signals. Up to "+max_inter_signal_chars+" chars is allowed");
+					else current_inter_signal_chars++;
+			};
+		};
+		/** Handles {@link #current_inter_signal_chars} in {@link #unread}*/
+		private void decrInterSignalLimit()
+		{
+			if(max_inter_signal_chars!=0)
+			{
+				if (current_inter_signal_chars>0) current_inter_signal_chars--;
+			};
+		};
+		/** Handles {@link #current_inter_signal_chars} in {@link #nextIndicator} and {@link #skip}*/
+		private void resetInterSignalLimit()
+		{
+			current_inter_signal_chars=0;
+		};
 		/**
 			Tests if next {@link #read} will throw
 			{@link UnexpectedEof}. Performs read of stream
@@ -750,10 +1015,10 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 			@return read character
 			@throws EUnexpectedEof if end of file was encounterd
 			@throws IOException if low level have failed.
-			
+			@throws EFormatBoundaryExceeded if {@link #max_inter_signal_chars} is exceeded.
 			@see #readEscaped
 		*/
-		protected final char read()throws EUnexpectedEof, IOException
+		protected final char read()throws EUnexpectedEof, IOException,EFormatBoundaryExceeded
 		{
 			int i =unread_at;
 			if (i==0)
@@ -761,13 +1026,15 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 				final int r = readImpl();
 				if (r==-1) throw new EUnexpectedEof();
 				assert(r>=-1);
-				assert(r<=0x0FFFF);
+				assert(r<=0x0FFFF);		
+				incrInterSignalLimit();
 				return (char)r;
 			}else
 			{
 				final char c = unread[i-1];
 				i--;
 				this.unread_at=i;
+				incrInterSignalLimit();
 				return c;
 			}
 		};
@@ -799,6 +1066,7 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 			if (i>=u.length) throw new AssertionError("Can't un-read so many characters");
 			u[i]=c;
 			i++;
+			decrInterSignalLimit();
 			this.unread_at = i;
 		};
 		/** Reads character, detects
@@ -870,7 +1138,8 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 								'%',';',//final char ESCAPE_CHAR, final char ESCAPE_CHAR_END, 
 								';',//final char PRIMITIVES_SEPARATOR_CHAR,
 								"e","n",//final String LONG_SIGNAL_ELEMENT,final String LONG_SIGNAL_ELEMENT_ATTR,
-								4 //final int max_type_tag_length
+								4, //final int max_type_tag_length
+								0  //max_inter_signal_chars
 								); 
 					};
 					DUT(String s)

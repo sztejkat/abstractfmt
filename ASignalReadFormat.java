@@ -978,7 +978,6 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 		{
 			//check what indicator is under cursor?
 			int indicator = getIndicator();
-			System.out.println("continuePrimitiveBlockType "+indicatorToString(indicator));
 			if (indicator==expected_type_indicator+0x100)
 			{
 					//ideal type match, ending indicator, consume it.
