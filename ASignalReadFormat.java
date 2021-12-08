@@ -166,7 +166,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 			    @see #getIndicator
 			    @see #consumeIndicator
 			    */
-				protected static final  int EOF_INDICATOR = -1;
+				public static final  int EOF_INDICATOR = -1;
 				/** Returned by {@link #readIndicator} to inform
 			    that there is no indicator under cursor, so nothing
 			    could have been read. 
@@ -181,7 +181,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 			    This class will never ask described stream for an indicator
 			    while inside an elementary primitive data.
 			    */
-				protected static final int NO_INDICATOR = 0;
+				public static final int NO_INDICATOR = 0;
 				/** Returned by {@link #readIndicator} to inform
 				that under a cursor there was a begin indicator,
 				it was fetched and cursor was moved forward.
@@ -191,19 +191,19 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 				can appear in stream.
 				@see ASignalWriteFormat#writeBeginSignalIndicator
 				*/
-				protected static final  int BEGIN_INDICATOR = 1;
+				public static final  int BEGIN_INDICATOR = 1;
 				/** Returned by {@link #readIndicator} to inform
 				that under a cursor there was a an end indicator, it was read
 				and cursor was moved forward.
 				@see ASignalWriteFormat#writeEndSignalIndicator
 				*/
-				protected static final  int END_INDICATOR = 2;
+				public static final  int END_INDICATOR = 2;
 				/** Returned by {@link #readIndicator} to inform,
 				that under a cursor there was a an end-begin indicator, it was read
 				and cursor was moved forward.
 				@see ASignalWriteFormat#writeEndBeginSignalIndicator
 				*/
-				protected static final  int END_BEGIN_INDICATOR = 3;
+				public static final  int END_BEGIN_INDICATOR = 3;
 				/** Returned by {@link #readIndicator} to inform,
 				that under a cursor there was a a "direct name" indicator, it was read
 				and cursor was moved forward.
@@ -213,7 +213,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 				@see ASignalWriteFormat#writeDirectName
 				@see ASignalWriteFormat#writeSignalNameData
 				*/ 
-				protected static final int DIRECT_INDICATOR=4;
+				public static final int DIRECT_INDICATOR=4;
 				/** Returned by {@link #readIndicator} to inform,
 				that under a cursor there was a a "register name" indicator, it was read
 				and cursor was moved forward.
@@ -227,7 +227,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 				@see ASignalWriteFormat#writeRegisterName
 				@see ASignalWriteFormat#writeSignalNameData
 				*/ 
-				protected static final int REGISTER_INDICATOR=5;
+				public static final int REGISTER_INDICATOR=5;
 				/** Returned by {@link #readIndicator} to inform,
 				that under a cursor there was a a "register use" indicator, it was read
 				and cursor was moved forward.
@@ -239,7 +239,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 				</ul>
 				@see ASignalWriteFormat#writeRegisterUse
 				*/ 
-				protected static final int REGISTER_USE_INDICATOR=6;
+				public static final int REGISTER_USE_INDICATOR=6;
 				/** Returned by {@link #readIndicator} to inform,
 				that under a cursor there was a primitive type begin
 				indicator.
@@ -256,7 +256,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 				is read from {@link #readIndicator}
 				@see ASignalWriteFormat#writeBooleanType
 				*/
-				protected static final int TYPE_BOOLEAN = 7;
+				public static final int TYPE_BOOLEAN = 7;
 				/** Returned by {@link #readIndicator} to inform,
 				that under a cursor there was an optional
 				primitive type end indicator. This is basically an entry
@@ -275,85 +275,85 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 				that such type of an indicator is not present.
 				@see ASignalWriteFormat#flushBoolean
 				*/
-				protected static final int FLUSH_BOOLEAN = 7+0x100;
+				public static final int FLUSH_BOOLEAN = 7+0x100;
 				
 				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int TYPE_BYTE = 8;
+				public static final int TYPE_BYTE = 8;
 				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int FLUSH_BYTE = 8+0x100;
-				
-				
-				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int TYPE_CHAR = 9;
-				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int FLUSH_CHAR = 9+0x100;
-				
-				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int TYPE_SHORT = 10;
-				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int FLUSH_SHORT = 10+0x100;
-				
-				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int TYPE_INT = 11;
-				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int FLUSH_INT = 11+0x100;
-				
-				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int TYPE_LONG = 12;
-				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int FLUSH_LONG = 12+0x100;
-				
-				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int TYPE_FLOAT = 13;
-				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int FLUSH_FLOAT = 13+0x100;
-				
-				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int TYPE_DOUBLE = 14;
-				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int FLUSH_DOUBLE = 14+0x100;
+				public static final int FLUSH_BYTE = 8+0x100;
 				
 				
 				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int TYPE_BOOLEAN_BLOCK = 15;
+				public static final int TYPE_CHAR = 9;
 				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int FLUSH_BOOLEAN_BLOCK = 15+0x100;
+				public static final int FLUSH_CHAR = 9+0x100;
 				
 				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int TYPE_BYTE_BLOCK = 16;
+				public static final int TYPE_SHORT = 10;
 				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int FLUSH_BYTE_BLOCK = 16+0x100;
+				public static final int FLUSH_SHORT = 10+0x100;
+				
+				/** See {@link #TYPE_BOOLEAN} */
+				public static final int TYPE_INT = 11;
+				/** See {@link #TYPE_BOOLEAN} */
+				public static final int FLUSH_INT = 11+0x100;
+				
+				/** See {@link #TYPE_BOOLEAN} */
+				public static final int TYPE_LONG = 12;
+				/** See {@link #TYPE_BOOLEAN} */
+				public static final int FLUSH_LONG = 12+0x100;
+				
+				/** See {@link #TYPE_BOOLEAN} */
+				public static final int TYPE_FLOAT = 13;
+				/** See {@link #TYPE_BOOLEAN} */
+				public static final int FLUSH_FLOAT = 13+0x100;
+				
+				/** See {@link #TYPE_BOOLEAN} */
+				public static final int TYPE_DOUBLE = 14;
+				/** See {@link #TYPE_BOOLEAN} */
+				public static final int FLUSH_DOUBLE = 14+0x100;
 				
 				
 				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int TYPE_CHAR_BLOCK = 17;
+				public static final int TYPE_BOOLEAN_BLOCK = 15;
 				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int FLUSH_CHAR_BLOCK = 17+0x100;
+				public static final int FLUSH_BOOLEAN_BLOCK = 15+0x100;
 				
 				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int TYPE_SHORT_BLOCK = 18;
+				public static final int TYPE_BYTE_BLOCK = 16;
 				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int FLUSH_SHORT_BLOCK = 18+0x100;
+				public static final int FLUSH_BYTE_BLOCK = 16+0x100;
+				
 				
 				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int TYPE_INT_BLOCK = 19;
+				public static final int TYPE_CHAR_BLOCK = 17;
 				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int FLUSH_INT_BLOCK = 19+0x100;
+				public static final int FLUSH_CHAR_BLOCK = 17+0x100;
 				
 				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int TYPE_LONG_BLOCK = 20;
+				public static final int TYPE_SHORT_BLOCK = 18;
 				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int FLUSH_LONG_BLOCK = 20+0x100;
+				public static final int FLUSH_SHORT_BLOCK = 18+0x100;
 				
 				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int TYPE_FLOAT_BLOCK = 21;
+				public static final int TYPE_INT_BLOCK = 19;
 				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int FLUSH_FLOAT_BLOCK = 21+0x100;
+				public static final int FLUSH_INT_BLOCK = 19+0x100;
 				
 				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int TYPE_DOUBLE_BLOCK = 22;
+				public static final int TYPE_LONG_BLOCK = 20;
 				/** See {@link #TYPE_BOOLEAN} */
-				protected static final int FLUSH_DOUBLE_BLOCK = 22+0x100;
+				public static final int FLUSH_LONG_BLOCK = 20+0x100;
+				
+				/** See {@link #TYPE_BOOLEAN} */
+				public static final int TYPE_FLOAT_BLOCK = 21;
+				/** See {@link #TYPE_BOOLEAN} */
+				public static final int FLUSH_FLOAT_BLOCK = 21+0x100;
+				
+				/** See {@link #TYPE_BOOLEAN} */
+				public static final int TYPE_DOUBLE_BLOCK = 22;
+				/** See {@link #TYPE_BOOLEAN} */
+				public static final int FLUSH_DOUBLE_BLOCK = 22+0x100;
 				/** Some described streams may use this indicator
 				to surround elementary primitive, but not provide type
 				information.
@@ -363,7 +363,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 				<p>
 				If stream is not {@link #isDescribed}  it must complain.
 				*/
-				protected static final int FLUSH = 23+0x100;
+				public static final int FLUSH = 23+0x100;
 				/** Some described streams may use this indicator
 				to surround block of primitives, but not provide type
 				information.
@@ -373,7 +373,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 				<p>
 				If stream is not {@link #isDescribed}  it must complain.
 				*/
-				protected static final int FLUSH_BLOCK = 24+0x100;
+				public static final int FLUSH_BLOCK = 24+0x100;
 				/** Some described streams may use this indicator
 				to surround block of primitives or elementary primitives,
 				but not provide type information.
@@ -383,7 +383,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 				<p>
 				If stream is not {@link #isDescribed}  it must complain.
 				*/
-				protected static final int FLUSH_ANY = 25+0x100;
+				public static final int FLUSH_ANY = 25+0x100;
 		
 		
 		/* ---------------------------------------------------
@@ -674,7 +674,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 		@param i indicator
 		@return true if it is
 		*/
-		protected static boolean isTypeIndicator(int i)
+		public static boolean isTypeIndicator(int i)
 		{
 			switch(i)
 			{
@@ -733,7 +733,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 		@param i indicator
 		@return true if it is
 		*/
-		protected static boolean isElementaryTypeIndicator(int i)
+		public static boolean isElementaryTypeIndicator(int i)
 		{
 			switch(i)
 			{
@@ -792,7 +792,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 		@param i indicator
 		@return true if it is
 		*/
-		protected static boolean isElementaryFlushIndicator(int i)
+		public static boolean isElementaryFlushIndicator(int i)
 		{
 			switch(i)
 			{
@@ -851,7 +851,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 		@param i indicator
 		@return true if it is
 		*/
-		protected static boolean isBlockTypeIndicator(int i)
+		public static boolean isBlockTypeIndicator(int i)
 		{
 			switch(i)
 			{
@@ -909,7 +909,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 		@param i indicator
 		@return true if it is
 		*/
-		protected static boolean isBlockFlushIndicator(int i)
+		public static boolean isBlockFlushIndicator(int i)
 		{
 			switch(i)
 			{
@@ -969,7 +969,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 		@param indicator one of indicator constants.
 		@return string form or "unknown(<i>indicator</i>)"
 		*/
-		protected static String indicatorToString(int indicator)
+		public static String indicatorToString(int indicator)
 		{
 			switch(indicator)
 			{
@@ -1026,7 +1026,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 		@param type_indicator indicator to convert
 		@return string form
 		*/
-		protected static String typeIndicatorToString(int type_indicator)
+		public static String typeIndicatorToString(int type_indicator)
 		{
 				switch(type_indicator)
 				{
