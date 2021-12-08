@@ -135,9 +135,12 @@ public class CBoundAppendable implements Appendable,CharSequence
     /** A quick test, faster than 
     <code>s.equals(this.toString)</code>
     because it avoids creation of a temporary object
+    @param s string to compare with, non-null
+    @return true if content is equal
     */
     public boolean equalsString(String s)
     {
+    	assert(s!=null);
     	//Note: Objects with different hashes can't be 
     	//the same.
     	if (hashCode()!=s.hashCode()) return false;

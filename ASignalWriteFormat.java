@@ -266,7 +266,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		/* -------------------------------------------------------
 				Types of primitives for described streams		
 		---------------------------------------------------------*/
-		/** Should write type indicator for {@link IDescribedSignalReadFormat#hasData}.
+		/** Should write type indicator.
 		Un-described formats may implement is a no-op. 
 		<p>
 		This implementation is no-op. 
@@ -281,6 +281,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		@throws IOException if low level i/o failed.
 		@see #writeBoolean
 		@see #writeBooleanImpl
+		@see ASignalReadFormat#readIndicator
 		*/
 		protected  void writeBooleanType()throws IOException{};
 		/** An entry point to make it easier to add type information
@@ -341,7 +342,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		@throws IOException if low level i/o failed.*/
 		protected  void flushDouble()throws IOException{};
 		
-		/** Should write type indicator for {@link IDescribedSignalReadFormat#hasData}.
+		/** Should write type indicator.
 		Un-described formats may implement is a no-op.
 		<p>
 		This implementation is no-op. 
@@ -358,6 +359,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		@throws IOException if low level i/o failed.
 		@see #writeBooleanBlock
 		@see #writeBooleanBlockImpl
+		@see ASignalReadFormat#readIndicator
 		*/
 		protected  void writeBooleanBlockType()throws IOException{};
 		/** This method is invoked when block write operation is 
