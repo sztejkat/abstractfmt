@@ -47,7 +47,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 		
 		***************************************************************/
 		/** Creates
-		@param names_registry_size see {@link ASignalReadFormat#ASignalReadFormat(int,int,int,boolean)}
+		@param names_registry_size see {@link ASignalReadFormat#ASignalReadFormat(int,int,int)}
 		@param max_name_length --//--
 		@param max_events_recursion_depth --//--
 		@param media non null media from which read data.

@@ -42,14 +42,9 @@ public abstract class ATestISignalFormatBase extends sztejkat.utils.test.ATest
 				};				
 		};
 		/** Creates a pair which is to be used for testing purposes.	
-		@param max_name_length greater or equal to 8. Maximum length of names
-			to be accepted in {@link #begin(String, boolean)} and be passed to
-			{@link #writeSignalNameData}
-		@param max_events_recursion_depth specifies the allowed depth of elements
-			nesting. Zero disables limit, 1 sets limit to: "no nested elements allowed",
-			2 allows element within an element and so on. If this limit is exceed
-			the {@link #begin(String,boolean)} will throw <code>IllegalStateException</code>.
+		@param max_name_length as declared in {@link ASignalWriteFormat#ASignalWriteFormat(int,int,int)}
+		@param max_events_recursion_depth --//--
 		@return created, coupled pair.
 		*/
-		protected abstract Pair create(int max_name_length, int max_recursion_depth);
+		protected abstract Pair create(int max_name_length, int max_events_recursion_depth);
 };

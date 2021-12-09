@@ -17,7 +17,7 @@ import java.io.IOException;
 	and what conditions should be checked.
 	
 	<h2>Testing</h2>
-	Through tests of this class are performed in </code>sztejkat.abstractfmt.obj</code>
+	Through tests of this class are performed in <code>sztejkat.abstractfmt.obj</code>
 	package with an apropriate test vehicle. Basic tests are performend in this
 	package <code>TestXXX</code> classes.
 */

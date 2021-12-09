@@ -15,7 +15,7 @@ import java.io.IOException;
 	and override {@link #isDescribed} to return true.
 	
 	<h2>Testing</h2>
-	Through tests of this class are performed in </code>sztejkat.abstractfmt.obj</code>
+	Through tests of this class are performed in <code>sztejkat.abstractfmt.obj</code>
 	package with an apropriate test vehicle. Basic tests are performend in this
 	package <code>TestXXX</code> classes.
 */

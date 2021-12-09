@@ -1,4 +1,5 @@
 package sztejkat.abstractfmt.obj;
+import sztejkat.abstractfmt.ASignalWriteFormat;
 import java.io.IOException;
 import java.util.Arrays;
 /**
