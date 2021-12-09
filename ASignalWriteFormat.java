@@ -13,6 +13,11 @@ import java.io.IOException;
 	in which type information must be written. The described
 	formats should override those methods (see their description)
 	and override {@link #isDescribed} to return true.
+	
+	<h2>Testing</h2>
+	Through tests of this class are performed in </code>sztejkat.abstractfmt.obj</code>
+	package with an apropriate test vehicle. Basic tests are performend in this
+	package <code>TestXXX</code> classes.
 */
 public abstract class ASignalWriteFormat implements ISignalWriteFormat
 {
@@ -621,7 +626,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			};
 		};
 		/** Checs if any block operation is pending and calls
-		their <code>writeXXXBlockTypeEnd</code>
+		their <code>flushXXXBlock</code>
 		@throws IOException if called method thrown 
 		*/
 		private void closePendingBlocks()throws IOException

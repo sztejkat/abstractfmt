@@ -90,6 +90,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 				media.removeFirst();	//read it from media.
 				CObjListFormat.INDICATOR i = (CObjListFormat.INDICATOR)at_cursor;
 				last_indicator = i; //for name index reading services.
+				
 				return i.type;
 			}else
 			{
@@ -125,6 +126,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 			//We expect that in stream there is a String representing name,
 			//as format specs say.			
 			Object at_cursor = media.pollFirst();
+			
 			if (at_cursor==null) throw new EUnexpectedEof();
 			if (at_cursor instanceof String)
 			{
@@ -267,6 +269,20 @@ public class CObjListReadFormat extends ASignalReadFormat
 				the implementation must look at indicators present
 				in stream.
 		..............................................................*/
+		private static boolean isBlockTerminator(Object at_cursor, CObjListFormat.INDICATOR type_specific_flush)
+		{
+			return (at_cursor == CObjListFormat.BEGIN_INDICATOR)
+					 ||
+				    (at_cursor == CObjListFormat.END_INDICATOR)
+				     ||
+				    (at_cursor == CObjListFormat.END_BEGIN_INDICATOR)
+				     ||
+				    (at_cursor == type_specific_flush)
+				     ||
+				    (at_cursor == CObjListFormat.FLUSH_BLOCK)
+				    ||
+				    (at_cursor == CObjListFormat.FLUSH_ANY);
+		}; 
 		@Override protected int readBooleanBlockImpl(boolean [] buffer, int offset, int length)throws IOException
 		{
 			//sever through blocks
@@ -276,17 +292,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 				//check what is under a cursor, but do not remove it.
 				if (media.isEmpty()) throw new EUnexpectedEof();	//this is unexpected
 				Object at_cursor = media.getFirst();
-				if (
-				    (at_cursor == CObjListFormat.BEGIN_INDICATOR)
-					 ||
-				    (at_cursor == CObjListFormat.END_INDICATOR)
-				     ||
-				    (at_cursor == CObjListFormat.END_BEGIN_INDICATOR)
-				     ||
-				    (at_cursor == CObjListFormat.FLUSH_BOOLEAN_BLOCK)
-				     ||
-				    (at_cursor == CObjListFormat.FLUSH_BLOCK)
-				   )
+				if (isBlockTerminator(at_cursor,CObjListFormat.FLUSH_BOOLEAN_BLOCK))
 				{
 					//the allowed condition when we reach block terminator
 					//after we fully read previous data block.
@@ -320,7 +326,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 						this.array_op_ptr=ptr;
 					};
 				}else
-					throw new EDataMissmatch(at_cursor.getClass()+" while expected boolean[]");
+					throw new EDataMissmatch(at_cursor.getClass()+" ("+at_cursor+") while expected boolean[]");
 			};
 			return read_count;
 		};
@@ -333,17 +339,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 				//check what is under a cursor, but do not remove it.
 				if (media.isEmpty()) throw new EUnexpectedEof();	//this is unexpected
 				Object at_cursor = media.getFirst();
-				if (
-				    (at_cursor == CObjListFormat.BEGIN_INDICATOR)
-					 ||
-				    (at_cursor == CObjListFormat.END_INDICATOR)
-				     ||
-				    (at_cursor == CObjListFormat.END_BEGIN_INDICATOR)
-				     ||
-				    (at_cursor == CObjListFormat.FLUSH_BYTE_BLOCK)
-				    ||
-				    (at_cursor == CObjListFormat.FLUSH_BLOCK)
-				   )
+				if (isBlockTerminator(at_cursor,CObjListFormat.FLUSH_BYTE_BLOCK))
 				{
 					//the allowed condition when we reach block terminator
 					//after we fully read previous data block.
@@ -377,7 +373,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 						this.array_op_ptr=ptr;
 					};
 				}else
-					throw new EDataMissmatch(at_cursor.getClass()+" while expected byte[]");
+					throw new EDataMissmatch(at_cursor.getClass()+" ("+at_cursor+") while expected byte[]");
 			};
 			return read_count;
 		};
@@ -390,17 +386,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 				//check what is under a cursor, but do not remove it.
 				if (media.isEmpty()) throw new EUnexpectedEof();	//this is unexpected
 				Object at_cursor = media.getFirst();
-				if (
-				    (at_cursor == CObjListFormat.BEGIN_INDICATOR)
-					 ||
-				    (at_cursor == CObjListFormat.END_INDICATOR)
-				     ||
-				    (at_cursor == CObjListFormat.END_BEGIN_INDICATOR)
-				     ||
-				    (at_cursor == CObjListFormat.FLUSH_BYTE_BLOCK)
-				    ||
-				    (at_cursor == CObjListFormat.FLUSH_BLOCK)
-				   )
+				if (isBlockTerminator(at_cursor,CObjListFormat.FLUSH_BYTE_BLOCK))
 				{
 					return -1;	//we have nothing read.
 				};
@@ -427,7 +413,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 						return ((int)v)&0xff;
 					}
 				}else
-					throw new EDataMissmatch(at_cursor.getClass()+" while expected byte[]");
+					throw new EDataMissmatch(at_cursor.getClass()+" ("+at_cursor+") while expected byte[]");
 			}
 		};
 		
@@ -440,17 +426,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 				//check what is under a cursor, but do not remove it.
 				if (media.isEmpty()) throw new EUnexpectedEof();	//this is unexpected
 				Object at_cursor = media.getFirst();
-				if (
-				    (at_cursor == CObjListFormat.BEGIN_INDICATOR)
-					 ||
-				    (at_cursor == CObjListFormat.END_INDICATOR)
-				     ||
-				    (at_cursor == CObjListFormat.END_BEGIN_INDICATOR)
-				     ||
-				    (at_cursor == CObjListFormat.FLUSH_CHAR_BLOCK)
-				    ||
-				    (at_cursor == CObjListFormat.FLUSH_BLOCK)
-				   )
+				if (isBlockTerminator(at_cursor,CObjListFormat.FLUSH_CHAR_BLOCK))
 				{
 					//the allowed condition when we reach block terminator
 					//after we fully read previous data block.
@@ -484,7 +460,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 						this.array_op_ptr=ptr;
 					};
 				}else
-					throw new EDataMissmatch(at_cursor.getClass()+" while expected char[]");
+					throw new EDataMissmatch(at_cursor.getClass()+" ("+at_cursor+") while expected char[]");
 			};
 			return read_count;
 		};
@@ -497,17 +473,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 				//check what is under a cursor, but do not remove it.
 				if (media.isEmpty()) throw new EUnexpectedEof();	//this is unexpected
 				Object at_cursor = media.getFirst();
-				if (
-				    (at_cursor == CObjListFormat.BEGIN_INDICATOR)
-					 ||
-				    (at_cursor == CObjListFormat.END_INDICATOR)
-				     ||
-				    (at_cursor == CObjListFormat.END_BEGIN_INDICATOR)
-				     ||
-				    (at_cursor == CObjListFormat.FLUSH_CHAR_BLOCK)
-				    ||
-				    (at_cursor == CObjListFormat.FLUSH_BLOCK)
-				   )
+				if (isBlockTerminator(at_cursor,CObjListFormat.FLUSH_CHAR_BLOCK))
 				{
 					//the allowed condition when we reach block terminator
 					//after we fully read previous data block.
@@ -543,7 +509,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 						this.array_op_ptr=ptr;
 					};
 				}else
-					throw new EDataMissmatch(at_cursor.getClass()+" while expected char[]");
+					throw new EDataMissmatch(at_cursor.getClass()+" ("+at_cursor+") while expected char[]");
 			};
 			return read_count;
 		};
@@ -556,17 +522,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 				//check what is under a cursor, but do not remove it.
 				if (media.isEmpty()) throw new EUnexpectedEof();	//this is unexpected
 				Object at_cursor = media.getFirst();
-				if (
-				    (at_cursor == CObjListFormat.BEGIN_INDICATOR)
-					 ||
-				    (at_cursor == CObjListFormat.END_INDICATOR)
-				     ||
-				    (at_cursor == CObjListFormat.END_BEGIN_INDICATOR)
-				     ||
-				    (at_cursor == CObjListFormat.FLUSH_SHORT_BLOCK)
-				    ||
-				    (at_cursor == CObjListFormat.FLUSH_BLOCK)
-				   )
+				if (isBlockTerminator(at_cursor,CObjListFormat.FLUSH_SHORT_BLOCK))
 				{
 					//the allowed condition when we reach block terminator
 					//after we fully read previous data block.
@@ -600,7 +556,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 						this.array_op_ptr=ptr;
 					};
 				}else
-					throw new EDataMissmatch(at_cursor.getClass()+" while expected short[]");
+					throw new EDataMissmatch(at_cursor.getClass()+" ("+at_cursor+") while expected short[]");
 			};
 			return read_count;
 		};
@@ -613,17 +569,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 				//check what is under a cursor, but do not remove it.
 				if (media.isEmpty()) throw new EUnexpectedEof();	//this is unexpected
 				Object at_cursor = media.getFirst();
-				if (
-				    (at_cursor == CObjListFormat.BEGIN_INDICATOR)
-					 ||
-				    (at_cursor == CObjListFormat.END_INDICATOR)
-				     ||
-				    (at_cursor == CObjListFormat.END_BEGIN_INDICATOR)
-				     ||
-				    (at_cursor == CObjListFormat.FLUSH_INT_BLOCK)
-				    ||
-				    (at_cursor == CObjListFormat.FLUSH_BLOCK)
-				   )
+				if (isBlockTerminator(at_cursor,CObjListFormat.FLUSH_INT_BLOCK))
 				{
 					//the allowed condition when we reach block terminator
 					//after we fully read previous data block.
@@ -657,7 +603,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 						this.array_op_ptr=ptr;
 					};
 				}else
-					throw new EDataMissmatch(at_cursor.getClass()+" while expected int[]");
+					throw new EDataMissmatch(at_cursor.getClass()+" ("+at_cursor+") while expected int[]");
 			};
 			return read_count;
 		};
@@ -670,17 +616,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 				//check what is under a cursor, but do not remove it.
 				if (media.isEmpty()) throw new EUnexpectedEof();	//this is unexpected
 				Object at_cursor = media.getFirst();
-				if (
-				    (at_cursor == CObjListFormat.BEGIN_INDICATOR)
-					 ||
-				    (at_cursor == CObjListFormat.END_INDICATOR)
-				     ||
-				    (at_cursor == CObjListFormat.END_BEGIN_INDICATOR)
-				     ||
-				    (at_cursor == CObjListFormat.FLUSH_LONG_BLOCK)
-				    ||
-				    (at_cursor == CObjListFormat.FLUSH_BLOCK)
-				   )
+				if (isBlockTerminator(at_cursor,CObjListFormat.FLUSH_LONG_BLOCK))
 				{
 					//the allowed condition when we reach block terminator
 					//after we fully read previous data block.
@@ -714,7 +650,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 						this.array_op_ptr=ptr;
 					};
 				}else
-					throw new EDataMissmatch(at_cursor.getClass()+" while expected long[]");
+					throw new EDataMissmatch(at_cursor.getClass()+" ("+at_cursor+") while expected long[]");
 			};
 			return read_count;
 		};
@@ -727,17 +663,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 				//check what is under a cursor, but do not remove it.
 				if (media.isEmpty()) throw new EUnexpectedEof();	//this is unexpected
 				Object at_cursor = media.getFirst();
-				if (
-				    (at_cursor == CObjListFormat.BEGIN_INDICATOR)
-					 ||
-				    (at_cursor == CObjListFormat.END_INDICATOR)
-				     ||
-				    (at_cursor == CObjListFormat.END_BEGIN_INDICATOR)
-				     ||
-				    (at_cursor == CObjListFormat.FLUSH_FLOAT_BLOCK)
-				    ||
-				    (at_cursor == CObjListFormat.FLUSH_BLOCK)
-				   )
+				if (isBlockTerminator(at_cursor,CObjListFormat.FLUSH_FLOAT_BLOCK))
 				{
 					//the allowed condition when we reach block terminator
 					//after we fully read previous data block.
@@ -771,7 +697,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 						this.array_op_ptr=ptr;
 					};
 				}else
-					throw new EDataMissmatch(at_cursor.getClass()+" while expected float[]");
+					throw new EDataMissmatch(at_cursor.getClass()+" ("+at_cursor+") while expected float[]");
 			};
 			return read_count;
 		};
@@ -784,17 +710,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 				//check what is under a cursor, but do not remove it.
 				if (media.isEmpty()) throw new EUnexpectedEof();	//this is unexpected
 				Object at_cursor = media.getFirst();
-				if (
-				    (at_cursor == CObjListFormat.BEGIN_INDICATOR)
-					 ||
-				    (at_cursor == CObjListFormat.END_INDICATOR)
-				     ||
-				    (at_cursor == CObjListFormat.END_BEGIN_INDICATOR)
-				     ||
-				    (at_cursor == CObjListFormat.FLUSH_DOUBLE_BLOCK)
-				    ||
-				    (at_cursor == CObjListFormat.FLUSH_BLOCK)
-				   )
+				if (isBlockTerminator(at_cursor,CObjListFormat.FLUSH_DOUBLE_BLOCK))
 				{
 					//the allowed condition when we reach block terminator
 					//after we fully read previous data block.
@@ -828,7 +744,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 						this.array_op_ptr=ptr;
 					};
 				}else
-					throw new EDataMissmatch(at_cursor.getClass()+" while expected double[]");
+					throw new EDataMissmatch(at_cursor.getClass()+" ("+at_cursor+") while expected double[]");
 			};
 			return read_count;
 		};

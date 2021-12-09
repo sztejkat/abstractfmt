@@ -1,7 +1,7 @@
 package sztejkat.abstractfmt.obj;
 import sztejkat.abstractfmt.ASignalWriteFormat;
-import java.io.IOException;
 import java.util.Arrays;
+import java.io.IOException;
 /**
 		An implementation {@link ASignalWriteFormat} which
 		writes signals and data to {@link CObjListFormat}.

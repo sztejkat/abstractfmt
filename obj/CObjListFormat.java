@@ -122,5 +122,147 @@ public final class CObjListFormat extends LinkedList<Object>
 				public static final INDICATOR FLUSH=new INDICATOR(ASignalReadFormat.FLUSH);
 				public static final INDICATOR FLUSH_BLOCK=new INDICATOR(ASignalReadFormat.FLUSH_BLOCK);
 				public static final INDICATOR FLUSH_ANY=new INDICATOR(ASignalReadFormat.FLUSH_ANY);
-				
+	
+	public String toString()
+	{
+		StringBuilder sb = new StringBuilder();
+		boolean comma = false;
+		for( Object i: this)
+		{
+			if (comma) sb.append(',');
+			
+			if (i==null) sb.append("--null--");
+			else
+			if (i instanceof String) sb.append("\""+i+"\"");
+			else
+			if (i instanceof boolean[])
+			{
+				boolean [] a = (boolean[])i;
+				sb.append("boolean["+a.length+"]{");
+				int j;
+				int lim = Math.min(a.length, 10);
+				boolean ca =false;
+				for( j=0;j<lim;j++)
+				{ 
+					if (ca) sb.append(',');
+					sb.append(a[j]);ca=true;
+				};
+				if (j<a.length) sb.append("...");
+				sb.append('}');
+			}else
+			if (i instanceof byte[])
+			{
+				byte [] a = (byte[])i;
+				sb.append("byte["+a.length+"]{");
+				int j;
+				int lim = Math.min(a.length, 10);
+				boolean ca =false;
+				for( j=0;j<lim;j++)
+				{ 
+					if (ca) sb.append(',');
+					sb.append(a[j]);ca=true;
+				};
+				if (j<a.length) sb.append("...");
+				sb.append('}');
+			}else
+			if (i instanceof char[])
+			{
+				char [] a = (char[])i;
+				sb.append("char["+a.length+"]{");
+				int j;
+				int lim = Math.min(a.length, 10);
+				boolean ca =false;
+				for( j=0;j<lim;j++)
+				{ 
+					if (ca) sb.append(',');
+					ca=true;
+					char c = a[j];
+					if ((c>=32)&&(c<=127))
+						sb.append("\'"+a[j]+"\'");
+					else
+						sb.append("#"+Integer.toHexString(c));
+				};
+				if (j<a.length) sb.append("...");
+				sb.append('}');
+			}else
+			if (i instanceof short[])
+			{
+				short [] a = (short[])i;
+				sb.append("short["+a.length+"]{");
+				int j;
+				int lim = Math.min(a.length, 10);
+				boolean ca =false;
+				for( j=0;j<lim;j++)
+				{ 
+					if (ca) sb.append(',');
+					sb.append(a[j]);ca=true;
+				};
+				if (j<a.length) sb.append("...");
+				sb.append('}');
+			}else
+			if (i instanceof int[])
+			{
+				int [] a = (int[])i;
+				sb.append("int["+a.length+"]{");
+				int j;
+				int lim = Math.min(a.length, 10);
+				boolean ca =false;
+				for( j=0;j<lim;j++)
+				{ 
+					if (ca) sb.append(',');
+					sb.append(a[j]);ca=true;
+				};
+				if (j<a.length) sb.append("...");
+				sb.append('}');
+			}else
+			if (i instanceof long[])
+			{
+				long [] a = (long[])i;
+				sb.append("long["+a.length+"]{");
+				int j;
+				int lim = Math.min(a.length, 10);
+				boolean ca =false;
+				for( j=0;j<lim;j++)
+				{ 
+					if (ca) sb.append(',');
+					sb.append(a[j]);ca=true;
+				};
+				if (j<a.length) sb.append("...");
+				sb.append('}');
+			}else
+			if (i instanceof float[])
+			{
+				float [] a = (float[])i;
+				sb.append("float["+a.length+"]{");
+				int j;
+				int lim = Math.min(a.length, 10);
+				boolean ca =false;
+				for( j=0;j<lim;j++)
+				{ 
+					if (ca) sb.append(',');
+					sb.append(a[j]);ca=true;
+				};
+				if (j<a.length) sb.append("...");
+				sb.append('}');
+			}else
+			if (i instanceof double[])
+			{
+				double [] a = (double[])i;
+				sb.append("short["+a.length+"]{");
+				int j;
+				int lim = Math.min(a.length, 10);
+				boolean ca =false;
+				for( j=0;j<lim;j++)
+				{ 
+					if (ca) sb.append(',');
+					sb.append(a[j]);ca=true;
+				};
+				if (j<a.length) sb.append("...");
+				sb.append('}');
+			}else
+				sb.append(i.toString());
+			comma=true;
+		};
+		return sb.toString();
+	};
 };

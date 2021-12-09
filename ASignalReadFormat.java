@@ -14,7 +14,12 @@ import java.io.IOException;
 	<h2>Described vs un-described formats</h2>
 	This class calls {@link #isDescribed} to validate how it
 	should treat indicators returned by {@link #readIndicator}
-	and what conditions should be checked.	
+	and what conditions should be checked.
+	
+	<h2>Testing</h2>
+	Through tests of this class are performed in </code>sztejkat.abstractfmt.obj</code>
+	package with an apropriate test vehicle. Basic tests are performend in this
+	package <code>TestXXX</code> classes.
 */
 public abstract class ASignalReadFormat implements ISignalReadFormat
 {
@@ -1111,13 +1116,13 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 		*/
 		private int getIndicator()throws IOException
 		{
-			validateUsable();			
+			validateUsable();						
 			if (pending_indicator==EOF_INDICATOR)
 			{
 				try{
-						pending_indicator = readIndicator();
-					}catch(EBrokenStream ex){ throw breakStream(ex); };
-			}
+						pending_indicator = readIndicator();						
+					}catch(EBrokenStream ex){  throw breakStream(ex); };
+			};
 			return pending_indicator;
 		};
 		
@@ -1479,6 +1484,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 		private void startPrimitiveBlockType(int expected_type_indicator)throws IOException
 		{
 			///validateUsable(); <- not necessary, callers are always testing it prior to calling this method.
+			if (current_depth==0) throw new IllegalStateException("Cannot initiate block read when there is no event active");
 			validatePrimitiveBlockType(expected_type_indicator);
 		};
 		
@@ -1495,7 +1501,9 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 			switch(indicator)
 			{
 				case EOF_INDICATOR:  	  throw new EUnexpectedEof();
-				case NO_INDICATOR:		  return true;	//some data
+				case NO_INDICATOR:		 
+									consumeIndicator(); //must be consumed, so next pool will ask stream.
+									return true;	//some data
 				case BEGIN_INDICATOR:
 				case END_INDICATOR:
 				case END_BEGIN_INDICATOR: return false; //correct, allowed indicators, but no more data.
@@ -1544,7 +1552,9 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 			switch(indicator)
 			{
 				case EOF_INDICATOR:		throw new EUnexpectedEof();
-				case NO_INDICATOR:		return true;				
+				case NO_INDICATOR:		
+										consumeIndicator(); //must be consumed, so next pool will ask stream.
+										return true;				
 				case BEGIN_INDICATOR:
 				case END_INDICATOR:
 				case END_BEGIN_INDICATOR: return false; //correct, allowed, since indicator is optional.
@@ -1797,16 +1807,17 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 			{
 				//check if stream did not break.
 				validateUsable();
-				try{
-					//consume pending indicator, so that if any operation fails we will move to next indicator.
+				try{					
 					final int indicator = getIndicator();
+					consumeIndicator(); //consume pending indicator, so that if any operation fails we will move to next indicator.
 					switch(indicator)
 					{
 							case BEGIN_INDICATOR:
 								{
+									
 									//validate depth
 									if ((max_events_recursion_depth!=0)&&(max_events_recursion_depth<=current_depth))
-										throw new EFormatBoundaryExceeded("Too deep elements recursion, max "+max_events_recursion_depth+" is allowed");
+										throw new EFormatBoundaryExceeded("Too deep elements recursion, max "+max_events_recursion_depth+" is allowed");									
 									current_depth++;
 									//Manipulate state
 									state = STATE_PRIMITIVE;									
