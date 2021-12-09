@@ -1746,13 +1746,10 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 					return;
 				case FLUSH:
 					//this primitive flush is allowed only for primitive flushes.
-					consumeIndicator();	//remove it, it is allowed, since it is a generic flush.
-					return;
-				case FLUSH_BLOCK:
-					//this primitive flush is allowed only for block flushes
-					//but we are handling primitves only.
 					throw new EDataMissmatch("Expected "+typeIndicatorToString(expected_flush_indicator)+
 												" but found type in stream is "+typeIndicatorToString(indicator));
+				case FLUSH_BLOCK:				
+					//this primitive flush is allowed only for block flushes										
 				case FLUSH_ANY:
 					consumeIndicator();	//remove it, it is allowed, since it is a generic flush.
 					return;

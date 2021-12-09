@@ -100,7 +100,9 @@ public interface ISignalReadFormat extends Closeable
 				which should be processed by {@link #readDoubleBlock}.*/
 				public static final int PRMTV_DOUBLE_BLOCK=16;
 				/** Indicates stread carries no type information about what
-				is under cursor, but surely this is not a signal.*/
+				is under cursor, but surely this is not a signal.
+				<p>
+				Note: All PRMTV_xxx constants are &gt;0*/
 				public static final int PRMTV_UNTYPED=0xFFFF;
 		/** 
 			Tests what kind of information is under a cursor.

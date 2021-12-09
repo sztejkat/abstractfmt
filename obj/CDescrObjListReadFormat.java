@@ -7,7 +7,7 @@ import java.io.IOException;
 	<p>
 	This implementation is described.
 */
-public class CDescrObjListReadFormat extends ObjListReadFormat
+public class CDescrObjListReadFormat extends CObjListReadFormat
 {
 		/* *************************************************************
 		

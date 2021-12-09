@@ -3,22 +3,23 @@ import sztejkat.abstractfmt.*;
 /**
 	An interoperational tests
 	for {@link ASignalReadFormat}/{@link ASignalWriteFormat}
-	through {@link CObjListWriteFormat}/{@link CObjListReadFormat}
+	using described streams (but running description agnostic tests)
+	through {@link CDescrFlushObjListWriteFormat}/{@link CDescrObjListReadFormat}
 */
-public class TestCObjListFormat_Primitves extends ATestISignalFormat_Primitives
+public class TestCDescrFlushObjListFormat_Primitves extends ATestISignalFormat_Primitives
 {
 		@Override protected Pair create(int max_name_length, int max_recursion_depth)
 		{
 			CObjListFormat media = new CObjListFormat();
 			
 			return new Pair(
-						new CObjListWriteFormat(
+						new CDescrFlushObjListWriteFormat(
 									 8,//int names_registry_size,
 									 max_name_length,//int max_name_length,
 									 max_recursion_depth,//int max_events_recursion_depth,
 									 media //CObjListFormat media
 									 ),
-						new CObjListReadFormat(
+						new CDescrObjListReadFormat(
 									 8,//int names_registry_size,
 									 max_name_length,//int max_name_length,
 									 max_recursion_depth,//int max_events_recursion_depth
