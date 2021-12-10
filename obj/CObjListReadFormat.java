@@ -99,7 +99,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 				return NO_INDICATOR;
 			}
 		};
-		@Override  protected void skip()throws IOException,EUnexpectedEof
+		@Override  protected void skipData()throws IOException,EUnexpectedEof
 		{
 			array_op_ptr = 0;	//reset any array op.
 			//loop

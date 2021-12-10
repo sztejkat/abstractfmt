@@ -454,7 +454,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 		@throws EUnexpectedEof if encounterd end of stream before reaching indicator
 		@throws ECorruptedFormat if stream is broken beyond repair.
 		*/
-		protected abstract void skip()throws IOException,EUnexpectedEof;
+		protected abstract void skipData()throws IOException,EUnexpectedEof;
 		
 		/* -------------------------------------------------------
 		
@@ -1887,7 +1887,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 									return null;
 							default:
 									//skip content till next indicator 
-									skip();
+									skipData();
 					 }
 				  }catch(EBrokenStream ex){ throw breakStream(ex); };
 			}
@@ -2474,7 +2474,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 						count++;
 						return next_indicator_to_return;
 					};
-					@Override protected void skip()throws IOException,EUnexpectedEof{ throw new AbstractMethodError(); };
+					@Override protected void skipData()throws IOException,EUnexpectedEof{ throw new AbstractMethodError(); };
 					@Override protected void readSignalNameData(Appendable a, int limit)throws IOException{ throw new AbstractMethodError(); };
 					@Override protected int readRegisterIndex()throws IOException{ throw new AbstractMethodError(); };
 					@Override protected int readRegisterUse()throws IOException{ throw new AbstractMethodError(); };

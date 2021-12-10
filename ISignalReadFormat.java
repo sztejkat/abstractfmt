@@ -40,16 +40,47 @@ public interface ISignalReadFormat extends Closeable
 		@see #whatNext
 		*/
 		public String next()throws IOException;
+		/** Skips all remaining primitives and all nested events until
+		it will read end signal for current event.
+		<p>
+		This method is to be used when You have read a "begin" signal,
+		figured out that You are not interested at all in what is in it,
+		regardless how many prmitives and events is inside
+		and You need to move to after the end of it.
+		
+		@throws IOException if low level i/o failed or an appropriate
+		subclass to represent encountered problem.
+		*/ 
+		public default void skip()throws IOException
+		{
+			int depth=1;
+			String s;
+			do{
+				s=next();
+				if (s!=null)
+				{
+					depth++;
+				}else
+				{
+					depth--;
+				};
+			}while(depth!=0);
+		};
 		
 				/** Indicates that {@link #next} would not skip anything
-				and would return a signal.*/
+				and would return a signal.
+				<p>
+				This constant is cast in stone zero.*/
 				public static final int SIGNAL=0;
 				/** Indicates that {@link #next} would have thrown {@link EUnexpectedEof}
 				if called right now. This condition may change if stream is
 				a network connection or other produced-on-demand stream. This condition
 				<u>must</u> appear if no data about next signal is present in stream, but
 				is not expected to detect the possibility of an EOF inside a begin
-				signal itself, ie. when reading a name of a signal*/
+				signal itself, ie. when reading a name of a signal.
+				<p>
+				This constant is cast in stone -1.
+				*/
 				public static final int EOF=-1;				
 				/** Indicates that next element in stream is an elementary primitive
 				which should be processed by {@link #readBoolean} */
@@ -112,8 +143,8 @@ public interface ISignalReadFormat extends Closeable
 			some data to be read from a low level stream.
 		@return one of:
 				<ul>
-					<li>{@link #EOF};</li>
-					<li>{@link #SIGNAL};</li>
+					<li>{@link #EOF} (this constant is -1)</li>
+					<li>{@link #SIGNAL} (this constant is zero);</li>
 					<li>if stream is {@link #isDescribed}:
 							<ul>
 								<li>{@link #PRMTV_BOOLEAN};</li>
@@ -133,11 +164,13 @@ public interface ISignalReadFormat extends Closeable
 								<li>{@link #PRMTV_FLOAT_BLOCK};</li>
 								<li>{@link #PRMTV_DOUBLE_BLOCK};</li>
 							</ul>
+							Note:All above constants are &gt;0.
 					<li>
 					<li>if stream is not {@link #isDescribed}:
 							<ul>
 								<li>{@link #PRMTV_UNTYPED};</li>
 							</ul>
+							Note:Above constant is &gt;0.
 					</li>
 				</ul>
 		@throws IOException if low level i/o failed, except of end-of-stream condition
