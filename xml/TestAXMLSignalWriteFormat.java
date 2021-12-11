@@ -25,9 +25,11 @@ public class TestAXMLSignalWriteFormat extends sztejkat.utils.test.ATest
 									 );
 						result=new StringBuilder(16384);
 					};
+					@Override protected void write(char c){ result.append(c); };
+					@Override protected void write(CharSequence c){ result.append(c); };					
+					
 					@Override protected void closeImpl(){};
-					@Override protected boolean isReservedElement(String signal_name){ return "root".equals(signal_name); };
-					@Override protected Appendable getOutput(){ return result; };
+					@Override protected boolean isReservedElement(String signal_name){ return "root".equals(signal_name); };					
 					
 			};
 	@org.junit.Test public void testPrimitiveSequence()throws IOException

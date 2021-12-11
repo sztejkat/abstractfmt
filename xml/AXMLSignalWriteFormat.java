@@ -8,7 +8,12 @@ import java.util.ArrayList;
 	<p>
 	For used XML format definition see <a href="doc-files/xml-syntax.html">there</a>.
 	<p>
-	This base class is undescribed.
+	This base class is undescribed. Described classes should
+	override methods as {@link ASignalWriteFormat} do specify and 
+	{@link #isReservedElement} to rule out type tags from allowed
+	event names.
+	<p>
+	This class does NOT write XML root element.
 */
 public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 {
@@ -16,10 +21,10 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 						XML elements					
 				* ***************************************************/
 				/** Character used to mark
-				<a href="doc-files/xml-syntax.html#escaped">escape sequence</a>.*/				
+				<a href="doc-files/xml-syntax.html#writeEscapedChard">escape sequence</a>.*/				
 				protected final char ESCAPE_CHAR;
 				/** Character used to mark end of
-				<a href="doc-files/xml-syntax.html#escaped">escape sequence</a>.*/
+				<a href="doc-files/xml-syntax.html#writeEscapedChard">escape sequence</a>.*/
 				protected final char ESCAPE_CHAR_END;
 				/** A character used to separate primitive data in un-typed streams */
 				protected final char PRIMITIVES_SEPARATOR_CHAR;
@@ -62,8 +67,8 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 		
 		@param max_name_length see {@link ASignalWriteFormat#ASignalWriteFormat(int,int,int)}
 		@param max_events_recursion_depth --//--
-		@param ESCAPE_CHAR see {@link #ESCAPE_CHAR}
-		@param ESCAPE_CHAR_END see {@link #ESCAPE_CHAR_END}
+		@param ESCAPE_CHAR see {@link #writeEscapedChar_CHAR}
+		@param ESCAPE_CHAR_END see {@link #writeEscapedChar_CHAR_END}
 		@param PRIMITIVES_SEPARATOR_CHAR see {@link #PRIMITIVES_SEPARATOR_CHAR}
 		@param LONG_SIGNAL_ELEMENT see {@link #LONG_SIGNAL_ELEMENT}, non null
 		@param LONG_SIGNAL_ELEMENT_ATTR see {@link #LONG_SIGNAL_ELEMENT_ATTR}, non null
@@ -96,16 +101,27 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 		or do it clash with XML elements used by this writer.
 		<p>
 		Used to test if use short or long begin signal form.
+		<p>
+		Default implementation returns false. Described implementations should
+		check here aginst own type tags. Implementations which do add 
+		enclosing tags (ie root tag) should also override it and include here.
+		
 		@param element a name of XML element to check, fitting XML rules, non null.
 		@return true if it clashes and cannot be used in short form.
 				Subclasses may enforce long form by always returning false from this 
 				method. Enforcing of short form is NOT possible.
 		*/
-		protected abstract boolean isReservedElement(String signal_name);
-		/** Should return an output to which we should write data.
-		@return never null, life time constant.
+		protected boolean isReservedElement(String signal_name){ return false; };
+		/** Like {@link java.io.Writer#write} or {@link Appendable#append}
+		Will be used to write XML content to stream.
+		@param c a part of XML content.
 		*/
-		protected abstract Appendable getOutput();
+		protected abstract void write(char c)throws IOException;
+		/** Like {@link java.io.Writer#write} or {@link Appendable#append}
+		Will be used to write XML content to stream.
+		@param csq a part of XML content.
+		*/
+		protected abstract void write(CharSequence csq)throws IOException;
 		/* ******************************************************************
 		
 				Services tunable by subclasses
@@ -118,41 +134,40 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 		with either <code>{@link ESCAPE_CHAR} {@link ESCAPE_CHAR} {@link ESCAPE_CHAR_END}</code>
 		or <code>{@link ESCAPE_CHAR} <i>1 to 4 hex upper case digits</i> {@link ESCAPE_CHAR_END}</code>
 		@param character what to escape
-		@param a where to put escaped data
 		@throws IOException if Appendable failed.
 		*/
-		protected void escape(Appendable a, char character)throws IOException
+		protected void writeEscapedChar(char character)throws IOException
 		{
-			a.append(ESCAPE_CHAR);
+			write(ESCAPE_CHAR);
 			if (character==ESCAPE_CHAR)
 			{
-				a.append(ESCAPE_CHAR);
+				write(ESCAPE_CHAR);
 			}else
 			{
 				char d0 = HEX[character & 0x0F]; character>>>=4;
 				char d1 = HEX[character & 0x0F]; character>>>=4;
 				char d2 = HEX[character & 0x0F]; character>>>=4;
 				char d3 = HEX[character]; 
-				if (d3!='0'){ a.append(d3); a.append(d2); a.append(d1); }
+				if (d3!='0'){ write(d3); write(d2); write(d1); }
 				else
-				if (d2!='0'){ a.append(d2); a.append(d1); }
+				if (d2!='0'){ write(d2); write(d1); }
 				else
-				if (d1!='0'){ a.append(d1); }
-				a.append(d0);
+				if (d1!='0'){ write(d1); }
+				write(d0);
 			};
-			a.append(ESCAPE_CHAR_END);
+			write(ESCAPE_CHAR_END);
 		};
 		/** Tests if specified character is a valid character which can be put into
 		the XML stream inside a text representing <code>char[]</code> block.
 		<p>
 		Default implementation tests againts rules 
-		specified in <a href="doc-files/xml-syntax.html#escape_in_char">xml syntax definition</a>.
+		specified in <a href="doc-files/xml-syntax.html#writeEscapedChar_in_char">xml syntax definition</a>.
 		<p>
 		Subclasses should also return false if character cannot be encoded with a low
 		level stream char-set (ie, ISO-xxx 8 bit code page).
 		@param c character
 		@return true if character does not need encoding,
-				false if it needs to be passed through {@link #escape}
+				false if it needs to be passed through {@link #writeEscapedChar}
 		*/
 		protected boolean isValidTextChar(char c)
 		{
@@ -186,7 +201,7 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 		Default implementation returns true if {@link #isValidTextChar} and not "'
 		@param c character to validate
 		@return  true if character does not need encoding,
-				false if it needs to be passed through {@link #escape}
+				false if it needs to be passed through {@link #writeEscapedChar}
 		*/
 		protected boolean isValidAttributeChar(char c)
 		{
@@ -194,16 +209,16 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 			return !((c=='\'')||(c=='\"'));
 		};
 		/** Tests if specified signal name (as passed to {@link #begin} )
-		can be used directly as XML element name
+		can be used <u>directly</u> as XML element name
 		<a href="doc-files/xml-syntax.html#short_signal_form">in a short form</a>
 		or if it must be encoded using 
 		<a href="doc-files/xml-syntax.html#long_signal_form">in a long form</a>.
 		<p>
-		Default implementation tests if XML rules are met and asks {@link #isReservedXMLElement}
+		Default implementation tests if XML rules are met and asks {@link #isReservedElement}
 		if there is no name clash.
 		@param signal_name name to check, non null.
 		@return true if can use short form
-		@see #isReservedXMLElement
+		@see #isReservedElement
 		*/
 		protected boolean isPossibleXMLElement(String signal_name)
 		{
@@ -245,27 +260,25 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 		/** Writes "&lt" */
 		@Override protected void writeBeginSignalIndicator()throws IOException
 		{
-			getOutput().append('<');
+			write('<');
 		};
 		/** Writes ending tag */
 		@Override protected void writeEndSignalIndicator()throws IOException
 		{
-			final Appendable a =getOutput(); 
 			assert(!signal_stack.isEmpty()):"superclass contract broken";
-			a.append("</");
-			a.append(signal_stack.remove(signal_stack.size()-1));
-			a.append('>');
+			write("</");
+			write(signal_stack.remove(signal_stack.size()-1));
+			write('>');
 		};
 		/** Empty. Only direct names are supported, no need for indicator. */
 		@Override protected void writeDirectName()throws IOException{};
 		
 		/** Uses {@link #isValidAttributeChar} to determine if each character
-		of <code>text</code> needs to be escaped or not. Escapes it with {@link #escape}.
-		@param Appendable a where to put resutlt;
+		of <code>text</code> needs to be escaped or not. Escapes it with {@link #writeEscapedChar}.
 		@param text what to put, not null
 		@throws IOException if Appendable failed.
 		*/
-		private void escapeAttribute(Appendable a, String text)throws IOException
+		private void writeEscapedAttribute( String text)throws IOException
 		{
 			assert(text!=null);
 			final int L = text.length();
@@ -273,9 +286,9 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 			{
 				char c= text.charAt(i);
 				if (isValidAttributeChar(c))
-					a.append(c);
+					write(c);
 				else
-					escape(a,c);
+					writeEscapedChar(c);
 			};
 		};
 		
@@ -283,23 +296,22 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 		Puts it on signal stack. */
 		@Override protected void writeSignalNameData(String name)throws IOException
 		{
-			final Appendable a =getOutput();
 			if (isPossibleXMLElement(name))
 			{
 					//short form
 					signal_stack.add(name); //Note: overflow is controlled by superclass.
-					a.append(name); 
-					a.append('>');
+					write(name); 
+					write('>');
 			}else
 			{
 					//long form.
 					signal_stack.add(LONG_SIGNAL_ELEMENT);
-					a.append(LONG_SIGNAL_ELEMENT);
-					a.append(' ');
-					a.append(LONG_SIGNAL_ELEMENT_ATTR);
-					a.append("=\"");
-					escapeAttribute(a,name);
-					a.append("\">");
+					write(LONG_SIGNAL_ELEMENT);
+					write(' ');
+					write(LONG_SIGNAL_ELEMENT_ATTR);
+					write("=\"");
+					writeEscapedAttribute(name);
+					write("\">");
 			};
 		};
 		/** Always throws
@@ -323,28 +335,30 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 			written. The end-type writes are used to write ;
 			but block ends are not written in this way.
 		---------------------------------------------------------*/
-		/** Called by all <code>writeXXXTypeEnd</code>
-		to write {@link #PRIMITIVES_SEPARATOR_CHAR} */
-		protected void writeXXXTypeEnd()throws IOException
+		/** Called by all <code>flushXXXX</code>
+		to write {@link #PRIMITIVES_SEPARATOR_CHAR}.
+		This method does not not write type tags.
+		*/
+		protected void flushXXXX()throws IOException
 		{
-			getOutput().append(PRIMITIVES_SEPARATOR_CHAR);
+			write(PRIMITIVES_SEPARATOR_CHAR);
 		};
-		/** Calls {@link #writeXXXTypeEnd} */
-		@Override protected  void writeBooleanTypeEnd()throws IOException{ writeXXXTypeEnd(); };
-		/** Calls {@link #writeXXXTypeEnd} */
-		@Override protected  void writeByteTypeEnd()throws IOException{ writeXXXTypeEnd(); };
-		/** Calls {@link #writeXXXTypeEnd} */
-		@Override protected  void writeCharTypeEnd()throws IOException{ writeXXXTypeEnd(); };
-		/** Calls {@link #writeXXXTypeEnd} */
-		@Override protected  void writeShortTypeEnd()throws IOException{ writeXXXTypeEnd(); };
-		/** Calls {@link #writeXXXTypeEnd} */
-		@Override protected  void writeIntTypeEnd()throws IOException{ writeXXXTypeEnd(); };
-		/** Calls {@link #writeXXXTypeEnd} */
-		@Override protected  void writeLongTypeEnd()throws IOException{ writeXXXTypeEnd(); };
-		/** Calls {@link #writeXXXTypeEnd} */
-		@Override protected  void writeDoubleTypeEnd()throws IOException{ writeXXXTypeEnd(); };
-		/** Calls {@link #writeXXXTypeEnd} */
-		@Override protected  void writeFloatTypeEnd()throws IOException{ writeXXXTypeEnd(); };
+		/** Calls {@link #flushXXXX} */
+		@Override protected  void flushBoolean()throws IOException{ flushXXXX(); };
+		/** Calls {@link #flushXXXX} */
+		@Override protected  void flushByte()throws IOException{ flushXXXX(); };
+		/** Calls {@link #flushXXXX} */
+		@Override protected  void flushChar()throws IOException{ flushXXXX(); };
+		/** Calls {@link #flushXXXX} */
+		@Override protected  void flushShort()throws IOException{ flushXXXX(); };
+		/** Calls {@link #flushXXXX} */
+		@Override protected  void flushInt()throws IOException{ flushXXXX(); };
+		/** Calls {@link #flushXXXX} */
+		@Override protected  void flushLong()throws IOException{ flushXXXX(); };
+		/** Calls {@link #flushXXXX} */
+		@Override protected  void flushDouble()throws IOException{ flushXXXX(); };
+		/** Calls {@link #flushXXXX} */
+		@Override protected  void flushFloat()throws IOException{ flushXXXX(); };
 		
 		
 		/*========================================================
@@ -358,7 +372,7 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 		*/
 		@Override protected void writeBooleanImpl(boolean v)throws IOException
 		{
-			getOutput().append(
+			write(
 						v ? 't' : 'f'
 								);
 		};
@@ -367,7 +381,7 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 		*/
 		@Override protected void writeByteImpl(byte v)throws IOException
 		{
-			getOutput().append(Byte.toString(v));
+			write(Byte.toString(v));
 		};
 		/** Encodes as described
 		in <a href="doc-files/xml-syntax.html#enc_char">specification</a>
@@ -375,44 +389,44 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 		@Override protected void writeCharImpl(char v)throws IOException
 		{
 			if ((v==';')||(!isValidTextChar(v)))
-				escape(getOutput(),v);
+				writeEscapedChar(v);
 			else
-				getOutput().append(v);
+				write(v);
 		};
 		/** Encodes as described
 		in <a href="doc-files/xml-syntax.html#enc_numeric">specification</a>
 		*/
 		@Override protected void writeShortImpl(short v)throws IOException
 		{
-			getOutput().append(Short.toString(v));
+			write(Short.toString(v));
 		};
 		/** Encodes as described
 		in <a href="doc-files/xml-syntax.html#enc_numeric">specification</a>
 		*/
 		@Override protected void writeIntImpl(int v)throws IOException
 		{
-			getOutput().append(Integer.toString(v));
+			write(Integer.toString(v));
 		};
 		/** Encodes as described
 		in <a href="doc-files/xml-syntax.html#enc_numeric">specification</a>
 		*/
 		@Override protected void writeLongImpl(long v)throws IOException
 		{
-			getOutput().append(Long.toString(v));
+			write(Long.toString(v));
 		};
 		/** Encodes as described
 		in <a href="doc-files/xml-syntax.html#enc_numeric">specification</a>
 		*/
 		@Override protected void writeFloatImpl(float v)throws IOException
 		{
-			getOutput().append(Float.toString(v));
+			write(Float.toString(v));
 		};
 		/** Encodes as described
 		in <a href="doc-files/xml-syntax.html#enc_numeric">specification</a>
 		*/
 		@Override protected void writeDoubleImpl(double v)throws IOException
 		{
-			getOutput().append(Double.toString(v));
+			write(Double.toString(v));
 		};
 		/* -------------------------------------------------------
 				Block primitives
@@ -423,10 +437,9 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 		*/
 		@Override protected void writeBooleanBlockImpl(boolean [] buffer, int offset, int length)throws IOException
 		{
-			Appendable a = getOutput();
 			while(length-->0)
 			{
-				a.append(buffer[offset++] ? 't' : 'f');
+				write(buffer[offset++] ? 't' : 'f');
 			};
 		};
 		/** Encodes as described
@@ -434,7 +447,6 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 		*/
 		@Override protected void writeByteBlockImpl(byte [] buffer, int offset, int length)throws IOException
 		{
-			Appendable a = getOutput();
 			while(length-->0)
 			{
 				//Note: Theoretically >>> is an unsigned shift.
@@ -452,30 +464,30 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 				int v = buffer[offset++] & 0xFF;
 				char d0 = HEX[v & 0x0F] ;v>>>=4;	
 				char d1 = HEX[v];
-				a.append(d1);a.append(d0);
+				write(d1);write(d0);
 			};
 		};
 		@Override protected void writeByteBlockImpl(byte v)throws IOException
 		{
-			Appendable a = getOutput();
+			
 			int vv = v & 0xFF;
 			char d0 = HEX[vv & 0x0F]; vv>>>=4;
 			char d1 = HEX[vv];
-			a.append(d1);a.append(d0);
+			write(d1);write(d0);
 		};
 		/** Encodes as described
 		in <a href="doc-files/xml-syntax.html#enc_char_blk">specification</a>
 		*/
 		@Override protected void writeCharBlockImpl(char [] buffer, int offset, int length)throws IOException
 		{
-			Appendable a = getOutput();
+			
 			while(length-->0)
 			{
 				char c = buffer[offset++];
 				if (isValidTextChar(c))
-					a.append(c);
+					write(c);
 				else
-					escape(a,c);
+					writeEscapedChar(c);
 			};
 		};
 		/** Encodes as described
@@ -483,14 +495,14 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 		*/
 		@Override protected void writeCharBlockImpl(CharSequence characters, int offset, int length)throws IOException
 		{
-			Appendable a = getOutput();
+			
 			while(length-->0)
 			{
 				char c = characters.charAt(offset++);
 				if (isValidTextChar(c))
-					a.append(c);
+					write(c);
 				else
-					escape(a,c);
+					writeEscapedChar(c);
 			};
 		};
 		/** Encodes as described
@@ -498,12 +510,12 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 		*/
 		@Override protected void writeShortBlockImpl(short [] buffer,int offset, int length)throws IOException
 		{
-			Appendable a = getOutput();
+			
 			while(length-->0)
 			{
 				short v = buffer[offset++];
-				a.append(Short.toString(v));
-				a.append(PRIMITIVES_SEPARATOR_CHAR);
+				write(Short.toString(v));
+				write(PRIMITIVES_SEPARATOR_CHAR);
 			};
 		};
 		/** Encodes as described
@@ -511,12 +523,12 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 		*/
 		@Override protected void writeIntBlockImpl(int [] buffer,int offset, int length)throws IOException
 		{
-			Appendable a = getOutput();
+			
 			while(length-->0)
 			{
 				int v = buffer[offset++];
-				a.append(Integer.toString(v));
-				a.append(PRIMITIVES_SEPARATOR_CHAR);
+				write(Integer.toString(v));
+				write(PRIMITIVES_SEPARATOR_CHAR);
 			};
 		};
 		/** Encodes as described
@@ -524,12 +536,12 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 		*/
 		@Override protected void writeLongBlockImpl(long [] buffer,int offset, int length)throws IOException
 		{
-			Appendable a = getOutput();
+			
 			while(length-->0)
 			{
 				long v = buffer[offset++];
-				a.append(Long.toString(v));
-				a.append(PRIMITIVES_SEPARATOR_CHAR);
+				write(Long.toString(v));
+				write(PRIMITIVES_SEPARATOR_CHAR);
 			};
 		};
 		/** Encodes as described
@@ -537,12 +549,12 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 		*/
 		@Override protected void writeFloatBlockImpl(float [] buffer,int offset, int length)throws IOException
 		{
-			Appendable a = getOutput();
+			
 			while(length-->0)
 			{
 				float v = buffer[offset++];
-				a.append(Float.toString(v));
-				a.append(PRIMITIVES_SEPARATOR_CHAR);
+				write(Float.toString(v));
+				write(PRIMITIVES_SEPARATOR_CHAR);
 			};
 		};
 		/** Encodes as described
@@ -550,12 +562,12 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 		*/
 		@Override protected void writeDoubleBlockImpl(double [] buffer,int offset, int length)throws IOException
 		{
-			Appendable a = getOutput();
+			
 			while(length-->0)
 			{
 				double v = buffer[offset++];
-				a.append(Double.toString(v));
-				a.append(PRIMITIVES_SEPARATOR_CHAR);
+				write(Double.toString(v));
+				write(PRIMITIVES_SEPARATOR_CHAR);
 			};
 		};
 		
@@ -592,6 +604,7 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 				/** Test bed device, throws on almost all methods */
 				private static final class DUT extends AXMLSignalWriteFormat
 				{
+					final StringBuilder sb = new StringBuilder(); 
 					DUT()
 					{
 						super(16,32, // int max_name_length, int max_events_recursion_depth,
@@ -600,7 +613,8 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 							   "e","n"//final String LONG_SIGNAL_ELEMENT,final String LONG_SIGNAL_ELEMENT_ATTR
 							);
 					};
-					protected Appendable getOutput(){ throw new AbstractMethodError(); }
+					@Override protected void write(char c){ sb.append(c); };
+					@Override protected void write(CharSequence c){ sb.append(c); };					
 					protected void closeImpl()throws IOException{ throw new AbstractMethodError(); }
 					protected boolean isReservedElement(String signal_name)
 					{
@@ -616,8 +630,8 @@ public abstract class AXMLSignalWriteFormat extends ASignalWriteFormat
 					*/					
 					StringBuilder sb = new StringBuilder();
 					DUT d = new DUT();
-					d.escape(sb, c);
-					String r = sb.toString();
+					d.writeEscapedChar(c);
+					String r = d.sb.toString();
 					System.out.println(Integer.toHexString(c)+"=> \""+r+"\"");
 					org.junit.Assert.assertTrue(exp.equals(r));
 					leave();

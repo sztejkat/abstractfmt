@@ -27,6 +27,16 @@ import java.util.ArrayList;
 	in a character block.
 	<p>
 	Inside a character block all characters are accepted.
+	
+	<h2>Described formats</h2>
+	Described formats should:
+	<ul>
+		<li>override {@link #isDescribed} to return true;</li>
+		<li>override {@link #processOpeningTag(String)} to recognize type 
+		indicators and return <code>TYPE_xxx</code> constants;</li>
+		<li>override {@link #processClosingTag(String)} to recognize closing type 
+		indicators and return <code>FLUSH_xxx</code> constants;</li>
+	</ul>
 */
 public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 {
@@ -112,8 +122,6 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 		
 		@param max_name_length see {@link ASignalWriteFormat#ASignalWriteFormat(int,int,int)}
 		@param max_events_recursion_depth --//--
-		@param strict_described_types --//--, subclasses which are undescribed must pass false
-				here. Subclasses which are described <i>may</i> pass true here.
 		@param ESCAPE_CHAR see {@link #ESCAPE_CHAR}
 		@param ESCAPE_CHAR_END see {@link #ESCAPE_CHAR_END}
 		@param PRIMITIVES_SEPARATOR_CHAR see {@link #PRIMITIVES_SEPARATOR_CHAR}
@@ -129,12 +137,13 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 		@param max_inter_signal_chars a maximum size of characters in stream 
 				between calls to {@link #nextIndicator} before
 				{@link EFormatBoundaryExceeded} is thrown. Zero disables this check.
-				This is a defense against streams of infinite size.
+				This is a defense against streams of infinite size filled with
+				spaces or comments which has to be skipped. This value does not affect
+				block reads.
 		*/
 		protected AXMLSignalReadFormat(
 									 final int max_name_length,
 									 final int max_events_recursion_depth,
-									 final boolean strict_described_types,
 									 final char ESCAPE_CHAR, final char ESCAPE_CHAR_END, 
 									 final char PRIMITIVES_SEPARATOR_CHAR,
 									 final String LONG_SIGNAL_ELEMENT,final String LONG_SIGNAL_ELEMENT_ATTR,
@@ -142,7 +151,7 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 									 final int max_inter_signal_chars
 									 )
 		{
-			super(0, max_name_length, max_events_recursion_depth,strict_described_types);//no names registry!
+			super(0, max_name_length, max_events_recursion_depth);//no names registry!
 			assert(LONG_SIGNAL_ELEMENT!=null);
 			assert(LONG_SIGNAL_ELEMENT_ATTR!=null);
 			assert(max_inter_signal_chars>=0);
@@ -226,7 +235,7 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 		once it checked, that closing tag does not match a signal tag
 		or there was no signal.
 		<p>
-		Default implementation is for un-typed stream and throws
+		Default implementation is for an un-described stream and throws
 		{@link ECorruptedFormat}.
 		@param tag tag which did not match.
 		@return an indicator to return from {@link #next}
@@ -239,7 +248,7 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 		/** Invoked from {@link #next} via {@link processOpeningTag()}
 		once tag is fetched.
 		<p>
-		Default implementation is for un-typed stream and returns {@link #BEGIN_INDICATOR}.
+		Default implementation is for un-described stream and returns {@link #BEGIN_INDICATOR}.
 		@param tag tag which did not match.
 		@return an indicator to return from {@link #next} or
 				{@link BEGIN_INDICATOR} if it did not identify 
@@ -290,7 +299,7 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 							char c = read();
 							while(Character.isWhitespace(c))//Note: This test covers EOL and page feeds too.
 							{
-								//skip it ang go for next.
+								//skip it and go for next.
 								if (isEof()) return EOF_INDICATOR;
 								c = read();
 							};
@@ -300,7 +309,7 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 						break; 
 					case STATE_CHARACTER_BLOCK:
 						state = STATE_NONE;		// no more if it, we are skipping the rest of the content.
-						break;
+						continue again;
 					case STATE_DIRECT_INDICATOR: 
 						state = STATE_NONE;
 						return DIRECT_INDICATOR; //a fake state, triggered by begin tag.
@@ -330,12 +339,13 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 					}
 				}else
 				{
+					assert(!Character.isWhitespace(c)):"spaces should have been skipped";
 					unread(c);	//put it back, we can't move cursor.
 					return NO_INDICATOR;
 				}
 			}
 		};
-		@Override protected void skip()throws IOException,EUnexpectedEof
+		@Override protected void skipData()throws IOException,EUnexpectedEof
 		{
 			resetInterSignalLimit();
 			//A bit more complex due to faked state.
@@ -453,7 +463,7 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 			//The name of closing tag may be
 			//	- the closing event, which is on events stack or
 			//	- closing type, which is known to subclass.
-			//First process event tag, possibly
+			//First process event tag, possibly, since we can easily check them
 			if (!signal_stack.isEmpty())
 			{
 				if (xml_element_buffer.equalsString(signal_stack.get(signal_stack.size()-1)))
@@ -462,7 +472,8 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 					return END_INDICATOR;
 				};
 			};
-			//Now we have to drirect it to subclass specific method.
+			//Now we have to drirect it to subclass specific method to detect non-event
+			//tags.
 			return processClosingTag(xml_element_buffer.toString());
 		};
 		/** Machinery for fetching and processing the opening XML tag.
@@ -604,7 +615,8 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 		-------------------------------------------------------*/
 		/** Reads a numeric primitive, that is a sequence down to ;
 		into a {@link #xml_element_buffer} 
-		@return xml_element_buffer or null if reached XML token.
+		@return xml_element_buffer or null if reached XML token	
+				without collecting any data.
 		*/
 		private CharSequence tryReadNumericPrimitive()throws IOException
 		{
@@ -613,6 +625,7 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 			//and other XML as problems.
 			xml_element_buffer.reset();
 			char c;
+			boolean tag_reached = false; 
 			for(;;)
 			{
 				c = read();
@@ -631,7 +644,8 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 				{
 						unread(c);	//need to detect this element indicator.
 									//because we use it in blocks too.
-						return null;
+						tag_reached=true;
+						break;
 				};
 				if ((c=='>')||( Character.isWhitespace(c)))
 				{	
@@ -641,7 +655,12 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 				if (c==PRIMITIVES_SEPARATOR_CHAR) break;
 				xml_element_buffer.append(c);
 			};
-			return xml_element_buffer;
+			resetInterSignalLimit();	//to not limit block size, but limit iddle spaces.
+			return ( tag_reached && xml_element_buffer.length()==0)
+					 ? 
+					  null
+					   :
+					  xml_element_buffer;
 		};
 		/** Reads a numeric primitive, that is a sequence down to ;
 		into a {@link #xml_element_buffer} 
@@ -723,8 +742,12 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 				};
 			}else
 			{
-				//check if there is a trailing ; which is now bligatory.			
+				//check if there is a trailing ; which is optional however..			
 				char v = read();
+				if (v=='<')
+				{
+					unread(v);		//this is when optional ; is not found.
+				}else
 				if (v!=PRIMITIVES_SEPARATOR_CHAR)
 				{
 					unread(c);	//possible xml?
@@ -785,6 +808,7 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 				if (Character.isWhitespace(c)) continue;
 				if (c=='<') { unread(c); break; }
 				buffer[offset++] = charToBoolean(c);
+				resetInterSignalLimit();	//to not limit block size, but limit iddle spaces.
 				readen++;
 				length--;
 			};
@@ -803,6 +827,7 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 				if (d1=='<') { unread(d1); break; }
 				char d0 = read();
 				buffer[offset++] = (byte)((HEX(d1)<<4)+(HEX(d0)));
+				resetInterSignalLimit();	//to not limit block size, but limit iddle spaces.
 				readen++;
 				length--;
 			};
@@ -819,6 +844,7 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 				if (Character.isWhitespace(d1)) continue;
 				if (d1=='<') { unread(d1); return -1; }
 				char d0 = read();
+				resetInterSignalLimit();	//to not limit block size, but limit iddle spaces.
 				return ((HEX(d1)<<4)+(HEX(d0)));
 			}
 		};
@@ -835,6 +861,7 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 				if (c==ESCAPE_CHAR)
 						c = unescape();
 				buffer[offset++] = c;
+				resetInterSignalLimit();	//to not limit block size, but limit iddle spaces.
 				readen++;
 				length--;
 			};
@@ -853,6 +880,7 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 				if (c==ESCAPE_CHAR)
 						c = unescape();
 				a.append(c);
+				resetInterSignalLimit();	//to not limit block size, but limit iddle spaces.
 				readen++;
 				length--;
 			};
@@ -1000,15 +1028,45 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 			int i =unread_at;
 			if (i==0)
 			{
-				final int r = readImpl();
-				if (r==-1) return true;
+				final int r = tryRead(); //Note: we need to poll un-read buffer, but not throw.	
 				assert(r>=-1);
-				assert(r<=0x0FFFF);
-				unread((char)r);
+				assert(r<=0x0FFFF);				
+				if (r==-1) return true;
+				unread((char)r);	//and un-read it.
 				return false;
 			}else
 				return false;
 		};
+		/**
+			Reads character either from push-back buffer or
+			from stream. Differs from {@link #read} in such a way that it does not throw.
+			@return read character or -1 if end of stream is reached.
+			@throws IOException if low level have failed.
+			@throws EFormatBoundaryExceeded if {@link #max_inter_signal_chars} is exceeded.
+			@see #readEscaped
+		*/
+		protected final int tryRead()throws EUnexpectedEof, IOException,EFormatBoundaryExceeded
+		{
+			int i =unread_at;
+			if (i==0)
+			{
+				final int r = readImpl();
+				assert(r>=-1);
+				assert(r<=0x0FFFF);
+				
+				if (r==-1) return r;					
+				incrInterSignalLimit();
+				return r;
+			}else
+			{
+				final char c = unread[i-1];
+				i--;
+				this.unread_at=i;
+				incrInterSignalLimit();
+				return c;
+			}
+		};
+		
 		/**
 			Reads character either from push-back buffer or
 			from stream.
@@ -1020,23 +1078,11 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 		*/
 		protected final char read()throws EUnexpectedEof, IOException,EFormatBoundaryExceeded
 		{
-			int i =unread_at;
-			if (i==0)
-			{
-				final int r = readImpl();
-				if (r==-1) throw new EUnexpectedEof();
-				assert(r>=-1);
-				assert(r<=0x0FFFF);		
-				incrInterSignalLimit();
-				return (char)r;
-			}else
-			{
-				final char c = unread[i-1];
-				i--;
-				this.unread_at=i;
-				incrInterSignalLimit();
-				return c;
-			}
+			int r = tryRead();
+			assert(r>=-1);
+			assert(r<=0x0FFFF);
+			if (r==-1) throw new EUnexpectedEof();						
+			return (char)r;
 		};
 		
 		/** Calls {@link #read} and puts result back to stream.
@@ -1059,15 +1105,26 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 					that some stream structure was larger than expected
 					and exceeded buffers specified in constructor.
 		*/
-		protected final void unread(char c)throws EBrokenStream
+		private final void unreadImpl(char c)throws EBrokenStream
 		{
 			int i =unread_at;
 			final char [] u = unread; 
 			if (i>=u.length) throw new AssertionError("Can't un-read so many characters");
 			u[i]=c;
 			i++;
-			decrInterSignalLimit();
 			this.unread_at = i;
+		};
+		/** Puts character back in stream and managed inter-signal length limit.
+			@param c character to put back
+			@throws AssertionError if could not un-read character 
+					because there is no place in buffer. It usually means,
+					that some stream structure was larger than expected
+					and exceeded buffers specified in constructor.
+		*/
+		protected final void unread(char c)throws EBrokenStream
+		{
+			unreadImpl(c);
+			decrInterSignalLimit();			
 		};
 		/** Reads character, detects
 			if it is an escape sequence and 
@@ -1099,8 +1156,13 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 		};
 		
 		
+		/* ********************************************************
 		
+				ISignalReadFormat
 		
+		**********************************************************/
+		/** Always false, as this class defaults to non-described */
+		@Override public boolean isDescribed(){ return false; };
 		
 		
 		
@@ -1134,7 +1196,6 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 						super(
 								8,//final int max_name_length,
 								16,// final int max_events_recursion_depth,
-								false,//final boolean strict_described_types,
 								'%',';',//final char ESCAPE_CHAR, final char ESCAPE_CHAR_END, 
 								';',//final char PRIMITIVES_SEPARATOR_CHAR,
 								"e","n",//final String LONG_SIGNAL_ELEMENT,final String LONG_SIGNAL_ELEMENT_ATTR,
@@ -1147,6 +1208,7 @@ public abstract class AXMLSignalReadFormat extends ASignalReadFormat
 						this();
 						open(s);
 					};
+					@Override public boolean isDescribed(){ return false; };
 					void open(String s){ in = new java.io.StringReader(s); };
 					@Override protected int readImpl()throws IOException
 					{

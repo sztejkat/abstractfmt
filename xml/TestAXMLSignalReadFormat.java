@@ -16,7 +16,6 @@ public class TestAXMLSignalReadFormat extends sztejkat.utils.test.ATest
 						super(
 								16,//final int max_name_length,
 								16,// final int max_events_recursion_depth,
-								false,//final boolean strict_described_types,
 								'%',';',//final char ESCAPE_CHAR, final char ESCAPE_CHAR_END, 
 								';',//final char PRIMITIVES_SEPARATOR_CHAR,
 								"e","n",//final String LONG_SIGNAL_ELEMENT,final String LONG_SIGNAL_ELEMENT_ATTR,
@@ -29,6 +28,7 @@ public class TestAXMLSignalReadFormat extends sztejkat.utils.test.ATest
 						this();
 						open(s);
 					};
+					@Override public boolean isDescribed(){ return false; };
 					void open(String s){ in = new java.io.StringReader(s); };
 					@Override protected int readImpl()throws IOException
 					{
@@ -1085,8 +1085,9 @@ public class TestAXMLSignalReadFormat extends sztejkat.utils.test.ATest
 						);
 			d.next();
 			try{
+				System.out.println("next() <- which should fail");
 				d.next();	
-				org.junit.Assert.fail();
+				org.junit.Assert.fail("should have failed, too many data were read");
 			}catch(EFormatBoundaryExceeded ex){ System.out.println(ex);};
 			leave();
 		};

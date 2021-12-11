@@ -11,7 +11,7 @@
 	classes in this package.
 	
 	<h1>Deviations from XML standard</h1>
-	
+	<i>Note: All elements are <u>case sensitive</u></i>
 	<h2>Bare XML format</h2>
 	The bare XML format implementation in this package
 	does not contain neither XML <i>prolog</i> nor <i>root</i> XML element which is
@@ -136,7 +136,16 @@
 	
 	<h1>Elementary primitives</h1>
 	The <code id="primitive_separator">;</code> (semicolon) is used
-	as an inter-primitive separator and terminates every primitive.
+	as an inter-primitive separator and terminates every primitive 
+	in undescribed format, but is optional in described formats.
+	<p>
+	Example:
+	<pre>
+	<i>undescribed:</i>
+		1;3;4;
+	<i>described:</i>
+		&lt;i&gt;1&lt;/i&gt;&lt;i&gt;2&lt;/i&gt;&lt;i&gt;3&lt;/i&gt;
+	</pre>
 	
 	<h2 id="enc_numeric">byte, short, int, long, float, double</h2>
 	Since XML must be human readable all primitives are coded as decimal numbers
