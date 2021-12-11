@@ -8,7 +8,7 @@ import java.io.IOException;
 	<h1>Notes</h1>
 	All notes for {@link ISignalWriteFormat} are binding.
 */
-public interface ISignalReadFormat extends Closeable
+public interface ISignalReadFormat extends Closeable, IPrimitiveReadFormat
 {	
 	/* ************************************************************
 	
@@ -40,6 +40,8 @@ public interface ISignalReadFormat extends Closeable
 		@see #whatNext
 		*/
 		public String next()throws IOException;
+		
+		
 		/** Skips all remaining primitives and all nested events until
 		it will read end signal for current event.
 		<p>
@@ -66,6 +68,8 @@ public interface ISignalReadFormat extends Closeable
 				};
 			}while(depth!=0);
 		};
+		
+		
 		
 				/** Indicates that {@link #next} would not skip anything
 				and would return a signal.
@@ -178,8 +182,10 @@ public interface ISignalReadFormat extends Closeable
 				(undescribed) or <code>PRMTV_XXX_BLOCK</code>. This should be
 				the behaviour regardless if entire block was read or not. 
 				<p>
-				If the partial block read is returned this method should return {@link #SIGNAL}
-				or, acceptably {@link #EOF}.
+				If the partial block read <u>is returned</u> this method
+				should return what is next in stream after a block.
+				Since block is terminated with "end signal" only
+				{@link #SIGNAL} or {@link #EOF} are allowed.
 				
 		@throws IOException if low level i/o failed, except of end-of-stream condition in allowed
 							places which is indicated by a dedicated return value.
@@ -189,6 +195,7 @@ public interface ISignalReadFormat extends Closeable
 		@see #isDescribed
 		*/
 		public int whatNext()throws IOException;
+		
 		/** True if stream implementation is "described".
 		A described implementation <u>do require</u> type information
 		and <u>do validate</u> type information. They must throw
@@ -196,83 +203,33 @@ public interface ISignalReadFormat extends Closeable
 		must throw {@link EDataTypeRequired} if there is no required type information.
 		<p>
 		A "non-described" implementation <u>must not</u> provide type information,
-		<u>must not</u> validate it and <u>must complain</u> if stream do contain
-		type information with {@link EDataTypeNotSupported}.
+		<u>must not</u> validate it and <u>should complain</u> if stream do contain
+		type information by throwing {@link ECorruptedFormat}.
 		@return true if described. A life time constant.		
 		*/
 		public boolean isDescribed();
 	
 	/* *************************************************************
 	
-			Primitives	
+			IPrimitiveReadFormat	
 	
 	* *************************************************************/
-	/*=============================================================
-	
-		Elementatry primitives.
 		
-		Note:
-			All elementary primitives do behave the same
-			and do throw in the same conditions.
-		
-	===============================================================*/
-		
-		/** An elementary primitive read 
-		@return fetched data
+		/** 
 		@throws IllegalStateException if this method is called when any block operation
 				is in progress.
 		@throws IOException if low level i/o failed
-		@throws ENoMoreData if stream cursor is at the signal
-		@throws EDataMissmatch if detected signal inside a body of primitive
+		@throws ENoMoreData if stream cursor is at the signal and there is no
+				data to initiate operation.
 		@throws EUnexpectedEof if read resulted in end-of-file condition
 		@throws EDataMissmatch if format is {@link #isDescribed} and the type information
-				found in stream is not matching type.
-		@throws EDataTypeRequired if format is {@link #isDescribed} and there is no data type information
-		@throws EDataTypeNotSupported if format is NOT {@link #isDescribed} but there is data type information
+				describing this primitive found in stream is not matching the type of
+				requested read.
+		@throws EDataTypeRequired if format is {@link #isDescribed} but there is no type
+				information.
 		*/
 		public boolean readBoolean()throws IOException;
-		/**  An elementary  primitive read 
-		@throws IOException if low level i/o failed
-		@return fetched data
-		@see #readBoolean
-		*/
-		public byte readByte()throws IOException;
-		/**  An elementary primitive read
-		@throws IOException if low level i/o failed
-		@return fetched data		
-		@see #readBoolean
-		*/
-		public char readChar()throws IOException;
-		/**  An elementary  primitive read
-		@throws IOException if low level i/o failed
-		@return fetched data		
-		@see #readBoolean
-		*/
-		public short readShort()throws IOException;
-		/**  An elementary  primitive read
-		@throws IOException if low level i/o failed
-		@return fetched data		
-		@see #readBoolean
-		*/
-		public int readInt()throws IOException;
-		/**  An elementary  primitive read
-		@throws IOException if low level i/o failed
-		@return fetched data		
-		@see #readBoolean
-		*/
-		public long readLong()throws IOException;
-		/**  An elementary size primitive read
-		@throws IOException if low level i/o failed
-		@return fetched data		
-		@see #readBoolean
-		*/
-		public float readFloat()throws IOException;
-		/**  An elementary  primitive read
-		@throws IOException if low level i/o failed
-		@return fetched data		
-		@see #readBoolean
-		*/
-		public double readDouble()throws IOException;
+		
 		/*=============================================================
 		
 			Primitive blocks
@@ -281,122 +238,34 @@ public interface ISignalReadFormat extends Closeable
 		/* -----------------------------------------------------------
 			Primary
 		-----------------------------------------------------------*/
-		/** Reads a part of bit-block
-		<br>
-		An initial read block read may happen in any place <a href="package.html#event">event</a>.
-		and after any <i>elementary</i> primitive read, or after any block read of the same type.
+		/** 
+		
+		An initial read block read may happen in any place <a href="package.html#event">event</a>,
+		including  after any <i>elementary</i> primitive read.
 		<br>
 		A block read may be followed <u>only</u> by other block read of the same type
-		or by reading of an "end" or "begin" signal with {@link #next}.
+		or by reading of an "end" or "begin" signal with {@link #next}/{@link #skip}
 		<br>
 		@param buffer buffer for read data, non-null.
 		@param offset where to save first data element in <code>buffer</code>
 		@param length number of bytes to read
-		@return <ul>
-					<li>number of bytes read, which can be less that <code>length</code>
-					only if signal was reached or;</li>
-					<li>0 if could not read anything because signal was reached;</li>
-				</ul>
+		@return number of bytes read, which can be less that <code>length</code> (including zero)
+					only if signal was reached. Once the partial read is returned this method
+					must always return zero;
 				
-		@throws AssertionError if <code>buffer</code> is null
-		@throws AssertionError if <code>offset</code> or <code>length</code> are negative
-		@throws AssertionError if <code>buffer.length</code> with <code>offset</code> and <code>length</code>
-							   would result in {@link ArrayIndexOutOfBoundsException} exception;
 		@throws IllegalStateException if call is made outside of an event.
 		@throws IllegalStateException if there is block operation of another type in progress.  
 		@throws IOException if failed at low level.
 		@throws ENoMoreData if it was a first read in block reading sequence and it could not
 						start because cursor is already at signal. Notice this exception is not
 						thrown if reading reaches a signal. In such case a partial read is returned.
-		@throws EUnexpectedEof if physical end of stream was reached.
-		@throws EDataMissmatch if format is {@link #isDescribed} and the type information
-				found in stream is not matching type.
-		@throws EDataTypeRequired if format is {@link #isDescribed} and there is no data type information
-		@throws EDataTypeNotSupported if format is NOT {@link #isDescribed} but there is data type information		
+		@throws EUnexpectedEof if physical end of stream was reached before the "end signal" was 
+						reached.
+		@throws EDataMissmatch if this is an initial read, format is {@link #isDescribed} and the type
+				 information found in stream is not matching the type of this request.		
+		@throws EDataTypeRequired  if this is an initial read,
+		 		format is {@link #isDescribed} but there is no type	information.
 		*/
 		public int readBooleanBlock(boolean [] buffer, int offset, int length)throws IOException;
 		
-		/** Reads a part of byte-block.
-		<p>
-		Operates like {@link #readBooleanBlock}.
-		@param buffer buffer for read data, non-null.
-		@param offset where to save first bit in <code>buffer</code>
-		@param length number of bytes to read
-		@return as in byte-block, but returns number of boolean values regardless of how they
-				were encoded.
-		@throws IOException if failed at low level.
-		*/				    
-		public int readByteBlock(byte [] buffer, int offset, int length)throws IOException;
-		/** Reads a part of byte block, one byte in size. 
-		<p>
-		This operation is usefull when implementing other raw block operations in per-byte basis.
-		<p>
-		@return -1 if could not read because signal was reached, 
-				otherwise a positive 0...255 number representing a byte.
-		@throws IllegalStateException if call is made outside of an event.
-		@throws IllegalStateException if there is block operation of another type in progress.  
-		@throws IOException if failed at low level. All other like {@link #readByteBlock(byte[],int,int)}.
-		*/			
-		public int readByteBlock()throws IOException;
-		
-		/** Reads a part of characters block
-		<br>
-		Same rules applies as for byte-block.
-		@param buffer where to add read characters
-		@param length how many characters to read
-		@return as in byte-block, but counts characters regardless of how they were encoded.
-		@throws IOException if failed at low level.
-		*/
-		public int readCharBlock(Appendable buffer, int length)throws IOException;
-		/* -----------------------------------------------------------
-			Secondary
-		-----------------------------------------------------------*/
-		/** As read byte block
-		@param buffer buffer for read data, non-null.
-		@param offset where to save first data in <code>buffer</code>
-		@param length number of elements to read
-		@return as in byte-block
-		@throws IOException if failed at low level.
-		*/
-		public int readCharBlock(char [] buffer, int offset, int length)throws IOException;
-		/** As read byte block
-		@param buffer buffer for read data, non-null.
-		@param offset where to save first data in <code>buffer</code>
-		@param length number of elements to read
-		@return as in byte-block
-		@throws IOException if failed at low level.
-		*/
-		public int readShortBlock(short [] buffer, int offset, int length)throws IOException;
-		/** As read byte block
-		@param buffer buffer for read data, non-null.
-		@param offset where to save first data in <code>buffer</code>
-		@param length number of elements to read
-		@return as in byte-block
-		@throws IOException if failed at low level.
-		*/
-		public int readIntBlock(int [] buffer, int offset, int length)throws IOException;
-		/** As read byte block
-		@param buffer buffer for read data, non-null.
-		@param offset where to save first data in <code>buffer</code>
-		@param length number of elements to read
-		@return as in byte-block
-		@throws IOException if failed at low level.
-		*/
-		public int readLongBlock(long [] buffer, int offset, int length)throws IOException;
-		/** As read byte block
-		@param buffer buffer for read data, non-null.
-		@param offset where to save first data in <code>buffer</code>
-		@param length number of elements to read
-		@return as in byte-block
-		@throws IOException if failed at low level.
-		*/
-		public int readFloatBlock(float [] buffer, int offset, int length)throws IOException;
-		/** As read byte block
-		@param buffer buffer for read data, non-null.
-		@param offset where to save first data in <code>buffer</code>
-		@param length number of elements to read
-		@return as in byte-block
-		@throws IOException if failed at low level.
-		*/
-		public int readDoubleBlock(double [] buffer, int offset, int length)throws IOException;
 };

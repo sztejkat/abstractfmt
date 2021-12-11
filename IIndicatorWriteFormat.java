@@ -1,0 +1,115 @@
+package sztejkat.abstractfmt;
+import java.io.Closeable;
+import java.io.Flushable;
+import java.io.IOException;
+/**
+	A lower level write format used as a "driver" 
+	to implement {@link ISignalWriteFormat}.
+	<p>
+	This is based on concept of "indicators"
+	which are used to build "signals" and carry information
+	about types of primitives.
+	<p>
+	This is up to a caller to take care about proper order 
+	of methods invocation and to defend against missues.
+*/
+public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveWriteFormat
+{
+		/* ****************************************************
+		
+				Signals related indicators.
+		
+		
+		****************************************************/
+		/** A maximum number which can be passed to 
+		{@link #writeBeginRegister} as name registration
+		and number of calls to this method.
+		@return non-negative, can be zero.
+		*/
+		public int getMaxBeginRegisterNumber();
+		/**
+			Writes to a stream {@link TIndicator#BEGIN_DIRECT}.
+			@param signal_name name of a signal
+			@throws IOException if failed at low level.
+		*/
+		public void writeBegin(String signal_name)throws IOException;
+		/**
+			Writes to a stream {@link TIndicator#END_BEGIN_DIRECT}.
+			@param signal_name name of a signal
+			@throws IOException if failed at low level.
+		*/
+		public void writeEndBegin(String signal_name)throws IOException;		
+		/**
+			Writes to a stream {@link TIndicator#BEGIN_REGISTER}
+			@param signal_name name of a signal
+			@param number a numeric value under which this signal name
+			is to be registered. Callers must call this method in such
+			a way, that:
+			<ul>
+				<li>calls with the same name are made only once;</li>
+				<li>number assigned to to name equals to number of calls
+				to this method since inside a caller. With this this 
+				driver may decide to not pass this value inside a stream
+				and use;</li>
+			</ul>
+			This number is in 0...{@link #getMaxBeginRegisterNumber} range
+			@throws IOException if failed at low level.			
+		*/
+		public void writeBeginRegister(String signal_name, int number)throws IOException;
+		/**
+			Writes to a stream {@link TIndicator#END_BEGIN_REGISTER}
+			@param signal_name as {@link #writeBeginRegister}
+			@param number {@link #writeBeginRegister}
+			@throws IOException if failed at low level.
+		*/
+		public void writeEndBeginRegister(String signal_name, int number)throws IOException;		
+		/**
+			Writes to a stream {@link TIndicator#BEGIN_USE}
+			@param number a numeric value under which this signal name
+			is registered. Callers must call this method passing
+			number which was previously registered with
+			{@link #writeBeginRegister}.
+			@throws IOException if failed at low level.
+		*/
+		public void writeBeginUse(int number)throws IOException;
+		/**
+			Writes to a stream {@link TIndicator#END_BEGIN_USE}
+			@param number as {@link #writeBeginUse}
+			@throws IOException if failed at low level.
+		*/
+		public void writeEndBeginUse(int number)throws IOException;
+		/** Write to a stream the {@link TIndicator#END}
+			@throws IOException if failed at low level.
+		*/ 
+		public void writeEnd()throws IOException;
+		
+		/* ****************************************************
+		
+				Type related indicators.
+		
+		
+		****************************************************/
+		/** Writes indicator telling that specific type start information
+		is to be stored. Un-described formats may ignore it.
+		@param type indicator with {@link TIndicator#TYPE} flag set.
+		@throws IOException if failed at low level.
+		*/ 
+		public void writeType(TIndicator type)throws IOException;
+		/** Writes indicator telling that specific data end information
+		is to be stored. Un-described formats may ignore it.
+		@param flush indicator with {@link TIndicator#FLUSH} flag set.
+		@throws IOException if failed at low level.
+		*/ 
+		public void writeFlush(TIndicator flush)throws IOException;
+		
+		/* ****************************************************
+		
+				IPrimitiveWriteFormat	
+		
+		****************************************************/
+		/** It is up to caller to invoke this method only if there
+		is an unclosed "begin" signal.
+		*/
+		@Override public void writeBooleanBlock(boolean [] buffer, int offset, int length)throws IOException;		
+		
+};
