@@ -13,7 +13,251 @@
         <p>
         For description of <i>event format</i> see
         <a href="package.html">this package description</a>.
-	
+
+    <h1>Why next kind of format?</h1>
+
+    Because I like it?
+    <p>
+    Seriously?
+    <p>
+    No, just kidding.
+    <p>
+    Because I don't like to use library X to save my data in format A.
+    Then use library B to save my data in format B. Then I don't like to
+    decide at the same beginning on what exactly data format will I
+    use for retaining my data.
+    <p>
+    And even more important, because I <u>need</u> to change the format
+    later.
+
+    <h2>Human readable or compact &amp; fast</h2>
+    This is the usuall choice to make. You can use JSON/XML/YAML whatever
+    and have hard to parse, bloated up but human readable format.
+    <p>
+    This is fine choice on PC, You can always ZIP it, right?
+    <p>
+    Well....
+    <p>
+    I do also program microcontrollers. And the space is scarce there. So in
+    many, many applications which are in my area of interest the compactness
+    of format is critical.
+    <p>
+    On the other hand, if I choose the compact, binary format I will have
+    a really hard work at debugging it. Or at moving data to an another program.
+    <p>
+    Damn.... choices, choices, choices.
+
+    <h2>Basic idea</h2>
+    There is one class in standard JAVA which has <i>almost</i> ideal contract.
+    This is the good old <code>java.io.DataInput</code>/<code>java.io.DataOutput</code>
+    <p>
+    I say it is <i>almost</i> ideal because:
+    <ul>
+        <li>it clearly specifies how exactly data are encoded in binary form. But hell, who
+        will make us to obey it if we provide both ends of stream?;</li>
+        <li>it does not allow:
+               <ul>
+                   <li>declaring <i>structured</i> named data;</li>
+                   <li>ignoring data You don't care or know about;</li>
+                   <li>processing streams of unknown data structure;</li>
+               </ul>
+        </li>
+    </ul>
+    Some ideas came from standard serialization specs.
+    <p>
+    First good idea in serialization is that basically all data
+    are saved as named and typed elements (please ignore for that moment how exactly
+    it is done). This is a briliant idea which can survive numerous data format changes.
+    But it bloats up size and adds complexity.
+    <p>
+    Second idea is about how the <code>private void readObject(ObjectInputStream ex)</code>
+    is feed with the input data. The serialization specs are saying, that whatever belongs to
+    an object but is NOT read by this method from a stream is silently skipped. This opens
+    an easy path to versioning, extending data format and etc.
+    <p>
+    Of course serialization is briliant, but old. Very old. Almost as old as I am. And as
+    each oldie which was Young at those days was not designed with thinking about everything.
+    It was revolutionary enough those days.
+    There is a <u>plenty</u> conceptual and implementation flaws in it.
+    <p>
+    When I was playing with serialization I was seriously hit by one problem: when You do
+    serialize Your data with Java serialization You are stuck with serialization binary format.
+    And it is a hell of pain to use it to serialize <u>the same set of objects</u> to <u>different format</u>.
+
+    <h2>So take serialization library X....</h2>
+    There is a plenty of serialization libraries. Really. The problem is that they are always
+    created in a way in which they are almost 1:1 bound with a specific binary/text stream format.
+    <p>
+    And, obviously, using serialization to just store simple data is like shooting with a cannon
+    to the mosquito. You can do it, but it is a bit too much.
+    <p>
+    So I was thinking: I need something what is conceptually like JSON/XML/etc, but is NOT JSON/XML/etc.
+    and what will be as easy to use as <code>DataInput/DataOutput</code>.
+
+
+    <h2>Named data blocks</h2>
+    The basic need is to be able to tell that there are some data about something.
+    <p>
+    In other words  need to be able to name some <i>block of data</i> to provide a kind of structural information.
+    XML is good in that area, allowing to enclose some block of text and give it a meaning.
+
+    <h2>Type information</h2>
+    Obviously naming the data is not enough. In XML and JSON it may be enough, but in binary formats, well....
+    You may of course know a'priori what when and what method to call to read data (ie. read byte, read int).
+    Unfortunately with such an approach You also <u>must</u> have such knowledge. And this is a reall
+    problem when You plan an upgrade path for You data and aim at downwards compatibility.
+    <p>
+    Due to that I <i>may like to be able</i> to add type information about what exact data forms (ie. number,
+    int, float, etc.) is stored in a data block. And I like to be able to add it in a very, very compact way.
+    <p>
+    And, of course, by NOT doing ANYTHING - type information should just add itself.
+
+
+    <h2>Skipping unknown content</h2>
+    Having blocks of data, either named or un-named should allow me to simply ignore some of them. Excactly
+    as XML do. I like this functionality. I hate formats in which I can't skip blocks I don't care about
+    without parsing them. Taking XML you may just count &lt; and &lt;/ (obviously bug prone, but You can get
+    the drift) and skip whatever You don't care about not even <u>knowing anything</u> about it.
+    <p>
+    On the contrary in JAVA class file if You encounter the record of type X which You don't care, You still
+    have to parse it because You can't just read what size it is. This becomes even trickier, if not only You
+    don't care about the record, but You can't recognize it because it is from a newer class file version than
+    Your code knows about.
+    <p>
+    I don't like the second case. Especially because I had to write once a code to extract some data from
+    ASCII human readable format which was made around lines:
+    <pre>
+    ELEMENT <i>name</i>,<i>type</i>,<i>shapes count</i>,<i>attributes count</i>
+    LINE <i>x0,y0,x1,y1</i>                    \
+    POLYGON <i>x0,y0,segments count</i>        |+ those are possible shapes.
+    SEGMENT <i>dx,dy</i>                       /
+    ATTRIBUTE <i>name</i>,<i>value</i>             \
+    MULTILINE_ATTRIBUTE <i>name</i>,<i>lines</i>   |+ those are possible atrribute formats.
+    <i>text</i>                             /
+    </pre>
+    to just extract a <u>single attribute</u> for each of elements.
+    <p>
+    Can You do it without parsing the shape definitions?
+
+
+    <h2>Boundary checking</h2>
+    In the C/C++ word the 99% of cracks and hacks are about <i>exceeding data boundaries</i>. Reading past the
+    block, writing past the buffer and etc. I don't like it.
+    <p>
+    And again, having blocks of data allows You to implement them in such a way, that they will simply complain
+    if You read past the end of it. You can read whatever is <u>inside a block</u>, but reading across the block
+    boundary may be detected and an exception may be thrown.
+
+
+    <h2>Dumb transcoding</h2>
+    Ok, no imagine You have two pairs of <code>DataInput/DataOutptu</code>. Both are breaking contract, since
+    pair A is reading and writing XML and pair B is reading and writing JSON.
+    <p>
+    Wouldn't it be great to just be able to read from A DataInput and write it to B DataOutput?
+    <p>
+    It would be great. But to do it as stream must be <i>described</i>. And for best result - <u>self described</u>.
+    You should be able to ask A DataInput: <i>"What method should I call to read what You carry next?"</i>
+    and simply call it paired with an apropriate B DataOutput method.
+    <p>
+    This is next functionality I need.
+
+
+    <h2>Infinite life and data</h2>
+    The stream must be able to live forever and transfer data of infinite size. It does not mean
+    it has to have infinite memory. Sending an array of ints does not mean: <i>"To have an array in memory
+    and dump it to stream"</i>. Data may be produced on demand.
+    <p>
+    And at reading end there is the same: data may be consumed item by item and the entire array may never
+    come to existence.
+    <p>
+    Why not let it to be infinite?
+
+    <p>
+    <i>Note: Serialization can't live infinitely long. It leaks memory on both ends and leaks reference identifiers.
+    And obviously it can't transfer infinite arrays because it transfers objects which do reside in RAM.</i>
+
+
+    <h2>Compact arrays</h2>
+    Since I <i>sometimes</i> like my format to be compact I like to think that arrays should have own API to let
+    stream store them in specific and efficient way.
+    <p>
+    The good example is SVG embedded bitmap image. The SVG is XML so it <i>could</i> store an image as a, for an example,
+    sequence of:
+    <pre>
+         &lt;pixel&gt;
+               &lt;R&gt;0.99&lt;/R&gt;
+               &lt;G&gt;0.99&lt;/G&gt;
+               &lt;B&gt;0.99&lt;/B&gt;
+         &lt;/pixel&gt;
+    </pre>
+    Does it do it that way? No. It encodes images in a most compact way possible in XML. I like it.
+    But I like to have a choice.
+
+
+    <h1>Robustness</h1>
+    Data formats must be robust. And formats may be only as robust as the <i>contract</i> are.
+    <p>
+    I will now point You some examples about how some solutions are <u>not robust</u>
+
+    <h2>DataInput</h2>
+    Let us take a look on <code>DataInput</code>. Precisely speaking on:
+    <pre>
+         String readUTF()throws IOException;
+    </pre>
+    What is wrong with it?
+    <p>
+    There is no adjustable size limit. According to contract the max length of string is 64k <u>bytes</u>.
+    Notice: <u>bytes</u>. Not characters. Bytes. After a hard to predict UTF-8 encoding.
+    <p>
+    This is bad i two ways: first You can't store all strings You like. And second, You must be <u>always
+    prepared</u> to read 64k bytes.
+    <p>
+    Removing the upper limit is <i>easy</i>. We already break the contract not encoding it in a binary
+    form, so we can remove the limit....
+    <p>
+    And break even more. If the limit is removed, and there is no:
+    <pre>
+          String readUTF(int max_length)throws IOException;
+    </pre>
+    limited read method, then the errornous data source may produce a stream with string long enough to
+    produce <u>OutOfMemoryException</u> or cause so hard swapping that our system will freeze.
+    <p>
+    <i>Note: The same problem applies to any arrays, lists, sequences of data and etc. You may attempt
+    to kill JSON with "value"="1.0000....and so on for 4GB"</i>
+
+    <h2>Serialization</h2>
+    The serialization has own dangers. And in fact almost any un-bound generic format has such dangers.
+    <p>
+    Serialization is <u>recursive</u>. It read objects calling <i>readObject0</i> method. If inside this
+    object is an another object, it just calls <i>readObject0</i> again to read it. And again, and again,
+    as the data stream dicates, up to <code>StackOverflowException</code>. This is one of nastiest
+    exceptions from which it is almost as tricky to recover, as from <code>OutOfMemoryException</code>.
+    <p>
+    Robust format must be able to control recursion depth and reject streams nested too deep.
+
+
+    <h1>So what I would like to see?</h1>
+
+    A slightly modified <code>DataOutput</code> with abilities to:
+    <ul>
+        <li>write blocks boundaries and name those boundaries;</li>
+        <li>have an option to write type information about primitives stored in stream;</li>
+        <li>have an ability to write arrays, esp. byte[] as compact, infinite structures;</li>
+        <li>live infinitely and write infinite data;</li>
+    </ul>
+    and at reading end and <code>DataInput</code> which should be able to read above and:
+    <ul>
+        <li>skip unread data in block;</li>
+        <li>prevent cross boundary reads, too deep recursion and data longer that expected;</li>
+        <li>be able to read the type information if present;</li>
+        <li>and if type information is present, to validate if I read it with proper method;</li>
+    </ul>
+    Those contracts should just specify <u>how to use them</u> and be completly unaware of
+    what format is actually used. XML? No problem. JSON? Why not? Binary? Ofcourse. Anything You
+    create. Completely transparent.
+
+
+
 
 </body>
 </html>

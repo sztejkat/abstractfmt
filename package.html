@@ -68,11 +68,16 @@
 	but the limit may not be smaller than 8 characters and must be directly reported through API.
 	
 	<h4>Decodnig signals and acting according to the names</h4>
-	Strings do have all the required capactity and solves the problem with name clash through
-	different code using the same format, but at the cost of the inefficient comparison.
-	<p>
-	Since JDK 7 when <code>switch(String)</code> which is using <u>cached hash code</u> 
-	was introduced the:
+        In plenty of use scenarios stream readers will have to react on names of incomming signals.
+        If there is a signal X do one thing, if there is a signal Y do the other thing.
+        <p>
+        This package have chose signal names to be strings rather than numbers,
+        because this do let us to be less prone to <i>name clash</i> between different
+        segments of code naming different signals.
+        <p>
+        The price for using strings is a less efficient comparison.
+        <p>
+	Since JDK 7 there is the <code>switch(String)</code> is using <u>cached hash code</u>:
 	<pre>
 		switch(<i>some string</i>)
 		{
@@ -80,16 +85,62 @@
 			case "two":...
 		};
 	</pre>
-	is only three times slower than:
-	<pre>
-		switch(<i>some int</i>)
-		{
-			case 1:
-			case 2:...
-		};
-	</pre>	
-	which is using a low level JVM (or even native assembly) "computed goto" structure.
-	This way string driven deconding can be perfomed in an efficient way.
+	which is NOT implemented as:
+        <pre>
+             if ("one".equals(x))
+             {
+             }else
+             if ("two".equals(x))
+             {
+             }...
+        </pre>
+        Instead it is implemented, roughly speaking, as:
+        <pre>
+                static final int ONE = "one".hashCode();   //thanks to cast in stone JLS implementation of hashCode()
+                static final int TWO = "two".hashCode();
+                ...
+                switch(x.hashCode)
+                {
+                    case ONE:     // grouping all identical hash codes at compile time
+                    case TWO:
+                           if ("one".equals(....))
+                };
+        </pre>
+        This is quite efficient when there is a large switch statement
+        over short strings. The primary cost comes from the need of
+        computing hashCode which takes ages for very, very long strings
+        and from the possibility that all <code>case</code> hash codes
+        will be the same and from the fact, that at least one <code>equals(...)</code>
+        will have to be executed.
+        <p>
+        If this performance is not good for You and You can live with
+        a more probable name clash and You like human readbale names then
+        You may restrict Your names length. For an example
+        if You will restrict recognized names to up to 4 ASCII letters,
+        where each ASCII is 0...255 number You may easily transform
+        the string to 1:1 identity mapped integer:
+        <pre>
+             int v = (char[0] & 0xff)+((char[1] & 0xff)&lt;&lt;8)...
+        </pre>
+        and use the <code>v</code> in <code>switch</code> statement
+        directly. With restriction to only capital letters (without numbers you have 26
+        ASCII letters) you may use only 5 bits per letter, so you can have
+        six letters long unique names identity mapped to single integer.
+        <p>
+        And finally You may make a use from a fact, that even tough names <u>are</u>
+        strings, they do <u>not have to be human readable</u>. A single character long
+        string may be good enough for You if You just use it as a number like:
+        <pre>
+             if (x.length()==1)
+             {
+              switch(x.charAt(0))
+              {
+               case 0x0909:
+               case 0xFFAA:
+              };
+             };
+        </pre>
+        which is a fastest possible solution.
 	
 	
 	<a name="end"><h3>End signal</h3></a>

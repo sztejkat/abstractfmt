@@ -5,7 +5,8 @@ import java.io.IOException;
 	A test bed for paired {@link ISignalReadFormat}/{@link ISignalWriteFormat}
 	using focused on event operations.
 	<p>
-	This is type agnostic.
+	Tests in this class are agnostic to whether streams
+	are described or not.
 */
 public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 {

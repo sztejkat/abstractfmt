@@ -120,6 +120,16 @@ public class CBoundAppendable implements Appendable,CharSequence
     */
     public final int hashCode()
     {
+        /* Please notice the inherent inefficiency
+           The 31*h will cross the 32 bit boundary
+           after about 20 characters or so. If computation
+           will continue after next 20 characters the
+           effect of first characters will get lost.
+
+           Why they have choosen unlimited hash, when
+           hash is just used to guess if texts are
+           "similiar"?
+        */
         int h = hash;
         final int L = length();
         if (h == 0 && L > 0) {
@@ -143,9 +153,23 @@ public class CBoundAppendable implements Appendable,CharSequence
     	assert(s!=null);
     	//Note: Objects with different hashes can't be 
     	//the same.
-    	if (hashCode()!=s.hashCode()) return false;
+        //Notice however, that computing hash code
+        //may be more time consuming than
+        //exact comparison for longer strings.
+        //But it may be more efficient if we
+        //compare the same string with multiple
+        //textes, since then hascode is cached.
+        //This is precisely why it could be used
+        //in switch statement.
+        //
+        //We can easliy check if we know own hascode,
+        //but we can't test if s knows it.
     	int L = length();
-    	if (length()!=s.length()) return false;
+    	if (L!=s.length()) return false;
+        if ((L<=32)&&(hash!=0))   //optimizing guess.
+        {
+               	if (hashCode()!=s.hashCode()) return false;
+        };
     	for(int i=L;--i>=0;)
     	{
     		if (buffer[i]!=s.charAt(i)) return false;
