@@ -173,8 +173,18 @@ public interface ISignalReadFormat extends Closeable
 							Note:Above constant is &gt;0.
 					</li>
 				</ul>
-		@throws IOException if low level i/o failed, except of end-of-stream condition
-							which is indicated by a dedicated return value.
+				Specifically if if block operation is in progress and <u>no partial
+				read was returned</u> this operation is expected to return <code>PRMTV_UNTYPED</code>
+				(undescribed) or <code>PRMTV_XXX_BLOCK</code>. This should be
+				the behaviour regardless if entire block was read or not. 
+				<p>
+				If the partial block read is returned this method should return {@link #SIGNAL}
+				or, acceptably {@link #EOF}.
+				
+		@throws IOException if low level i/o failed, except of end-of-stream condition in allowed
+							places which is indicated by a dedicated return value.
+		@throws EUnexpectedEof when end of stream is not expected, ie. within data block
+							and etc.
 		@throws ECorruptedFormat if could not decode content due to other errors.
 		@see #isDescribed
 		*/
