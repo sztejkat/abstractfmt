@@ -284,7 +284,7 @@ public class CObjListReadFormat extends ASignalReadFormat
 				    (at_cursor == CObjListFormat.FLUSH_ANY);
 		}; 
 		@Override protected int readBooleanBlockImpl(boolean [] buffer, int offset, int length)throws IOException
-		{
+		{		
 			//sever through blocks
 			int read_count =0;
 			while(length!=0)
@@ -324,6 +324,24 @@ public class CObjListReadFormat extends ASignalReadFormat
 						read_count+=to_transfer;
 						length-=to_transfer;
 						this.array_op_ptr=ptr;
+						//Now we do INTENTIONALLY introduce here a difference between
+						//this method and remaning methods.
+						//This is a boundary case which helps testing ASignalReadFormat.
+						//If You consider what happens when the last buffer is fully
+						//read but NO PARTIAL READ is triggere then:
+						// - Without below code there is a boolean[] array on list
+						//	 which is fully used up and readIndicator reports NO_INDICATOR.
+						// - With this code this array is consumed and readIndicator
+						//	 reports next element which can be BEGIN/END or FLUSH.
+						// Both are correct conditions and both must be handled identically.
+						//
+						if (L-ptr==0)
+						{
+							//move to next element, by taking current element from queue
+							media.removeFirst();
+							this.array_op_ptr = 0;	//reset array pointer.
+							continue;
+						};
 					};
 				}else
 					throw new EDataMissmatch(at_cursor.getClass()+" ("+at_cursor+") while expected boolean[]");

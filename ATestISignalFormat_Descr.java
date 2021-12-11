@@ -137,7 +137,10 @@ public abstract class ATestISignalFormat_Descr extends ATestISignalFormatBase
 				r = p.read.readBooleanBlock(new boolean[16],0,16-9);
 				org.junit.Assert.assertTrue(9+r==16);
 				//There had to be NO partial read. 
-				org.junit.Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_BOOLEAN_BLOCK);
+				org.junit.Assert.assertTrue(
+							" "+p.read.whatNext(),
+							p.read.whatNext()==ISignalReadFormat.PRMTV_BOOLEAN_BLOCK
+							);
 			};
 			//However NEXT should skip data block.
 			org.junit.Assert.assertTrue(p.read.next()==null);
@@ -376,7 +379,9 @@ public abstract class ATestISignalFormat_Descr extends ATestISignalFormatBase
 				r = p.read.readShortBlock(new short[16],0,16-9);
 				org.junit.Assert.assertTrue(9+r==16);
 				//There had to be NO partial read. 
+				System.out.println("Asking if still in block");
 				org.junit.Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_SHORT_BLOCK);
+				System.out.println("Fine, still in block.");
 			};
 			//However NEXT should skip data block.
 			org.junit.Assert.assertTrue(p.read.next()==null);

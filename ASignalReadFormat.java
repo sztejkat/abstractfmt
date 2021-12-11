@@ -63,11 +63,14 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 				private static final byte STATE_PRIMITIVE = 0;
 				/** State indicating that initial boolean block write
 				was read. Each type of block has own state and 
-				state indicating that block reached end-of-data*/
+				state indicating that block reached end-of-data.
+				*/
 				private static final byte STATE_BOOLEAN_BLOCK=(byte)1;
 				private static final byte STATE_FIRST_BLOCK=STATE_BOOLEAN_BLOCK;
+				
 				/** See {@link #STATE_BOOLEAN_BLOCK} */
-				private static final byte STATE_BYTE_BLOCK=(byte)2;				
+				private static final byte STATE_BYTE_BLOCK=(byte)2;
+								
 				/** See {@link #STATE_BOOLEAN_BLOCK} */
 				private static final byte STATE_CHAR_BLOCK=(byte)3;				
 				/** See {@link #STATE_BOOLEAN_BLOCK} */
@@ -1120,7 +1123,7 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 			if (pending_indicator==EOF_INDICATOR)
 			{
 				try{
-						pending_indicator = readIndicator();						
+						pending_indicator = readIndicator();
 					}catch(EBrokenStream ex){  throw breakStream(ex); };
 			};
 			return pending_indicator;
@@ -1892,61 +1895,142 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 				  }catch(EBrokenStream ex){ throw breakStream(ex); };
 			}
 		};
-		
+		private static int whatNextFromBlockState(int state)
+		{
+				switch(state)
+				{
+					case STATE_BOOLEAN_BLOCK: return PRMTV_BOOLEAN_BLOCK;
+					case STATE_BYTE_BLOCK: return PRMTV_BYTE_BLOCK;
+					case STATE_SHORT_BLOCK: return PRMTV_SHORT_BLOCK;
+					case STATE_CHAR_BLOCK: return PRMTV_CHAR_BLOCK;
+					case STATE_INT_BLOCK: return PRMTV_INT_BLOCK;
+					case STATE_LONG_BLOCK: return PRMTV_LONG_BLOCK;
+					case STATE_FLOAT_BLOCK: return PRMTV_FLOAT_BLOCK;
+					case STATE_DOUBLE_BLOCK: return PRMTV_DOUBLE_BLOCK;
+					default: throw new AssertionError("invalid state:"+state);
+				}
+		};
+		private static int flushIndicatorFromBlockState(int state)
+		{
+				switch(state)
+				{
+					case STATE_BOOLEAN_BLOCK: return FLUSH_BOOLEAN_BLOCK;
+					case STATE_BYTE_BLOCK: return FLUSH_BYTE_BLOCK;
+					case STATE_SHORT_BLOCK: return FLUSH_SHORT_BLOCK;
+					case STATE_CHAR_BLOCK: return FLUSH_CHAR_BLOCK;
+					case STATE_INT_BLOCK: return FLUSH_INT_BLOCK;
+					case STATE_LONG_BLOCK: return FLUSH_LONG_BLOCK;
+					case STATE_FLOAT_BLOCK: return FLUSH_FLOAT_BLOCK;
+					case STATE_DOUBLE_BLOCK: return FLUSH_DOUBLE_BLOCK;
+					default: throw new AssertionError("invalid state:"+state);
+				}
+		};
 		@Override public int whatNext()throws IOException
 		{
 				final int indicator = getIndicator();
-				switch(indicator)
+				//Block processing needs a special treatment
+				if ((state>=STATE_FIRST_BLOCK)&&(state<=STATE_LAST_BLOCK))
 				{
-						case EOF_INDICATOR: 		return ISignalReadFormat.EOF;							
-						case NO_INDICATOR:		
-								//Note: No indicator is returned by un-described streams
-								//inside a data stream and for both types
-								//of streams inside a block, so we need to continue according to
-								//currently processing type.
-								if ((state>=STATE_FIRST_BLOCK)&&(state<=STATE_LAST_BLOCK))
-								{
-									switch(state)
-									{
-										case STATE_BOOLEAN_BLOCK: return PRMTV_BOOLEAN_BLOCK;
-										case STATE_BYTE_BLOCK: return PRMTV_BYTE_BLOCK;
-										case STATE_SHORT_BLOCK: return PRMTV_SHORT_BLOCK;
-										case STATE_CHAR_BLOCK: return PRMTV_CHAR_BLOCK;
-										case STATE_INT_BLOCK: return PRMTV_INT_BLOCK;
-										case STATE_LONG_BLOCK: return PRMTV_LONG_BLOCK;
-										case STATE_FLOAT_BLOCK: return PRMTV_FLOAT_BLOCK;
-										case STATE_DOUBLE_BLOCK: return PRMTV_DOUBLE_BLOCK;
-										default: throw new AssertionError("invalid state:"+state);
-									}
-								}else
-								{
-									//not in block operation.
-									if (isDescribed()) 
-										throw new EDataTypeRequired("Described fromat, but NO_INDICATOR is found in stream while type is expected.");
-									return PRMTV_UNTYPED;	//<-- as generic, non typed indicator.
-								}
-						case BEGIN_INDICATOR:		//fallthrough
-						case END_INDICATOR:			//fallthrough
-						case END_BEGIN_INDICATOR: 	return SIGNAL;
-						case TYPE_BOOLEAN: 			return PRMTV_BOOLEAN;
-						case TYPE_BYTE: 			return PRMTV_BYTE;
-						case TYPE_CHAR: 			return PRMTV_CHAR;
-						case TYPE_SHORT: 			return PRMTV_SHORT;
-						case TYPE_INT: 				return PRMTV_INT;
-						case TYPE_LONG: 			return PRMTV_LONG;
-						case TYPE_FLOAT: 			return PRMTV_FLOAT;
-						case TYPE_DOUBLE: 			return PRMTV_DOUBLE;
-						case TYPE_BOOLEAN_BLOCK: 	return PRMTV_BOOLEAN_BLOCK;
-						case TYPE_BYTE_BLOCK: 		return PRMTV_BYTE_BLOCK;
-						case TYPE_CHAR_BLOCK: 		return PRMTV_CHAR_BLOCK;
-						case TYPE_SHORT_BLOCK: 		return PRMTV_SHORT_BLOCK;
-						case TYPE_INT_BLOCK: 		return PRMTV_INT_BLOCK;
-						case TYPE_LONG_BLOCK: 		return PRMTV_LONG_BLOCK;
-						case TYPE_FLOAT_BLOCK: 		return PRMTV_FLOAT_BLOCK;
-						case TYPE_DOUBLE_BLOCK: 	return PRMTV_DOUBLE_BLOCK;
-						default:					
-								//All remaining are not allowed in this place.
-								throw new ECorruptedFormat("Unexpected indicator "+indicatorToString(indicator));
+					//During block operation we need to, practically always, return
+					//proper PRMTV_xxx_BLOCK, unless block returned partial read.
+					//We do however introduce some state validation.
+					//Notice, the indicator may be NOT picked from a stream if it
+					//was actually NOT touched during block operation so we may
+					//expect any indicator which is terminating a block operation.
+					if (!isDescribed())
+					{
+						switch(indicator)
+						{
+							case EOF_INDICATOR: 		return ISignalReadFormat.EOF;
+							//and now list of allowed indicators within a block
+							case NO_INDICATOR:		
+							case BEGIN_INDICATOR:		
+							case END_INDICATOR:			
+							case END_BEGIN_INDICATOR:
+										return whatNextFromBlockState(state); 
+							default:
+									throw new ECorruptedFormat("Unexpected "+indicatorToString(indicator)+" inside block operation"); 	 
+						}	   
+					}else
+					{
+						switch(indicator)
+						{
+							case EOF_INDICATOR: 		return ISignalReadFormat.EOF;
+							//and now list of allowed indicators within a block
+							case NO_INDICATOR:		
+							case BEGIN_INDICATOR:		
+							case END_INDICATOR:			
+							case END_BEGIN_INDICATOR:
+												return whatNextFromBlockState(state); 
+							case FLUSH_BOOLEAN_BLOCK:	
+							case FLUSH_BYTE_BLOCK: 		
+							case FLUSH_CHAR_BLOCK: 		
+							case FLUSH_SHORT_BLOCK: 	
+							case FLUSH_INT_BLOCK: 		
+							case FLUSH_LONG_BLOCK: 		
+							case FLUSH_FLOAT_BLOCK: 	
+							case FLUSH_DOUBLE_BLOCK: 	
+										if (flushIndicatorFromBlockState(state)!=indicator)
+											throw new ECorruptedFormat("Found "+indicatorToString(indicator)+
+											" but of FLUSH_xxx_BLOCK only "+indicatorToString(flushIndicatorFromBlockState(state))+" is allowed now");
+										return whatNextFromBlockState(state);
+							case FLUSH:			
+									   throw new ECorruptedFormat("Found FLUSH indicator but only "+indicatorToString(flushIndicatorFromBlockState(state))+" flush is allowed now");
+							case FLUSH_BLOCK:
+							case FLUSH_ANY:
+										return whatNextFromBlockState(state);	 	
+							default:
+										throw new ECorruptedFormat("Unexpected "+indicatorToString(indicator)+" inside block operation"); 
+						}
+					}
+				}else
+				{
+					if (!isDescribed())
+					{
+						switch(indicator)
+						{
+								case EOF_INDICATOR: 		return ISignalReadFormat.EOF;							
+								case NO_INDICATOR:			return PRMTV_UNTYPED;	//<-- as generic, non typed indicator.
+								case BEGIN_INDICATOR:		//fallthrough
+								case END_INDICATOR:			//fallthrough
+								case END_BEGIN_INDICATOR: 	return SIGNAL;
+								default:					
+										//All remaining are not allowed in this place.
+										throw new ECorruptedFormat("Unexpected indicator "+indicatorToString(indicator));
+						}
+					}else
+					{
+						switch(indicator)
+						{
+								case EOF_INDICATOR: 		return ISignalReadFormat.EOF;							
+								case NO_INDICATOR:		
+											throw new EDataTypeRequired("Described fromat, but NO_INDICATOR is found in stream while type is expected.");
+								case BEGIN_INDICATOR:		//fallthrough
+								case END_INDICATOR:			//fallthrough
+								case END_BEGIN_INDICATOR: 	return SIGNAL;
+								
+								case TYPE_BOOLEAN: 			return PRMTV_BOOLEAN;
+								case TYPE_BYTE: 			return PRMTV_BYTE;
+								case TYPE_CHAR: 			return PRMTV_CHAR;
+								case TYPE_SHORT: 			return PRMTV_SHORT;
+								case TYPE_INT: 				return PRMTV_INT;
+								case TYPE_LONG: 			return PRMTV_LONG;
+								case TYPE_FLOAT: 			return PRMTV_FLOAT;
+								case TYPE_DOUBLE: 			return PRMTV_DOUBLE;
+								
+								case TYPE_BOOLEAN_BLOCK: 	return PRMTV_BOOLEAN_BLOCK;
+								case TYPE_BYTE_BLOCK: 		return PRMTV_BYTE_BLOCK;
+								case TYPE_CHAR_BLOCK: 		return PRMTV_CHAR_BLOCK;
+								case TYPE_SHORT_BLOCK: 		return PRMTV_SHORT_BLOCK;
+								case TYPE_INT_BLOCK: 		return PRMTV_INT_BLOCK;
+								case TYPE_LONG_BLOCK: 		return PRMTV_LONG_BLOCK;
+								case TYPE_FLOAT_BLOCK: 		return PRMTV_FLOAT_BLOCK;
+								case TYPE_DOUBLE_BLOCK: 	return PRMTV_DOUBLE_BLOCK;
+								default:					
+										//All remaining are not allowed in this place.
+										throw new ECorruptedFormat("Unexpected indicator "+indicatorToString(indicator));
+						}
+					}
 				}
 		};
 		/* =================================================================
@@ -2089,7 +2173,10 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 					return r;
 				}catch(EBrokenStream ex){ throw breakStream(ex); } 
 			}else
+			{
+				validateBlockFlush(FLUSH_BOOLEAN_BLOCK);
 				return 0;
+			}
 		}
 		/** See {@link #readBooleanBlock}
 		*/
@@ -2125,7 +2212,10 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 					return r;
 				}catch(EBrokenStream ex){ throw breakStream(ex); } 
 			}else
+			{
+				validateBlockFlush(FLUSH_BYTE_BLOCK);
 				return 0;
+			}
 		}
 		/** See {@link #readBooleanBlock}
 		*/
@@ -2158,7 +2248,10 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 					return r;
 				}catch(EBrokenStream ex){ throw breakStream(ex); } 
 			}else
+			{
+				validateBlockFlush(FLUSH_BYTE_BLOCK);
 				return -1;
+			}
 		}
 		/** See {@link #readBooleanBlock}
 		*/
@@ -2194,7 +2287,10 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 					return r;
 				}catch(EBrokenStream ex){ throw breakStream(ex); } 
 			}else
+			{
+				validateBlockFlush(FLUSH_CHAR_BLOCK);
 				return 0;
+			}
 		}
 		/** See {@link #readBooleanBlock}
 		*/
@@ -2228,7 +2324,10 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 					return r;
 				}catch(EBrokenStream ex){ throw breakStream(ex); } 
 			}else
+			{
+				validateBlockFlush(FLUSH_CHAR_BLOCK);
 				return 0;
+			}
 		}
 		/** See {@link #readBooleanBlock}
 		*/
@@ -2264,7 +2363,10 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 					return r;
 				}catch(EBrokenStream ex){ throw breakStream(ex); } 
 			}else
+			{
+				validateBlockFlush(FLUSH_SHORT_BLOCK);
 				return 0;
+			}
 		}
 		/** See {@link #readBooleanBlock}
 		*/
@@ -2372,7 +2474,10 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 					return r;
 				}catch(EBrokenStream ex){ throw breakStream(ex); } 
 			}else
+			{
+				validateBlockFlush(FLUSH_FLOAT_BLOCK);
 				return 0;
+			}	
 		}
 		/** See {@link #readBooleanBlock}
 		*/
@@ -2408,7 +2513,10 @@ public abstract class ASignalReadFormat implements ISignalReadFormat
 					return r;
 				}catch(EBrokenStream ex){ throw breakStream(ex); } 
 			}else
+			{
+				validateBlockFlush(FLUSH_DOUBLE_BLOCK);
 				return 0;
+			}
 		}
 		/* =================================================================
 		

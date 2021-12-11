@@ -9,7 +9,7 @@ import java.io.IOException;
 	
 	<h2>Described formats</h2>
 	This class provides a no-operation set of methods
-	<code>writeTypeXXX</code> which are invoked in every place
+	<code>writeXXXType</code> which are invoked in every place
 	in which type information must be written. The described
 	formats should override those methods (see their description)
 	and override {@link #isDescribed} to return true.
