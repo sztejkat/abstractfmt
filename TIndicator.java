@@ -48,7 +48,7 @@ public enum TIndicator
 		to readers after this indicator is read from
 		stream
 		*/ 
-		BEGIN_DIRECT(TIndicator.SIGNAL+TIndicator.NAME),		
+		BEGIN_DIRECT(TIndicator.SIGNAL+TIndicator.NAME+TIndicator.IS_BEGIN),		
 		/** This indicator is written to a stream
 		when "begin" signal is stored with it's name
 		written directly to a stream together
@@ -62,7 +62,7 @@ public enum TIndicator
 		after this indicator is read from
 		stream
 		*/ 
-		BEGIN_REGISTER(TIndicator.SIGNAL+TIndicator.NAME+TIndicator.REGISTER),
+		BEGIN_REGISTER(TIndicator.SIGNAL+TIndicator.NAME+TIndicator.REGISTER+TIndicator.IS_BEGIN),
 		/** This indicator is written to a stream
 		when "begin" signal registered previously
 		with {@link #BEGIN_REGISTER} or {@link #END_BEGIN_REGISTER}
@@ -73,21 +73,21 @@ public enum TIndicator
 		which should be avaialable to readers 
 		after this indicator is read from
 		stream */
-		BEGIN_USE(TIndicator.SIGNAL+TIndicator.REGISTER),
+		BEGIN_USE(TIndicator.SIGNAL+TIndicator.REGISTER+TIndicator.IS_BEGIN),
 		/** Written to stream to indicated an end signal */
-		END(TIndicator.SIGNAL),
+		END(TIndicator.SIGNAL+TIndicator.IS_END),
 		/** Written to a stream to indicate {@link #END}
 		followed by {@link #BEGIN_DIRECT} without anything
 		in between */
-		END_BEGIN_DIRECT(TIndicator.SIGNAL+TIndicator.NAME),
+		END_BEGIN_DIRECT(TIndicator.SIGNAL+TIndicator.NAME+TIndicator.IS_END+TIndicator.IS_BEGIN),
 		/** Written to a stream to indicate {@link #END}
 		followed by {@link #BEGIN_REGISTER} without anything
 		in between */
-		END_BEGIN_REGISTER(TIndicator.SIGNAL+TIndicator.NAME+TIndicator.REGISTER),
+		END_BEGIN_REGISTER(TIndicator.SIGNAL+TIndicator.NAME+TIndicator.REGISTER+TIndicator.IS_END+TIndicator.IS_BEGIN),
 		/** Written to a stream to indicate {@link #END}
 		followed by {@link #END_BEGIN_USE} without anything
 		in between */
-		END_BEGIN_USE(TIndicator.SIGNAL+TIndicator.REGISTER),
+		END_BEGIN_USE(TIndicator.SIGNAL+TIndicator.REGISTER+TIndicator.IS_END+TIndicator.IS_BEGIN),
 		
 		/** This indicator is written to mark, that a single
 		elementary primitive of specified type do follow.
@@ -208,7 +208,7 @@ public enum TIndicator
 				/** If set indicator describes elementary primitive operation*/
 				public static final int ELEMENT = 0x08;
 				/** If set indicator describes signals management */
-				public static final int SIGNAL = 0x10;
+				public static final int SIGNAL = 0x10;				
 				/** If set indicator describes stream status management */
 				public static final int STATUS = 0x20;
 				/** If set indicator describes indicator which do carry signal name*/
@@ -217,10 +217,14 @@ public enum TIndicator
 				public static final int REGISTER = 0x80;
 				/** If set indicator is read-only and cannot be written to a stream.*/
 				public static final int READ_ONLY = 0x100;
+				/** If set indicator is one of end indicators */
+				public static final int IS_END = 0x200;
+				/** If set indicator is one of begin indicators */
+				public static final int IS_BEGIN = 0x400;
 				
 				/** Combination of {@link #TYPE}, {@link #FLUSH}, {@link #BLOCK},
 				{@link #ELEMENT}, {@link #SIGNAL}, {@link #STATUS},{@link #NAME},
-				{@link #REGISTER},{@link #READ_ONLY}
+				{@link #REGISTER},{@link #READ_ONLY},{@link #IS_END},{@link #IS_BEGIN}
 				 */
 				public final int FLAGS;
 		

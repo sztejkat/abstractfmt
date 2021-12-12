@@ -35,7 +35,7 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 		updates data accessible through {@link #getSignalNumber}.
 		<p>
 		If there is no indicator under cursor but some data (including block body)
-		it returns {@link TIndicator#DATA}.
+		it returns {@link TIndicator#DATA} and does not move a cursor.
 		<p>
 		If cursor is at the physical end of file returns 
 		{@link TIndicator#EOF}.		
@@ -45,7 +45,13 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 		with a signal are out of allowed boundaries.
 	*/
 	public TIndicator readIndicator()throws IOException;
-	
+	/** A maximum of times the {@link #readIndicator}
+	 can return name registration indicators and a maxium number
+	 of registered names.
+	@return non-negative, can be zero.
+	*/
+	public int getMaxRegistrations();
+		
 	/** Returns most recently read name during processing
 	the {@link #readIndicator} which returned 
 	indicator with {@link TIndicator#NAME} flag set.
@@ -98,7 +104,7 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	the behavior is unspecified. 	
 	<p>
 	During block read the {@link #readIndicator} must return {@link TIndicator#DATA}
-	unless indicator is at cursor.
+	unless there is an indicator at cursor.
 	<p>
 	This method reads data item by item, as long as the requested number
 	of items is read <u>or</u> and indicator is reached.

@@ -103,9 +103,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 					/** A names registry, hash codes for registered names.
 					Null if registry is not used.*/
 					private final int [] names_registry_hash;
-					/** State variable, can take one of 
-					<code>STATE_xxx</code> constants.
-					Initially {@link TState#NONE}*/
+					/** State variable initially {@link TState#NONE}*/
 					private TState state;
 				
 		/* *******************************************************
@@ -122,7 +120,8 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			Zero to disable registry and always write names directly.
 			<p>
 			This value must not be greater than one returned
-			by <code>out.getMaxRegistrations</code>
+			by <code>output.getMaxRegistrations</code> and can be
+			used to limit registry range if required.
 		@param max_name_length greater or equal to 8. Maximum length of names
 			to be accepted in {@link #begin(String, boolean)} and be passed to
 			{@link #writeSignalNameData}

@@ -1,7 +1,7 @@
 package sztejkat.abstractfmt;
 /**
 	An exception thrown when stream is broken beyond repair
-	and any subsequent attempt to read it should throw.
+	and any subsequent attempt to use it <i>should</i> throw.
 */
 public class EBrokenStream extends ECorruptedFormat
 {
