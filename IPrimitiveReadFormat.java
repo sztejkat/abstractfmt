@@ -131,23 +131,13 @@ public interface IPrimitiveReadFormat extends Closeable
 		
 		
 		/**  See {@link #readBooleanBlock(boolean[],int,int)}
-		@param characters --//--
-		@param offset --//--
+		@param characters where to read data to
 		@param length --//--		
 		@return --//--
  		@throws IOException --//--
 		*/
-		public int readCharBlock(CharSequence characters, int offset, int length)throws IOException;		
-		/** See {@link #readBooleanBlock(boolean[],int,int)}
-		@param s --//--	
-		@return --//--
- 		@throws IOException --//--
-		*/
-		public default int readCharBlock(CharSequence s)throws IOException
-		{
-				assert(s!=null);
-				return readCharBlock(s,0,s.length());
-		}
+		public int readCharBlock(Appendable characters,  int length)throws IOException;		
+		
 		/**  See {@link #readBooleanBlock(boolean[],int,int)}
 		@param buffer --//--
 		@param offset --//--

@@ -140,11 +140,12 @@ public interface ISignalReadFormat extends Closeable, IPrimitiveReadFormat
 				Note: All PRMTV_xxx constants are &gt;0*/
 				public static final int PRMTV_UNTYPED=0xFFFF;
 		/** 
-			Tests what kind of information is under a cursor.
+			Tests what kind of information is under a cursor and what methods
+			are safe to call.
 			<p>
-			Subsequent calls to this method must return the same value and must not 
-			affect the stream or move stream cursor. They may however cause
-			some data to be read from a low level stream.
+			Subsequent calls to this method must return the same value and must neither 
+			affect the stream nor move stream cursor. They may however cause
+			some data to be read from a low level stream if necessary.
 		@return one of:
 				<ul>
 					<li>{@link #EOF} (this constant is -1)</li>
@@ -177,15 +178,15 @@ public interface ISignalReadFormat extends Closeable, IPrimitiveReadFormat
 							Note:Above constant is &gt;0.
 					</li>
 				</ul>
-				Specifically if if block operation is in progress and <u>no partial
-				read was returned</u> this operation is expected to return <code>PRMTV_UNTYPED</code>
-				(undescribed) or <code>PRMTV_XXX_BLOCK</code>. This should be
-				the behaviour regardless if entire block was read or not. 
+				Specifically if if block operation is in progress this operation 
+				is expected to return <code>PRMTV_UNTYPED</code>(undescribed)
+				or <code>PRMTV_XXX_BLOCK</code>.. 
 				<p>
-				If the partial block read <u>is returned</u> this method
-				should return what is next in stream after a block.
-				Since block is terminated with "end signal" only
-				{@link #SIGNAL} or {@link #EOF} are allowed.
+				If the partial block read <u>was returned</u> or the entire
+				data block was consumed this method	should return what is
+				next in a stream after a block.	Since block is terminated 
+				with "end signal" only {@link #SIGNAL} or {@link #EOF}
+				are allowed.
 				
 		@throws IOException if low level i/o failed, except of end-of-stream condition in allowed
 							places which is indicated by a dedicated return value.

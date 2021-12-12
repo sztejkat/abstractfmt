@@ -99,6 +99,8 @@ public interface ISignalWriteFormat extends Closeable, Flushable,IPrimitiveWrite
 		<p>
 		An elementry primitive write may happen anywhere in a stream, including
 		outside of an <a href="package.html#event">event</a>.
+		<p>
+		If format is described it must write type information.
 		
 		@param v value to write
 		@throws IllegalStateException if invoked after any block-operation was initiated and
@@ -115,13 +117,15 @@ public interface ISignalWriteFormat extends Closeable, Flushable,IPrimitiveWrite
 		/** 
 		An initial  block write may happen in any place inside and an <a href="package.html#event">event</a>.
 		<p>
-		A byte-block write may be followed <u>only</u> by other byte-block write
+		A block write may be followed <u>only</u> by other block write of the same type.
 		or by writing of "end" or "begin" signal.
+		<p>
+		If format is described it must write type information.
 						
 		@throws IllegalStateException if there is block operation of another type in progress
 					or there is no active event.
 		*/
-		@Override public void writeByteBlock(byte [] buffer, int offset, int length)throws IOException;
+		@Override public void writeBooleanBlock(boolean [] buffer, int offset, int length)throws IOException;
 			
 		/*=============================================================
 		

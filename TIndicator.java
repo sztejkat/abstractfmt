@@ -12,7 +12,7 @@ package sztejkat.abstractfmt;
 */
 public enum TIndicator
 {
-			/*--------------------------------------------
+		/*--------------------------------------------
 			Stream state, read only indicators.
 		---------------------------------------------*/
 		/** 
@@ -24,7 +24,7 @@ public enum TIndicator
 		 This is read only indicator and is NOT written
 		 to a stream.
 		*/
-		EOF(TIndicator.STATUS),
+		EOF(TIndicator.STATUS+TIndicator.READ_ONLY),
 		/** 
 		 This indicator is to be returned from stream
 		 indicator querry to inform that there are data
@@ -34,7 +34,7 @@ public enum TIndicator
 		 This is read only indicator and is NOT written
 		 to a stream.
 		*/		
-		DATA(TIndicator.STATUS),
+		DATA(TIndicator.STATUS+TIndicator.READ_ONLY),
 		
 		/*--------------------------------------------
 			Signals, read-write indicators.
@@ -89,46 +89,113 @@ public enum TIndicator
 		in between */
 		END_BEGIN_USE(TIndicator.SIGNAL+TIndicator.REGISTER),
 		
-		
+		/** This indicator is written to mark, that a single
+		elementary primitive of specified type do follow.
+		<p>
+		It is an optional indicator used by described streams.
+		 */
 		TYPE_BOOLEAN(TIndicator.TYPE+TIndicator.ELEMENT),
+		/** See {@link #TYPE_BOOLEAN} */
 		TYPE_BYTE(TIndicator.TYPE+TIndicator.ELEMENT),
+		/** See {@link #TYPE_BOOLEAN} */
 		TYPE_CHAR(TIndicator.TYPE+TIndicator.ELEMENT),
+		/** See {@link #TYPE_BOOLEAN} */
 		TYPE_SHORT(TIndicator.TYPE+TIndicator.ELEMENT),
+		/** See {@link #TYPE_BOOLEAN} */
 		TYPE_INT(TIndicator.TYPE+TIndicator.ELEMENT),
+		/** See {@link #TYPE_BOOLEAN} */
 		TYPE_LONG(TIndicator.TYPE+TIndicator.ELEMENT),
+		/** See {@link #TYPE_BOOLEAN} */
 		TYPE_FLOAT(TIndicator.TYPE+TIndicator.ELEMENT),
+		/** See {@link #TYPE_BOOLEAN} */
 		TYPE_DOUBLE(TIndicator.TYPE+TIndicator.ELEMENT),
 		
+		/** This indicator is written to mark, that a single
+		elementary primitive of specified type just was
+		read.
+		<p>
+		It is an optional indicator used by described streams
+		which need to enclose the primitive from both sides.
+		*/
 		FLUSH_BOOLEAN(TIndicator.FLUSH+TIndicator.ELEMENT),
+		/** See {@link #FLUSH_BOOLEAN} */
 		FLUSH_BYTE(TIndicator.FLUSH+TIndicator.ELEMENT),
+		/** See {@link #FLUSH_BOOLEAN} */
 		FLUSH_CHAR(TIndicator.FLUSH+TIndicator.ELEMENT),
+		/** See {@link #FLUSH_BOOLEAN} */
 		FLUSH_SHORT(TIndicator.FLUSH+TIndicator.ELEMENT),
+		/** See {@link #FLUSH_BOOLEAN} */
 		FLUSH_INT(TIndicator.FLUSH+TIndicator.ELEMENT),
+		/** See {@link #FLUSH_BOOLEAN} */
 		FLUSH_LONG(TIndicator.FLUSH+TIndicator.ELEMENT),
+		/** See {@link #FLUSH_BOOLEAN} */
 		FLUSH_FLOAT(TIndicator.FLUSH+TIndicator.ELEMENT),
+		/** See {@link #FLUSH_BOOLEAN} */
 		FLUSH_DOUBLE(TIndicator.FLUSH+TIndicator.ELEMENT),
 		
+		
+		/** This indicator is written to mark, that a block
+		of primitives of specified type do follow.
+		<p>
+		It is an optional indicator used by described streams.
+		*/		 
 		TYPE_BOOLEAN_BLOCK(TIndicator.TYPE+TIndicator.BLOCK),
+		/** See {@link #TYPE_BOOLEAN_BLOCK} */
 		TYPE_BYTE_BLOCK(TIndicator.TYPE+TIndicator.BLOCK),
+		/** See {@link #TYPE_BOOLEAN_BLOCK} */
 		TYPE_CHAR_BLOCK(TIndicator.TYPE+TIndicator.BLOCK),
+		/** See {@link #TYPE_BOOLEAN_BLOCK} */
 		TYPE_SHORT_BLOCK(TIndicator.TYPE+TIndicator.BLOCK),
+		/** See {@link #TYPE_BOOLEAN_BLOCK} */
 		TYPE_INT_BLOCK(TIndicator.TYPE+TIndicator.BLOCK),
+		/** See {@link #TYPE_BOOLEAN_BLOCK} */
 		TYPE_LONG_BLOCK(TIndicator.TYPE+TIndicator.BLOCK),
+		/** See {@link #TYPE_BOOLEAN_BLOCK} */
 		TYPE_FLOAT_BLOCK(TIndicator.TYPE+TIndicator.BLOCK),
+		/** See {@link #TYPE_BOOLEAN_BLOCK} */
 		TYPE_DOUBLE_BLOCK(TIndicator.TYPE+TIndicator.BLOCK),
 		
+		/** Like {@link #FLUSH_BOOLEAN} but for blocks */
 		FLUSH_BOOLEAN_BLOCK(TIndicator.FLUSH+TIndicator.BLOCK),
+		/** See {@link #FLUSH_BOOLEAN_BLOCK} */
 		FLUSH_BYTE_BLOCK(TIndicator.FLUSH+TIndicator.BLOCK),
+		/** See {@link #FLUSH_BOOLEAN_BLOCK} */
 		FLUSH_CHAR_BLOCK(TIndicator.FLUSH+TIndicator.BLOCK),
+		/** See {@link #FLUSH_BOOLEAN_BLOCK} */
 		FLUSH_SHORT_BLOCK(TIndicator.FLUSH+TIndicator.BLOCK),
+		/** See {@link #FLUSH_BOOLEAN_BLOCK} */
 		FLUSH_INT_BLOCK(TIndicator.FLUSH+TIndicator.BLOCK),
+		/** See {@link #FLUSH_BOOLEAN_BLOCK} */
 		FLUSH_LONG_BLOCK(TIndicator.FLUSH+TIndicator.BLOCK),
+		/** See {@link #FLUSH_BOOLEAN_BLOCK} */
 		FLUSH_FLOAT_BLOCK(TIndicator.FLUSH+TIndicator.BLOCK),
+		/** See {@link #FLUSH_BOOLEAN_BLOCK} */
 		FLUSH_DOUBLE_BLOCK(TIndicator.FLUSH+TIndicator.BLOCK),
 		
-		FLUSH_ELEMENTARY(TIndicator.FLUSH+TIndicator.ELEMENT),
-		FLUSH_BLOCK(TIndicator.FLUSH+TIndicator.BLOCK),
-		FLUSH_ANY(TIndicator.FLUSH+TIndicator.ELEMENT+TIndicator.BLOCK);
+		/** This indicator is read from stream if described
+		stream needs to surround elementary primitives from
+		both sides with some indicators, but the indicator
+		is not type specifiec.
+		<p>
+		This is a read only indicator.
+		*/
+		FLUSH_ELEMENTARY(TIndicator.FLUSH+TIndicator.ELEMENT+TIndicator.READ_ONLY),
+		/** This indicator is read from stream if described
+		stream needs to surround blocks of primitives from
+		both sides with some indicators, but the indicator
+		is not type specifiec.
+		<p>
+		This is a read only indicator.
+		*/
+		FLUSH_BLOCK(TIndicator.FLUSH+TIndicator.BLOCK+TIndicator.READ_ONLY),
+		/** This indicator is read from stream if described
+		stream needs to surround blocks of primitives or elementary primitives from
+		both sides with some indicators, but the indicator
+		is neither type specifiec nor specific to block or primitive.
+		<p>
+		This is a read only indicator.
+		*/
+		FLUSH_ANY(TIndicator.FLUSH+TIndicator.ELEMENT+TIndicator.BLOCK+TIndicator.READ_ONLY);
 		
 		
 		
@@ -148,10 +215,12 @@ public enum TIndicator
 				public static final int NAME = 0x40;
 				/** If set indicator describes indicator which do carry signal number*/
 				public static final int REGISTER = 0x80;
-		
+				/** If set indicator is read-only and cannot be written to a stream.*/
+				public static final int READ_ONLY = 0x100;
+				
 				/** Combination of {@link #TYPE}, {@link #FLUSH}, {@link #BLOCK},
 				{@link #ELEMENT}, {@link #SIGNAL}, {@link #STATUS},{@link #NAME},
-				{@link #REGISTER}
+				{@link #REGISTER},{@link #READ_ONLY}
 				 */
 				public final int FLAGS;
 		

@@ -133,13 +133,13 @@ public interface IPrimitiveWriteFormat
 		*/
 		public void writeCharBlock(CharSequence characters, int offset, int length)throws IOException;		
 		/** See {@link #writeBooleanBlock(boolean[],int,int)}
-		@param s --//--
+		@param characters --//--
 		@throws IOException --//--
 		*/
-		public default void writeCharBlock(CharSequence s)throws IOException
+		public default void writeCharBlock(CharSequence characters)throws IOException
 		{
-				assert(s!=null);
-				writeCharBlock(s,0,s.length());
+				assert(characters!=null);
+				writeCharBlock(characters,0,characters.length());
 		}
 		/**  See {@link #writeBooleanBlock(boolean[],int,int)}
 		@param buffer --//--

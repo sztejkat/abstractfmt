@@ -11,7 +11,10 @@ import java.io.IOException;
 	about types of primitives.
 	<p>
 	This is up to a caller to take care about proper order 
-	of methods invocation and to defend against missues.
+	of methods invocation and to defend against missues
+	and implementations of this class should provide little if
+	any defense against missuse and may fail misserably if
+	abused.
 */
 public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveWriteFormat
 {
@@ -21,24 +24,30 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 		
 		
 		****************************************************/
-		/** A maximum number which can be passed to 
-		{@link #writeBeginRegister} as name registration
-		and number of calls to this method.
+		/** A maximum of calls to {@link #writeBeginRegister}
+		 and a maximum number to be passed there.
 		@return non-negative, can be zero.
 		*/
-		public int getMaxBeginRegisterNumber();
+		public int getMaxRegistrations();
+		/** Tells if {@link #writeType} may be called alone
+		or if {@link #writeFlush} is required when {@link #writeType} 
+		is used.
+		
+		@return true if {@link #writeFlush} of matching type is required.
+		*/
+		public boolean requiresFlushes();
 		/**
 			Writes to a stream {@link TIndicator#BEGIN_DIRECT}.
 			@param signal_name name of a signal
 			@throws IOException if failed at low level.
 		*/
-		public void writeBegin(String signal_name)throws IOException;
+		public void writeBeginDirect(String signal_name)throws IOException;
 		/**
 			Writes to a stream {@link TIndicator#END_BEGIN_DIRECT}.
 			@param signal_name name of a signal
 			@throws IOException if failed at low level.
 		*/
-		public void writeEndBegin(String signal_name)throws IOException;		
+		public void writeEndBeginDirect(String signal_name)throws IOException;		
 		/**
 			Writes to a stream {@link TIndicator#BEGIN_REGISTER}
 			@param signal_name name of a signal
@@ -52,7 +61,7 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 				driver may decide to not pass this value inside a stream
 				and use;</li>
 			</ul>
-			This number is in 0...{@link #getMaxBeginRegisterNumber} range
+			This number is in 0...{@link #getMaxRegistrations}-1 range
 			@throws IOException if failed at low level.			
 		*/
 		public void writeBeginRegister(String signal_name, int number)throws IOException;
@@ -91,13 +100,14 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 		****************************************************/
 		/** Writes indicator telling that specific type start information
 		is to be stored. Un-described formats may ignore it.
-		@param type indicator with {@link TIndicator#TYPE} flag set.
+		@param type indicator with {@link TIndicator#TYPE} flag set 
 		@throws IOException if failed at low level.
 		*/ 
 		public void writeType(TIndicator type)throws IOException;
 		/** Writes indicator telling that specific data end information
 		is to be stored. Un-described formats may ignore it.
-		@param flush indicator with {@link TIndicator#FLUSH} flag set.
+		@param flush indicator with {@link TIndicator#FLUSH} flag set
+				and  {@link TIndicator#READ_ONLY} not set.
 		@throws IOException if failed at low level.
 		*/ 
 		public void writeFlush(TIndicator flush)throws IOException;
