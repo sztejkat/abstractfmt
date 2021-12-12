@@ -17,14 +17,18 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 			Carries pointer from which return data in currently
 			processes block on {@link #media} */
 			private int array_op_ptr;
+			
 		/** Creates
 		@param media non null media to read from
 		@param max_signal_name_length boundary of signal name length. 
 		*/
 		public CObjIndicatorReadFormat(CObjListFormat media, int max_signal_name_length)
 		{ 
+			assert(max_signal_name_length>=0);
+			assert(media!=null);
+			
 			this.media = media; 
-			this.max_signal_name_length=max_signal_name_length;
+			this.max_signal_name_length=max_signal_name_length;			
 			this.register_number =-1;
 		};
 		/* *******************************************************
@@ -33,6 +37,7 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 				
 		
 		********************************************************/
+		public int getMaxRegistrations(){ return Integer.MAX_VALUE; };
 		public TIndicator readIndicator()throws IOException
 		{
 			//Any call invalidates store name and number
@@ -70,14 +75,14 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 		public String getSignalName()
 		{
 			String n =this.signal_name;
-			if (n==null) throw new IllegalStateException("Name is invalid");
+			if (n==null) throw new IllegalStateException("Signal name can't be read.");
 			this.signal_name = null;
 			return n;
 		};
 		public int getSignalNumber()
 		{
 			int n=this.register_number;
-			if (n==-1) throw new IllegalStateException("Number is invalid");
+			if (n==-1) throw new IllegalStateException("Signal number can't be read.");
 			this.register_number = -1;
 			return n;
 		};

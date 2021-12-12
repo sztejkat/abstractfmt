@@ -13,7 +13,11 @@ public class CObjIndicatorWriteFormat implements IIndicatorWriteFormat
 		/** Creates
 		@param media non null media to write to 
 		*/
-		public CObjIndicatorWriteFormat(CObjListFormat media){ this.media = media; };
+		public CObjIndicatorWriteFormat(CObjListFormat media)
+		{
+			assert(media!=null); 
+			this.media = media; 
+		};
 		
 		/* ***************************************************************
 		

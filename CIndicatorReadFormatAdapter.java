@@ -38,19 +38,18 @@ final class CIndicatorReadFormatAdapter implements IIndicatorReadFormat
 	*/
 	public TIndicator getIndicator()throws IOException
 	{
-		if (current==null) current = readIndicator();
+		if (current==null) current = in.readIndicator();
 		return current;
 	};
-	private boolean isAtIndicator()
-	{
-		return ((current ==null)||(current == TIndicator.DATA));
-	};
+	/** Invalidates cached indicator */
 	private void invalidate(){ current=null; };
 	
 	public int getMaxRegistrations(){ return in.getMaxRegistrations(); };
 	/**	
-		Overriden to return cached value or read
-		it from stream.
+		If there is cached value, invalidates cache and returns it.
+		If there is no cached value, returns it from stream and does NOT
+		update cache, thous effectively consumig it.
+		@return read indicator.
 	*/
 	public TIndicator readIndicator()throws IOException
 	{
@@ -60,8 +59,7 @@ final class CIndicatorReadFormatAdapter implements IIndicatorReadFormat
 			current = null;
 			return i;
 		}
-		current = readIndicator();
-		return current;
+		return in.readIndicator();
 	};
 	public String getSignalName()
 	{
@@ -73,13 +71,8 @@ final class CIndicatorReadFormatAdapter implements IIndicatorReadFormat
 	};
 	public void skip()throws IOException
 	{
-		//Now we need to take in an account that we read-ahead
-		//the current, so if 
-		if (!isAtIndicator())
-		{
-			invalidate();
-			in.skip();
-		};
+		invalidate();	
+		in.skip();
 	};
 	public boolean readBoolean()throws IOException
 	{

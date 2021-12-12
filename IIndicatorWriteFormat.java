@@ -20,8 +20,7 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 {
 		/* ****************************************************
 		
-				Signals related indicators.
-		
+				Information and settings.
 		
 		****************************************************/
 		/** A maximum of calls to {@link #writeBeginRegister}
@@ -36,6 +35,12 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 		@return true if {@link #writeFlush} of matching type is required.
 		*/
 		public boolean requiresFlushes();
+		/* ****************************************************
+		
+				Signals related indicators.
+		
+		****************************************************/
+		
 		/**
 			Writes to a stream {@link TIndicator#BEGIN_DIRECT}.
 			@param signal_name name of a signal

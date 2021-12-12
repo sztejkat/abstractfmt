@@ -78,8 +78,6 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 									)
 							{ 
 								this.FLAGS=f;
-								assert((type_indicator.FLAGS & TIndicator.TYPE)!=0);
-								assert((flush_indicator.FLAGS & TIndicator.FLUSH)!=0);
 								this.TYPE_INDICATOR=type_indicator;
 								this.FLUSH_INDICATOR=flush_indicator;								
 							};
@@ -668,4 +666,18 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 				}finally{ state=TState.CLOSED; closeOnce(); };
 			};
 		};
+		/* **********************************************************************
+		
+		
+				Flushable
+		
+				
+		**********************************************************************/
+		/** Flushes the output */
+		@Override public void flush()throws IOException
+		{
+			validateNotClosed();
+			flushPendingEnd();
+			output.flush();
+		};	
 };

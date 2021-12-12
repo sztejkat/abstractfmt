@@ -113,6 +113,9 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 			This value must not be greater than one returned
 			by <code>input.getMaxRegistrations</code> and can be
 			used to limit registry range if required.	
+			<p>
+			Notice, this class will pre-allocate name registry
+			to that size so keep this in mind.
 		@param max_events_recursion_depth specifies the allowed depth of events
 		nesting. -1 disables limit, 0 sets limit to: "no events allowed",
 		1 allows event but no events inside and so on. If this limit is exceed
@@ -194,10 +197,18 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 		/*
 				This operation must skip what source
 				provides until we are at the signal indicator.
+				
+				Now important warning. If input.skip() is due to 
+				some reason ineffective we may get stuck in a loop.
+				The number of skipped non-signal indicators can be
+				unlimited because there is an unlimited amount of
+				TYPE+DATA+FLUSH triplets or TYPE+DATA pairs 
+				inside an event. The only way to detect it is to
+				validate if skip did not end up in DATA.
 		*/
 		for(;;)
 		{
-			TIndicator indicator = input.getIndicator();
+			TIndicator indicator = input.readIndicator();
 			if (indicator==TIndicator.EOF) throw new EUnexpectedEof();
 			if ((indicator.FLAGS & TIndicator.SIGNAL)==0)
 			{
@@ -208,7 +219,11 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 						if ((indicator.FLAGS & (TIndicator.TYPE+TIndicator.FLUSH))!=0)
 							throw new ECorruptedFormat("Type information "+indicator+" found in undescribed stream");
 					};
-					input.skip();
+					input.skip();		
+					//Skipping must not end in DATA. This is deadly condition so we
+					//check it always.
+					if (input.getIndicator()==TIndicator.DATA) //<-- get to put in cache.
+						throw new IllegalStateException("input.skip() failed to skip DATA. Possibly broken indicator format reader?");
 			}else
 			{
 				/*
@@ -372,7 +387,7 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 	{
 		TIndicator required_type_indicator = isDescribed() ? required_state.TYPE : TIndicator.DATA;
 		TIndicator indicator = input.getIndicator();
-		if (indicator!=required_state.TYPE)
+		if (indicator!=required_type_indicator)
 		{
 			if ((indicator.FLAGS & TIndicator.SIGNAL)!=0) throw new ENoMoreData();
 			if (indicator==TIndicator.EOF) throw new EUnexpectedEof();
@@ -410,7 +425,8 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 		if((state.FLAGS & (TState.ELEMENT + TState.BLOCK))==0) throw new EBrokenStream("Broken, something wrong with states, can't recover from that");
 		
 		TIndicator indicator = input.getIndicator();		
-		if (indicator==TIndicator.EOF) throw new EUnexpectedEof();
+		if (indicator==TIndicator.EOF)	return;	//This is allowed, we can have no more data
+												//even in described stream, where flushes are optional.		
 		if (isDescribed())
 		{
 			//Flush indicators are optional, but if they are they have to match.
