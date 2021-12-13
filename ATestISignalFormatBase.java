@@ -35,13 +35,8 @@ public abstract class ATestISignalFormatBase extends sztejkat.utils.test.ATest
 					read.close();
 				};				
 		};
-		/** Creates a pair which is to be used for testing purposes.	
-		@param max_name_length a maximum name of signal length above which reading and 
-				writing ends are expected to complain.				
-		@param max_events_recursion_depth a maximum name depth of events opened at time
-				 length above which reading and	writing ends should complain or -1 to
-				 disable control.
-		@return created, coupled pair.
+		/** 
+			Creates a pair which is to be used for testing purposes.
 		*/
-		protected abstract Pair create(int max_name_length, int max_events_recursion_depth);
+		protected abstract Pair create();
 };

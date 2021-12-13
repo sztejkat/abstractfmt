@@ -3,8 +3,7 @@ import java.io.IOException;
 
 /**
 		An implementation of {@link ISignalReadFormat} over the
-		{@link #IIndicatorReadFormat} which adds handling of {@link EBrokenStream}
-		and recursion protection.
+		{@link #IIndicatorReadFormat} which adds handling of {@link EBrokenStream}.
 */
 public abstract class ASignalReadFormat extends ASignalReadFormat0
 {
@@ -13,25 +12,17 @@ public abstract class ASignalReadFormat extends ASignalReadFormat0
 					private boolean is_broken;
 					
 	/** Creates read format
-	@param names_registry_size maximum number of names 
-		to register if compact names should be implemented.			
-		<p>
-		Zero to disable registry and reject streams which are using it.
-	@param max_events_recursion_depth specifies the allowed depth of elements
-		nesting. -1 disables limit, 0 sets limit to: "no nested elements allowed",
-		1 allows event but no events inside and so on. If this limit is exceed
-		the {@link #next} will throw {@link EFormatBoundaryExceeded} if stream
-		contains too deep recursion of elements.
-	@param input output to set. If null will be set to <code>(IIndicatorWriteFormat)this</code>.
+	@param max_events_recursion_depth see {@link ASignalReadFormat0#ASignalReadFormat0}
+	@param input --//--
 	@throws Assertion error if parameters do not match.
 	@see IIndicatorReadFormat#getMaxRegistrations
 	*/
-	protected ASignalReadFormat(int names_registry_size,
+	protected ASignalReadFormat(
 								 int max_events_recursion_depth,
 								 IIndicatorReadFormat input
 								 )
 	{
-		super(names_registry_size,max_events_recursion_depth,input);
+		super(max_events_recursion_depth,input);
 	};				
 	/* ****************************************************************
 	

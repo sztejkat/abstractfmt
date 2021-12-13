@@ -7,38 +7,26 @@ import java.io.IOException;
 */
 public class CSignalReadFormat extends ASignalReadFormat
 {
-					private final boolean is_described;
+					
 	/* *************************************************
 	
 			Creation
 			
 	
 	* *************************************************/
-	/** Creates write format
-		@param names_registry_size see {@link ASignalReadFormat#ASignalReadFormat}
-		@param max_events_recursion_depth --//--
-		@param output --//--
-		@param is_described value to return from {@link #isDescribed}.
-				If this value is true stream is described and 
-				the control of details about if write type-flush
-				indicators is under a control of <code>output</code>
-				{@link IIndicatorReadFormat#requiresFlushes}.
-				<p>
-				Output must be compatible with this setting.
+	/** Creates read format
+		@param max_events_rInecursion_depth {@link ASignalReadFormat#ASignalReadFormat}
+		@param output --//--		
 	*/
-	protected CSignalReadFormat(
-								 int names_registry_size,
+	public CSignalReadFormat(
 								 int max_events_recursion_depth,
-								 IIndicatorReadFormat input,
-								 boolean is_described
+								 IIndicatorReadFormat input
 								 )
 	 {
-	 	super( names_registry_size,
+	 	super( 
 			  max_events_recursion_depth,								 
-			  input);
-		this.is_described=is_described;
+			  input
+			  );
 	 };
-	 
-	 @Override public boolean isDescribed(){ return is_described; };
 	
 };

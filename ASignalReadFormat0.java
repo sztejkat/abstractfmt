@@ -77,9 +77,8 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 			/* ----------------------------------------------------
 					Input			
 			----------------------------------------------------*/
-			/** Input wrapped in current-indicator tracking
-			adapter */
-			private final CIndicatorReadFormatAdapter input;
+			/** Input format */
+			private final IIndicatorReadFormat input;
 			
 			/* ---------------------------------------------------
 							Names registry
@@ -104,18 +103,7 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 			/** Current events depth */
 			private int depth;
 			
-	/** Creates write format
-		@param names_registry_size maximum number of names 
-			to register if compact names should be implemented.			
-			<p>
-			Zero to disable registry and always write names directly.
-			<p>
-			This value must not be greater than one returned
-			by <code>input.getMaxRegistrations</code> and can be
-			used to limit registry range if required.	
-			<p>
-			Notice, this class will pre-allocate name registry
-			to that size so keep this in mind.
+	/** Creates read format		
 		@param max_events_recursion_depth specifies the allowed depth of events
 		nesting. -1 disables limit, 0 sets limit to: "no events allowed",
 		1 allows event but no events inside and so on. If this limit is exceed
@@ -126,20 +114,15 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 		@see IIndicatorReadFormat#getMaxRegistrations
 		*/
 	protected ASignalReadFormat0(
-								  int names_registry_size,
-								   int max_events_recursion_depth,
+								  int max_events_recursion_depth,
 								  IIndicatorReadFormat input
 								 )
 	{
-		assert(names_registry_size>=0):"names_registry_size="+names_registry_size;
-		assert( (input==null)
-				||
-				((input!=null) &&( input.getMaxRegistrations()>=names_registry_size))
-			   );
 		assert(max_events_recursion_depth>=0):"max_events_recursion_depth="+max_events_recursion_depth;
+		if (input==null) input = (IIndicatorReadFormat)this;
+		this.input = input;					
 		this.max_events_recursion_depth=max_events_recursion_depth;
-		this.names_registry= new String[names_registry_size];
-		this.input = new CIndicatorReadFormatAdapter( input==null ? (IIndicatorReadFormat)this : input );			
+		this.names_registry= new String[input.getMaxRegistrations()];			
 		this.state = TState.IDLE;
 	};
 	/* ****************************************************************
@@ -155,7 +138,18 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 	
 				ISignalReadFormat
 	
+				
 	*****************************************************************/
+	/* -------------------------------------------------------------
+				Information
+	-------------------------------------------------------------*/
+	/** Passes down to input */
+	@Override public void setMaxSignalNameLength(int characters)
+	{
+		input.setMaxSignalNameLength(characters);
+	};
+	/** Returns what input return */
+	@Override final public boolean isDescribed(){ return input.isDescribed(); };
 	/* -------------------------------------------------------------
 				Signals
 	-------------------------------------------------------------*/
@@ -197,19 +191,13 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 		/*
 				This operation must skip what source
 				provides until we are at the signal indicator.
-				
-				Now important warning. If input.skip() is due to 
-				some reason ineffective we may get stuck in a loop.
-				The number of skipped non-signal indicators can be
-				unlimited because there is an unlimited amount of
-				TYPE+DATA+FLUSH triplets or TYPE+DATA pairs 
-				inside an event. The only way to detect it is to
-				validate if skip did not end up in DATA.
 		*/
 		for(;;)
 		{
-			TIndicator indicator = input.readIndicator();
-			if (indicator==TIndicator.EOF) throw new EUnexpectedEof();
+			//Check what is under a cursor?
+			TIndicator indicator = input.getIndicator();
+			if (indicator==TIndicator.EOF) throw new EUnexpectedEof();			
+			//Check if not a signal, since non-signals need to be skipped.
 			if ((indicator.FLAGS & TIndicator.SIGNAL)==0)
 			{
 					//Now do some type testing.The only testing we can do it is
@@ -219,11 +207,7 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 						if ((indicator.FLAGS & (TIndicator.TYPE+TIndicator.FLUSH))!=0)
 							throw new ECorruptedFormat("Type information "+indicator+" found in undescribed stream");
 					};
-					input.skip();		
-					//Skipping must not end in DATA. This is deadly condition so we
-					//check it always.
-					if (input.getIndicator()==TIndicator.DATA) //<-- get to put in cache.
-						throw new IllegalStateException("input.skip() failed to skip DATA. Possibly broken indicator format reader?");
+					input.next();	//We moved to next data or signal.
 			}else
 			{
 				/*
@@ -259,6 +243,8 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 							signal_name = input.getSignalName();
 							break;
 				};
+				//move cursor after the signal
+				input.next();
 				//Now make a proper state transition.
 				if ((indicator.FLAGS & (TIndicator.IS_END+TIndicator.IS_BEGIN))
 							==(TIndicator.IS_END+TIndicator.IS_BEGIN))
@@ -366,17 +352,25 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 	/** Starts or continoues block primitive by validating conditions
 	and toggling state to specfied
 	@param required_state state to toggle to, used to check what type is needed
+	@return true if can safely call input block read, false if there is no data.
 	@throws IOException if failed or detected problems*/
-	private void startBlockPrimitive(TState required_state)throws IOException
+	private boolean startBlockPrimitive(TState required_state)throws IOException
 	{		
 		validateNotClosed();
+		//decide if continue or initialize?
 		if (state!=required_state)
 		{
+			//initialize
 			if ((state.FLAGS & TState.BLOCK)!=0) 
 			{
 					throw new IllegalStateException("Can't initiate "+required_state+" block operation since "+state+" is in progress");
 			};
 			startPrimitive(required_state);
+			return true;
+		}else
+		{
+			//continue. Can be done if data is under cursor.
+			return (input.getIndicator()==TIndicator.DATA);
 		}
 	};
 	/** Starts primitive by validating conditions
@@ -385,16 +379,29 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 	@throws IOException if failed or detected problems*/
 	private void startPrimitive(TState required_state)throws IOException
 	{
-		TIndicator required_type_indicator = isDescribed() ? required_state.TYPE : TIndicator.DATA;
+		//Both types react the same on signal and EOF
 		TIndicator indicator = input.getIndicator();
-		if (indicator!=required_type_indicator)
+		if ((indicator.FLAGS & TIndicator.SIGNAL)!=0) throw new ENoMoreData();
+		if (indicator==TIndicator.EOF) throw new EUnexpectedEof();		
+		if (isDescribed())
 		{
-			if ((indicator.FLAGS & TIndicator.SIGNAL)!=0) throw new ENoMoreData();
-			if (indicator==TIndicator.EOF) throw new EUnexpectedEof();
-			if (isDescribed() && (indicator.FLAGS & TIndicator.TYPE)!=0)
-					throw new EDataMissmatch("Required type information "+required_state.TYPE+" but "+indicator+" found");
-			throw new ECorruptedFormat("Unexpected indicator:"+indicator);
-		}	
+			//Requires type information
+			if ((indicator.FLAGS & TIndicator.TYPE)==0)
+				throw new EDataTypeRequired("Required type information "+required_state.TYPE+" but "+indicator+" found");
+			if (indicator != required_state.TYPE)
+				throw new EDataMissmatch("Expected "+required_state.TYPE+" but found "+indicator);
+			//ok, type is correct, this indicator must be removed.
+			input.next();
+			//and presence of data must be validated.
+			indicator =input.getIndicator(); 
+			if (indicator!=TIndicator.DATA)
+				throw new ECorruptedFormat("Data expected but "+indicator+" found");
+		}else
+		{
+			//undescribed format requires data.
+			if (indicator!=TIndicator.DATA)
+				throw new ECorruptedFormat("Data expected but "+indicator+" found");
+		};	
 		this.state = required_state;
 	};
 	/** Ends elementary primitive by validating conditions and restore state
@@ -405,12 +412,22 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 		if((state.FLAGS & TState.ELEMENT)==0) throw new EBrokenStream("Broken, something wrong with states, can't recover from that");
 		endPrimtive(TState.IDLE);
 	};
+	/** Checks if block is at the end, regardless of returned partial read or not.
+	If it is at the end, validates flush condictions. 
+	@throws IOException if failed or detected problems*/
+	private void tryEndBlockPrimitive()throws IOException
+	{
+		if((state.FLAGS & TState.BLOCK)==0) throw new EBrokenStream("Broken, something wrong with states, can't recover from that");
+		TIndicator indicator = input.getIndicator();
+		if (indicator!=TIndicator.DATA)
+			endBlockPrimitive();
+	};
 	/** Ends block primitive by validating conditions and leaving state at block
 	condition.
 	@throws IOException if failed or detected problems*/
 	private void endBlockPrimitive()throws IOException
 	{
-		if((state.FLAGS & TState.BLOCK)==0) throw new EBrokenStream("Broken, something wrong with states, can't recover from that");
+		assert((state.FLAGS & TState.BLOCK)!=0);
 		endPrimtive(this.state);
 	};
 	/** Ends primitive by validating conditions and toggling state
@@ -419,30 +436,38 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 	@throws IOException if failed or detected problems*/
 	private void endPrimtive(TState required_state)throws IOException
 	{
+		//toggle state.
 		TState state = this.state;
 		this.state = required_state;
-		
-		if((state.FLAGS & (TState.ELEMENT + TState.BLOCK))==0) throw new EBrokenStream("Broken, something wrong with states, can't recover from that");
-		
+		//This is used to handle block and elementary primitives.
+		//and is called only when we are sure, that data is read.		
 		TIndicator indicator = input.getIndicator();		
 		if (indicator==TIndicator.EOF)	return;	//This is allowed, we can have no more data
 												//even in described stream, where flushes are optional.		
 		if (isDescribed())
 		{
-			//Flush indicators are optional, but if they are they have to match.
-			if ((indicator.FLAGS & TIndicator.FLUSH)!=0)
+			if (input.isFlushing())
 			{
-				if(!(
-					   (state.FLUSH == indicator)
+				//Flushes are expected.
+				if  (!(
+					   (indicator==state.FLUSH) // precise type math
+						 ||
+					   ( ((state.FLAGS & TState.BLOCK)!=0) && ((indicator.FLAGS & (TIndicator.BLOCK+ TIndicator.FLUSH))==(TIndicator.BLOCK+ TIndicator.FLUSH))  ) //class math
 						||
-					   ( ((state.FLAGS & TState.BLOCK)!=0) && ((indicator.FLAGS & TIndicator.BLOCK)!=0) )
-						||
-					   ( ((state.FLAGS & TState.ELEMENT)!=0) && ((indicator.FLAGS & TIndicator.ELEMENT)!=0) )
-					   )
-					  ) throw new ECorruptedFormat("Flush indicator "+state.FLUSH+" expected but "+indicator+" is found");
+					   ( ((state.FLAGS & TState.ELEMENT)!=0) && ((indicator.FLAGS & (TIndicator.ELEMENT+ TIndicator.FLUSH))==(TIndicator.ELEMENT+ TIndicator.FLUSH)) ) //class math
+					    ||
+					   ((indicator.FLAGS & TIndicator.FLUSH)!=0)	//jgeneric flush
+					   ))
+					 throw new ECorruptedFormat("Flush indicator "+state.FLUSH+" expected but "+indicator+" is found");
+				input.next();	//consume this indicator.
 			};
-		};
-		//And in un-described format we can ignore what is now.
+			//and later we have type or signal, but this will be checked by a caller.
+		}else
+		{
+			//un-described format will have here data.
+			//If we were finishing block we were called here only when there was
+			//no data, so we can't mess up.
+		}		
 	};
 	
 	/* ...........................................................
@@ -516,10 +541,9 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 		
 		if (length==0) return 0;	//filter out empty reads.		
 		
-		startBlockPrimitive(TState.BOOLEAN_BLOCK);
+		if (!startBlockPrimitive(TState.BOOLEAN_BLOCK))return 0;
 		final int r = input.readBooleanBlock(buffer, offset, length);
-		if (r<length)
-			endBlockPrimitive();
+		tryEndBlockPrimitive();
 		return r;
 	};
 	@Override public int readByteBlock(byte [] buffer, int offset, int length)throws IOException
@@ -531,19 +555,17 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 		
 		if (length==0) return 0;	//filter out empty reads.		
 		
-		startBlockPrimitive(TState.BYTE_BLOCK);
+		if (!startBlockPrimitive(TState.BYTE_BLOCK)) return 0;
 		final int r = input.readByteBlock(buffer, offset, length);
-		if (r<length)
-			endBlockPrimitive();
+		tryEndBlockPrimitive();
 		return r;
 	};
 	@Override public int readByteBlock()throws IOException
 	{
-		startBlockPrimitive(TState.BYTE_BLOCK);
+		if (!startBlockPrimitive(TState.BYTE_BLOCK)) return -1;
 		final int r = input.readByteBlock();
 		assert((r>=-1)&&(r<=0xFF));
-		if (r==-1)
-			endBlockPrimitive();
+		tryEndBlockPrimitive();
 		return r;
 	};
 	@Override public int readCharBlock(char [] buffer, int offset, int length)throws IOException
@@ -555,10 +577,9 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 		
 		if (length==0) return 0;	//filter out empty reads.		
 		
-		startBlockPrimitive(TState.CHAR_BLOCK);
+		if (!startBlockPrimitive(TState.CHAR_BLOCK)) return 0;
 		final int r = input.readCharBlock(buffer, offset, length);
-		if (r<length)
-			endBlockPrimitive();
+		tryEndBlockPrimitive();
 		return r;
 	};
 	@Override public int readCharBlock(Appendable buffer, int length)throws IOException
@@ -567,10 +588,9 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 		
 		if (length==0) return 0;	//filter out empty reads.		
 		
-		startBlockPrimitive(TState.CHAR_BLOCK);
+		if (!startBlockPrimitive(TState.CHAR_BLOCK)) return 0;
 		final int r = input.readCharBlock(buffer, length);
-		if (r<length)
-			endBlockPrimitive();
+		tryEndBlockPrimitive();
 		return r;
 	};
 	@Override public int readShortBlock(short [] buffer, int offset, int length)throws IOException
@@ -582,10 +602,9 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 		
 		if (length==0) return 0;	//filter out empty reads.		
 		
-		startBlockPrimitive(TState.SHORT_BLOCK);
+		if (!startBlockPrimitive(TState.SHORT_BLOCK)) return 0;
 		final int r = input.readShortBlock(buffer, offset, length);
-		if (r<length)
-			endBlockPrimitive();
+		tryEndBlockPrimitive();
 		return r;
 	};
 	@Override public int readIntBlock(int [] buffer, int offset, int length)throws IOException
@@ -597,10 +616,9 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 		
 		if (length==0) return 0;	//filter out empty reads.		
 		
-		startBlockPrimitive(TState.INT_BLOCK);
+		if (!startBlockPrimitive(TState.INT_BLOCK)) return 0;
 		final int r = input.readIntBlock(buffer, offset, length);
-		if (r<length)
-			endBlockPrimitive();
+		tryEndBlockPrimitive();
 		return r;
 	};	
 	@Override public int readLongBlock(long [] buffer, int offset, int length)throws IOException
@@ -612,10 +630,9 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 		
 		if (length==0) return 0;	//filter out empty reads.		
 		
-		startBlockPrimitive(TState.LONG_BLOCK);
+		if (!startBlockPrimitive(TState.LONG_BLOCK)) return 0;
 		final int r = input.readLongBlock(buffer, offset, length);
-		if (r<length)
-			endBlockPrimitive();
+		tryEndBlockPrimitive();
 		return r;
 	};
 	@Override public int readFloatBlock(float [] buffer, int offset, int length)throws IOException
@@ -627,10 +644,9 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 		
 		if (length==0) return 0;	//filter out empty reads.		
 		
-		startBlockPrimitive(TState.FLOAT_BLOCK);
+		if (!startBlockPrimitive(TState.FLOAT_BLOCK)) return 0;
 		final int r = input.readFloatBlock(buffer, offset, length);
-		if (r<length)
-			endBlockPrimitive();
+		tryEndBlockPrimitive();
 		return r;
 	};
 	@Override public int readDoubleBlock(double [] buffer, int offset, int length)throws IOException
@@ -642,10 +658,9 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 		
 		if (length==0) return 0;	//filter out empty reads.		
 		
-		startBlockPrimitive(TState.DOUBLE_BLOCK);
+		if (!startBlockPrimitive(TState.DOUBLE_BLOCK)) return 0;
 		final int r = input.readDoubleBlock(buffer, offset, length);
-		if (r<length)
-			endBlockPrimitive();
+		tryEndBlockPrimitive();
 		return r;
 	};
 	

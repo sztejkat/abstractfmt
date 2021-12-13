@@ -89,8 +89,8 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 					
 					/** An output to which write all data.	*/
 					protected final IIndicatorWriteFormat output;					
-					/** See constructor */
-					private final int max_name_length;
+					/** Set with {@link #setMaxSignalNameLength} */
+					private int max_name_length = 1024;
 					/** See constructor */
 					private final int max_events_recursion_depth;				
 					/** Keeps track of current events depth */
@@ -112,17 +112,6 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		
 		*********************************************************/
 		/** Creates write format
-		@param names_registry_size maximum number of names 
-			to register if compact names should be implemented.			
-			<p>
-			Zero to disable registry and always write names directly.
-			<p>
-			This value must not be greater than one returned
-			by <code>output.getMaxRegistrations</code> and can be
-			used to limit registry range if required.
-		@param max_name_length greater or equal to 8. Maximum length of names
-			to be accepted in {@link #begin(String, boolean)} and be passed to
-			{@link #writeSignalNameData}
 		@param max_events_recursion_depth specifies the allowed depth of elements
 			nesting. Zero disables limit, 1 sets limit to: "no nested elements allowed",
 			2 allows element within an element and so on. If this limit is exceed
@@ -131,19 +120,16 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		@throws Assertion error if parameters do not match.
 		@see IIndicatorWriteFormat#getMaxRegistrations
 		*/
-		protected ASignalWriteFormat(int names_registry_size,
-									 int max_name_length,
-									 int max_events_recursion_depth,
+		protected ASignalWriteFormat(int max_events_recursion_depth,
 									 IIndicatorWriteFormat output
 									 )
 		{
-			assert(names_registry_size>=0):"names_registry_size="+names_registry_size;
-			assert(max_name_length>=8):"max_name_length="+max_name_length;
 			assert(max_events_recursion_depth>=0):"max_events_recursion_depth="+max_events_recursion_depth;
-			assert( (output==null)
-					||
-					((output!=null) &&( output.getMaxRegistrations()>=names_registry_size))
-				   );
+			
+			if (output==null) output = (IIndicatorWriteFormat)this;
+			this.output = output;
+			
+			int names_registry_size = output.getMaxRegistrations();
 			if (names_registry_size>0)
 			{
 				this.names_registry 	 = new String[names_registry_size];
@@ -153,10 +139,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 				this.names_registry = null;
 				this.names_registry_hash=null;
 			}
-			this.max_name_length=max_name_length;
-			this.max_events_recursion_depth=max_events_recursion_depth;
-			this.output = output==null ? (IIndicatorWriteFormat)this : output;
-			
+			this.max_events_recursion_depth=max_events_recursion_depth;			
 			this.state = TState.NONE;
 		};
 		/* ********************************************************
@@ -176,29 +159,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		{
 			output.close();
 		};
-		/** This method is checked to decide if send type
-		indicators to output. Described subclasses should
-		override it to true.
-		<p>
-		This implementation returns false.
-		@return true to write type information and optionally
-		flushes, false to not write.
-		@see IIndicatorWriteFormat#writeType
-		@see #isPrimitiveFlushing
-		*/
-		@Override public boolean isDescribed(){ return false; };
-		/** This method is checked to decide if a flush indicators
-		should be written to a stream. This is an error to return
-		true from this method if {@link #isDescribed} returns false.
-		<p>
-		This implementation returns:
-		<pre>
-			 {@link #isDescribed} &amp;&amp; output.requiresFlushes()
-		</pre>
-		@return true to write flushes, false to not write.
-		@see IIndicatorWriteFormat#writeFlush
-		*/
-		public boolean isPrimitiveFlushing(){ return isDescribed() && output.requiresFlushes();  };
+		
 		/* *******************************************************
 		
 		
@@ -292,7 +253,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		*/
 		private void flushBlockOperation()throws IOException
 		{			
-			if(((state.FLAGS & TState.BLOCK)!=0)&&(isPrimitiveFlushing()))
+			if((state.FLAGS & TState.BLOCK)!=0)
 			{ 
 				output.writeFlush(state.FLUSH_INDICATOR);
 			};
@@ -309,7 +270,13 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		/* ---------------------------------------------------------
 					Generic
 		---------------------------------------------------------*/
-		@Override public final int getMaxSignalNameLength(){ return max_name_length; };
+		@Override public void setMaxSignalNameLength(int characters)
+		{ 
+			assert(characters>=0);
+			this.max_name_length = characters; 
+		};
+		/** Returns what output returns.	*/
+		@Override public final boolean isDescribed(){ return output.isDescribed(); };
 		
 		/* ---------------------------------------------------------
 					Signals
@@ -320,7 +287,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		@throws IOException . 
 		*/
 		private void writeBeginDirect(String name)throws IOException
-		{
+		{			
 			if (state == TState.END_PENDING)
 			{
 				output.writeEndBeginDirect( name );
@@ -467,63 +434,63 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 				throw new IllegalStateException("Cannot do elementary primitive write when block write is in progress.");
 			this.state = state;
 			
-			if (isDescribed()) output.writeType(state.TYPE_INDICATOR);
+			output.writeType(state.TYPE_INDICATOR);
 		};
 		
-		/** Writes primitive flush if known and necessary. Takes information
+		/** Writes elementary primitive flush if known and necessary. Takes information
 		form state 
 		@throws IOException if failed. */
-		private void writeFlush()throws IOException
+		private void writeElementaryFlush()throws IOException
 		{
-			if (isPrimitiveFlushing()) output.writeFlush(state.FLUSH_INDICATOR);
+			output.writeFlush(state.FLUSH_INDICATOR);
 		};
 		@Override public  void writeBoolean(boolean v)throws IOException
 		{
 			startElementaryPrimitiveWrite(TState.BOOLEAN);			
 			output.writeBoolean(v);
-			writeFlush();
+			writeElementaryFlush();
 		};
 		@Override public  void writeByte(byte v)throws IOException
 		{
 			startElementaryPrimitiveWrite(TState.BYTE);			
 			output.writeByte(v);
-			writeFlush();
+			writeElementaryFlush();
 		};
 		@Override public  void writeChar(char v)throws IOException
 		{
 			startElementaryPrimitiveWrite(TState.CHAR);			
 			output.writeChar(v);
-			writeFlush();
+			writeElementaryFlush();
 		};
 		@Override public  void writeShort(short v)throws IOException
 		{
 			startElementaryPrimitiveWrite(TState.SHORT);			
 			output.writeShort(v);
-			writeFlush();
+			writeElementaryFlush();
 		};
 		@Override public  void writeInt(int v)throws IOException
 		{
 			startElementaryPrimitiveWrite(TState.INT);			
 			output.writeInt(v);
-			writeFlush();
+			writeElementaryFlush();
 		};
 		@Override public  void writeLong(long v)throws IOException
 		{
 			startElementaryPrimitiveWrite(TState.LONG);			
 			output.writeLong(v);
-			writeFlush();
+			writeElementaryFlush();
 		};
 		@Override public  void writeFloat(float v)throws IOException
 		{
 			startElementaryPrimitiveWrite(TState.FLOAT);			
 			output.writeFloat(v);
-			writeFlush();
+			writeElementaryFlush();
 		};
 		@Override public void writeDouble(double v)throws IOException
 		{
 			startElementaryPrimitiveWrite(TState.DOUBLE);			
 			output.writeDouble(v);
-			writeFlush();
+			writeElementaryFlush();
 		};
 		/* ---------------------------------------------------------
 					Blocks
@@ -541,7 +508,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			if (current_depth==0)
 				throw new IllegalStateException("Can't start block write if there is no event active");				
 			this.state =  target_state;
-			if (isDescribed()) output.writeType(state.TYPE_INDICATOR);
+			output.writeType(state.TYPE_INDICATOR);
 		};
 		
 		@Override public void writeBooleanBlock(boolean [] buffer, int offset, int length)throws IOException
@@ -552,7 +519,6 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			assert(offset+length<=buffer.length):"buffer.length="+buffer.length+" but offset="+offset+" length="+length+" do point outside buffer";
 			startBlockPrimitiveWrite(TState.BOOLEAN_BLOCK);	
 			output.writeBooleanBlock(buffer,offset,length);
-			writeFlush();
 		};
 		@Override public void writeByteBlock(byte [] buffer, int offset, int length)throws IOException
 		{		
@@ -562,13 +528,11 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			assert(offset+length<=buffer.length):"buffer.length="+buffer.length+" but offset="+offset+" length="+length+" do point outside buffer";
 			startBlockPrimitiveWrite(TState.BYTE_BLOCK);	
 			output.writeByteBlock(buffer,offset,length);
-			writeFlush();
 		};
 		@Override public void writeByteBlock(byte data)throws IOException
 		{		
 			startBlockPrimitiveWrite(TState.BYTE_BLOCK);	
 			output.writeByteBlock(data);
-			writeFlush();
 		};
 		@Override public void writeCharBlock(char [] buffer, int offset, int length)throws IOException
 		{		
@@ -578,7 +542,6 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			assert(offset+length<=buffer.length):"buffer.length="+buffer.length+" but offset="+offset+" length="+length+" do point outside buffer";
 			startBlockPrimitiveWrite(TState.CHAR_BLOCK);	
 			output.writeCharBlock(buffer,offset,length);
-			writeFlush();
 		};
 		@Override public void writeCharBlock(CharSequence characters,  int offset, int length)throws IOException
 		{		
@@ -588,7 +551,6 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			assert(offset+length<=characters.length()):"characters.length="+characters.length()+" but offset="+offset+" length="+length+" do point outside buffer";
 			startBlockPrimitiveWrite(TState.CHAR_BLOCK);	
 			output.writeCharBlock(characters,offset, length);
-			writeFlush();
 		};
 		
 		@Override public void writeShortBlock(short [] buffer, int offset, int length)throws IOException
@@ -599,7 +561,6 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			assert(offset+length<=buffer.length):"buffer.length="+buffer.length+" but offset="+offset+" length="+length+" do point outside buffer";
 			startBlockPrimitiveWrite(TState.SHORT_BLOCK);	
 			output.writeShortBlock(buffer,offset,length);
-			writeFlush();
 		};
 		
 		@Override public void writeIntBlock(int [] buffer, int offset, int length)throws IOException
@@ -610,7 +571,6 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			assert(offset+length<=buffer.length):"buffer.length="+buffer.length+" but offset="+offset+" length="+length+" do point outside buffer";
 			startBlockPrimitiveWrite(TState.INT_BLOCK);	
 			output.writeIntBlock(buffer,offset,length);
-			writeFlush();
 		};
 		
 		@Override public void writeLongBlock(long [] buffer, int offset, int length)throws IOException
@@ -621,7 +581,6 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			assert(offset+length<=buffer.length):"buffer.length="+buffer.length+" but offset="+offset+" length="+length+" do point outside buffer";
 			startBlockPrimitiveWrite(TState.LONG_BLOCK);	
 			output.writeLongBlock(buffer,offset,length);
-			writeFlush();
 		};
 		
 		@Override public void writeFloatBlock(float [] buffer, int offset, int length)throws IOException
@@ -632,7 +591,6 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			assert(offset+length<=buffer.length):"buffer.length="+buffer.length+" but offset="+offset+" length="+length+" do point outside buffer";
 			startBlockPrimitiveWrite(TState.FLOAT_BLOCK);	
 			output.writeFloatBlock(buffer,offset,length);
-			writeFlush();
 		};
 		
 		@Override public void writeDoubleBlock(double [] buffer, int offset, int length)throws IOException
@@ -643,7 +601,6 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			assert(offset+length<=buffer.length):"buffer.length="+buffer.length+" but offset="+offset+" length="+length+" do point outside buffer";
 			startBlockPrimitiveWrite(TState.DOUBLE_BLOCK);	
 			output.writeDoubleBlock(buffer,offset,length);
-			writeFlush();
 		};
 		/* **********************************************************************
 		

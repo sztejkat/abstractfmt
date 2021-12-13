@@ -35,16 +35,8 @@ public abstract class ATestIIndicatorFormatBase extends sztejkat.utils.test.ATes
 					read.close();
 				};				
 		};
-		/** Creates a pair which is to be used for testing purposes.	
-		@param max_name_length a maximum boundary of signal names which can be read from
-				name related indicators.
-		@param max_registrations maximum number of registration calls.
-				If the writing end does not support specified number of registartions
-				it should use <code>org.junit.Assume.assumeTrue</code> to disable tests
-				related to it.
-		@return created, coupled pair. This pair must NOT fail if executed with names
-				or registrations in above bounds, but is allowed to not fail if executed
-				with data exceeding it.
+		/** Creates a pair which is to be used for testing purposes.			
+		@return created, coupled pair. 
 		*/
-		protected abstract Pair create(int max_name_length, int max_registrations);
+		protected abstract Pair create();
 };

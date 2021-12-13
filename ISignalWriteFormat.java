@@ -16,19 +16,13 @@ public interface ISignalWriteFormat extends Closeable, Flushable,IPrimitiveWrite
 			Signals and events	
 	
 	* *************************************************************/
-
-		/** Returns maximum supported length of a signal name in this
-		format. A life-time constant. 
-		@return maximum number of characters allowed in
-			   {@link #begin}. It is recommended that it is
-			   not less than 8.
-			   <p>
-			   Too small value may prevent format from any
-			   usability, too large value (esp. un-bound) 
-			   may open paths to 
-			   <a href="doc-files/security.html#OOMEVENT_NAME">"out-of-memory"</a> attacks.
+		/** Allows to set limit for signal name.
+		<p>
+		Default value is 1024.
+		@param characters name limit, non-negative. Zero is silly,
+		no signal names can be written 
 		*/
-		public int getMaxSignalNameLength();
+		public void setMaxSignalNameLength(int characters);
 		/** <a name="BEGIN"></a>
 		Writes "begin" signal. Begin signals do indicate
 		the beginning of an <a href="package.html#event">event</a>

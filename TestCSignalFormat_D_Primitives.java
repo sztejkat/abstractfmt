@@ -6,7 +6,7 @@ import java.io.IOException;
 	Test bed for {@link CSignalReadFormat}/{@link CSignalWriteFormat}
 	running in non-described mode over {@link CObjFormat}.
 */
-public class TestCSignalFormat_Primitives extends ATestISignalFormat_Primitives
+public class TestCSignalFormat_D_Primitives extends ATestISignalFormat_Primitives
 {
 	protected Pair create()
 	{
@@ -18,7 +18,7 @@ public class TestCSignalFormat_Primitives extends ATestISignalFormat_Primitives
 								 new CObjIndicatorWriteFormat(
 										media,
 										4,//final int max_registrations,
-										false,//final boolean is_described,
+										true,//final boolean is_described,
 										false //final boolean is_flushing
 										)//IIndicatorWriteFormat output,
 								 )
@@ -34,7 +34,7 @@ public class TestCSignalFormat_Primitives extends ATestISignalFormat_Primitives
 								 new CObjIndicatorReadFormat(
 										media,//CObjListFormat media, 
 										4,//final int max_registrations,
-										false,//final boolean is_described,
+										true,//final boolean is_described,
 										false //final boolean is_flushing
 										)//  IIndicatorReadFormat input,
 								 )			//ISignalReadFormat read

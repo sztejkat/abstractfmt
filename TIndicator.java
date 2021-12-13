@@ -73,7 +73,7 @@ public enum TIndicator
 		which should be avaialable to readers 
 		after this indicator is read from
 		stream */
-		BEGIN_USE(TIndicator.SIGNAL+TIndicator.REGISTER+TIndicator.IS_BEGIN),
+		BEGIN_USE(TIndicator.SIGNAL+TIndicator.REGISTER+TIndicator.IS_BEGIN+TIndicator.USE_REGISTER),
 		/** Written to stream to indicated an end signal */
 		END(TIndicator.SIGNAL+TIndicator.IS_END),
 		/** Written to a stream to indicate {@link #END}
@@ -87,7 +87,7 @@ public enum TIndicator
 		/** Written to a stream to indicate {@link #END}
 		followed by {@link #END_BEGIN_USE} without anything
 		in between */
-		END_BEGIN_USE(TIndicator.SIGNAL+TIndicator.REGISTER+TIndicator.IS_END+TIndicator.IS_BEGIN),
+		END_BEGIN_USE(TIndicator.SIGNAL+TIndicator.REGISTER+TIndicator.IS_END+TIndicator.IS_BEGIN+TIndicator.USE_REGISTER),
 		
 		/** This indicator is written to mark, that a single
 		elementary primitive of specified type do follow.
@@ -221,6 +221,8 @@ public enum TIndicator
 				public static final int IS_END = 0x200;
 				/** If set indicator is one of begin indicators */
 				public static final int IS_BEGIN = 0x400;
+				/** If set indicator describes indicator which do carry use of a signal number*/
+				public static final int USE_REGISTER = 0x800;
 				
 				/** Combination of {@link #TYPE}, {@link #FLUSH}, {@link #BLOCK},
 				{@link #ELEMENT}, {@link #SIGNAL}, {@link #STATUS},{@link #NAME},

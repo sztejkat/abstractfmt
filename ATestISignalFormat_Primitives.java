@@ -24,13 +24,13 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 				Just elementary tests.				
 		
 		-----------------------------------------------------------------*/
-		@Test public void testByte_1()throws IOException
+		@Test  public void testByte_1()throws IOException
 		{
 			enter();
 			/*
 				In this test we just write single byte and read it back
 			*/			
-			Pair p = create(8,8);
+			Pair p = create();
 			try{
 				p.write.writeByte((byte)-45);
 				p.write.close();			
@@ -51,7 +51,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			/*
 				In this test we just write all bytes and read them back
 			*/			
-			Pair p = create(8,8);
+			Pair p = create();
 			try{
 			
 					for(int i=-100;i<100;i+=10)
@@ -74,7 +74,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			/*
 				In this test we just write all chars
 			*/			
-			Pair p = create(8,8);
+			Pair p = create();
 			try{
 					for(int i=0;i<65536;i+=37)
 					{
@@ -95,7 +95,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			/*
 				In this test we just write all chars
 			*/			
-			Pair p = create(8,8);
+			Pair p = create();
 			try{
 					for(int i=-32767;i<32768;i+=97)
 					{
@@ -111,13 +111,13 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			leave();
 		};
 		
-		@Test  public void testInts()throws IOException
+		@Test public void testInts()throws IOException
 		{
 			enter();
 			/*
 				In this test we just write some ints
 			*/			
-			Pair p = create(8,8);
+			Pair p = create();
 			try{
 					for(int i=-32767;i<32768;i+=97)
 					{
@@ -133,13 +133,13 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			leave();
 		};
 		
-		@Test public void testLongs()throws IOException
+		@Test  public void testLongs()throws IOException
 		{
 			enter();
 			/*
 				In this test we just write some longs
 			*/			
-			Pair p = create(8,8);
+			Pair p = create();
 			try{
 					for(long i=-32767;i<32768;i+=97)
 					{
@@ -155,13 +155,13 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			leave();
 		};
 		
-		@Test  public void testFloats()throws IOException
+		@Test   public void testFloats()throws IOException
 		{
 			enter();
 			/*
 				In this test we just write some floats
 			*/			
-			Pair p = create(8,8);
+			Pair p = create();
 			try{
 					for(long i=-32767;i<32768;i+=97)
 					{
@@ -176,13 +176,13 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			
 			leave();
 		};
-		@Test public void testDouble()throws IOException
+		@Test  public void testDouble()throws IOException
 		{
 			enter();
 			/*
 				In this test we just write some doubles
 			*/			
-			Pair p = create(8,8);
+			Pair p = create();
 			try{
 					for(long i=-32767;i<32768;i+=97)
 					{
@@ -216,7 +216,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 				In this test we write a signal and test 
 				if it is readable.
 			*/			
-			Pair p = create(8,8);
+			Pair p = create();
 			try{
 				
 					p.write.begin("pershing");
@@ -268,7 +268,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 				in each pair and different cross-block scatter and we perform a complete
 				read or partial or incomplete.
 			*/	
-			Pair p = create(8,8);
+			Pair p = create();
 			try{
 				int wL = wlength/2;
 				int wH = wlength - wL;
@@ -298,6 +298,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 					};
 					if (wlength<=rlength)
 					{
+						Assert.assertTrue(p.read.readBooleanBlock(res,0,1)==0);	//subseqent read shuld be stuck.
 						Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
 					}else
 					{
@@ -355,6 +356,97 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 		
 		
 		
+		/* ................................................................
+					Byte
+		................................................................*/
+		private static byte [] prepareByteBlock(int size)
+		{	
+			byte [] a = new byte[size];
+			for(int i=0;i<size;i++){ a[i] = (byte)(i*31-i); }
+			return a;
+		};
+		private void testByteBlock(int woffset, int roffset, int wlength, int rlength)throws IOException
+		{
+			enter();
+			
+			/*
+				In this test we just write some blocks of data using different offset
+				in each pair and different cross-block scatter and we perform a complete
+				read or partial or incomplete.
+			*/	
+			Pair p = create();
+			try{
+				int wL = wlength/2;
+				int wH = wlength - wL;
+				
+				int rL = wlength/3;	//<-- intentionally wlength
+				int rH = rlength - rL;
+				
+				
+					p.write.begin("block");
+					System.out.println("write??Block(..,"+woffset+","+wlength+")");
+					byte [] blk = prepareByteBlock(woffset+wlength);
+					p.write.writeByteBlock(blk,woffset,wL);
+					p.write.writeByteBlock(blk,woffset+wL,wH);
+					p.write.end();
+					p.write.close();
+					
+					Assert.assertTrue("block".equals(p.read.next()));
+					byte [] res = new byte[rlength+roffset];
+					System.out.println("read??Block(..,"+roffset+","+rlength+")");
+					int r = p.read.readByteBlock(res, roffset, rL);
+						r += p.read.readByteBlock(res, roffset+rL, rH);						
+					System.out.println("r="+r);
+					Assert.assertTrue(r==Math.min(wlength,rlength)); //<-- partial or incomplete
+					for(int i=0;i<r;i++)
+					{
+							Assert.assertTrue(blk[i+woffset]==res[i+roffset]);
+					};
+					if (wlength<=rlength)
+					{
+						Assert.assertTrue(p.read.readByteBlock(res,0,1)==0);	//subseqent read shuld be stuck.
+						Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+					}else
+					{
+						Assert.assertTrue(
+									p.read.isDescribed() ?
+										(p.read.whatNext()==ISignalReadFormat.PRMTV_BYTE_BLOCK)
+										:
+										(p.read.whatNext()==ISignalReadFormat.PRMTV_UNTYPED)
+									);
+					};
+					Assert.assertTrue(p.read.next()==null);
+					Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			}finally{ p.close(); };
+			leave();
+		};
+		@Test public void testByteBlock_full()throws IOException
+		{
+			enter();
+			/* Test complete reads */
+				testByteBlock(0,0,16,16);
+				testByteBlock(0,5,16,16);
+				testByteBlock(5,0,16,16);
+			leave();
+		};
+		@Test public void testByteBlock_partial()throws IOException
+		{
+			enter();
+			/* Test partial reads over the end of block*/
+				testByteBlock(0,0,16,19);
+				testByteBlock(0,5,16,19);
+				testByteBlock(5,0,16,19);
+			leave();
+		};
+		@Test public void testByteBlock_incomplete()throws IOException
+		{
+			enter();
+			/* Test partial reads over the end of block*/
+				testByteBlock(0,0,16,10);
+				testByteBlock(0,5,16,10);
+				testByteBlock(5,0,16,10);
+			leave();
+		};
 		
 		
 		
@@ -362,6 +454,720 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 		
 		
 		
+		
+		
+		
+		
+		/* ................................................................
+					Byte, single element
+		................................................................*/
+		private void testByteBlockS(int woffset, int roffset, int wlength, int rlength)throws IOException
+		{
+			enter();
+			
+			/*
+				In this test we just write some blocks of data using different offset
+				in each pair and different cross-block scatter and we perform a complete
+				read or partial or incomplete.
+			*/	
+			Pair p = create();
+			try{
+				
+				
+				
+					p.write.begin("block");
+					System.out.println("write??Block(..,"+woffset+","+wlength+")");
+					byte [] blk = prepareByteBlock(woffset+wlength);
+					for(int i=0;i<wlength;i++)
+						p.write.writeByteBlock(blk[woffset+i]);
+					p.write.end();
+					p.write.close();
+					
+					Assert.assertTrue("block".equals(p.read.next()));
+					byte [] res = new byte[rlength+roffset];
+					System.out.println("read??Block(..,"+roffset+","+rlength+")");
+					int r=0;
+					for( int i=0;i<rlength;i++)
+					{
+						int x = p.read.readByteBlock();
+						if (x==-1) break;
+						res[roffset+i]=(byte)x;
+						r++;
+					};
+					System.out.println("r="+r);
+					Assert.assertTrue(r==Math.min(wlength,rlength)); //<-- partial or incomplete
+					for(int i=0;i<r;i++)
+					{
+							Assert.assertTrue(blk[i+woffset]==res[i+roffset]);
+					};
+					if (wlength<=rlength)
+					{
+						Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+					}else
+					{
+						Assert.assertTrue(
+									p.read.isDescribed() ?
+										(p.read.whatNext()==ISignalReadFormat.PRMTV_BYTE_BLOCK)
+										:
+										(p.read.whatNext()==ISignalReadFormat.PRMTV_UNTYPED)
+									);
+					};
+					Assert.assertTrue(p.read.next()==null);
+					Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			}finally{ p.close(); };
+			leave();
+		};
+		@Test  public void testByteBlockS_full()throws IOException
+		{
+			enter();
+			/* Test complete reads */
+				testByteBlockS(0,0,16,16);
+			leave();
+		};
+		@Test  public void testByteBlockS_partial()throws IOException
+		{
+			enter();
+			/* Test partial reads over the end of block*/
+				testByteBlockS(0,0,16,19);
+			leave();
+		};
+		@Test  public void testByteBlockS_incomplete()throws IOException
+		{
+			enter();
+			/* Test partial reads over the end of block*/
+				testByteBlockS(0,0,16,10);
+			leave();
+		};
+		
+		
+		
+		
+		
+		
+		/* ................................................................
+					Char
+		................................................................*/
+		private static char [] prepareCharBlock(int size)
+		{	
+			char [] a = new char[size];
+			for(int i=0;i<size;i++){ a[i] = (char)(i*1940); }
+			return a;
+		};
+		private void testCharBlock(int woffset, int roffset, int wlength, int rlength)throws IOException
+		{
+			enter();
+			
+			/*
+				In this test we just write some blocks of data using different offset
+				in each pair and different cross-block scatter and we perform a complete
+				read or partial or incomplete.
+			*/	
+			Pair p = create();
+			try{
+				int wL = wlength/2;
+				int wH = wlength - wL;
+				
+				int rL = wlength/3;	//<-- intentionally wlength
+				int rH = rlength - rL;
+				
+				
+					p.write.begin("block");
+					System.out.println("write??Block(..,"+woffset+","+wlength+")");
+					char [] blk = prepareCharBlock(woffset+wlength);
+					p.write.writeCharBlock(blk,woffset,wL);
+					p.write.writeCharBlock(blk,woffset+wL,wH);
+					p.write.end();
+					p.write.close();
+					
+					Assert.assertTrue("block".equals(p.read.next()));
+					char [] res = new char[rlength+roffset];
+					System.out.println("read??Block(..,"+roffset+","+rlength+")");
+					int r = p.read.readCharBlock(res, roffset, rL);
+						r += p.read.readCharBlock(res, roffset+rL, rH);
+					System.out.println("r="+r);
+					Assert.assertTrue(r==Math.min(wlength,rlength)); //<-- partial or incomplete
+					for(int i=0;i<r;i++)
+					{
+							Assert.assertTrue(blk[i+woffset]==res[i+roffset]);
+					};
+					if (wlength<=rlength)
+					{
+						Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+					}else
+					{
+						Assert.assertTrue(
+									p.read.isDescribed() ?
+										(p.read.whatNext()==ISignalReadFormat.PRMTV_CHAR_BLOCK)
+										:
+										(p.read.whatNext()==ISignalReadFormat.PRMTV_UNTYPED)
+									);
+					};
+					Assert.assertTrue(p.read.next()==null);
+					Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			}finally{ p.close(); };
+			leave();
+		};
+		@Test  public void testCharBlock_full()throws IOException
+		{
+			enter();
+			/* Test complete reads */
+				testCharBlock(0,0,16,16);
+				testCharBlock(0,5,16,16);
+				testCharBlock(5,0,16,16);
+			leave();
+		};
+		@Test  public void testCharBlock_partial()throws IOException
+		{
+			enter();
+			/* Test partial reads over the end of block*/
+				testCharBlock(0,0,16,19);
+				testCharBlock(0,5,16,19);
+				testCharBlock(5,0,16,19);
+			leave();
+		};
+		@Test  public void testCharBlock_incomplete()throws IOException
+		{
+			enter();
+			/* Test partial reads over the end of block*/
+				testCharBlock(0,0,16,10);
+				testCharBlock(0,5,16,10);
+				testCharBlock(5,0,16,10);
+			leave();
+		};
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		/* ................................................................
+					Short
+		................................................................*/
+		private static short [] prepareShortBlock(int size)
+		{	
+			short [] a = new short[size];
+			for(int i=0;i<size;i++){ a[i] = (short)(i ^ 0x55AA); }
+			return a;
+		};
+		private void testShortBlock(int woffset, int roffset, int wlength, int rlength)throws IOException
+		{
+			enter();
+			
+			/*
+				In this test we just write some blocks of data using different offset
+				in each pair and different cross-block scatter and we perform a complete
+				read or partial or incomplete.
+			*/	
+			Pair p = create();
+			try{
+				int wL = wlength/2;
+				int wH = wlength - wL;
+				
+				int rL = wlength/3;	//<-- intentionally wlength
+				int rH = rlength - rL;
+				
+				
+					p.write.begin("block");
+					System.out.println("write??Block(..,"+woffset+","+wlength+")");
+					short [] blk = prepareShortBlock(woffset+wlength);
+					p.write.writeShortBlock(blk,woffset,wL);
+					p.write.writeShortBlock(blk,woffset+wL,wH);
+					p.write.end();
+					p.write.close();
+					
+					Assert.assertTrue("block".equals(p.read.next()));
+					short [] res = new short[rlength+roffset];
+					System.out.println("read??Block(..,"+roffset+","+rlength+")");
+					int r = p.read.readShortBlock(res, roffset, rL);
+						r += p.read.readShortBlock(res, roffset+rL, rH);
+					System.out.println("r="+r);
+					Assert.assertTrue(r==Math.min(wlength,rlength)); //<-- partial or incomplete
+					for(int i=0;i<r;i++)
+					{
+							Assert.assertTrue(blk[i+woffset]==res[i+roffset]);
+					};
+					if (wlength<=rlength)
+					{
+						Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+					}else
+					{
+						Assert.assertTrue(
+									p.read.isDescribed() ?
+										(p.read.whatNext()==ISignalReadFormat.PRMTV_SHORT_BLOCK)
+										:
+										(p.read.whatNext()==ISignalReadFormat.PRMTV_UNTYPED)
+									);
+					};
+					Assert.assertTrue(p.read.next()==null);
+					Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			}finally{ p.close(); };
+			leave();
+		};
+		@Test  public void testShortBlock_full()throws IOException
+		{
+			enter();
+			/* Test complete reads */
+				testShortBlock(0,0,16,16);
+				testShortBlock(0,5,16,16);
+				testShortBlock(5,0,16,16);
+			leave();
+		};
+		@Test  public void testShortBlock_partial()throws IOException
+		{
+			enter();
+			/* Test partial reads over the end of block*/
+				testShortBlock(0,0,16,19);
+				testShortBlock(0,5,16,19);
+				testShortBlock(5,0,16,19);
+			leave();
+		};
+		@Test  public void testShortBlock_incomplete()throws IOException
+		{
+			enter();
+			/* Test partial reads over the end of block*/
+				testShortBlock(0,0,16,10);
+				testShortBlock(0,5,16,10);
+				testShortBlock(5,0,16,10);
+			leave();
+		};
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		/* ................................................................
+					Int
+		................................................................*/
+		private static int [] prepareIntBlock(int size)
+		{	
+			int [] a = new int[size];
+			for(int i=0;i<size;i++){ a[i] = i*102; }
+			return a;
+		};
+		private void testIntBlock(int woffset, int roffset, int wlength, int rlength)throws IOException
+		{
+			enter();
+			
+			/*
+				In this test we just write some blocks of data using different offset
+				in each pair and different cross-block scatter and we perform a complete
+				read or partial or incomplete.
+			*/	
+			Pair p = create();
+			try{
+				int wL = wlength/2;
+				int wH = wlength - wL;
+				
+				int rL = wlength/3;	//<-- intentionally wlength
+				int rH = rlength - rL;
+				
+				
+					p.write.begin("block");
+					System.out.println("write??Block(..,"+woffset+","+wlength+")");
+					int [] blk = prepareIntBlock(woffset+wlength);
+					p.write.writeIntBlock(blk,woffset,wL);
+					p.write.writeIntBlock(blk,woffset+wL,wH);
+					p.write.end();
+					p.write.close();
+					
+					Assert.assertTrue("block".equals(p.read.next()));
+					int [] res = new int[rlength+roffset];
+					System.out.println("read??Block(..,"+roffset+","+rlength+")");
+					int r = p.read.readIntBlock(res, roffset, rL);
+						r += p.read.readIntBlock(res, roffset+rL, rH);
+					System.out.println("r="+r);
+					Assert.assertTrue(r==Math.min(wlength,rlength)); //<-- partial or incomplete
+					for(int i=0;i<r;i++)
+					{
+							Assert.assertTrue(blk[i+woffset]==res[i+roffset]);
+					};
+					if (wlength<=rlength)
+					{
+						Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+					}else
+					{
+						Assert.assertTrue(
+									p.read.isDescribed() ?
+										(p.read.whatNext()==ISignalReadFormat.PRMTV_INT_BLOCK)
+										:
+										(p.read.whatNext()==ISignalReadFormat.PRMTV_UNTYPED)
+									);
+					};
+					Assert.assertTrue(p.read.next()==null);
+					Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			}finally{ p.close(); };
+			leave();
+		};
+		@Test  public void testIntBlock_full()throws IOException
+		{
+			enter();
+			/* Test complete reads */
+				testIntBlock(0,0,16,16);
+				testIntBlock(0,5,16,16);
+				testIntBlock(5,0,16,16);
+			leave();
+		};
+		@Test  public void testIntBlock_partial()throws IOException
+		{
+			enter();
+			/* Test partial reads over the end of block*/
+				testIntBlock(0,0,16,19);
+				testIntBlock(0,5,16,19);
+				testIntBlock(5,0,16,19);
+			leave();
+		};
+		@Test  public void testIntBlock_incomplete()throws IOException
+		{
+			enter();
+			/* Test partial reads over the end of block*/
+				testIntBlock(0,0,16,10);
+				testIntBlock(0,5,16,10);
+				testIntBlock(5,0,16,10);
+			leave();
+		};
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		/* ................................................................
+					Long
+		................................................................*/
+		private static long [] prepareLongBlock(int size)
+		{	
+			long [] a = new long[size];
+			for(int i=0;i<size;i++){ a[i] = i*37 + (i-1)*81; }
+			return a;
+		};
+		private void testLongBlock(int woffset, int roffset, int wlength, int rlength)throws IOException
+		{
+			enter();
+			
+			/*
+				In this test we just write some blocks of data using different offset
+				in each pair and different cross-block scatter and we perform a complete
+				read or partial or incomplete.
+			*/	
+			Pair p = create();
+			try{
+				int wL = wlength/2;
+				int wH = wlength - wL;
+				
+				int rL = wlength/3;	//<-- intentionally wlength
+				int rH = rlength - rL;
+				
+				
+					p.write.begin("block");
+					System.out.println("write??Block(..,"+woffset+","+wlength+")");
+					long [] blk = prepareLongBlock(woffset+wlength);
+					p.write.writeLongBlock(blk,woffset,wL);
+					p.write.writeLongBlock(blk,woffset+wL,wH);
+					p.write.end();
+					p.write.close();
+					
+					Assert.assertTrue("block".equals(p.read.next()));
+					long [] res = new long[rlength+roffset];
+					System.out.println("read??Block(..,"+roffset+","+rlength+")");
+					int r = p.read.readLongBlock(res, roffset, rL);
+						r += p.read.readLongBlock(res, roffset+rL, rH);
+					System.out.println("r="+r);
+					Assert.assertTrue(r==Math.min(wlength,rlength)); //<-- partial or incomplete
+					for(int i=0;i<r;i++)
+					{
+							Assert.assertTrue(blk[i+woffset]==res[i+roffset]);
+					};
+					if (wlength<=rlength)
+					{
+						Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+					}else
+					{
+						Assert.assertTrue(
+									p.read.isDescribed() ?
+										(p.read.whatNext()==ISignalReadFormat.PRMTV_LONG_BLOCK)
+										:
+										(p.read.whatNext()==ISignalReadFormat.PRMTV_UNTYPED)
+									);
+					};
+					Assert.assertTrue(p.read.next()==null);
+					Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			}finally{ p.close(); };
+			leave();
+		};
+		@Test  public void testLongBlock_full()throws IOException
+		{
+			enter();
+			/* Test complete reads */
+				testLongBlock(0,0,16,16);
+				testLongBlock(0,5,16,16);
+				testLongBlock(5,0,16,16);
+			leave();
+		};
+		@Test  public void testLongBlock_partial()throws IOException
+		{
+			enter();
+			/* Test partial reads over the end of block*/
+				testLongBlock(0,0,16,19);
+				testLongBlock(0,5,16,19);
+				testLongBlock(5,0,16,19);
+			leave();
+		};
+		@Test  public void testLongBlock_incomplete()throws IOException
+		{
+			enter();
+			/* Test partial reads over the end of block*/
+				testLongBlock(0,0,16,10);
+				testLongBlock(0,5,16,10);
+				testLongBlock(5,0,16,10);
+			leave();
+		};
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		/* ................................................................
+					Float
+		................................................................*/
+		private static float [] prepareFloatBlock(int size)
+		{	
+			float [] a = new float[size];
+			for(int i=0;i<size;i++){ a[i] = i*999f; }
+			return a;
+		};
+		private void testFloatBlock(int woffset, int roffset, int wlength, int rlength)throws IOException
+		{
+			enter();
+			
+			/*
+				In this test we just write some blocks of data using different offset
+				in each pair and different cross-block scatter and we perform a complete
+				read or partial or incomplete.
+			*/	
+			Pair p = create();
+			try{
+				int wL = wlength/2;
+				int wH = wlength - wL;
+				
+				int rL = wlength/3;	//<-- intentionally wlength
+				int rH = rlength - rL;
+				
+				
+					p.write.begin("block");
+					System.out.println("write??Block(..,"+woffset+","+wlength+")");
+					float [] blk = prepareFloatBlock(woffset+wlength);
+					p.write.writeFloatBlock(blk,woffset,wL);
+					p.write.writeFloatBlock(blk,woffset+wL,wH);
+					p.write.end();
+					p.write.close();
+					
+					Assert.assertTrue("block".equals(p.read.next()));
+					float [] res = new float[rlength+roffset];
+					System.out.println("read??Block(..,"+roffset+","+rlength+")");
+					int r = p.read.readFloatBlock(res, roffset, rL);
+						r += p.read.readFloatBlock(res, roffset+rL, rH);
+					System.out.println("r="+r);
+					Assert.assertTrue(r==Math.min(wlength,rlength)); //<-- partial or incomplete
+					for(int i=0;i<r;i++)
+					{
+							Assert.assertTrue(blk[i+woffset]==res[i+roffset]);
+					};
+					if (wlength<=rlength)
+					{
+						Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+					}else
+					{
+						Assert.assertTrue(
+									p.read.isDescribed() ?
+										(p.read.whatNext()==ISignalReadFormat.PRMTV_FLOAT_BLOCK)
+										:
+										(p.read.whatNext()==ISignalReadFormat.PRMTV_UNTYPED)
+									);
+					};
+					Assert.assertTrue(p.read.next()==null);
+					Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			}finally{ p.close(); };
+			leave();
+		};
+		@Test  public void testFloatBlock_full()throws IOException
+		{
+			enter();
+			/* Test complete reads */
+				testFloatBlock(0,0,16,16);
+				testFloatBlock(0,5,16,16);
+				testFloatBlock(5,0,16,16);
+			leave();
+		};
+		@Test  public void testFloatBlock_partial()throws IOException
+		{
+			enter();
+			/* Test partial reads over the end of block*/
+				testFloatBlock(0,0,16,19);
+				testFloatBlock(0,5,16,19);
+				testFloatBlock(5,0,16,19);
+			leave();
+		};
+		@Test  public void testFloatBlock_incomplete()throws IOException
+		{
+			enter();
+			/* Test partial reads over the end of block*/
+				testFloatBlock(0,0,16,10);
+				testFloatBlock(0,5,16,10);
+				testFloatBlock(5,0,16,10);
+			leave();
+		};
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		/* ................................................................
+					Double
+		................................................................*/
+		private static double [] prepareDoubleBlock(int size)
+		{	
+			double [] a = new double[size];
+			for(int i=0;i<size;i++){ a[i] = 47.5*(i ^ 0x55AA44); }
+			return a;
+		};
+		private void testDoubleBlock(int woffset, int roffset, int wlength, int rlength)throws IOException
+		{
+			enter();
+			
+			/*
+				In this test we just write some blocks of data using different offset
+				in each pair and different cross-block scatter and we perform a complete
+				read or partial or incomplete.
+			*/	
+			Pair p = create();
+			try{
+				int wL = wlength/2;
+				int wH = wlength - wL;
+				
+				int rL = wlength/3;	//<-- intentionally wlength
+				int rH = rlength - rL;
+				
+				
+					p.write.begin("block");
+					System.out.println("write??Block(..,"+woffset+","+wlength+")");
+					double [] blk = prepareDoubleBlock(woffset+wlength);
+					p.write.writeDoubleBlock(blk,woffset,wL);
+					p.write.writeDoubleBlock(blk,woffset+wL,wH);
+					p.write.end();
+					p.write.close();
+					
+					Assert.assertTrue("block".equals(p.read.next()));
+					double [] res = new double[rlength+roffset];
+					System.out.println("read??Block(..,"+roffset+","+rlength+")");
+					int r = p.read.readDoubleBlock(res, roffset, rL);
+						r += p.read.readDoubleBlock(res, roffset+rL, rH);
+					System.out.println("r="+r);
+					Assert.assertTrue(r==Math.min(wlength,rlength)); //<-- partial or incomplete
+					for(int i=0;i<r;i++)
+					{
+							Assert.assertTrue(blk[i+woffset]==res[i+roffset]);
+					};
+					if (wlength<=rlength)
+					{
+						Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+					}else
+					{
+						Assert.assertTrue(
+									p.read.isDescribed() ?
+										(p.read.whatNext()==ISignalReadFormat.PRMTV_DOUBLE_BLOCK)
+										:
+										(p.read.whatNext()==ISignalReadFormat.PRMTV_UNTYPED)
+									);
+					};
+					Assert.assertTrue(p.read.next()==null);
+					Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			}finally{ p.close(); };
+			leave();
+		};
+		@Test  public void testDoubleBlock_full()throws IOException
+		{
+			enter();
+			/* Test complete reads */
+				testDoubleBlock(0,0,16,16);
+				testDoubleBlock(0,5,16,16);
+				testDoubleBlock(5,0,16,16);
+			leave();
+		};
+		@Test  public void testDoubleBlock_partial()throws IOException
+		{
+			enter();
+			/* Test partial reads over the end of block*/
+				testDoubleBlock(0,0,16,19);
+				testDoubleBlock(0,5,16,19);
+				testDoubleBlock(5,0,16,19);
+			leave();
+		};
+		@Test  public void testDoubleBlock_incomplete()throws IOException
+		{
+			enter();
+			/* Test partial reads over the end of block*/
+				testDoubleBlock(0,0,16,10);
+				testDoubleBlock(0,5,16,10);
+				testDoubleBlock(5,0,16,10);
+			leave();
+		};
 		/* ********************************************************************
 		
 		
@@ -380,13 +1186,13 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 				to initate operation (EUnexpectedEof)
 		
 		------------------------------------------------------------------*/		
-		@Test  @org.junit.Ignore public void testUEof_Bool()throws IOException
+		@Test  public void testUEof_Bool()throws IOException
 		{
 			enter();
 			/*
 				In this test we just check if we read past end of stream.
 			*/			
-			Pair p = create(8,8);
+			Pair p = create();
 			try{
 					p.write.writeBoolean(false);
 					p.write.flush();
@@ -400,13 +1206,13 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			
 			leave();
 		};
-		@Test  @org.junit.Ignore public void testUEof_Byte()throws IOException
+		@Test  public void testUEof_Byte()throws IOException
 		{
 			enter();
 			/*
 				In this test we just check if we read past end of stream.
 			*/			
-			Pair p = create(8,8);
+			Pair p = create();
 			try{
 					p.write.writeByte((byte)34);
 					p.write.flush();
@@ -420,13 +1226,13 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			
 			leave();
 		};
-		@Test  @org.junit.Ignore public void testUEof_Char()throws IOException
+		@Test   public void testUEof_Char()throws IOException
 		{
 			enter();
 			/*
 				In this test we just check if we read past end of stream.
 			*/			
-			Pair p = create(8,8);
+			Pair p = create();
 			try{
 					p.write.writeChar((char)34);
 					p.write.flush();
@@ -440,13 +1246,13 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			
 			leave();
 		};
-		@Test  @org.junit.Ignore public void testUEof_Shrt()throws IOException
+		@Test  public void testUEof_Shrt()throws IOException
 		{
 			enter();
 			/*
 				In this test we just check if we read past end of stream.
 			*/			
-			Pair p = create(8,8);
+			Pair p = create();
 			try{
 					p.write.writeShort((short)34);
 					p.write.flush();
@@ -460,13 +1266,13 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			
 			leave();
 		};
-		@Test  @org.junit.Ignore public void testUEof_Int()throws IOException
+		@Test  public void testUEof_Int()throws IOException
 		{
 			enter();
 			/*
 				In this test we just check if we read past end of stream.
 			*/			
-			Pair p = create(8,8);
+			Pair p = create();
 			try{
 					p.write.writeInt(34);
 					p.write.flush();
@@ -480,13 +1286,13 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			
 			leave();
 		};
-		@Test  @org.junit.Ignore public void testUEof_Lng()throws IOException
+		@Test  public void testUEof_Lng()throws IOException
 		{
 			enter();
 			/*
 				In this test we just check if we read past end of stream.
 			*/			
-			Pair p = create(8,8);
+			Pair p = create();
 			try{
 					p.write.writeLong((long)34);
 					p.write.flush();
@@ -500,13 +1306,13 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			
 			leave();
 		};
-		@Test  @org.junit.Ignore public void testUEof_Flt()throws IOException
+		@Test  public void testUEof_Flt()throws IOException
 		{
 			enter();
 			/*
 				In this test we just check if we read past end of stream.
 			*/			
-			Pair p = create(8,8);
+			Pair p = create();
 			try{
 					p.write.writeFloat((float)34);
 					p.write.flush();
@@ -520,13 +1326,13 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			
 			leave();
 		};
-		@Test  @org.junit.Ignore public void testUEof_Dbl()throws IOException
+		@Test  public void testUEof_Dbl()throws IOException
 		{
 			enter();
 			/*
 				In this test we just check if we read past end of stream.
 			*/			
-			Pair p = create(8,8);
+			Pair p = create();
 			try{
 					p.write.writeDouble((double)34);
 					p.write.flush();
@@ -546,7 +1352,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 				to initate operation (ENoMoreData)
 		
 		------------------------------------------------------------------*/
-		@Test  @org.junit.Ignore public void testENoMoreData_elemntry()throws IOException
+		@Test public void testENoMoreData_elemntry()throws IOException
 		{
 			enter();
 			/*
@@ -554,7 +1360,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 				We do run single test to check if all possible subsequent
 				attempts do fail and if signal is then read correctly.
 			*/			
-			Pair p = create(8,8);
+			Pair p = create();
 			try{
 					p.write.begin("paris");
 					p.write.end();
@@ -603,7 +1409,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			leave();
 		};	
 		
-		@Test  @org.junit.Ignore public void testENoMoreData_block()throws IOException
+		@Test public void testENoMoreData_block()throws IOException
 		{
 			enter();
 			/*
@@ -611,7 +1417,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 				We do run single test to check if all possible subsequent
 				attempts do fail and if signal is then read correctly.
 			*/			
-			Pair p = create(8,8);
+			Pair p = create();
 			try{
 					p.write.begin("paris");
 					p.write.end();

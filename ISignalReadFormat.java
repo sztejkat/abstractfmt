@@ -12,6 +12,29 @@ public interface ISignalReadFormat extends Closeable, IPrimitiveReadFormat
 {	
 	/* ************************************************************
 	
+			Information
+	
+		* *************************************************************/
+		/** Allows to set limit for signal name. Default
+		value is 1024. 
+		@param characters name limit, non-negative. Zero is silly,
+		no signal names can be read 
+		*/
+		public void setMaxSignalNameLength(int characters);
+	/** True if stream implementation is "described".
+		A described implementation <u>do require</u> type information
+		and <u>do validate</u> type information. They must throw
+		{@link EDataMissmatch} if type validation failed and 
+		must throw {@link EDataTypeRequired} if there is no required type information.
+		<p>
+		A "non-described" implementation <u>must not</u> provide type information,
+		<u>must not</u> validate it and <u>should complain</u> if stream do contain
+		type information by throwing {@link ECorruptedFormat}.
+		@return true if described. A life time constant.		
+		*/
+		public boolean isDescribed();
+	/* ************************************************************
+	
 			Signals and events	
 	
 	* *************************************************************/
@@ -197,18 +220,7 @@ public interface ISignalReadFormat extends Closeable, IPrimitiveReadFormat
 		*/
 		public int whatNext()throws IOException;
 		
-		/** True if stream implementation is "described".
-		A described implementation <u>do require</u> type information
-		and <u>do validate</u> type information. They must throw
-		{@link EDataMissmatch} if type validation failed and 
-		must throw {@link EDataTypeRequired} if there is no required type information.
-		<p>
-		A "non-described" implementation <u>must not</u> provide type information,
-		<u>must not</u> validate it and <u>should complain</u> if stream do contain
-		type information by throwing {@link ECorruptedFormat}.
-		@return true if described. A life time constant.		
-		*/
-		public boolean isDescribed();
+		
 	
 	/* *************************************************************
 	

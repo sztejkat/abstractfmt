@@ -6,15 +6,18 @@ import java.io.IOException;
 	A lower level write format used as a "driver" 
 	to implement {@link ISignalWriteFormat}.
 	<p>
-	This is based on concept of "indicators"
-	which are used to build "signals" and carry information
-	about types of primitives.
+	This is based on concept of <a href="doc-file/indicator-format.html">"indicators"</a>.
 	<p>
 	This is up to a caller to take care about proper order 
 	of methods invocation and to defend against missues
 	and implementations of this class should provide little if
 	any defense against missuse and may fail misserably if
 	abused.
+	
+	<h2>Described versus un-described</h2>
+	The indicator format decides by itself if it is described 
+	or not. Writing classes should always assume format is
+	described and call all methods in a proper way.
 */
 public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveWriteFormat
 {
@@ -27,14 +30,15 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 		 and a maximum number to be passed there.
 		@return non-negative, can be zero.
 		*/
-		public int getMaxRegistrations();
-		/** Tells if {@link #writeType} may be called alone
-		or if {@link #writeFlush} is required when {@link #writeType} 
-		is used.
-		
-		@return true if {@link #writeFlush} of matching type is required.
-		*/
-		public boolean requiresFlushes();
+		public int getMaxRegistrations();	
+		/** Informative method which can be used to tell
+		if this indicator format is doing any job in
+		{@link #writeType} or {@link #writeFlush} */
+		public boolean isDescribed();
+		/** Informative method which can be used to tell
+		if this indicator format is doing any job in
+		{@link #writeFlush} */			
+		public boolean isFlushing();
 		/* ****************************************************
 		
 				Signals related indicators.
@@ -104,13 +108,22 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 		
 		****************************************************/
 		/** Writes indicator telling that specific type start information
-		is to be stored. Un-described formats may ignore it.
+		is to be stored. This method should be called in following sequence:
+		<pre>
+			writeType(X)
+			<i>write primitive or block</i>
+			writeFlush(X)
+		</pre>
+		regardless if upper level format is described or not.
+		
 		@param type indicator with {@link TIndicator#TYPE} flag set 
 		@throws IOException if failed at low level.
 		*/ 
 		public void writeType(TIndicator type)throws IOException;
 		/** Writes indicator telling that specific data end information
-		is to be stored. Un-described formats may ignore it.
+		is to be stored. Un-described formats may ignore it,
+		but if {@link #writeType} is called this method must also be
+		called.
 		@param flush indicator with {@link TIndicator#FLUSH} flag set
 				and  {@link TIndicator#READ_ONLY} not set.
 		@throws IOException if failed at low level.
@@ -122,8 +135,26 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 				IPrimitiveWriteFormat	
 		
 		****************************************************/
+		/** 
+		It is up to caller to always call it in sequence:
+		<pre>
+			writeType(...)
+			writeBoolean(....)
+			writeFlush(...)
+		</pre>
+		*/
+		@Override public void writeBoolean(boolean v)throws IOException;		
 		/** It is up to caller to invoke this method only if there
-		is an unclosed "begin" signal.
+		is an unclosed "begin" signal.		
+		<p>
+		It is up to caller to call it in sequence:
+		<pre>
+			writeType(...)
+			writeBooleanBlock(...
+			writeBooleanBlock(...
+			....
+			writeFlush(...)
+		</pre>
 		*/
 		@Override public void writeBooleanBlock(boolean [] buffer, int offset, int length)throws IOException;		
 		

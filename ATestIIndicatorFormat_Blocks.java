@@ -12,7 +12,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a partial read.*/
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeBooleanBlock(new boolean[32],0,32);
 		p.write.writeBooleanBlock(new boolean[32],0,32);
@@ -26,8 +26,8 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//run all, trigger partial read.
 		Assert.assertTrue(p.read.readBooleanBlock(new boolean[100])==32+32-16);		
-		Assert.assertTrue(p.read.readBooleanBlock(new boolean[1])==0); //check if it is safe?		
-		Assert.assertTrue(p.read.readBooleanBlock(new boolean[1])==0); //check if it is safe?
+		//Should be getting end indicator and calls should be not allowed, but 
+		//calls are allowed to not throw directly because it is up to us to check it.
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
 		leave();
@@ -39,7 +39,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a completion read */
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeBooleanBlock(new boolean[32],0,32);
 		p.write.writeBooleanBlock(new boolean[32],0,32);
@@ -62,7 +62,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 	{
 		enter();
 		/* Test if layer properly handles block writes when it comes to full read again */
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeBooleanBlock(new boolean[32],0,32);
 		p.write.writeBooleanBlock(new boolean[32],0,32);
@@ -84,7 +84,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to skipping
 		when we use a partial read.*/
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeBooleanBlock(new boolean[32],0,32);
 		p.write.writeBooleanBlock(new boolean[32],0,32);
@@ -97,7 +97,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		Assert.assertTrue(p.read.readBooleanBlock(new boolean[16])==16);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//skip rest.
-		p.read.skip();
+		p.read.next();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
 		leave();
@@ -125,7 +125,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a partial read.*/
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeByteBlock(new byte[32],0,32);
 		p.write.writeByteBlock(new byte[32],0,32);
@@ -139,8 +139,8 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//run all, trigger partial read.
 		Assert.assertTrue(p.read.readByteBlock(new byte[100])==32+32-16);		
-		Assert.assertTrue(p.read.readByteBlock(new byte[1])==0); //check if it is safe?		
-		Assert.assertTrue(p.read.readByteBlock(new byte[1])==0); //check if it is safe?
+	//Should be getting end indicator and calls should be not allowed, but 
+		//calls are allowed to not throw directly because it is up to us to check it.
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
 		leave();
@@ -152,7 +152,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a partial read.*/
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeByteBlock(new byte[32],0,32);
 		p.write.writeByteBlock(new byte[32],0,32);
@@ -172,9 +172,8 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		{
 			Assert.assertTrue(p.read.readByteBlock()!=-1);
 		};
-		Assert.assertTrue(p.read.readByteBlock()==-1);
-		Assert.assertTrue(p.read.readByteBlock()==-1);
-		Assert.assertTrue(p.read.readByteBlock()==-1);
+		//Should be getting end indicator and calls should be not allowed, but 
+		//calls are allowed to not throw directly because it is up to us to check it.
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
 		leave();
@@ -186,7 +185,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a completion read */
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeByteBlock(new byte[32],0,32);
 		p.write.writeByteBlock(new byte[32],0,32);
@@ -209,7 +208,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 	{
 		enter();
 		/* Test if layer properly handles block writes when it comes to full read again */
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeByteBlock(new byte[32],0,32);
 		p.write.writeByteBlock(new byte[32],0,32);
@@ -231,7 +230,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to skipping
 		when we use a partial read.*/
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeByteBlock(new byte[32],0,32);
 		p.write.writeByteBlock(new byte[32],0,32);
@@ -270,7 +269,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a partial read.*/
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeCharBlock(new char[32],0,32);
 		p.write.writeCharBlock(new char[32],0,32);
@@ -284,8 +283,8 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//run all, trigger partial read.
 		Assert.assertTrue(p.read.readCharBlock(new char[100])==32+32-16);		
-		Assert.assertTrue(p.read.readCharBlock(new char[1])==0); //check if it is safe?		
-		Assert.assertTrue(p.read.readCharBlock(new char[1])==0); //check if it is safe?
+		//Should be getting end indicator and calls should be not allowed, but 
+		//calls are allowed to not throw directly because it is up to us to check it.
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
 		leave();
@@ -295,7 +294,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a partial read.*/
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeCharBlock("12345678901234567890123456789012",0,32);
 		p.write.writeCharBlock(new char[32],0,32);
@@ -309,8 +308,8 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//run all, trigger partial read.
 		Assert.assertTrue(p.read.readCharBlock(new StringBuilder(),100)==32+32-16);		
-		Assert.assertTrue(p.read.readCharBlock(new StringBuilder(),1)==0); //check if it is safe?		
-		Assert.assertTrue(p.read.readCharBlock(new StringBuilder(),1)==0); //check if it is safe?
+		//Should be getting end indicator and calls should be not allowed, but 
+		//calls are allowed to not throw directly because it is up to us to check it.
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
 		leave();
@@ -322,7 +321,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a completion read */
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeCharBlock(new char[32],0,32);
 		p.write.writeCharBlock(new char[32],0,32);
@@ -345,7 +344,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 	{
 		enter();
 		/* Test if layer properly handles block writes when it comes to full read again */
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeCharBlock(new char[32],0,32);
 		p.write.writeCharBlock(new char[32],0,32);
@@ -367,7 +366,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to skipping
 		when we use a partial read.*/
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeCharBlock(new char[32],0,32);
 		p.write.writeCharBlock(new char[32],0,32);
@@ -412,7 +411,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a partial read.*/
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeShortBlock(new short[32],0,32);
 		p.write.writeShortBlock(new short[32],0,32);
@@ -426,8 +425,8 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//run all, trigger partial read.
 		Assert.assertTrue(p.read.readShortBlock(new short[100])==32+32-16);		
-		Assert.assertTrue(p.read.readShortBlock(new short[1])==0); //check if it is safe?		
-		Assert.assertTrue(p.read.readShortBlock(new short[1])==0); //check if it is safe?
+		//Should be getting end indicator and calls should be not allowed, but 
+		//calls are allowed to not throw directly because it is up to us to check it.
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
 		leave();
@@ -439,7 +438,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a completion read */
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeShortBlock(new short[32],0,32);
 		p.write.writeShortBlock(new short[32],0,32);
@@ -462,7 +461,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 	{
 		enter();
 		/* Test if layer properly handles block writes when it comes to full read again */
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeShortBlock(new short[32],0,32);
 		p.write.writeShortBlock(new short[32],0,32);
@@ -484,7 +483,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to skipping
 		when we use a partial read.*/
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeShortBlock(new short[32],0,32);
 		p.write.writeShortBlock(new short[32],0,32);
@@ -524,7 +523,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a partial read.*/
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeIntBlock(new int[32],0,32);
 		p.write.writeIntBlock(new int[32],0,32);
@@ -538,8 +537,8 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//run all, trigger partial read.
 		Assert.assertTrue(p.read.readIntBlock(new int[100])==32+32-16);		
-		Assert.assertTrue(p.read.readIntBlock(new int[1])==0); //check if it is safe?		
-		Assert.assertTrue(p.read.readIntBlock(new int[1])==0); //check if it is safe?
+		//Should be getting end indicator and calls should be not allowed, but 
+		//calls are allowed to not throw directly because it is up to us to check it.
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
 		leave();
@@ -551,7 +550,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a completion read */
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeIntBlock(new int[32],0,32);
 		p.write.writeIntBlock(new int[32],0,32);
@@ -574,7 +573,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 	{
 		enter();
 		/* Test if layer properly handles block writes when it comes to full read again */
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeIntBlock(new int[32],0,32);
 		p.write.writeIntBlock(new int[32],0,32);
@@ -596,7 +595,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to skipping
 		when we use a partial read.*/
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeIntBlock(new int[32],0,32);
 		p.write.writeIntBlock(new int[32],0,32);
@@ -640,7 +639,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a partial read.*/
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeLongBlock(new long[32],0,32);
 		p.write.writeLongBlock(new long[32],0,32);
@@ -654,8 +653,8 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//run all, trigger partial read.
 		Assert.assertTrue(p.read.readLongBlock(new long[100])==32+32-16);		
-		Assert.assertTrue(p.read.readLongBlock(new long[1])==0); //check if it is safe?		
-		Assert.assertTrue(p.read.readLongBlock(new long[1])==0); //check if it is safe?
+		//Should be getting end indicator and calls should be not allowed, but 
+		//calls are allowed to not throw directly because it is up to us to check it.
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
 		leave();
@@ -667,7 +666,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a completion read */
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeLongBlock(new long[32],0,32);
 		p.write.writeLongBlock(new long[32],0,32);
@@ -690,7 +689,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 	{
 		enter();
 		/* Test if layer properly handles block writes when it comes to full read again */
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeLongBlock(new long[32],0,32);
 		p.write.writeLongBlock(new long[32],0,32);
@@ -712,7 +711,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to skipping
 		when we use a partial read.*/
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeLongBlock(new long[32],0,32);
 		p.write.writeLongBlock(new long[32],0,32);
@@ -743,7 +742,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a partial read.*/
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeFloatBlock(new float[32],0,32);
 		p.write.writeFloatBlock(new float[32],0,32);
@@ -757,8 +756,8 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//run all, trigger partial read.
 		Assert.assertTrue(p.read.readFloatBlock(new float[100])==32+32-16);		
-		Assert.assertTrue(p.read.readFloatBlock(new float[1])==0); //check if it is safe?		
-		Assert.assertTrue(p.read.readFloatBlock(new float[1])==0); //check if it is safe?
+		//Should be getting end indicator and calls should be not allowed, but 
+		//calls are allowed to not throw directly because it is up to us to check it.
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
 		leave();
@@ -770,7 +769,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a completion read */
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeFloatBlock(new float[32],0,32);
 		p.write.writeFloatBlock(new float[32],0,32);
@@ -793,7 +792,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 	{
 		enter();
 		/* Test if layer properly handles block writes when it comes to full read again */
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeFloatBlock(new float[32],0,32);
 		p.write.writeFloatBlock(new float[32],0,32);
@@ -815,7 +814,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to skipping
 		when we use a partial read.*/
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeFloatBlock(new float[32],0,32);
 		p.write.writeFloatBlock(new float[32],0,32);
@@ -856,7 +855,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a partial read.*/
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeDoubleBlock(new double[32],0,32);
 		p.write.writeDoubleBlock(new double[32],0,32);
@@ -869,9 +868,9 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		Assert.assertTrue(p.read.readDoubleBlock(new double[16])==16);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//run all, trigger partial read.
-		Assert.assertTrue(p.read.readDoubleBlock(new double[100])==32+32-16);		
-		Assert.assertTrue(p.read.readDoubleBlock(new double[1])==0); //check if it is safe?		
-		Assert.assertTrue(p.read.readDoubleBlock(new double[1])==0); //check if it is safe?
+		Assert.assertTrue(p.read.readDoubleBlock(new double[100])==32+32-16);
+		//Should be getting end indicator and calls should be not allowed, but 
+		//calls are allowed to not throw directly because it is up to us to check it.		
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
 		leave();
@@ -883,7 +882,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a completion read */
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeDoubleBlock(new double[32],0,32);
 		p.write.writeDoubleBlock(new double[32],0,32);
@@ -906,7 +905,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 	{
 		enter();
 		/* Test if layer properly handles block writes when it comes to full read again */
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeDoubleBlock(new double[32],0,32);
 		p.write.writeDoubleBlock(new double[32],0,32);
@@ -928,7 +927,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to skipping
 		when we use a partial read.*/
-		Pair p = create(8,0);
+		Pair p = create();
 		p.write.writeBeginDirect("A");
 		p.write.writeDoubleBlock(new double[32],0,32);
 		p.write.writeDoubleBlock(new double[32],0,32);
