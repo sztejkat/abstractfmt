@@ -5,18 +5,41 @@ import java.io.IOException;
 
 /**
 	An indicator format implementation over {@link CObjListFormat} media.
+	<p>
+	This format is armed with a heavy defense layer normally not necessary.
+	This layer tests if it is called according to rules.
 */
 public class CObjIndicatorWriteFormat implements IIndicatorWriteFormat
 {
 			private final CObjListFormat media;
+			private final int max_registrations;
+			private final boolean is_described;
+			private final boolean is_flushing;
+			/** Used to validate registrations contract */
+			private int registration_count;
 			
 		/** Creates
-		@param media non null media to write to 
+		@param media non null media to write to
+		@param max_registrations number returned from {@link #getMaxRegistrations}
+		@param is_described returned from {@link #isDescribed}. If false
+			type writes are non-op
+		@param is_flushing returned from {@link #isFlushing}. If false
+			type writes are non-op
+		@throws AssertionError is something is wrong.
 		*/
-		public CObjIndicatorWriteFormat(CObjListFormat media)
+		public CObjIndicatorWriteFormat(CObjListFormat media,
+										final int max_registrations,
+										final boolean is_described,
+										final boolean is_flushing
+											)
 		{
-			assert(media!=null); 
+			assert(media!=null);
+			assert(max_registrations>=0);
+			assert( !is_flushing || (is_flushing && is_described)):"invalid is_described/is_flushing combination";
 			this.media = media; 
+			this.max_registrations=max_registrations;
+			this.is_described=is_described;
+			this.is_flushing=is_flushing;
 		};
 		
 		/* ***************************************************************
@@ -26,65 +49,102 @@ public class CObjIndicatorWriteFormat implements IIndicatorWriteFormat
 		
 		
 		****************************************************************/
-		/** @return Integer.MAX_VALUE */		
-		public int getMaxRegistrations(){ return Integer.MAX_VALUE; };
-		/** @return false */
-		public boolean requiresFlushes(){ return false; };
+		/* ------------------------------------------------------
 		
-		public void writeBeginDirect(String signal_name)throws IOException
+				Information and settings
+		
+		------------------------------------------------------*/
+		@Override public final int getMaxRegistrations(){ return max_registrations; };
+		@Override public final boolean isDescribed(){return is_described; };
+		@Override public final boolean isFlushing(){return is_flushing; };
+		
+		/* ------------------------------------------------------
+		
+				Signals
+		
+		------------------------------------------------------*/
+		@Override public void writeBeginDirect(String signal_name)throws IOException
 		{
+			assert(signal_name!=null);
 			media.add(TIndicator.BEGIN_DIRECT);
 			media.add(signal_name);
 		};
-		public void writeEndBeginDirect(String signal_name)throws IOException		
+		@Override public void writeEndBeginDirect(String signal_name)throws IOException		
 		{
+			assert(signal_name!=null);
 			media.add(TIndicator.END_BEGIN_DIRECT);
 			media.add(signal_name);
 		};
-		public void writeBeginRegister(String signal_name, int number)throws IOException
+		@Override public void writeBeginRegister(String signal_name, int number)throws IOException
 		{
+			assert(signal_name!=null);
+			assert(number>=0);
+			if (registration_count>=max_registrations)  throw new AssertionError("Can't call it so many times "+(registration_count+1));
+			if (number!=registration_count) throw new AssertionError("numer="+registration_count+" in not in valid sequence, registration_count="+registration_count+" expected");
 			media.add(TIndicator.BEGIN_REGISTER);
 			media.add(Integer.valueOf(number));
 			media.add(signal_name);
+			registration_count++;
 		};
-		public void writeEndBeginRegister(String signal_name, int number)throws IOException
+		@Override public void writeEndBeginRegister(String signal_name, int number)throws IOException
 		{
+			assert(number>=0);
+			assert(signal_name!=null);
+			if (registration_count>=max_registrations)  throw new AssertionError("Can't call it so many times "+(registration_count+1));
+			if (number!=registration_count) throw new AssertionError("numer="+registration_count+" in not in valid sequence, registration_count="+registration_count+" expected");			
 			media.add(TIndicator.END_BEGIN_REGISTER);
 			media.add(Integer.valueOf(number));
 			media.add(signal_name);
+			registration_count++;
 		};
-		public void writeBeginUse(int number)throws IOException
+		@Override public void writeBeginUse(int number)throws IOException
 		{
+			assert(number>=0);
+			if (number>=registration_count) throw new AssertionError("number "+number+" is not registered yet, 0..."+(registration_count-1)+" are registered");
 			media.add(TIndicator.BEGIN_USE);
 			media.add(Integer.valueOf(number));
 		};
-		public void writeEndBeginUse( int number)throws IOException
+		@Override public void writeEndBeginUse( int number)throws IOException
 		{
+			assert(number>=0);
+			if (number>=registration_count) throw new AssertionError("number "+number+" is not registered yet, 0..."+(registration_count-1)+" are registered");			
 			media.add(TIndicator.END_BEGIN_USE);
 			media.add(Integer.valueOf(number));
 		};
-		public void writeEnd()throws IOException
+		@Override public void writeEnd()throws IOException
 		{
 			media.add(TIndicator.END);
 		};
-		public void writeType(TIndicator type)throws IOException
+		@Override public void writeType(TIndicator type)throws IOException
 		{
 			assert(type!=null);
 			assert((type.FLAGS & TIndicator.TYPE)!=0);
-			media.add(type);
+			if (is_described)
+				media.add(type);
 		};
-		public void writeFlush(TIndicator flush)throws IOException
+		@Override public void writeFlush(TIndicator flush)throws IOException
 		{
 			assert(flush!=null);
 			assert((flush.FLAGS & TIndicator.FLUSH)!=0);
 			assert((flush.FLAGS & TIndicator.READ_ONLY)==0);
-			media.add(flush);
+			if (is_flushing)
+				media.add(flush);
 		};
-		public void close()throws IOException
+		/* ------------------------------------------------------
+		
+				Closeable
+		
+		------------------------------------------------------*/
+		@Override public void close()throws IOException
 		{
 			flush();
 		};
-		public void flush(){};
+		/* ------------------------------------------------------
+		
+				Flushable
+		
+		------------------------------------------------------*/
+		@Override public void flush(){};
 		/* ***************************************************************
 		
 		

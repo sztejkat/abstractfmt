@@ -8,28 +8,50 @@ import java.io.IOException;
 public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 {
 			private final CObjListFormat media;
-			private final int max_signal_name_length;
-			/** Name registration number, -1 for invalid */
-			private int register_number;
-			/** Signal name data */
+			private final int max_registrations;
+			private final boolean is_described;
+			private final boolean is_flushing;
+			
+			/** Active name length limit */
+			private int max_signal_name_length = 1024;
+			
+			/** Name and number cache for indicators */
 			private String signal_name;
+			private int signal_number;
+			/** Controls if above have to be re-read */
+			private boolean signal_data_valid;
+			
+			/** Used to validate registrations contract */
+			private int registration_count;
+			
 			/** Used to implement array operations stitching.
 			Carries pointer from which return data in currently
 			processes block on {@link #media} */
-			private int array_op_ptr;
+			private int array_op_ptr;			
+			
 			
 		/** Creates
 		@param media non null media to read from
-		@param max_signal_name_length boundary of signal name length. 
+		@param max_registrations number returned from {@link #getMaxRegistrations}
+		@param is_described returned from {@link #isDescribed}. If false
+			type writes are non-op
+		@param is_flushing returned from {@link #isFlushing}. If false
+			type writes are non-op
+		@throws AssertionError is something is wrong. 
 		*/
-		public CObjIndicatorReadFormat(CObjListFormat media, int max_signal_name_length)
+		public CObjIndicatorReadFormat(CObjListFormat media, 
+										final int max_registrations,
+										final boolean is_described,
+										final boolean is_flushing
+										)
 		{ 
-			assert(max_signal_name_length>=0);
 			assert(media!=null);
-			
+			assert(max_registrations>=0);
+			assert( !is_flushing || (is_flushing && is_described)):"invalid is_described/is_flushing combination";
 			this.media = media; 
-			this.max_signal_name_length=max_signal_name_length;			
-			this.register_number =-1;
+			this.max_registrations=max_registrations;
+			this.is_described=is_described;
+			this.is_flushing=is_flushing;
 		};
 		/* *******************************************************
 		
@@ -37,65 +59,137 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 				
 		
 		********************************************************/
-		public int getMaxRegistrations(){ return Integer.MAX_VALUE; };
-		public TIndicator readIndicator()throws IOException
+		/* ------------------------------------------------------
+		
+				Information and settings
+		
+		------------------------------------------------------*/
+		@Override public final int getMaxRegistrations(){ return max_registrations; };
+		@Override public final boolean isDescribed(){return is_described; };
+		@Override public final boolean isFlushing(){return is_flushing; };
+		@Override public void setMaxSignalNameLength(int characters)
 		{
-			//Any call invalidates store name and number
-		 	register_number = -1;
-		 	signal_name=null; 
-		 	//poll data
-			if (media.isEmpty()) return TIndicator.EOF;
+			assert(characters>=0);
+			this.max_signal_name_length=max_signal_name_length;
+		};
+		/* ------------------------------------------------------
+		
+				Signals
+		
+		------------------------------------------------------*/
+		@Override public TIndicator getIndicator()throws IOException
+		{
+			//poll data
+			if (media.isEmpty()) 
+			{
+				//have to invalidate signal info
+				this.signal_name=null;	
+				this.signal_number=-1;
+				return TIndicator.EOF;
+			};
 			Object at_cursor = media.getFirst();
 			if (at_cursor instanceof TIndicator)
 			{
-				 media.removeFirst();
-				 TIndicator indicator = (TIndicator)at_cursor;
-				 //Handler name and registration pick-ups.
-				 //Note: Writer always writes number first, then
-				 //text so we can use flags to pick it.				 
-				 if ((indicator.FLAGS & TIndicator.REGISTER)!=0)
-				 {
-				 	if (media.isEmpty()) throw new EUnexpectedEof("No registration number?");
-				 	register_number = ((Integer)(media.removeFirst())).intValue();	
-				 	if (register_number<0) throw new ECorruptedFormat("Negative registration number");		 	
-				 };
-				 if ((indicator.FLAGS & TIndicator.NAME)!=0)
-				 {
-				 	if (media.isEmpty()) throw new EUnexpectedEof("No signal name?");
-				 	String n = (String)(media.removeFirst());
-				 	if (n.length()>	max_signal_name_length) throw new EFormatBoundaryExceeded("Name length "+n.length()+" is more than "+max_signal_name_length);
-				 	this.signal_name=n;	
-				 };
-				 return indicator;
+				TIndicator indicator = (TIndicator)at_cursor;
+				//pick name and numbers to cache
+				int offset = 0;
+				boolean signal_data_valid = this.signal_data_valid;
+				if ((indicator.FLAGS & TIndicator.REGISTER)!=0)
+				{
+					offset++;
+					if (!signal_data_valid) //to avoid re-reading if already read.
+					{
+						if (media.size()<offset+1) throw new EUnexpectedEof();					
+						int n = ((Number)media.get(offset)).intValue();
+						if (n<0) throw new ECorruptedFormat("signal number="+n);
+						if ((indicator.FLAGS & TIndicator.USE_REGISTER)==0)
+						{
+							if (n!=registration_count) throw new ECorruptedFormat("signal number="+n+" out of sequence "+registration_count);
+							this.registration_count++;
+						}else
+						{
+							if (n>=registration_count) throw new ECorruptedFormat("signal number="+n+" out of sequence "+registration_count);
+						};						
+						this.signal_number = n;
+						this.signal_data_valid=true;
+					};
+				}else
+				{
+					//have to invalidate signal info
+					this.signal_number=-1;
+				};
+				if ((indicator.FLAGS & TIndicator.NAME)!=0)
+				{
+					offset++;
+					if (!signal_data_valid) //to avoid re-reading if already read.
+					{
+						if (media.size()<offset+1) throw new EUnexpectedEof();					
+						String n = (String)media.get(offset);
+						if (n.length()>max_signal_name_length) throw new EFormatBoundaryExceeded("Name too long");
+						this.signal_name = n;
+						this.signal_data_valid=true;
+					};	
+				}else
+				{
+					//have to invalidate signal info
+					this.signal_name=null;
+				};
+				return indicator;
 			}else
 			{
+				//have to invalidate signal info
+				this.signal_name=null;
+				this.signal_number=-1;
 				return TIndicator.DATA;
 			}			
 		};
-		public String getSignalName()
-		{
-			String n =this.signal_name;
-			if (n==null) throw new IllegalStateException("Signal name can't be read.");
-			this.signal_name = null;
-			return n;
-		};
-		public int getSignalNumber()
-		{
-			int n=this.register_number;
-			if (n==-1) throw new IllegalStateException("Signal number can't be read.");
-			this.register_number = -1;
-			return n;
-		};
-		public void skip()throws IOException
-		{			
-			for(;;)
+		@Override public void next()throws IOException
+		{	
+			this.signal_data_valid=false;	//<-- do not invalidate cache,
+										//but make sure it is refreshed from
+										//signal.
+			if (media.isEmpty()) throw new EUnexpectedEof();
+			//check what are we skipping?
+			Object at_cursor = media.removeFirst();
+			if (at_cursor instanceof TIndicator)
 			{
-				if (media.isEmpty()) throw new EUnexpectedEof();
-				Object at_cursor = media.getFirst();
-				if (at_cursor instanceof TIndicator) break;
-				media.removeFirst();
-			}
+				TIndicator indicator = (TIndicator)at_cursor;
+				if ((indicator.FLAGS & TIndicator.REGISTER)!=0)
+				{
+					if (media.isEmpty()) throw new EUnexpectedEof();
+					media.removeFirst();
+				};
+				if ((indicator.FLAGS & TIndicator.NAME)!=0)
+				{
+					if (media.isEmpty()) throw new EUnexpectedEof();
+					media.removeFirst();
+				};
+			}else
+			{
+				//we can have more than one data object, all have to
+				//be skipped.
+				for(;;)
+				{
+				 	if (media.isEmpty()) throw new EUnexpectedEof();
+					at_cursor = media.getFirst();
+					if (at_cursor instanceof TIndicator) break;
+					media.removeFirst();
+				};
+			};
 		};
+		@Override public String getSignalName()
+		{
+			String n=this.signal_name;
+			if (n==null) throw new IllegalStateException("Signal number can't be read.");
+			return n;
+		};
+		@Override public int getSignalNumber()
+		{
+			int n=this.signal_number;
+			if (n==-1) throw new IllegalStateException("Signal number can't be read.");
+			return n;
+		};
+		
 		/* *******************************************************
 		
 				IPrimitiveReadFormat
@@ -106,7 +200,7 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 		{
 			if (media.isEmpty()) throw new EUnexpectedEof();			
 			Object at_cursor = media.getFirst();
-			if (at_cursor instanceof TIndicator) throw new ENoMoreData();
+			if (at_cursor instanceof TIndicator) throw new AssertionError("at_cursor="+at_cursor);
 		};
 		public boolean readBoolean()throws IOException
 		{
@@ -215,6 +309,7 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 		@Override public int readBooleanBlock(boolean [] buffer, int offset, int length)throws IOException
 		{		
 			//sever through blocks
+			startPrimitiveRead();
 			int read_count =0;
 			while(length!=0)
 			{
@@ -242,7 +337,7 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 					//Now purge fully used up blocks.
 					available = L -  ptr;
 					if (available<=0)
-					{
+					{						
 						media.removeFirst();
 						this.array_op_ptr = 0;	//reset array pointer.
 					}
@@ -255,6 +350,7 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 		
 		@Override public int readByteBlock(byte [] buffer, int offset, int length)throws IOException
 		{		
+			startPrimitiveRead();
 			//sever through blocks
 			int read_count =0;
 			while(length!=0)
@@ -296,6 +392,7 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 		
 		@Override public int readByteBlock()throws IOException
 		{		
+			startPrimitiveRead();
 			byte v = 0;
 			boolean read = false;
 			while(!read)
@@ -331,6 +428,7 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 		
 		@Override public int readCharBlock(char [] buffer, int offset, int length)throws IOException
 		{		
+			startPrimitiveRead();
 			//sever through blocks
 			int read_count =0;
 			while(length!=0)
@@ -371,7 +469,8 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 		
 		
 		@Override public int readCharBlock(Appendable characters,  int length)throws IOException
-		{		
+		{	
+			startPrimitiveRead();	
 			//sever through blocks
 			int read_count =0;
 			while(length!=0)
@@ -413,6 +512,7 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 		
 		@Override public int readShortBlock(short [] buffer, int offset, int length)throws IOException
 		{		
+			startPrimitiveRead();
 			//sever through blocks
 			int read_count =0;
 			while(length!=0)
@@ -453,7 +553,8 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 		
 		
 		@Override public int readIntBlock(int [] buffer, int offset, int length)throws IOException
-		{		
+		{
+			startPrimitiveRead();		
 			//sever through blocks
 			int read_count =0;
 			while(length!=0)
@@ -494,7 +595,8 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 		
 		
 		@Override public int readLongBlock(long [] buffer, int offset, int length)throws IOException
-		{		
+		{	
+			startPrimitiveRead();	
 			//sever through blocks
 			int read_count =0;
 			while(length!=0)
@@ -536,6 +638,7 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 		
 		@Override public int readFloatBlock(float [] buffer, int offset, int length)throws IOException
 		{		
+			startPrimitiveRead();
 			//sever through blocks
 			int read_count =0;
 			while(length!=0)
@@ -577,6 +680,7 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 		
 		@Override public int readDoubleBlock(double [] buffer, int offset, int length)throws IOException
 		{		
+			startPrimitiveRead();
 			//sever through blocks
 			int read_count =0;
 			while(length!=0)
