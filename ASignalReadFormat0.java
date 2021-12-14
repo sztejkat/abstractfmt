@@ -235,7 +235,7 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 							int idx = input.getSignalNumber();
 							if (idx<0) throw new ECorruptedFormat("Negative name index");
 							if (idx>=names_registry.length) throw new ECorruptedFormat("Name index out of bounds: index="+idx);
-							if (names_registry[idx]!=null) throw new ECorruptedFormat("Name registry at "+idx+" is empty");
+							if (names_registry[idx]==null) throw new ECorruptedFormat("Name registry at "+idx+" is empty");
 							signal_name = names_registry[idx];
 							};break;
 					case BEGIN_DIRECT:
