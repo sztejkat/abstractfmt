@@ -204,6 +204,15 @@
 	<h2 id="enc_char">Characters</h2>
 	Are escaped. The <a href="#primitive_separator">primitive separator</a>
 	and white spaces are included in set of escaped characters.
+	<p>
+	If primitives separator char is the same as escape sequence terminating
+	char then primitives separator is skipped and only sequence terminating char
+	 is used,ie:
+	<pre>
+		; &larr; both separators are semicolon.
+		<i>sequence of two char primitives looks like:</i>
+		%0;%434;
+	</pre>
 	
 	<h2 id="primitive_elements">Described format</h2>
 	Following elements are used to enclose each elementary primitive in

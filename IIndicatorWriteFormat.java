@@ -33,11 +33,17 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 		public int getMaxRegistrations();	
 		/** Informative method which can be used to tell
 		if this indicator format is doing any job in
-		{@link #writeType} or {@link #writeFlush} */
+		{@link #writeType} and/or {@link #writeFlush}.
+		Notice both methods <u>must be called</u> regardless
+		of what is returned here.
+		@return true if generates described stream.
+		*/
 		public boolean isDescribed();
 		/** Informative method which can be used to tell
 		if this indicator format is doing any job in
-		{@link #writeFlush} */			
+		{@link #writeFlush}.
+		@return this method may not return true if 
+		{@link #isDescribed} is false. */			
 		public boolean isFlushing();
 		/* ****************************************************
 		
@@ -118,6 +124,7 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 		
 		@param type indicator with {@link TIndicator#TYPE} flag set 
 		@throws IOException if failed at low level.
+		@throws AssertionError if indicator has no specified flags set
 		*/ 
 		public void writeType(TIndicator type)throws IOException;
 		/** Writes indicator telling that specific data end information
@@ -127,6 +134,7 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 		@param flush indicator with {@link TIndicator#FLUSH} flag set
 				and  {@link TIndicator#READ_ONLY} not set.
 		@throws IOException if failed at low level.
+		@throws AssertionError if indicator has no specified flags set
 		*/ 
 		public void writeFlush(TIndicator flush)throws IOException;
 		
@@ -136,18 +144,21 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 		
 		****************************************************/
 		/** 
-		It is up to caller to always call it in sequence:
+		It is up to caller to always call it in sequence
+		regardless if is described stream or not:
 		<pre>
 			writeType(...)
 			writeBoolean(....)
 			writeFlush(...)
 		</pre>
+		@see #isDescribed
 		*/
 		@Override public void writeBoolean(boolean v)throws IOException;		
 		/** It is up to caller to invoke this method only if there
 		is an unclosed "begin" signal.		
 		<p>
-		It is up to caller to call it in sequence:
+		It is up to caller to always call it in sequence
+		regardless if is described stream or not:
 		<pre>
 			writeType(...)
 			writeBooleanBlock(...
@@ -155,6 +166,7 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 			....
 			writeFlush(...)
 		</pre>
+		@see #isDescribed
 		*/
 		@Override public void writeBooleanBlock(boolean [] buffer, int offset, int length)throws IOException;		
 		
