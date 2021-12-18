@@ -36,7 +36,8 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	*/			
 	public boolean isFlushing();
 	/** Allows to set limit for signal name. Default
-	value is 1024. 
+	value is 1024. Adjusting this value during stream
+	processing may have unpredictable results.
 	@param characters name limit, non-negative. Zero is silly,
 	no signal names can be read 
 	*/
@@ -171,8 +172,9 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	This method may be called only if cursor is at data.
 	<p>
 	Reading blocks from indicator streams should be done in a sequence
-	of calls of block reads of the same type. If it is done otherwise
-	the behavior is unspecified. 	
+	of calls of block reads of the same type and this sequence
+	may be terminated only by an indicator. If it is done otherwise
+	the behavior is unspecified and format may fail to work.
 	<p>
 	This method reads data item by item, as long as the requested number
 	of items is read <u>or</u> and indicator is reached.

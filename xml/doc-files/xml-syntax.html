@@ -127,6 +127,39 @@
 	results. Simply using comment inside a primitive element text body should be avoided.
 	
 	
+	<h1 id="WHITESPACES">Whitespeace and EOL</h1>
+	<i>Note: "whitespace" means space, tab, eol and anything what JAVA Character
+	says <code>isWhitespace</code>.</i>
+	<p>
+	All whitespaces:
+	<ul>
+		<li>directly before or after XML tag;</li>
+		<li>found under cursor when primitive read (except character block read)
+		is performed;</li> 
+		<li>found under cursor when first character block block is performed;</li>  
+	</ul>
+	are silently skipped and ignored.
+	<p>
+	That is file:
+	<pre>
+	&gt;x&lt;ABCDEF&gt;/x&lt;
+	</pre>
+	and
+	<pre>
+	&gt;x&lt;	ABCDEF
+	&gt;/x&lt;
+	</pre>
+	are giving the same result.
+	<p>
+	Since any whitespace before or after the primitive is ignored thous if a begining
+	or trailing white space is a part of a primitive it must be escaped.
+	<p>
+	The only exception from this case is when a character block is processed.
+	In such case only initial call to character block read is expected to
+	skip beginning whitespaces. Then all subsequence character block reads are expected to
+	not skip leading whitespaces, but trim all trailing whitespaces. 
+	
+	
 	<h1>Begin signal</h1>
 	XML format does not support <i>names registry</i> provided by <code>ASignalWriteFormat</code>
 	and is always using directly stored signal names. This is because a primary reason for
@@ -180,9 +213,6 @@
 	The <code id="primitive_separator">;</code> (semicolon, configurable) is used
 	as a primitive separator if there is no <code>&lt;</code> XML element
 	start character.
-	<p>
-	Any whitespace before or after the primitive is ignored thous if white
-	space is a part of a primitive it must be escaped. 
 	<p>
 	Example:
 	<pre>
@@ -249,13 +279,18 @@
 	Character blocks are represented as encoded texts.
 	<p>
 	Writers are required to escape all white spaces, eols, tabs and etc. and not
-	write any leading or traling whitespaces.
+	write any <a href="#WHITESPACES">leading or traling whitespaces and eols</a>.
 	<p>
-	Readers are required to process text as it is, replacing only <code>\n\r</code>,
-	<code>\r\n</code> and <code>\r</code> to <code>\n</code> character.
-	<p>
+	Readers are required to process text as:
+	<ul>
+		<li>skip all <a href="#WHITESPACES">leading and trailing whitespaces and eols</a>;</li>
+		<li>replace all <code>\n\r</code>, <code>\r\n</code> and 
+		 <code>\r</code> to <code>\n</code> character;</li>
+		<li>unescape all found escapes;</li>
+	</ul>
 	This should allow both precise and accurate representation and allow manual for editing,
-	but with loss of EOL convention.
+	with fixed well defined, user editor indepentent EOL convention.
+	
 	
 	
 	

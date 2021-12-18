@@ -1,6 +1,7 @@
 package sztejkat.abstractfmt.xml;
 import sztejkat.abstractfmt.IIndicatorWriteFormat;
 import sztejkat.abstractfmt.TIndicator;
+import sztejkat.abstractfmt.EClosed;
 import java.io.*;
 import java.util.ArrayList;
 /**
@@ -19,8 +20,9 @@ public abstract class AXMLIndicatorWriteFormatBase implements IIndicatorWriteFor
 				write primitive separator. At the end it
 				should re-set it to pending. Each XML
 				element write should clear it without flushing. */ 
-				private boolean pending_primitive_separator;
-				
+				private boolean pending_primitive_separator;				
+				/** Set to true once closed */
+				private boolean is_closed;
 	/* ****************************************************
 	
 			Creation
@@ -60,7 +62,20 @@ public abstract class AXMLIndicatorWriteFormatBase implements IIndicatorWriteFor
 	@return true if can be properly encoded by charset, false if must
 	be escaped. */
 	protected abstract boolean canWrite(char c);
-	
+	/* ****************************************************
+		
+			State
+			
+	*****************************************************/
+	/** Tests if format is usable
+	@throws EClosed if closed
+	@see #is_closed
+	@see #close 
+	*/
+	protected void validateNotClosed()throws EClosed
+	{
+		if (is_closed) throw new EClosed();
+	};
 	
 	/* ****************************************************
 	
@@ -251,6 +266,7 @@ public abstract class AXMLIndicatorWriteFormatBase implements IIndicatorWriteFor
 	@Override public void writeBeginDirect(String signal_name)throws IOException
 	{
 		assert(signal_name!=null);
+		validateNotClosed();
 		clearPendingPrimitiveSeparator();
 		write('<');
 		//check if can be XML signal directly?
@@ -302,6 +318,7 @@ public abstract class AXMLIndicatorWriteFormatBase implements IIndicatorWriteFor
 	};
 	@Override public void writeEnd()throws IOException
 	{
+		validateNotClosed();
 		clearPendingPrimitiveSeparator();
 		write("</");
 		write(popEvent());	//<-- may throw if no events on stack.
@@ -316,6 +333,7 @@ public abstract class AXMLIndicatorWriteFormatBase implements IIndicatorWriteFor
 	--------------------------------------------------*/
 	@Override public void writeType(TIndicator type)throws IOException
 	{
+		validateNotClosed();
 		if (isDescribed())
 		{
 			clearPendingPrimitiveSeparator();
@@ -326,6 +344,7 @@ public abstract class AXMLIndicatorWriteFormatBase implements IIndicatorWriteFor
 	};
 	@Override public void writeFlush(TIndicator flush)throws IOException
 	{
+		validateNotClosed();
 		if (isDescribed())
 		{
 			clearPendingPrimitiveSeparator();
@@ -361,6 +380,7 @@ public abstract class AXMLIndicatorWriteFormatBase implements IIndicatorWriteFor
 	
 	private void startElementaryPrimitive()throws IOException
 	{
+		validateNotClosed();
 		flushPendingPrimitiveSeparator();
 	};
 	private void endElementaryPrimitive()throws IOException
@@ -441,6 +461,7 @@ public abstract class AXMLIndicatorWriteFormatBase implements IIndicatorWriteFor
 	@throws IOException if failed */
 	private void startBlockPrimitive()throws IOException
 	{
+		validateNotClosed();
 		flushPendingPrimitiveSeparator();
 	};
 	@Override public void writeBooleanBlock(boolean [] buffer, int offset, int length)throws IOException
@@ -555,6 +576,14 @@ public abstract class AXMLIndicatorWriteFormatBase implements IIndicatorWriteFor
 	/** Flushes pending separator if any */
 	public void flush()throws IOException
 	{
+		validateNotClosed();
 		flushPendingPrimitiveSeparator();
+	};
+	/** Sets closed status to true.
+	@see #validateNotClosed
+	*/
+	public void close()throws IOException
+	{
+		closed = true;
 	};
 };

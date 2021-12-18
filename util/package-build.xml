@@ -1,0 +1,31 @@
+<!--
+	This ant-file is a patern to be used for all package compilation
+	ant files.
+	
+	Copy it to package source folder with name changed to "build.xml" and
+	then fill the "package" property. All paths will be taken from "build-common.xml"
+	found in the source root folder and it will be asked for compilation.
+-->
+<project basedir="." default="main">
+	<taskdef resource="net/sf/antcontrib/antlib.xml"/>	<!-- depends on ant-contrib -->
+<!-- 
+	*************************************************************************
+	*									*
+	*									*
+	*		Replace "mypackage"  with package name 			*
+	*									*
+	*									*
+	*************************************************************************
+-->
+	<property name="package" value="sztejkat.abstractfmt.util"/>
+	
+
+	<!-- deduces source root from package name -->
+	<propertyregex property="source_root"
+              		input="${package}"
+			regexp="([^.]+)(\.)*"
+			replace="../"
+			casesensitive="false"
+			/>
+     <import file="${source_root}/build-common.xml"/>
+</project>

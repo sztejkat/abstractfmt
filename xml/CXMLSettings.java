@@ -32,6 +32,8 @@ public class CXMLSettings
 		public final String ROOT_ELEMENT;
 		/** Character used to separate primitives */
 		public final char PRIMITIVE_SEPARATOR;		
+		
+		
 		/** Element to enclose boolean elementary primitive. */
 		public final String BOOLEAN_ELEMENT;
 		/** Element to enclose byte elementary primitive. */
@@ -67,6 +69,8 @@ public class CXMLSettings
 		/** Element to enclose double block primitive. */
 		public final String DOUBLE_BLOCK_ELEMENT;
 		
+		
+		private int max_length_cache;
 		
 		CXMLSettings(
 				 char ESCAPE_CHARACTER,
@@ -139,6 +143,27 @@ public class CXMLSettings
 		 this.LONG_BLOCK_ELEMENT=LONG_BLOCK_ELEMENT;		
 		 this.FLOAT_BLOCK_ELEMENT=FLOAT_BLOCK_ELEMENT;		
 		 this.DOUBLE_BLOCK_ELEMENT=DOUBLE_BLOCK_ELEMENT;
+		 
+		 this.max_length_cache = 
+		 		Math.max(EVENT.length(),
+				Math.max(SIGNAL_NAME_ATTR.length(),   
+				Math.max(ROOT_ELEMENT.length(),
+				Math.max(BOOLEAN_ELEMENT.length(),
+				Math.max(BYTE_ELEMENT.length(),
+				Math.max(CHAR_ELEMENT.length(),
+				Math.max(SHORT_ELEMENT.length(),
+				Math.max(INT_ELEMENT.length(),
+				Math.max(LONG_ELEMENT.length(),
+				Math.max(FLOAT_ELEMENT.length(),
+				Math.max(DOUBLE_ELEMENT.length(),
+				Math.max(BOOLEAN_BLOCK_ELEMENT.length(),
+				Math.max(BYTE_BLOCK_ELEMENT.length(),
+				Math.max(CHAR_BLOCK_ELEMENT.length(),
+				Math.max(SHORT_BLOCK_ELEMENT.length(),
+				Math.max(INT_BLOCK_ELEMENT.length(),
+				Math.max(LONG_BLOCK_ELEMENT.length(),
+				Math.max(FLOAT_BLOCK_ELEMENT.length(),
+					     DOUBLE_BLOCK_ELEMENT.length()))))))))))))))))));
 	};
 	/** Checks if specified text equals to any of 
 	defined elements
@@ -172,6 +197,14 @@ public class CXMLSettings
 		if (equals(DOUBLE_BLOCK_ELEMENT,text)) return true;
 		
 		return false;
+	};
+				
+	/** Computes max length of used signals and attributes
+	@return max length
+	*/
+	public int getMaximumTokenLength()
+	{
+		return max_length_cache;
 	};
 	/** Retrives element selected by indicator
 	@param indicator with either {@link TIndicator#TYPE}
