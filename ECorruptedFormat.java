@@ -3,8 +3,8 @@ package sztejkat.abstractfmt;
 	A generic exception indicating that there is something 
 	wrong with a stream at format level.
 	<p>
-	If this exception stream may recover by re-trying operations
-	or skipping event.
+	If this exception is thrown stream may recover 
+	by skipping to next signal.
 */
 public class ECorruptedFormat extends java.io.IOException
 {

@@ -5,7 +5,7 @@ import java.io.IOException;
 		An implementation of {@link ISignalReadFormat} over the
 		{@link #IIndicatorReadFormat}.
 		<p>
-		This class does not handle {@link EBrokenStream} as a permanent break.
+		This class does not handle {@link EBrokenFormat} as a permanent break.
 */
 abstract class ASignalReadFormat0 implements ISignalReadFormat
 {
@@ -409,7 +409,7 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 	@throws IOException if failed or detected problems*/
 	private void endElementaryPrimitive()throws IOException
 	{
-		if((state.FLAGS & TState.ELEMENT)==0) throw new EBrokenStream("Broken, something wrong with states, can't recover from that");
+		if((state.FLAGS & TState.ELEMENT)==0) throw new EBrokenFormat("Broken, something wrong with states, can't recover from that");
 		endPrimtive(TState.IDLE);
 	};
 	/** Checks if block is at the end, regardless of returned partial read or not.
@@ -417,7 +417,7 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 	@throws IOException if failed or detected problems*/
 	private void tryEndBlockPrimitive()throws IOException
 	{
-		if((state.FLAGS & TState.BLOCK)==0) throw new EBrokenStream("Broken, something wrong with states, can't recover from that");
+		if((state.FLAGS & TState.BLOCK)==0) throw new EBrokenFormat("Broken, something wrong with states, can't recover from that");
 		TIndicator indicator = input.getIndicator();
 		if (indicator!=TIndicator.DATA)
 			endBlockPrimitive();

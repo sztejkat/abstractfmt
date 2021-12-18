@@ -136,7 +136,7 @@
 		<li>directly before or after XML tag;</li>
 		<li>found under cursor when primitive read (except character block read)
 		is performed;</li> 
-		<li>found under cursor when first character block block is performed;</li>  
+		<li>found between primtive block elements;</li> 
 	</ul>
 	are silently skipped and ignored.
 	<p>
@@ -155,9 +155,8 @@
 	or trailing white space is a part of a primitive it must be escaped.
 	<p>
 	The only exception from this case is when a character block is processed.
-	In such case only initial call to character block read is expected to
-	skip beginning whitespaces. Then all subsequence character block reads are expected to
-	not skip leading whitespaces, but trim all trailing whitespaces. 
+	All character block reads are expected to not skip any whitespaces, 
+	but replace the entire sequence with a single <code>d32</code> character. 
 	
 	
 	<h1>Begin signal</h1>
