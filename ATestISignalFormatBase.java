@@ -37,6 +37,7 @@ public abstract class ATestISignalFormatBase extends sztejkat.utils.test.ATest
 		};
 		/** 
 			Creates a pair which is to be used for testing purposes.
+			@return newly created, coupled formats pair.
 		*/
 		protected abstract Pair create();
 };

@@ -3,7 +3,8 @@ import java.io.IOException;
 
 /**
 		An implementation of {@link ISignalReadFormat} over the
-		{@link #IIndicatorReadFormat} which adds handling of {@link EBrokenFormat}.
+		{@link IIndicatorReadFormat} which adds throwing 
+		{@link EBrokenFormat} as a request to make format permanently broken.
 */
 public abstract class ASignalReadFormat extends ASignalReadFormat0
 {
@@ -14,7 +15,7 @@ public abstract class ASignalReadFormat extends ASignalReadFormat0
 	/** Creates read format
 	@param max_events_recursion_depth see {@link ASignalReadFormat0#ASignalReadFormat0}
 	@param input --//--
-	@throws Assertion error if parameters do not match.
+	@throws AssertionError error if parameters do not match.
 	@see IIndicatorReadFormat#getMaxRegistrations
 	*/
 	protected ASignalReadFormat(

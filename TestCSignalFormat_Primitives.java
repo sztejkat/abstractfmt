@@ -4,7 +4,7 @@ import java.io.IOException;
 
 /**
 	Test bed for {@link CSignalReadFormat}/{@link CSignalWriteFormat}
-	running in non-described mode over {@link CObjFormat}.
+	running in non-described mode over {@link CObjListFormat}.
 */
 public class TestCSignalFormat_Primitives extends ATestISignalFormat_Primitives
 {

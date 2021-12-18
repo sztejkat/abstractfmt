@@ -3,9 +3,10 @@ import java.io.IOException;
 
 /**
 		An implementation of {@link ISignalReadFormat} over the
-		{@link #IIndicatorReadFormat}.
+		{@link IIndicatorReadFormat}.
 		<p>
-		This class does not handle {@link EBrokenFormat} as a permanent break.
+		This class does not detect {@link EBrokenFormat} as a request
+		to lock in a permanently broken state.
 */
 abstract class ASignalReadFormat0 implements ISignalReadFormat
 {
@@ -110,7 +111,7 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 		the {@link #next} will throw {@link EFormatBoundaryExceeded} if stream
 		contains too deep recursion of elements.	
 		@param input output to set. If null will be set to <code>(IIndicatorWriteFormat)this</code>.
-		@throws Assertion error if parameters do not match.
+		@throws AssertionError error if parameters do not match.
 		@see IIndicatorReadFormat#getMaxRegistrations
 		*/
 	protected ASignalReadFormat0(
@@ -175,7 +176,7 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 	};
 	/** Implements {@link #next} but without depth tracking
 	@return --//-- 
-	@throws --//-- 
+	@throws IOException --//-- 
 	*/
 	private String nextImpl()throws IOException
 	{
@@ -670,7 +671,9 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 	
 	**************************************************************/
 	/** Invoked in {@link #close}.
-	closes input */
+	Closes input 
+	@throws IOException if {@link #input} have thrown.
+	*/
 	protected void closeOnce()throws IOException
 	{
 		input.close();

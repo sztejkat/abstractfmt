@@ -38,6 +38,16 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 	
 	/* ****************************************************
 		
+			Services required from subclasses
+			
+	*****************************************************/
+	/** Called in {@link #close} when closed for a first 
+	time.
+	@throws IOException if failed.
+	*/
+	protected abstract void closeOnce()throws IOException;
+	/* ****************************************************
+		
 			State
 			
 	*****************************************************/
@@ -414,16 +424,27 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 	
 	*****************************************************/
 	/** Flushes pending separator if any */
-	public void flush()throws IOException
+	@Override public void flush()throws IOException
 	{
 		validateNotClosed();
 		flushPendingPrimitiveSeparator();
 	};
+	
 	/** Sets closed status to true.
+	If it was false calls {@link #closeOnce}
 	@see #validateNotClosed
 	*/
-	public void close()throws IOException
+	@Override public void close()throws IOException
 	{
-		is_closed = true;
+		if (!is_closed)
+		{
+			try{
+				flush();
+			}finally{
+					try{
+					closeOnce();
+				}finally{is_closed = true; };
+			}
+		};
 	};
 };

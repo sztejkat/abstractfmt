@@ -4,9 +4,14 @@ import java.io.*;
 
 /**
 	Settings of XML, names of elements, escapes and etc.
+	<p>
+	For defaults see {@link SXMLSettings}
 */
 public class CXMLSettings
 {
+		/** Optional XML prolog. Used by writing side.
+		Can be null if no prolog is written */
+		public final String PROLOG;
 		/** Character initializing escape sequence.
 		<p>
 		See <A href="doc-files/xml-syntax.html#ESCAPING">syntax definition</a>.
@@ -23,7 +28,7 @@ public class CXMLSettings
 		*/
 		public final String EVENT;
 		/** String representing a name of an XML attribute 
-		of {@link EVENT} element used to carry
+		of {@link #EVENT} element used to carry
 		<A href="doc-files/xml-syntax.html#ESCAPED_ATTR">escaped signal name</a>.
 		*/
 		public final String SIGNAL_NAME_ATTR;
@@ -72,7 +77,8 @@ public class CXMLSettings
 		
 		private int max_length_cache;
 		
-		CXMLSettings(
+	public CXMLSettings(
+				 String PROLOG,
 				 char ESCAPE_CHARACTER,
 			 	 char ESCAPE_END_CHARACTER,
 				 String EVENT,
@@ -120,7 +126,7 @@ public class CXMLSettings
 		 assert( FLOAT_BLOCK_ELEMENT!=null);		
 		 assert( DOUBLE_BLOCK_ELEMENT!=null);
 		 
-		 
+		 this.PROLOG=PROLOG;
 		 this.ESCAPE_CHARACTER=ESCAPE_CHARACTER;
 		 this.ESCAPE_END_CHARACTER=ESCAPE_END_CHARACTER;
 		 this.EVENT=EVENT;
@@ -165,6 +171,41 @@ public class CXMLSettings
 				Math.max(FLOAT_BLOCK_ELEMENT.length(),
 					     DOUBLE_BLOCK_ELEMENT.length()))))))))))))))))));
 	};
+	/** Creates, taking everything from specified settings
+	except prolog and root.
+	*/
+	public CXMLSettings(
+				 CXMLSettings copy_from,
+				 String PROLOG,
+				 String ROOT_ELEMENT
+				 )
+	{
+		this(
+				PROLOG,//String PROLOG,
+				 copy_from.ESCAPE_CHARACTER,//char ESCAPE_CHARACTER,
+				 copy_from.ESCAPE_END_CHARACTER,//char ESCAPE_END_CHARACTER,
+				 copy_from.EVENT,//String EVENT,
+				 copy_from.SIGNAL_NAME_ATTR,//String SIGNAL_NAME_ATTR,
+				 copy_from.PRIMITIVE_SEPARATOR,//char PRIMITIVE_SEPARATOR,
+				 ROOT_ELEMENT,//String ROOT_ELEMENT,
+				 copy_from.BOOLEAN_ELEMENT,//String BOOLEAN_ELEMENT,
+				 copy_from.BYTE_ELEMENT,//String BYTE_ELEMENT,
+				 copy_from.CHAR_ELEMENT,//String CHAR_ELEMENT,
+				 copy_from.SHORT_ELEMENT,//String SHORT_ELEMENT,
+				 copy_from.INT_ELEMENT,//String INT_ELEMENT,
+				 copy_from.LONG_ELEMENT,//String LONG_ELEMENT,
+				 copy_from.FLOAT_ELEMENT,//String FLOAT_ELEMENT,
+				 copy_from.DOUBLE_ELEMENT,//String DOUBLE_ELEMENT,
+				 copy_from.BOOLEAN_BLOCK_ELEMENT,//String BOOLEAN_BLOCK_ELEMENT,		
+				 copy_from.BYTE_BLOCK_ELEMENT,//String BYTE_BLOCK_ELEMENT,		
+				 copy_from.CHAR_BLOCK_ELEMENT,//String CHAR_BLOCK_ELEMENT,		
+				 copy_from.SHORT_BLOCK_ELEMENT,//String SHORT_BLOCK_ELEMENT,		
+				 copy_from.INT_BLOCK_ELEMENT,//String INT_BLOCK_ELEMENT,		
+				 copy_from.LONG_BLOCK_ELEMENT,//String LONG_BLOCK_ELEMENT,		
+				 copy_from.FLOAT_BLOCK_ELEMENT,//String FLOAT_BLOCK_ELEMENT,		
+				 copy_from.DOUBLE_BLOCK_ELEMENT//String DOUBLE_BLOCK_ELEMENT
+				 );
+	}
 	/** Checks if specified text equals to any of 
 	defined elements
 	@param text what to check, non null
@@ -262,6 +303,7 @@ public class CXMLSettings
 	public String explain()
 	{
 		return "CXMLSettings:\n"+
+			"              prolog  "+(PROLOG==null? "is undefined" : ("\""+PROLOG+"\""))+
 			"     escape character \'"+ESCAPE_CHARACTER+"\'\n"+
 			"           escape end \'"+ESCAPE_END_CHARACTER+"\'\n"+
 			"   long event element <"+EVENT+">\n"+

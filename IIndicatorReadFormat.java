@@ -28,18 +28,19 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	/** Informative method which can be used to tell
 	that user of this format must check for 
 	type indicators with {@link TIndicator#TYPE} flag set.
+	@return true if described. Life time constant.
 	 */
 	public boolean isDescribed();
 	/** Informative method which can be used to tell
 	that user of this format must check for 
 	flush indicators with {@link TIndicator#FLUSH} flag set.
+	@return true if flushing. Life time constant.
 	*/			
 	public boolean isFlushing();
 	/** Allows to set limit for signal name. Default
 	value is 1024. Adjusting this value during stream
 	processing may have unpredictable results.
-	@param characters name limit, non-negative. Zero is silly,
-	no signal names can be read 
+	@param characters name limit, non-zero positive. 
 	*/
 	public void setMaxSignalNameLength(int characters);
 	/* ***************************************************
@@ -68,7 +69,7 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	@return enum representing state of a stream
 	@throws EFormatBoundaryExceeded if name or number related
 	with a signal are out of allowed boundaries.	
-	@see #next();
+	@see #next()
 	*/
 	public TIndicator getIndicator()throws IOException;
 	/** Calls {@link #getIndicator} and calls {@link #next} if not on data
@@ -81,9 +82,10 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	 						next();
 	 	return i;
 	}
-	/** Calls {@link #getIndicator} and calls {@link #next} if on data
-	@return as {@link #getIndicator}
-	@throws IOException if failed. */	
+	/** Calls {@link #getIndicator} and calls {@link #next} if 
+	at {@link TIndicator#DATA}
+	@throws IOException if failed. 
+	*/	
 	public default void skip()throws IOException
 	{
 		final TIndicator i = getIndicator();
@@ -159,7 +161,7 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	In undescribed ({@link #isDescribed}==false) streams it can be:
 	<ul>
 		<li>data - in such case {@link #getIndicator} returns
-		{@link TIndicator#data};</li>
+		{@link TIndicator#DATA};</li>
 		<li>an indicator with {@link TIndicator#SIGNAL} flag set;</li>
 	</ul> 
 	In described ({@link #isDescribed}==true) stream it must be an indicator:

@@ -4,7 +4,7 @@ import java.io.IOException;
 
 /**
 	Test bed for {@link CSignalReadFormat}/{@link CSignalWriteFormat}
-	running in non-described mode over {@link CObjFormat}
+	running in non-described mode over {@link CObjListFormat}
 	with disabled names registry.
 */
 public class TestCSignalFormat_NoReg_Events extends ATestISignalFormat_Events

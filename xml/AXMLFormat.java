@@ -11,7 +11,7 @@ abstract class AXMLFormat
 				
 				/** List if &amp;xxx; XML escapes this class do
 				recognize.
-				This list is coupled with {@link #AMP_XML_ESCAPES_VALUES}
+				This list is coupled with {@link #AMP_XML_ESCAPED_CHAR}
 				*/
 				private static final String [] AMP_XML_ESCAPES = 
 					new String[]{
@@ -150,6 +150,8 @@ abstract class AXMLFormat
 	/** Tests if it is an allowed XML character in 
 	 portions of XML which cannot carry XML escapes
 	 like tags, attribute names and etc.
+	 @param c character to check
+	 @return true if allowed.
 	*/
 	protected boolean isValidXMLTokenChar(char c)
 	{

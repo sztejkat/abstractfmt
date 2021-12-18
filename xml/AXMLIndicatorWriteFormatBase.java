@@ -33,18 +33,20 @@ abstract class AXMLIndicatorWriteFormatBase extends AXMLFormat
 	/** Like {@link java.io.Writer#write} or {@link Appendable#append}
 	Will be used to write XML content to stream.
 	@param c a part of XML content.
+	@throws IOException if failed
 	*/
 	protected abstract void write(char c)throws IOException;
 	/** Like {@link java.io.Writer#write} or {@link Appendable#append}
 	Will be used to write XML content to stream.
 	@param csq a part of XML content.
+	@throws IOException if failed
 	*/
 	protected abstract void write(CharSequence csq)throws IOException;
 	/** Tests if specified character can be written to output
 	without escaping. Depends on charset use in output stream.
 	<p>
-	Charset must be able to write all characters included in {@link #setup}.
-	
+	Charset must be able to write all characters included in {@link #settings}.
+	@param c character to check.	
 	@return true if can be properly encoded by charset, false if must
 	be escaped. */
 	protected abstract boolean canWrite(char c);
@@ -120,7 +122,7 @@ abstract class AXMLIndicatorWriteFormatBase extends AXMLFormat
 	};
 	
 	
-	/** Tests if specified signal name (as passed to {@link #begin} )
+	/** Tests if specified signal name (as passed to {@link #writeBeginDirect} and others )
 	can be used <u>directly</u> as XML element name
 	<a href="doc-files/xml-syntax.html#short_signal_form">in a short form</a>
 	or if it must be encoded using 
@@ -130,7 +132,7 @@ abstract class AXMLIndicatorWriteFormatBase extends AXMLFormat
 	if there is no name clash.
 	@param signal_name name to check, non null.
 	@return true if can use short form
-	@see #isReservedElement
+	@see CXMLSettings#isDefinedElement
 	*/
 	protected boolean isPossibleXMLElement(String signal_name)
 	{

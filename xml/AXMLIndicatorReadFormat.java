@@ -2,7 +2,6 @@ package sztejkat.abstractfmt.xml;
 import sztejkat.abstractfmt.IIndicatorReadFormat;
 import sztejkat.abstractfmt.TIndicator;
 import sztejkat.abstractfmt.util.CBoundAppendable;
-import sztejkat.abstractfmt.util.CUnbufferingMapper;
 import sztejkat.abstractfmt.EUnexpectedEof;
 import sztejkat.abstractfmt.EClosed;
 import sztejkat.abstractfmt.EFormatBoundaryExceeded;
@@ -19,7 +18,7 @@ import java.util.ArrayList;
 	This format is NOT strictly validating XML data and does:
 	<ul>
 		<li>do allow bare format, without root element;</li>
-		<li>do allow "anonymous end tags" <code>&lt;/;&gt</code>;</li>
+		<li>do allow "anonymous end tags" <code>&lt;/&gt;</code>;</li>
 		<li>the &amp; escapes are only partially recognized and if &amp; is encountered
 		anywhere an exception is thrown to indicate that XML file may be XML compilant
 		but we are not fully XML compilant.
@@ -29,7 +28,6 @@ import java.util.ArrayList;
 	This class is using a stack to track XML elements, so the longer containg 
 	XML element chain is, the more memory it consumes. This means that the user
 	of this class should take care about recursion limit.
-	See {@link ASignalReadFormat0#ASignalReadFormat0}.
 	<p>
 	If this class encounters root element then the opening root tag is
 	silently skipped while closing root tag toggles stream to 
@@ -93,10 +91,6 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	@param settings XML settings to use
 	@param maximum_idle_characters safety limit, setting upper boundary
 		 for comment, processing commands and other skipable characters.
-		 This value will also control, in some cases, the number of 
-		 continous un-escaped white space characters inside a character block
-		 and will, together with maximum name length and XML tokens,
-		 control the size of character buffers.
 		 <p>
 		 Non zero, positive
 	*/
@@ -145,16 +139,19 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		indicator_cache = null;
 		super.unread(c);
 	};	
-	/* ************************************************************
 	
-			Low level I/O
-	
-	* ************************************************************/
-	/** As {@link java.io.Reader#read}
-	@return --//--
-	@throws IOException --//--
+	/* ****************************************************
+		
+			Services required from subclasses
+			
+	*****************************************************/
+	/** Called in {@link #close} when closed for a first 
+	time.
+	@throws IOException if failed.
 	*/
-	protected abstract int readFromInput()throws IOException;
+	protected abstract void closeOnce()throws IOException;
+	
+	
 	
 	/* *************************************************************************
 			State validation	
@@ -380,6 +377,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	};
 	/** Helper for {@link #processOpeningTag}/{@link #processClosingTag}
 	checking if there are no attributes
+	@param element used to format error message in thrown exception
 	@throws EBrokenFormat if there are attributes */
 	private void validateNoAttributes(String element)throws IOException
 	{
@@ -400,7 +398,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		//The opening tag may be one of indicator tags, long encoded name, root element
 		//or short encoded name.		
 		//Just compare them using quick compare routines.
-		if (b.equalsString(settings.ROOT_ELEMENT))
+		if ((settings.ROOT_ELEMENT!=null)&&(b.equalsString(settings.ROOT_ELEMENT)))
 		{
 			//Check if root is not already on stack? If it would be, it would
 			//be first element.
@@ -544,9 +542,10 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	};
 	/** Buffers tag in {@link #token_buffer}. Once this
 	method return the stream cursor is at the first non-whitespace
-	character after the tag which may be > or a first character
+	character after the tag which may be &gt; or a first character
 	of attribute name.
 	@return {@link #token_buffer} filled with tag
+	@throws IOException if failed
 	*/ 
 	private CBoundAppendable readTag()throws IOException
 	{
@@ -579,6 +578,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	method return the stream cursor is at the first first character
 	of attribute value which is "
 	@return {@link #token_buffer} filled with attribute name
+	@throws IOException if failed
 	*/ 
 	private CBoundAppendable readAttributeName()throws IOException
 	{
@@ -623,6 +623,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	method return the stream cursor is at the first first non-white space
 	character after value which should be either &gt; or next attribute name.
 	@return {@link #token_buffer} filled with attribute value stripped of "
+	@throws IOException if failed
 	*/ 
 	private CBoundAppendable readAttributeValue()throws IOException
 	{
@@ -678,7 +679,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		};
 		validateNoAttributes(closed);
 		//act accordingly.
-		if (b.equalsString(settings.ROOT_ELEMENT))
+		if ((settings.ROOT_ELEMENT!=null)&&(b.equalsString(settings.ROOT_ELEMENT)))
 		{
 			//toggle to unusable.
 			state = STATE_ROOT_CLOSED;
@@ -762,6 +763,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	if it is a comment tag and eventually skip it.
 	@return true if processed it, false if it was not a comment.
 			If false stream cursor is not moved.
+	@throws IOException if failed
 	*/
 	private boolean tryCommentTag()throws IOException
 	{
@@ -797,6 +799,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	if it is a processing instruction  tag and eventually skip it.
 	@return true if processed it, false if it was not a processing tag.
 			If false stream cursor is not moved.
+	@throws IOException if failed
 	*/
 	private boolean tryProcessingTag()throws IOException
 	{
@@ -851,6 +854,8 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	/** Fetches numeric primitive to {@link #token_buffer}. After return from this method
 	cursor is at first character after a numeric value which is either whitespace or &gt;.
 	@param allowedCharacters list of allowed characters. White spaces are NOT allowed in this set.
+	@param max_length maximum length of primitive token in characters. If there is 
+		more characters from <code>allowedCharacters</code> it throws. 
 	@return {@link #token_buffer}. This buffer has zero size if there was no non-white space characters
 		after initial white-spaces (skipped) and &gt; was reached.
 	@throws IOException if failed
@@ -1295,9 +1300,16 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		
 	
 	************************************************************************/
+	/** Sets closed status to true.
+	If it was false calls {@link #closeOnce}
+	@see #validateNotClosed
+	*/
 	@Override public void close()throws IOException
 	{
-		state = STATE_CLOSED;
+		try{
+			if (state!=STATE_CLOSED)
+								closeOnce();
+		}finally { state = STATE_CLOSED;}
 	};
 	
 };

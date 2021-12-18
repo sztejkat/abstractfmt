@@ -69,7 +69,7 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 		@Override public final boolean isFlushing(){return is_flushing; };
 		@Override public void setMaxSignalNameLength(int characters)
 		{
-			assert(characters>=0);
+			assert(characters>0);
 			this.max_signal_name_length=max_signal_name_length;
 		};
 		/* ------------------------------------------------------

@@ -1,12 +1,11 @@
 package sztejkat.abstractfmt.util;
-import java.io.PipedReader;
 /**
 	A simplified toolbox class which is intended to 
 	be used for testing purpose of character based formats
 	and provides an ability to write and read characters from
 	a certain buffer.
 	<p>
-	<i>Notes: This class could be a pair {@link PipedReader} and {@link PipedWriter}
+	<i>Notes: This class could be a pair {@link java.io.PipedReader} and {@link java.io.PipedWriter}
 	if those could be tuned to have a different behavior on circular buffer overrun.
 	The primary intent of those pipes was to provide a blocking I/O to exchange
 	data between <u>threads</u>. In this package and for testing I need a 
@@ -18,6 +17,41 @@ import java.io.PipedReader;
 */
 public final class CCharExchangeBuffer
 {	
+		private class _Reader extends java.io.Reader
+		{
+			public int read(char[] cbuf, int off, int len)
+			{
+				int readen = 0;
+				while(len>0)
+				{
+					int c = CCharExchangeBuffer.this.read();
+					if (c==-1) break;
+					cbuf[off++] = (char)c;
+					len--;
+					readen++;
+				}
+				return readen==0 ? -1 : readen;
+			};
+			public void close(){};
+		}; 
+		private class _Writer extends java.io.Writer
+		{
+			public void close(){};
+			public void flush(){};
+			public void write(int c)
+			{
+				CCharExchangeBuffer.this.write((char)c);
+			};
+			public void write(char[] cbuf,
+                           int off,
+                           int len)
+			{
+				while(len-->0)
+				{
+					CCharExchangeBuffer.this.write(cbuf[off++]);
+				}
+			};
+		};
 			/** How much of size will be added to {@link #buffer}
 			when it is necessary */
 			private static final int GROWTH_INCREMENT = 1024;
@@ -35,24 +69,42 @@ public final class CCharExchangeBuffer
 			private int write_at;
 			/** Where to read next character */
 			private int read_at;
+			/** Lazy intialized support classes */
+			private _Reader reader;
+			/** Lazy intialized support classes */
+			private _Writer writer;
 			
+			
+			
+		/* **************************************************
+		
+				Creation
+		
+		***************************************************/
 		public CCharExchangeBuffer()
 		{
 			this.buffer = new char[GROWTH_INCREMENT];			
 		};
-		/** True if any character is available for reading
-		@return false if do not have anything to read */
-		private boolean available()
-		{
-			return (read_at<write_at);
-		};
+		
+		/* **************************************************
+		
+				Informative routines.
+		
+		***************************************************/
 		/** Number of characters available for reading 
 		@return chars */
-		private int length()
+		public int length()
 		{
 			return write_at-read_at;
 		};
+		/** True if any character is available for reading
+		@return false if do not have anything to read */
+		public boolean available()
+		{
+			return (read_at<write_at);
+		};
 		
+		/** Converts readable part to independent string*/
 		public String toString()
 		{
 			return new String(
@@ -60,6 +112,36 @@ public final class CCharExchangeBuffer
 						read_at,
 						length());
 		};
+		
+		/* **************************************************
+		
+				java.io.Reader/Write API
+		
+		***************************************************/
+		/** Returns reader of that buffer 
+		@return life time constant.
+		*/
+		public java.io.Reader getReader()
+		{
+			if (reader==null)
+				reader = new _Reader();
+			return reader;
+		};
+		/** Returns writer of that buffer 
+		@return life time constant.
+		*/
+		public java.io.Writer getWriter()
+		{
+			if (writer==null)
+				writer = new _Writer();
+			return writer;
+		};
+		
+		/* **************************************************
+		
+			Direct reading API
+		
+		***************************************************/
 		/** Reads character or returns -1
 		@return 0...0xFFFF or -1 if nothing to read
 		*/
@@ -95,8 +177,17 @@ public final class CCharExchangeBuffer
 			};
 			return c;
 		};
+		
+		
+		/* **************************************************
+		
+			Direct writing
+		
+		***************************************************/
 		/** Writes character possibly enlarging buffer.
-		No buffer limiting is applied */
+		No buffer limiting is applied 
+		@param c character to write
+		*/
 		public void write(char c)
 		{
 			int at = write_at;
@@ -110,12 +201,16 @@ public final class CCharExchangeBuffer
 			//update pointer.
 			write_at = at;
 		};
-		
+		/** Writes text possibly enlarging buffer.
+		No buffer limiting is applied 
+		@param s text to write
+		*/
 		public void write(CharSequence s)
 		{
 			for(int i=0,n=s.length(); i<n; i++)
 									write(s.charAt(i));
 		};
+		
 		
 		
 		

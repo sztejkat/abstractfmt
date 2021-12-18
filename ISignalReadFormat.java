@@ -10,7 +10,7 @@ import java.io.IOException;
 */
 public interface ISignalReadFormat extends Closeable, IPrimitiveReadFormat
 {	
-	/* ************************************************************
+		/* ************************************************************
 	
 			Information
 	
@@ -56,7 +56,7 @@ public interface ISignalReadFormat extends Closeable, IPrimitiveReadFormat
 		@throws EUnexpectedEof if encountered an end-of-stream.
 		@throws ECorruptedFormat if could not decode end signal due to other errors.
 		@throws EFormatBoundaryExceeded if name found in stream is too long.
-		See {@link ISignalWriteFormat#getMaxSignalNameLength}.
+		See {@link ISignalWriteFormat#setMaxSignalNameLength}.
 		@throws EFormatBoundaryExceeded if events recursion depth control is enabled
 		and this limit is exceeded.
 		See <a href="doc-files/security.html#STACK_OVERFLOW_ATTACK">"stack overflow"</a> attack.

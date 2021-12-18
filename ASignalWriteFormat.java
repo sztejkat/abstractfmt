@@ -3,7 +3,7 @@ import java.io.IOException;
 
 /**
 		An implementation of {@link ISignalWriteFormat} over the
-		{@link #IIndicatorWriteFormat}
+		{@link IIndicatorWriteFormat}
 */
 public abstract class ASignalWriteFormat implements ISignalWriteFormat
 {		
@@ -117,7 +117,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			2 allows element within an element and so on. If this limit is exceed
 			the {@link #begin(String,boolean)} will throw <code>IllegalStateException</code>.
 		@param output output to set. If null will be set to <code>(IIndicatorWriteFormat)this</code>.
-		@throws Assertion error if parameters do not match.
+		@throws AssertionError error if parameters do not match.
 		@see IIndicatorWriteFormat#getMaxRegistrations
 		*/
 		protected ASignalWriteFormat(int max_events_recursion_depth,
@@ -233,9 +233,9 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		**********************************************************/
 		
 		
-		/** If state is {@link #STATE_END_PENDING}
-		writes an end indicator and togles state to {@link #STATE_END}.
-		Used to optimize end-being sequence 
+		/** If state is {@link TState#END_PENDING}
+		writes an end indicator and togles state to {@link TState#END}.
+		Used to optimize end-being sequence.
 		@throws IOException if idicator write failed
 		@see IIndicatorWriteFormat#writeEnd
 		*/
@@ -283,8 +283,10 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		---------------------------------------------------------*/
 		/** Dispatcher method, sending depending one end-begin optimization
 		to correct writes in {@link IIndicatorWriteFormat}
-		@param name 
-		@throws IOException . 
+		@param name signal name to write
+		@throws IOException if failed.
+		@see IIndicatorWriteFormat#writeEndBeginDirect
+		@see IIndicatorWriteFormat#writeBeginDirect
 		*/
 		private void writeBeginDirect(String name)throws IOException
 		{			
@@ -298,9 +300,11 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		};
 		/** Dispatcher method, sending depending one end-begin optimization
 		to correct writes in {@link IIndicatorWriteFormat}
-		@param name --//--
-		@param number --//--
-		@throws IOException . 
+		@param name signal name to write
+		@param number signal number to write
+		@throws IOException if failed.
+		@see IIndicatorWriteFormat#writeEndBeginRegister
+		@see IIndicatorWriteFormat#writeBeginRegister
 		*/
 		private void writeBeginRegister(String name, int number)throws IOException
 		{
@@ -314,8 +318,10 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		};
 		/** Dispatcher method, sending depending one end-begin optimization
 		to correct writes in {@link IIndicatorWriteFormat}
-		@param number --//--
-		@throws IOException . 
+		@param number signal number to write
+		@throws IOException if failed.
+		@see IIndicatorWriteFormat#writeEndBeginUse
+		@see IIndicatorWriteFormat#writeBeginUse 
 		*/
 		private void writeBeginUse(int number)throws IOException
 		{
@@ -389,11 +395,12 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			 }finally{ current_depth++; state=TState.BEGIN; };
 		};
 		/** Implemented in such a way, that actuall writing of
-		{@link #writeEndSignalIndicator} is posponed till it
-		can be decided if it can be optimized to
-		{@link #writeEndBeginSignalIndicator}. Basically it is delayed till
-		nearest {@link #begin}, {@link #end} or any primitive write.
-		@see #flush
+		end indicator is put-off to let it to make some end-begin optimization.
+		Basically it is delayed till nearest 
+		{@link #begin}, {@link #end} or any primitive write.
+		@see #flushPendingEnd
+		@see #flushBlockOperation
+		@see TState#END_PENDING
 		*/
 		@Override public void end()throws IOException
 		{
@@ -419,8 +426,8 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		/* ---------------------------------------------------------
 					Elementary primitives.
 		---------------------------------------------------------*/
-		/** Checks if current state allows any elementary primitive write
-		and toggles state to {@link #STATE_PRIMITIVE}
+		/** Checks if current state allows any elementary primitive write,
+		 toggles state to specified state and writes type indicator according to <code>state</code>.
 		@param state state to set to state variable.
 		@throws IllegalStateException if not.
 		@throws IOException if needed to flush pending end indicator and it failed.
@@ -496,7 +503,10 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 					Blocks
 		---------------------------------------------------------*/
 		/** Like {@link #startElementaryPrimitiveWrite} but for blocks.
-		Correctly handles continuation. */
+		Correctly handles continuation. 
+		@param target_state expected state after return
+		@throws IOException if failed.
+		*/
 		private void startBlockPrimitiveWrite(TState target_state)throws IOException
 		{
 			validateNotClosed();
@@ -620,7 +630,11 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			{
 				try{
 					flush(); 					
-				}finally{ state=TState.CLOSED; closeOnce(); };
+				}finally{ 
+						try{
+							closeOnce();
+							}finally{ state=TState.CLOSED; }; 
+					};
 			};
 		};
 		/* **********************************************************************

@@ -4,7 +4,7 @@ import java.io.IOException;
 
 /**
 	Test bed for {@link CSignalReadFormat}/{@link CSignalWriteFormat}
-	over {@link CObjFormat} for described operations.
+	over {@link CObjListFormat} for described operations.
 */
 public class TestCSignalFormat_D_Descr extends ATestISignalFormat_Descr
 {

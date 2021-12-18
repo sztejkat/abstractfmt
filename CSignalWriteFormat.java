@@ -3,7 +3,7 @@ import java.io.IOException;
 
 /**
 		An implementation of {@link ISignalWriteFormat} over the
-		{@link #IIndicatorWriteFormat}
+		{@link IIndicatorWriteFormat}
 */
 public class CSignalWriteFormat extends ASignalWriteFormat
 {

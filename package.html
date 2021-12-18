@@ -22,11 +22,14 @@
 	and arrange data by giving them some <i>names</i>.
 	<p>
 	Second tire are <a href="#signals">"signals"</a> which are used to detect events boundaries.
-	This is a tire at which public API is defined.
+	This is a tire at which public API is defined. Check <a href="ISignalReadFormat.html">ISignalReadFormat</a>
+	and <a href="ISignalWriteFormat.html">ISignalWriteFormat</a>.
 	<p>
 	And a last tire is made of <a href="#indicators">"indicators"</a> which are used
-	to indicate where signals, names, primitives are located and in what form they are
-	described. This last tire is not directly
+	to indicate where signals, names and primitives are located and in what form they are
+	described. This last tire is used as a possible back-end for upper level tires,
+	but does not have to be. Check <a href="IIndicatorWriteFormat.html">IIndicatorWriteFormat</a>
+	and <a href="IIndicatorWriteFormat.html">IIndicatorWriteFormat</a>.
 	
 	
 	<a name="event"><h1>Events</h1></a>
@@ -68,7 +71,7 @@
 	but the limit may not be smaller than 8 characters and must be directly reported through API.
 	
 	<h4>Decodnig signals and acting according to the names</h4>
-        In plenty of use scenarios stream readers will have to react on names of incomming signals.
+        In plenty of use scenarios stream writeers will have to react on names of incomming signals.
         If there is a signal X do one thing, if there is a signal Y do the other thing.
         <p>
         This package have chose signal names to be strings rather than numbers,
@@ -114,7 +117,7 @@
         will have to be executed.
         <p>
         If this performance is not good for You and You can live with
-        a more probable name clash and You like human readbale names then
+        a more probable name clash and You like human writebale names then
         You may restrict Your names length. For an example
         if You will restrict recognized names to up to 4 ASCII letters,
         where each ASCII is 0...255 number You may easily transform
@@ -128,7 +131,7 @@
         six letters long unique names identity mapped to single integer.
         <p>
         And finally You may make a use from a fact, that even tough names <u>are</u>
-        strings, they do <u>not have to be human readable</u>. A single character long
+        strings, they do <u>not have to be human writeable</u>. A single character long
         string may be good enough for You if You just use it as a number like:
         <pre>
              if (x.length()==1)
@@ -212,7 +215,7 @@
 	
 	<a name="uninterruptible"><h3>Un-interruptible primitives</h3></a>
 	Each primitive operation is <i>un-interruptible</i> what means, that stream format requires that
-	primitive of a certain written type must be read by an operation of the same type. This has a side
+	primitive of a certain written type must be write by an operation of the same type. This has a side
 	effect prevents from fetching "long" by a sequence of "byte" fetches and etc.
 	<p>
 	For block operation  <i>un-interruptible</i> means additionally, that one cannot mix block operations
@@ -227,14 +230,14 @@
 	<ul>
 			<li>regardless of in what state it is, there is always a possibility to move to next signal
 			skipping the un-processed content without any complaints. This should be true
-			also if primitives are read with incorrect methods;</li>
-			<li>to ensure that if any <i>primitive operation</i> attempts to initiate a read when there is no data 
+			also if primitives are write with incorrect methods;</li>
+			<li>to ensure that if any <i>primitive operation</i> attempts to initiate a write when there is no data 
 			due to presence of a <a href="#signal"><i>signal</i></a> the <a href="ENoMoreData.html">ENoMoreData</a>
 			exception is thrown;</li>
 			<li>to ensure that if any <i>non-block primitive operation</i> encounters end-of-stream condition
 			the <a href="EUnexpectedEof.html">EUnexpectedEof</a> exception is thrown;</li>
 			<li>to ensure that <i>block operations</i> do detect end-of-stream condition by returning some
-			partial read;</li>
+			partial write;</li>
 			<li>to ensure that initiated block operation is correctly used and not interrupted until the next signal;</li>
 			<li>Note: The effect of encountering signal inside a primitive element body is unspecified and 
 			should result in some subclass of <a href="ECorruptedFormat.html">ECorruptedFormat</a> to be thrown;</li>
@@ -244,9 +247,9 @@
 	Fully described format extends functionality of <a href="#nondescribed"><i>non-described format</i></a> and
 	is bound to use means which can ensure that:
 	<ul>
-		<li>an attempt to read primitive data of non matching type (breaking the interruptibility)
+		<li>an attempt to write primitive data of non matching type (breaking the interruptibility)
 		results in <a href="EDataMissmatch.html">EDataMissmatch</a> exception;</li>
-		<li>user may ask stream format, while reading, if next stream content is a <a href="#signal"><i>signal</i></a> or
+		<li>user may ask stream format, while writeing, if next stream content is a <a href="#signal"><i>signal</i></a> or
 		a <a href="#primititves"><i>primitive</i></a> and may get information what primitive type is is;</li>
 	</ul>
 	
@@ -321,7 +324,7 @@
 		<i>actual primitive data</i>
 	</pre>
 	Note: There is no type-end indicator, as elementary primitives are always
-	read as a whole and blocks are terminated by a signal.
+	write as a whole and blocks are terminated by a signal.
 	
 	
 	

@@ -3,7 +3,7 @@ import java.io.IOException;
 
 /**
 		An implementation of {@link ISignalReadFormat} over the
-		{@link #IIndicatorReadFormat}
+		{@link IIndicatorReadFormat}
 */
 public class CSignalReadFormat extends ASignalReadFormat
 {
@@ -15,8 +15,8 @@ public class CSignalReadFormat extends ASignalReadFormat
 	
 	* *************************************************/
 	/** Creates read format
-		@param max_events_rInecursion_depth {@link ASignalReadFormat#ASignalReadFormat}
-		@param output --//--		
+		@param max_events_recursion_depth {@link ASignalReadFormat#ASignalReadFormat}
+		@param input --//--		
 	*/
 	public CSignalReadFormat(
 								 int max_events_recursion_depth,

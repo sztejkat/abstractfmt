@@ -2,7 +2,6 @@ package sztejkat.abstractfmt.xml;
 import sztejkat.abstractfmt.IIndicatorReadFormat;
 import sztejkat.abstractfmt.TIndicator;
 import sztejkat.abstractfmt.util.CBoundAppendable;
-import sztejkat.abstractfmt.util.CUnbufferingMapper;
 import sztejkat.abstractfmt.EUnexpectedEof;
 import sztejkat.abstractfmt.EFormatBoundaryExceeded;
 import sztejkat.abstractfmt.ECorruptedFormat;
@@ -65,8 +64,8 @@ public abstract class AXMLIndicatorReadFormatBase extends AXMLFormat
 	};
 				
 	/* ************************************************************
-	
-			Low level I/O
+			Services required from subclasses.
+				Low level I/O
 	
 	* ************************************************************/
 	/** As {@link java.io.Reader#read}
@@ -102,25 +101,14 @@ public abstract class AXMLIndicatorReadFormatBase extends AXMLFormat
 	/**
 		Reads character either from push-back buffer or
 		from stream. Differs from {@link #read} in such a way that it does not throw.
-		<p>
-		Internally clears indicator cache.
 		
 		@return read character or -1 if end of stream is reached.
 		@throws IOException if low level have failed.
 		@see #read
-		@see _tryRead
+		@see #unread
 	*/
-	protected int tryRead()throws EUnexpectedEof, IOException
+	protected int tryRead()throws IOException
 	{		
-		return _tryRead();	
-	};
-	/** Internal service for {@link #tryRead}, assuming that no cursor motion
-	will be actually done. Used to implement {@link #peek} and {@link #isEof}.
-	@return as {@link #tryRead}
-	@throws IOException if low level have failed.
-	*/
-	private int _tryRead()throws EUnexpectedEof, IOException,EFormatBoundaryExceeded
-	{
 		int i =unread_at;		
 		if (i==0)
 		{
@@ -144,9 +132,9 @@ public abstract class AXMLIndicatorReadFormatBase extends AXMLFormat
 		@throws EUnexpectedEof if end of file was encounterd
 		@throws IOException if low level have failed.
 		@see #tryRead
-		@see #readSafe
+		@see #read
 		@see #readEscaped
-		@see #tryRead
+		@see #unread
 	*/
 	protected char read()throws EUnexpectedEof, IOException
 	{
@@ -186,8 +174,9 @@ public abstract class AXMLIndicatorReadFormatBase extends AXMLFormat
 		};
 		this.unread_at = put_at;
 	};
-	/** Internal service for {@link #unread}, assuming no cursor was moved.
-		Always used in pair with {@link #_tryRead}.
+	/** Internal service for {@link #unread}
+		used in {@link #peek} and {@link #isEof} instead of 
+		{@link #unread} to not trigger any reactions on cursor motion.	
 		@param c as {@link #unread}
 		@throws AssertionError as {@link #unread}
 	*/
@@ -236,12 +225,12 @@ public abstract class AXMLIndicatorReadFormatBase extends AXMLFormat
 		}
 	};
 	/**
-			Tests if next {@link #read} will throw
-			{@link UnexpectedEof}. Performs read of stream
-			if necessary to test the condition.
-			
-			@return true if at end of stream
-			@throws IOException if low level have failed.
+		Tests if next {@link #read} will throw
+		{@link EUnexpectedEof}.
+		
+		@return true if at end of stream
+		@throws IOException if low level have failed.
+		@see #_unread
 	*/
 	protected final boolean isEof()throws IOException
 	{

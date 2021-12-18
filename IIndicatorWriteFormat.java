@@ -170,4 +170,11 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 		*/
 		@Override public void writeBooleanBlock(boolean [] buffer, int offset, int length)throws IOException;		
 		
+		/* ************************************************
+		
+				Closeable		
+		
+		*************************************************/
+		/** Must call {@link #flush} before closing */
+		@Override public void close()throws IOException;
 };
