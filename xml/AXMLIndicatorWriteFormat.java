@@ -2,10 +2,15 @@ package sztejkat.abstractfmt.xml;
 import sztejkat.abstractfmt.IIndicatorWriteFormat;
 import sztejkat.abstractfmt.TIndicator;
 import sztejkat.abstractfmt.EClosed;
-import java.io.*;
+import java.io.Writer;
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 /**
-	An indicator writer using XML as specified in <A href="doc-files/xml-syntax.html">syntax definition</a>
+	An indicator writer using XML as specified in 
+	<A href="doc-files/xml-syntax.html">syntax definition</a>.
+	<p>
+	Adds "bare" format writing.
 */
 public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatBase
 {
@@ -19,8 +24,7 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 				should re-set it to pending. Each XML
 				element write should clear it without flushing. */ 
 				private boolean pending_primitive_separator;				
-				/** Set to true once closed */
-				private boolean is_closed;
+				
 	/* ****************************************************
 	
 			Creation
@@ -28,39 +32,18 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 	
 	*****************************************************/
 	/** Creates
-	@param settings xml settings, non null
+	@param output see {@link AXMLIndicatorWriteFormatBase#AXMLIndicatorWriteFormatBase}
+	@param charset --//--
+	@param settings --//--
 	*/
-	protected AXMLIndicatorWriteFormat(CXMLSettings settings)
+	protected AXMLIndicatorWriteFormat( Writer output,
+										  Charset charset,
+										  CXMLSettings settings
+										  )
 	{
-		super(settings);
+		super(output,charset,settings);
 		this.events_stack = new ArrayList<String>(32);
 	};
-	
-	/* ****************************************************
-		
-			Services required from subclasses
-			
-	*****************************************************/
-	/** Called in {@link #close} when closed for a first 
-	time.
-	@throws IOException if failed.
-	*/
-	protected abstract void closeOnce()throws IOException;
-	/* ****************************************************
-		
-			State
-			
-	*****************************************************/
-	/** Tests if format is usable
-	@throws EClosed if closed
-	@see #is_closed
-	@see #close 
-	*/
-	protected void validateNotClosed()throws EClosed
-	{
-		if (is_closed) throw new EClosed();
-	};
-	
 	
 	
 	/* ****************************************************
@@ -88,7 +71,7 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 		{
 			char c= name.charAt(i);
 			if (isValidUnescapedAttributeValueChar(c))
-				write(c);
+				output.write(c);
 			else
 				writeEscapedChar(c);
 		};
@@ -118,22 +101,23 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 		assert(signal_name!=null);
 		validateNotClosed();
 		clearPendingPrimitiveSeparator();
-		write('<');
+		final Writer o = output;
+		o.write('<');
 		//check if can be XML signal directly?
 		if (isPossibleXMLElement(signal_name))
 		{
-			write(signal_name);
+			o.write(signal_name);
 			pushEvent(signal_name);
-			write('>');
+			o.write('>');
 		}else
 		{
-			write(settings.EVENT);
+			o.write(settings.EVENT);
 			pushEvent(settings.EVENT);
-			write(' ');
-			write(settings.SIGNAL_NAME_ATTR);
-			write("=\"");
+			o.write(' ');
+			o.write(settings.SIGNAL_NAME_ATTR);
+			o.write("=\"");
 			writeNameAttribute(signal_name);
-			write("\">");
+			o.write("\">");
 		};
 	};
 	/** Calls {@link writeEnd} followed by {@link #writeBeginDirect} */
@@ -170,9 +154,10 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 	{
 		validateNotClosed();
 		clearPendingPrimitiveSeparator();
-		write("</");
-		write(popEvent());	//<-- may throw if no events on stack.
-		write('>');
+		final Writer o = output;
+		o.write("</");
+		o.write(popEvent());	//<-- may throw if no events on stack.
+		o.write('>');
 	};
 	/* --------------------------------------------------
 			Type information
@@ -187,9 +172,10 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 		if (isDescribed())
 		{
 			clearPendingPrimitiveSeparator();
-			write('<');
-			write(settings.elementByIndicator(type));	
-			write('>');
+			final Writer o = output;
+			o.write('<');
+			o.write(settings.elementByIndicator(type));	
+			o.write('>');
 		};
 	};
 	@Override public void writeFlush(TIndicator flush)throws IOException
@@ -198,9 +184,10 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 		if (isDescribed())
 		{
 			clearPendingPrimitiveSeparator();
-			write("</");
-			write(settings.elementByIndicator(flush));	
-			write('>');
+			final Writer o = output;
+			o.write("</");
+			o.write(settings.elementByIndicator(flush));	
+			o.write('>');
 		}
 	};
 	
@@ -220,7 +207,7 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 	{
 		if (pending_primitive_separator)
 		{
-			write(settings.PRIMITIVE_SEPARATOR);
+			output.write(settings.PRIMITIVE_SEPARATOR);
 			pending_primitive_separator = false;
 		};
 	};
@@ -241,13 +228,13 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 	@Override public void writeBoolean(boolean v)throws IOException
 	{
 		startElementaryPrimitive();
-		write(v ? 't' : 'f');
+		output.write(v ? 't' : 'f');
 		endElementaryPrimitive();
 	};
 	@Override public void writeByte(byte v)throws IOException
 	{
 		startElementaryPrimitive();
-		write(Byte.toString(v));
+		output.write(Byte.toString(v));
 		endElementaryPrimitive();
 	};
 	@Override public void writeChar(char v)throws IOException
@@ -262,7 +249,7 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 		}
 		else
 		{
-			write(v);
+			output.write(v);
 			endElementaryPrimitive();
 		};
 		
@@ -270,31 +257,31 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 	@Override public void writeShort(short v)throws IOException
 	{
 		startElementaryPrimitive();
-		write(Short.toString(v));
+		output.write(Short.toString(v));
 		endElementaryPrimitive();
 	};
 	@Override public void writeInt(int v)throws IOException
 	{
 		startElementaryPrimitive();
-		write(Integer.toString(v));
+		output.write(Integer.toString(v));
 		endElementaryPrimitive();
 	};
 	@Override public void writeLong(long v)throws IOException
 	{
 		startElementaryPrimitive();
-		write(Long.toString(v));
+		output.write(Long.toString(v));
 		endElementaryPrimitive();
 	};
 	@Override public void writeFloat(float v)throws IOException
 	{
 		startElementaryPrimitive();
-		write(Float.toString(v));
+		output.write(Float.toString(v));
 		endElementaryPrimitive();
 	};
 	@Override public void writeDouble(double v)throws IOException
 	{
 		startElementaryPrimitive();
-		write(Double.toString(v));
+		output.write(Double.toString(v));
 		endElementaryPrimitive();
 	};
 	/*.................................................
@@ -317,14 +304,16 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 	@Override public void writeBooleanBlock(boolean [] buffer, int offset, int length)throws IOException
 	{
 		startBlockPrimitive();
+		final Writer o = output;
 		while(length-->0)
 		{
-			write(buffer[offset++] ? 't' : 'f');
+			o.write(buffer[offset++] ? 't' : 'f');
 		};
 	};
 	@Override public void writeByteBlock(byte [] buffer, int offset, int length)throws IOException
 	{
 		startBlockPrimitive();
+		final Writer o = output;
 		while(length-->0)
 		{
 			//Note: Theoretically >>> is an unsigned shift.
@@ -342,25 +331,27 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 			int v = buffer[offset++] & 0xFF;
 			char d0 = D2HEX(v & 0x0F) ;v>>>=4;	
 			char d1 = D2HEX(v);
-			write(d1);write(d0);
+			o.write(d1);o.write(d0);
 		};
 	};
 	@Override public void writeByteBlock(byte v)throws IOException
 	{
 		startBlockPrimitive();
+		final Writer o = output;
 		int vv = v & 0xFF;
 		char d0 = D2HEX(vv & 0x0F); vv>>>=4;
 		char d1 = D2HEX(vv);
-		write(d1);write(d0);
+		o.write(d1);o.write(d0);
 	};
 	@Override public void writeCharBlock(char [] buffer, int offset, int length)throws IOException
 	{
 		startBlockPrimitive();
+		final Writer o = output;
 		while(length-->0)
 		{
 			char c = buffer[offset++];
 			if (isValidUnescapedTextChar(c))
-				write(c);
+				o.write(c);
 			else
 				writeEscapedChar(c);
 		};
@@ -368,11 +359,12 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 	@Override public void writeCharBlock(CharSequence characters, int offset, int length)throws IOException
 	{
 		startBlockPrimitive();
+		final Writer o = output;
 		while(length-->0)
 		{
 			char c = characters.charAt(offset++);
 			if (isValidUnescapedTextChar(c))
-				write(c);
+				o.write(c);
 			else
 				writeEscapedChar(c);
 		};
@@ -428,23 +420,7 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 	{
 		validateNotClosed();
 		flushPendingPrimitiveSeparator();
+		super.flush();
 	};
 	
-	/** Sets closed status to true.
-	If it was false calls {@link #closeOnce}
-	@see #validateNotClosed
-	*/
-	@Override public void close()throws IOException
-	{
-		if (!is_closed)
-		{
-			try{
-				flush();
-			}finally{
-					try{
-					closeOnce();
-				}finally{is_closed = true; };
-			}
-		};
-	};
 };
