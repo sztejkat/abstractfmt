@@ -7,7 +7,7 @@ import java.io.Reader;
 	<p>
 	Not thread safe.
 */
-class CBlockFilter extends AAdaptiveFilterReader
+public class CBlockFilter extends AAdaptiveFilterReader
 {
 				/** Input armend with read-back capabilities */
 				private final CAdaptivePushBackReader in;
@@ -19,7 +19,7 @@ class CBlockFilter extends AAdaptiveFilterReader
 				private final String end;
 				/** True if skipping is in progress */
 				private boolean skipping;
-	CBlockFilter(Reader in,String begin, String end)
+	public CBlockFilter(Reader in,String begin, String end)
 	{
 		super(4,32);	//we need very little buffering,
 						//just to <!-- 
@@ -116,5 +116,9 @@ class CBlockFilter extends AAdaptiveFilterReader
 			}
 		}
 	}
-	
+	@Override public void close()throws IOException
+	{
+		super.close();
+		in.close();
+	};
 };

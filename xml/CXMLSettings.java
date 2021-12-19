@@ -73,7 +73,13 @@ public class CXMLSettings
 		public final String FLOAT_BLOCK_ELEMENT;
 		/** Element to enclose double block primitive. */
 		public final String DOUBLE_BLOCK_ELEMENT;
-		
+		/** List if &amp;xxx; XML escapes this class do
+		require to be recognized.
+		This list is coupled with {@link #AMP_XML_ESCAPED_CHAR}
+		*/
+		public final String [] AMP_XML_ESCAPES; 
+		/** See {@link #AMP_XML_ESCAPES}*/
+		public final char [] AMP_XML_ESCAPED_CHAR;
 		
 		private int max_length_cache;
 		
@@ -100,7 +106,9 @@ public class CXMLSettings
 				 String INT_BLOCK_ELEMENT,		
 				 String LONG_BLOCK_ELEMENT,		
 				 String FLOAT_BLOCK_ELEMENT,		
-				 String DOUBLE_BLOCK_ELEMENT
+				 String DOUBLE_BLOCK_ELEMENT,
+				 String [] AMP_XML_ESCAPES,
+				 char [] AMP_XML_ESCAPED_CHAR
 				 )
 	{
 		assert(ESCAPE_CHARACTER!=ESCAPE_END_CHARACTER):"escape start and end have to differ";
@@ -125,6 +133,9 @@ public class CXMLSettings
 		 assert( LONG_BLOCK_ELEMENT!=null);		
 		 assert( FLOAT_BLOCK_ELEMENT!=null);		
 		 assert( DOUBLE_BLOCK_ELEMENT!=null);
+		 assert( AMP_XML_ESCAPES!=null);
+		 assert( AMP_XML_ESCAPED_CHAR!=null);
+		 assert(AMP_XML_ESCAPED_CHAR.length==AMP_XML_ESCAPES.length);
 		 
 		 this.PROLOG=PROLOG;
 		 this.ESCAPE_CHARACTER=ESCAPE_CHARACTER;
@@ -149,6 +160,8 @@ public class CXMLSettings
 		 this.LONG_BLOCK_ELEMENT=LONG_BLOCK_ELEMENT;		
 		 this.FLOAT_BLOCK_ELEMENT=FLOAT_BLOCK_ELEMENT;		
 		 this.DOUBLE_BLOCK_ELEMENT=DOUBLE_BLOCK_ELEMENT;
+		 this.AMP_XML_ESCAPES=AMP_XML_ESCAPES;
+		 this.AMP_XML_ESCAPED_CHAR=AMP_XML_ESCAPED_CHAR;
 		 
 		 this.max_length_cache = 
 		 		Math.max(EVENT.length(),
@@ -203,7 +216,9 @@ public class CXMLSettings
 				 copy_from.INT_BLOCK_ELEMENT,//String INT_BLOCK_ELEMENT,		
 				 copy_from.LONG_BLOCK_ELEMENT,//String LONG_BLOCK_ELEMENT,		
 				 copy_from.FLOAT_BLOCK_ELEMENT,//String FLOAT_BLOCK_ELEMENT,		
-				 copy_from.DOUBLE_BLOCK_ELEMENT//String DOUBLE_BLOCK_ELEMENT
+				 copy_from.DOUBLE_BLOCK_ELEMENT,//String DOUBLE_BLOCK_ELEMENT
+				 copy_from.AMP_XML_ESCAPES,
+				 copy_from.AMP_XML_ESCAPED_CHAR
 				 );
 	}
 	/** Checks if specified text equals to any of 
@@ -328,6 +343,7 @@ public class CXMLSettings
 		    "                 int[]<"+INT_BLOCK_ELEMENT+">\n"+
 		    "                long[]<"+LONG_BLOCK_ELEMENT+">\n"+
 		    "               float[]<"+FLOAT_BLOCK_ELEMENT+">\n"+
-		    "              double[]<"+DOUBLE_BLOCK_ELEMENT+">\n";
+		    "              double[]<"+DOUBLE_BLOCK_ELEMENT+">\n"+
+		    " supported xml escapes:"+java.util.Arrays.toString(AMP_XML_ESCAPES);
 	};
 };

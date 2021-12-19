@@ -9,23 +9,6 @@ abstract class AXMLFormat
 				/** XML settings */
 				protected final CXMLSettings settings;
 				
-				/** List if &amp;xxx; XML escapes this class do
-				recognize.
-				This list is coupled with {@link #AMP_XML_ESCAPED_CHAR}
-				*/
-				private static final String [] AMP_XML_ESCAPES = 
-					new String[]{
-								"&gt;",
-								"&lt;",
-								"&amp;"
-								};
-				/** See {@link #AMP_XML_ESCAPES}*/
-				private static final char [] AMP_XML_ESCAPED_CHAR =
-					new char[] {
-								'>',
-								'<',
-								'&'
-								};
 				/** Binary nibble to hex conversion table */
 				private static final char [] _D2HEX= new char[]{'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
 			
@@ -67,26 +50,7 @@ abstract class AXMLFormat
 	{
 		assert((nibble & 0x0F)==nibble);
 		return _D2HEX[nibble];
-	}
-	
-	/* ****************************************************************
-	
-			XML amp Escapes recognitions
-	
-	
-	*****************************************************************/
-	/** Returns an array which lists characters which
-	are subject of standard &amp;xx; escape.
-	@return reference to array, non-null. Must be index-to-index coupled
-		with {@link #getAMP_XML_ESCAPES}
-	*/
-	protected char[] getAMP_XML_ESCAPED_CHAR(){ return AMP_XML_ESCAPED_CHAR; };
-	/** Returns an array which lists standard &amp;xx; escapes.
-	@return reference to array, non-null. Must be index-to-index coupled
-		with {@link #getAMP_XML_ESCAPED_CHAR}
-	*/
-	protected String[] getAMP_XML_ESCAPES(){ return AMP_XML_ESCAPES; };
-	
+	}	
 	/** Tests if character is a subject of known &amp;xx; XML 
 	escapes
 	@param c char to test
@@ -95,7 +59,7 @@ abstract class AXMLFormat
 	*/
 	protected final boolean isStandardAmpEscapeChar(char c)
 	{
-		char [] escaped = getAMP_XML_ESCAPED_CHAR();
+		char [] escaped = settings.AMP_XML_ESCAPED_CHAR;
 		for(int i = escaped.length; --i>=0;)
 		{
 			if (c==escaped[i]) return true;
@@ -111,10 +75,10 @@ abstract class AXMLFormat
 	*/
 	protected final String getStandardAmpEscape(char c)
 	{
-		char [] escaped = getAMP_XML_ESCAPED_CHAR();		
+		char [] escaped = settings.AMP_XML_ESCAPED_CHAR;		
 		for(int i = escaped.length; --i>=0;)
 		{
-			if (c==escaped[i]) return getAMP_XML_ESCAPES()[i];
+			if (c==escaped[i]) return settings.AMP_XML_ESCAPES[i];
 		};
 		return null;
 	};

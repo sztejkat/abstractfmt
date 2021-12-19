@@ -4,14 +4,14 @@ import java.io.IOException;
 import java.io.Reader;
 
 /**
-	A filter removing XML comments.
+	A filter removing XML processing commands.
 	<p>
 	Not thread safe.
 */
-class CXMLCommentFilter extends CBlockFilter
+class CXMLProcessingCommandFilter extends CBlockFilter
 {				
-	CXMLCommentFilter(Reader in)
+	CXMLProcessingCommandFilter(Reader in)
 	{
-		super(in, "<!--","-->");
+		super(in, "<?","?>");
 	};
 };

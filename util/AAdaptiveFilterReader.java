@@ -196,7 +196,7 @@ public abstract class AAdaptiveFilterReader extends Reader
 		}
 	};
 	
-	@Override public void close()
+	@Override public void close()throws IOException
 	{
 		synchronized(lock)
 		{

@@ -5,6 +5,14 @@ package sztejkat.abstractfmt.xml;
 */
 public abstract class SXMLSettings
 {
+			private static final String []STD_AMP_ESCAPES = new String[]
+					{
+						"&amp;","&gt;","&lt;"
+					};
+			private static final char []STD_AMP_ESCAPES_CHAR = new char[]
+					{
+						'&',	'>',   '<'
+					};
 			/** Bare XML settings, without root and prolog, as described in 
 			<A href="doc-files/xml-syntax.html#ESCAPING">syntax definition</a>.
 			*/
@@ -31,7 +39,9 @@ public abstract class SXMLSettings
 							 "ia",//String INT_BLOCK_ELEMENT,		
 							 "la",//String LONG_BLOCK_ELEMENT,		
 							 "fa",//String FLOAT_BLOCK_ELEMENT,		
-							 "da"//String DOUBLE_BLOCK_ELEMENT
+							 "da",//String DOUBLE_BLOCK_ELEMENT
+							 STD_AMP_ESCAPES,
+							 STD_AMP_ESCAPES_CHAR
 							 );
 			/** Full XML settings, with root and prolog for UTF-8 encoding, as described in 
 			<A href="doc-files/xml-syntax.html#ESCAPING">syntax definition</a>.
@@ -73,7 +83,9 @@ public abstract class SXMLSettings
 							 "int_array",//String INT_BLOCK_ELEMENT,		
 							 "long_array",//String LONG_BLOCK_ELEMENT,		
 							 "float_array",//String FLOAT_BLOCK_ELEMENT,		
-							 "double_array"//String DOUBLE_BLOCK_ELEMENT
+							 "double_array",//String DOUBLE_BLOCK_ELEMENT
+							  STD_AMP_ESCAPES,
+							 STD_AMP_ESCAPES_CHAR
 							 );				
 			/** Full XML settings for {@link #LONG_BARE} with "root" as root element
 			 and prolog:
