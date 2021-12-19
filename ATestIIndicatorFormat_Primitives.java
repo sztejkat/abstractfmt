@@ -20,8 +20,8 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 		
 		w.writeType(TIndicator.TYPE_CHAR);
 		w.writeChar('c');
-		w.writeFlush(TIndicator.FLUSH_CHAR);		
-		
+		w.writeFlush(TIndicator.FLUSH_CHAR);
+			
 		w.writeType(TIndicator.TYPE_SHORT);
 		w.writeShort((short)8888);
 		w.writeFlush(TIndicator.FLUSH_SHORT);
@@ -51,7 +51,7 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 		Assume.assumeTrue("must be described",p.write.isDescribed());
 		Assume.assumeTrue("must be flushing",p.write.isFlushing());
 		writeTypesAndFlushes(p.write);		
-		p.write.flush();		
+		p.write.close();		
 		
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BOOLEAN);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
@@ -109,7 +109,7 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 		Assume.assumeTrue("must be described",p.write.isDescribed());
 		Assume.assumeTrue("must be not flushing",!p.write.isFlushing());
 		writeTypesAndFlushes(p.write);		
-		p.write.flush();		
+		p.write.close();		
 		
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BOOLEAN);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
@@ -156,7 +156,7 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 		Pair p = create();
 		Assume.assumeTrue("must be not described",!p.write.isDescribed());
 		writeTypesAndFlushes(p.write);		
-		p.write.flush();		
+		p.write.close();		
 		
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		Assert.assertTrue(p.read.readBoolean()==false);
@@ -198,7 +198,7 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 		/* Test if layer properly report unexpected end-of-file if there is no data */
 		Pair p = create();
 		p.write.writeBoolean(false);
-		p.write.flush();
+		p.write.close();
 		
 		p.read.readBoolean();
 		try{
@@ -215,7 +215,7 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 		/* Test if layer properly report unexpected end-of-file if there is no data */
 		Pair p = create();
 		p.write.writeByte((byte)0);
-		p.write.flush();
+		p.write.close();
 		
 		p.read.readByte();
 		try{
@@ -232,7 +232,7 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 		/* Test if layer properly report unexpected end-of-file if there is no data */
 		Pair p = create();
 		p.write.writeShort((short)0);
-		p.write.flush();
+		p.write.close();
 		
 		p.read.readShort();
 		try{
@@ -248,7 +248,7 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 		/* Test if layer properly report unexpected end-of-file if there is no data */
 		Pair p = create();
 		p.write.writeChar('v');
-		p.write.flush();
+		p.write.close();
 		
 		p.read.readChar();
 		try{
@@ -265,7 +265,7 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 		/* Test if layer properly report unexpected end-of-file if there is no data */
 		Pair p = create();
 		p.write.writeInt(0);
-		p.write.flush();
+		p.write.close();
 		
 		p.read.readInt();
 		try{
@@ -282,7 +282,7 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 		/* Test if layer properly report unexpected end-of-file if there is no data */
 		Pair p = create();
 		p.write.writeLong(0);
-		p.write.flush();
+		p.write.close();
 		
 		p.read.readLong();
 		try{
@@ -299,7 +299,7 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 		/* Test if layer properly report unexpected end-of-file if there is no data */
 		Pair p = create();
 		p.write.writeFloat(0);
-		p.write.flush();
+		p.write.close();
 		
 		p.read.readFloat();
 		try{
@@ -316,7 +316,7 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 		/* Test if layer properly report unexpected end-of-file if there is no data */
 		Pair p = create();
 		p.write.writeDouble(0);
-		p.write.flush();
+		p.write.close();
 		
 		p.read.readDouble();
 		try{

@@ -15,7 +15,7 @@ package sztejkat.abstractfmt.util;
 	This class is NOT thread safe and is intended to be used in single
 	thread to buffer and read characters, possibly interleaving those operations.
 */
-public final class CCharExchangeBuffer
+public class CCharExchangeBuffer
 {	
 		private class _Reader extends java.io.Reader
 		{

@@ -134,20 +134,24 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	
 	* *************************************************************/
 	/** Read primitive and moves cursor at the element after it.
-		<p>
-		In undescribed ({@link #isDescribed}==false) streams it can be:
-		<ul>
-			<li>data - in such case {@link #getIndicator} returns
-			{@link TIndicator#DATA};</li>
-			<li>an indicator with {@link TIndicator#SIGNAL} flag set;</li>
-		</ul> 
-		In described ({@link #isDescribed}==true) stream it must be an indicator:
-		<ul>
-			<li>any with {@link TIndicator#FLUSH}, if {@link #isFlushing};</li>
-			<li>an indicator with {@link TIndicator#SIGNAL} flag set;</li>
-		</ul>
-		This method may be called only if cursor is at data.
-		
+	<p>
+	In undescribed ({@link #isDescribed}==false) streams after
+	return from this method curstor can be:
+	<ul>
+		<li>data - in such case {@link #getIndicator} returns
+		{@link TIndicator#DATA};</li>
+		<li>an indicator with {@link TIndicator#SIGNAL} flag set;</li>
+	</ul> 
+	In described ({@link #isDescribed}==true) stream 
+	after return from this method curstor must be at an indicator:
+	<ul>
+		<li>with {@link TIndicator#FLUSH}, if {@link #isFlushing} or;</li>
+		<li>with {@link TIndicator#SIGNAL} flag set if not {@link #isFlushing};</li>
+	</ul>
+	This method may be called only if cursor is at data and this condition must
+	be validated by calling {@link #getIndicator} prior to calling this method.
+	
+	@throws ENoMoreData if reached indicator inside a single element.	
 	@throws EUnexpectedEof if there is not enough data physically in stream to complete
 		read.
 	@throws ECorruptedFormat if could initialize operation, but
@@ -158,20 +162,23 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	/**
 	Reads part of block, moves cursor.
 	<p>
-	In undescribed ({@link #isDescribed}==false) streams it can be:
+	In undescribed ({@link #isDescribed}==false) streams after
+	return from this method curstor can be:
 	<ul>
 		<li>data - in such case {@link #getIndicator} returns
 		{@link TIndicator#DATA};</li>
 		<li>an indicator with {@link TIndicator#SIGNAL} flag set;</li>
 	</ul> 
-	In described ({@link #isDescribed}==true) stream it must be an indicator:
+	In described ({@link #isDescribed}==true) stream 
+	after return from this method curstor must be at:
 	<ul>
 		<li>data - if some data remains un-read. In such case {@link #getIndicator} returns
 		{@link TIndicator#DATA};</li>
-		<li>any with {@link TIndicator#FLUSH}, if {@link #isFlushing};</li>
-		<li>an indicator with {@link TIndicator#SIGNAL} flag set;</li>
+		<li> an indicator with {@link TIndicator#FLUSH}, if {@link #isFlushing} or;</li>
+		<li> an indicator with {@link TIndicator#SIGNAL} flag set if not {@link #isFlushing};</li>
 	</ul>
-	This method may be called only if cursor is at data.
+	This method may be called only if cursor is at data and this condition must
+	be validated by calling {@link #getIndicator} prior to calling this method.
 	<p>
 	Reading blocks from indicator streams should be done in a sequence
 	of calls of block reads of the same type and this sequence
@@ -184,7 +191,8 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	@return number of read elements. Partial read can be returned only 
 			if at an attempt to read an item the cursor was at an indicator. 
 		
-	@throws EUnexpectedEof if there is not enough data physically in stream.
+	@throws EUnexpectedEof if there is not enough data physically in stream
+		to complete operation for a single element.
 	@throws ECorruptedFormat if could initialize operation, but
 		reached the indicator inside a single element read, ie. between bytes
 		if an interger.	In such case the indicator must be available 
