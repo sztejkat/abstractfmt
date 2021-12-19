@@ -28,6 +28,7 @@ public class CXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormat
 		{@link CXMLSettings#ROOT_ELEMENT} then 
 		{@link #open} will open this element it and {@link #close}
 		will close it (if opened).
+		<br>
 		If those settings carry prolog it also will be written in open.
 	@param is_described true to write primitive type description data.
 	*/

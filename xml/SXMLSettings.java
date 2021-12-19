@@ -83,7 +83,7 @@ public abstract class SXMLSettings
 			*/
 			public static final CXMLSettings LONG_FULL_UTF8 = new CXMLSettings(
 											LONG_BARE,//CXMLSettings copy_from,
-				 							"<?xml version=\"1.0\" encoding=\"UTF-8\"?> <?sztejkat.abstractfmt.xml variant=\"long\">",// String PROLOG,
+				 							"<?xml version=\"1.0\" encoding=\"UTF-8\"?> <?sztejkat.abstractfmt.xml variant=\"long\"?>",// String PROLOG,
 				 							"root" //String ROOT_ELEMENT
 				 							);				
 

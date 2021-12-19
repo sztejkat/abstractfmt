@@ -153,7 +153,7 @@ public class CXMLSettings
 		 this.max_length_cache = 
 		 		Math.max(EVENT.length(),
 				Math.max(SIGNAL_NAME_ATTR.length(),   
-				Math.max(ROOT_ELEMENT.length(),
+				Math.max(ROOT_ELEMENT==null ? 0 : ROOT_ELEMENT.length(),
 				Math.max(BOOLEAN_ELEMENT.length(),
 				Math.max(BYTE_ELEMENT.length(),
 				Math.max(CHAR_ELEMENT.length(),

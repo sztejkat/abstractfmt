@@ -4,10 +4,10 @@ import sztejkat.abstractfmt.util.CCharExchangeBuffer;
 import java.io.IOException;
 
 /**
-	Tests for primitives inter-exchange using {@link SXMLSettings#LONG_BARE} XML format
-	without type information. 
+	Tests for primitives inter-exchange using {@link SXMLSettings#BARE} XML format
+	with type information. 
 */
-public class TestXMLFormat_Primitives extends ATestIIndicatorFormat_Primitives
+public class TestXMLFormat_D_Primitives extends ATestIIndicatorFormat_Primitives
 {
 	@Override protected Pair create()
 	{
@@ -18,7 +18,7 @@ public class TestXMLFormat_Primitives extends ATestIIndicatorFormat_Primitives
 										media.getWriter(),//Writer out,
 								    	null,//Charset charset,
 								    	SXMLSettings.LONG_BARE,//CXMLSettings settings,
-								    	false //boolean is_described
+								    	true //boolean is_described
 										)
 										{
 											protected void closeOnce()throws IOException
@@ -31,7 +31,7 @@ public class TestXMLFormat_Primitives extends ATestIIndicatorFormat_Primitives
 										media.getReader(),//final Reader input,
 								   		SXMLSettings.LONG_BARE, //final CXMLSettings settings,
 								   		1000,//final int maximum_idle_characters,
-								   		false//boolean is_described
+								   		true//boolean is_described
 										)
 					);
 	};

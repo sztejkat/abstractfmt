@@ -8,6 +8,7 @@ import sztejkat.abstractfmt.EFormatBoundaryExceeded;
 import sztejkat.abstractfmt.ECorruptedFormat;
 import sztejkat.abstractfmt.EBrokenFormat;
 import sztejkat.abstractfmt.EDataMissmatch;
+import sztejkat.abstractfmt.ENoMoreData;
 import java.io.*;
 import java.util.ArrayList;
 
@@ -59,7 +60,9 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 				by providing XML with infinite comment, processing
 				or skippable characters.*/
 				private final int maximum_idle_characters;
-			
+				/** Value incremented by any skipping routine
+				and clared if data are picked */
+				private int skipped_idle_character;
 				/* ***********************************************
 				
 						State
@@ -74,6 +77,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 				private TIndicator indicator_cache;
 				/** Cache for {@link #getSignalName} */
 				private String signal_name_cache;
+				
 				/** State representing stream which is ready for action
 				and processing of any indicator or data */
 				private static final byte STATE_RDY = (byte)0;
@@ -86,6 +90,9 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 				private static final byte STATE_ROOT_CLOSED = (byte)2;
 				/** State variable */
 				private byte state;
+				/** Stream definition has root element, but root element
+				was not read */
+				private static final byte STATE_ROOT_PENDING = (byte)3;
 				
 	/** Creates 
 	@param settings XML settings to use
@@ -114,7 +121,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		this.token_buffer = new CBoundAppendable(Math.max(1024,settings.getMaximumTokenLength()));
 		//pre-allocate some stack
 		this.xml_elements_stack = new ArrayList<String>(32);//same as write format, just for symetry.
-		this.state = STATE_RDY;
+		this.state = settings.ROOT_ELEMENT==null ? STATE_RDY : STATE_ROOT_PENDING;
 	};
 	/* ************************************************************
 	
@@ -158,16 +165,30 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	* *************************************************************************/
 	/** Validates if stream is readable.
 	Stream is not readbale if closed or if root element is closed.
+	This method also validates if root element was read and attempts
+	to silently fetch it.
 	@throws EClosed if closed
 	@throws EUnexpectedEof if root element is closed 
 	*/
 	protected void validateReadable()throws IOException
 	{
+	 System.out.println("validateReadable state="+state);
 		switch(state)
 		{
 			case STATE_RDY: break;
 			case STATE_CLOSED: throw new EClosed();
-			case STATE_ROOT_CLOSED: throw new EUnexpectedEof("root "+settings.ROOT_ELEMENT+" XML element is closed, can't read anymore.");
+			case STATE_ROOT_CLOSED: throw new EUnexpectedEof("root <"+settings.ROOT_ELEMENT+"> XML element is closed, can't read anymore.");
+			case STATE_ROOT_PENDING:
+			  System.out.println("validateReadable --> pending");
+					//This is a state in which root element was not read, but 
+					//an operation was requested.
+					//Usually root is silently picked up by getIndicator, both closing and opening.
+					assert(settings.ROOT_ELEMENT!=null);
+					getIndicator();
+					if (!xml_elements_stack.contains(settings.ROOT_ELEMENT))
+						throw new EBrokenFormat("root element <"+settings.ROOT_ELEMENT+"> required, but not found");
+					state =  STATE_RDY;
+					break;
 		};
 	};
 	
@@ -215,7 +236,6 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		  indicator 
 		*/		
 		if (indicator_cache!=null) return indicator_cache;		
-		int skipped = 0;
 		loop:
 		for(;;)
 		{
@@ -239,6 +259,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 							{ 
 								//cache value for later use.
 								indicator_cache = i;
+								skipped_idle_character=0;
 								return i;
 							}else							
 								break; 
@@ -249,7 +270,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 				default : 						
 						if (Character.isWhitespace(c))
 						{
-							if (skipped==maximum_idle_characters) 
+							if (skipped_idle_character==maximum_idle_characters) 
 								throw new EFormatBoundaryExceeded("Too many skippable white spaces, possible Denial Of Service attack?");
 							//When cursor is at white space, this white-space
 							//is skippable or is a part of data block. We may
@@ -278,7 +299,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 									//but current might be not, because it may be a part of character 
 									//block followed by letter.
 									unread(c);
-									skipped++;	//to capture too many skips.
+									skipped_idle_character++;	//to capture too many skips.
 									continue loop;
 								}else
 								{
@@ -287,6 +308,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 									unread(c);
 									unread(' ');	//<-- fixed white-space conversion according to XML specs.
 									indicator_cache=TIndicator.DATA; 
+									skipped_idle_character=0;
 									return TIndicator.DATA; 
 								}
 							}
@@ -295,6 +317,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 							//this is a simple condition
 							unread(c);
 							indicator_cache=TIndicator.DATA;
+							skipped_idle_character=0;
 							return TIndicator.DATA;
 						}
 			}
@@ -315,7 +338,6 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		{
 			//Now if we are inside data we should be able scan to next
 			// < regardles of what is there.
-			int skipped = 0;
 			for(;;)
 			{
 				int c = read();
@@ -329,12 +351,12 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 				//we do reset skip counter at each non-white-space.
 				if (!Character.isWhitespace(c))
 				{
-					 skipped=0;
+					 skipped_idle_character=0;
 				}else
 				{
-					skipped++;
-					if (skipped ==maximum_idle_characters)
+					if (skipped_idle_character ==maximum_idle_characters)
 						throw new EFormatBoundaryExceeded("Too many idle characters to skip. Possible DoS attack?");
+					skipped_idle_character++;
 				}
 			}
 		}
@@ -470,9 +492,9 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		}else
 		if (b.equalsString(settings.FLOAT_ELEMENT))
 		{
-			validateNoAttributes(settings.DOUBLE_ELEMENT);
-			xml_elements_stack.add(settings.DOUBLE_ELEMENT);
-			return TIndicator.TYPE_DOUBLE;
+			validateNoAttributes(settings.FLOAT_ELEMENT);
+			xml_elements_stack.add(settings.FLOAT_ELEMENT);
+			return TIndicator.TYPE_FLOAT;
 		}else
 		if (b.equalsString(settings.DOUBLE_ELEMENT))
 		{
@@ -715,7 +737,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		}else
 		if (closed.equals(settings.FLOAT_ELEMENT))
 		{
-			return TIndicator.FLUSH_DOUBLE;
+			return TIndicator.FLUSH_FLOAT;
 		}else
 		if (closed.equals(settings.DOUBLE_ELEMENT))
 		{
@@ -775,7 +797,6 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		c = read();
 		if (c!='-')  { unread(c);unread('-');unread('!');  return false; };
 		//Now skip comment, testing maximum_idle_characters limit.
-		int skipped = 0;
 		for(;;)
 		{
 			c = read();
@@ -790,14 +811,14 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 				}
 			};
 			//just skip it.
-			if (skipped==maximum_idle_characters)
+			if (skipped_idle_character==maximum_idle_characters)
 					throw new EFormatBoundaryExceeded("XML comment too long, possible Denial Of Service attack?");			
-			skipped++;
+			skipped_idle_character++;
 		}
 	};
 	/** Invoked after &gt; was read from stream to check,
 	if it is a processing instruction  tag and eventually skip it.
-	@return true if processed it, false if it was not a processing tag.
+	@return true if processed it, false if it was not a comment.
 			If false stream cursor is not moved.
 	@throws IOException if failed
 	*/
@@ -807,7 +828,6 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		char c=read();
 		if (c!='?') { unread(c); return false; };
 		//Now skip processing command, testing maximum_idle_characters limit.
-		int skipped = 0;
 		for(;;)
 		{
 			c = read();
@@ -818,34 +838,101 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 				if (c=='>') return true;
 			};
 			//just skip it.
-			if ((maximum_idle_characters>=0)&&(skipped==maximum_idle_characters))
+			if (skipped_idle_character==maximum_idle_characters)
 					throw new EFormatBoundaryExceeded("XML processig block too long, possible Denial Of Service attack?");			
-			skipped++;
+			skipped_idle_character++;
 		}
 	};
 	
-	
+	/** This method is running a closing "root" element handling as
+	a counterpart for {@link #validateReadable}. It should be called
+	in every place where primitive element reached &lt;
+	<p>
+	Validates if it is not closing root tag.
+	@throws ENoMoreData if it was non-root tag or
+	@throws EUnexpectedEof it is was a closing root tag.
+	*/
+	private void checkRootOnNoMoreData()throws IOException
+	{
+		if (settings.ROOT_ELEMENT==null) throw new ENoMoreData();
+		
+		//Root defined, must be checked.
+		char c = read();
+		assert(c=='<');	//this is pre-condition
+		char c = read();
+		if (c!='/')
+		{
+			//not closing so not a root.
+			unread(c); unread('<'); throw new ENoMoreData();
+		};
+		String root = settings.ROOT_ELEMENT;
+		//now it may be a root tag?
+		for(int i=0, n = root.length(); i<n; i++)
+		{
+			char c = read();
+			if (c!=root.charAt(i))
+			{
+				//not a root.
+				unread(c);
+				while(i>0)
+				{
+					unread(root.charAt(i--));
+				};
+				unread('/');
+				unread('<');
+				throw new ENoMoreData();
+			};
+		};
+		c = read();
+		if ((c=='>')||(Character.isWhitespace(c)))
+		{
+			//we have root tag.
+			state = STATE_ROOT_CLOSED;
+			throw new EUnexpectedEof("</"+root+"> reached"); 
+		}else
+		{
+			//have to un-read.
+			unread(c);
+			unread(root);
+			unread('/');
+			unread('<');
+			throw new ENoMoreData();
+		}
+	};
 	
 	/** Skips skippable white-spaces which may be present in front of
-	of primitive elements or between them.
+	of primitive elements or between them and eventuall comments.
 	@throws IOException if failed at low level
 	@throws EFormatBoundaryExceeded if there were too many spaces.
 	*/
-	private void skipWhiteSpaces()throws IOException,EFormatBoundaryExceeded
+	private void skipWhitespacesAndComments()throws IOException,EFormatBoundaryExceeded
 	{
-		int skipped = 0;
+		System.out.println("skipWhitespacesAndComments ENTER");
 		int ci;
 		char c;
-		do{
-			//remember about limiting.
-			if (skipped==maximum_idle_characters)
-				throw new EFormatBoundaryExceeded("Too many whitespaces to skip possible Denial Of Service attack?");
-			ci = tryRead();
-			if (ci==-1) return;
-			c = (char)ci;
-			skipped++;									
-		 }while(Character.isWhitespace(c));
-		 unread(c);
+		for(;;)
+		{
+			do{
+				//remember about limiting.
+				if (skipped_idle_character==maximum_idle_characters)
+					throw new EFormatBoundaryExceeded("Too many whitespaces to skip possible Denial Of Service attack?");
+				ci = tryRead();
+				if (ci==-1) return;
+				c = (char)ci;
+				skipped_idle_character++;									
+			 }while(Character.isWhitespace(c));
+			 if (c=='<')
+			 {
+			 	//need to skip comments or processing tags, accumulating
+			 	//count of skipped elements to avoid DoS attack by 
+			 	//interlaved comments.
+			 	if (tryCommentTag()) { System.out.println("skipWhitespacesAndComments had comment");continue;}
+			 	if (tryProcessingTag()) {System.out.println("skipWhitespacesAndComments had processing");continue;};
+			 }
+			 unread(c);
+			 System.out.println("skipWhitespacesAndComments LEAVE, due to "+c);
+			 return;
+		 }
 	};
 	
 	/* -------------------------------------------------		
@@ -863,7 +950,8 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	protected CBoundAppendable fetchNumericPrimitive(String allowedCharacters, int max_length)throws IOException
 	{
 		assert(token_buffer.capacity()>=max_length);
-		skipWhiteSpaces();	//skip leading white-spaces
+		System.out.println("fetchNumericPrimitive ENTER");
+		skipWhitespacesAndComments();	//skip leading white-spaces
 		token_buffer.reset();
 		final char separator = settings.PRIMITIVE_SEPARATOR;
 		loop:
@@ -885,12 +973,15 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 			//ok, accumulate.
 			token_buffer.append(c);
 		};
+		skipped_idle_character =0;	//because we break empty sequence.
+		System.out.println("fetchNumericPrimitive =\""+token_buffer+"\" LEAVE");
 		return token_buffer;
 	};
 	@Override public boolean readBoolean()throws IOException
 	{
 		validateReadable();
 		CBoundAppendable b = fetchNumericPrimitive("tTfF01",1);
+		if (b.length()==0) throw new ENoMoreData();
 		switch(b.charAt(0))
 		{
 			case 't':
@@ -907,6 +998,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	{
 		validateReadable();
 		CBoundAppendable b = fetchNumericPrimitive("-0123456789",1);
+		if (b.length()==0) throw new ENoMoreData();
 		String s = b.toString();
 		try{
 			return Byte.parseByte(s);
@@ -915,6 +1007,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	@Override public char readChar()throws IOException
 	{
 		validateReadable();
+		if (peek()=='<') throw new ENoMoreData();
 		int ci = readEscaped();
 		char c =(char)( (ci<0) ? (-ci-1) : ci );
 		//now poll for next character		
@@ -927,6 +1020,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	{
 		validateReadable();
 		CBoundAppendable b = fetchNumericPrimitive("-0123456789",6);
+		if (b.length()==0) throw new ENoMoreData();
 		String s = b.toString();
 		try{
 			return Short.parseShort(s);
@@ -936,6 +1030,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	{
 		validateReadable();
 		CBoundAppendable b = fetchNumericPrimitive("-0123456789",12);
+		if (b.length()==0) throw new ENoMoreData();
 		String s = b.toString();
 		try{
 			return Integer.parseInt(s);
@@ -945,6 +1040,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	{
 		validateReadable();
 		CBoundAppendable b = fetchNumericPrimitive("-0123456789",21);
+		if (b.length()==0) throw new ENoMoreData();
 		String s = b.toString();
 		try{
 			return Long.parseLong(s);
@@ -954,6 +1050,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	{
 		validateReadable();
 		CBoundAppendable b = fetchNumericPrimitive("-0123456789.eE",40);
+		if (b.length()==0) throw new ENoMoreData();
 		String s = b.toString();
 		try{
 			return Float.parseFloat(s);
@@ -963,6 +1060,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	{
 		validateReadable();
 		CBoundAppendable b = fetchNumericPrimitive("-0123456789.eE",40);
+		if (b.length()==0) throw new ENoMoreData();
 		String s = b.toString();
 		try{
 			return Double.parseDouble(s);
@@ -975,7 +1073,6 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	{
 		validateReadable();
 		//Blocks do allow skipping white-spaces in a body
-		int skipped = 0;	//counting skipped white spaces.
 		int read = 0;		//how many data were read.
 		loop:
 		while(length>0)
@@ -983,13 +1080,13 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 			char c = read();
 			if (Character.isWhitespace(c))
 			{
-				 skipped++;
-				 if (skipped==maximum_idle_characters)
+				 skipped_idle_character++;
+				 if (skipped_idle_character==maximum_idle_characters)
 				 	throw new EFormatBoundaryExceeded("Too many skippable white spaces, possible Denial Of Service attack?"); 
 				 continue;
 			}else
 			{
-				skipped=0;
+				skipped_idle_character=0;
 			}
 			boolean v;
 			switch(c)
@@ -1001,7 +1098,10 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 				case 'f':
 				case 'F':			
 				case '0': v=false; break;
-				case '<': unread(c); break loop;
+				case '<': 
+						if (tryCommentTag()) continue loop;
+			 			if (tryProcessingTag()) continue loop; 
+						unread(c); break loop;
 				default: throw new ECorruptedFormat("Invalid character \""+c+"\" in boolean block");
 			}
 			buffer[offset++]=v;
@@ -1015,7 +1115,6 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	{
 		validateReadable();
 		//Blocks do allow skipping white-spaces in a body, but only at values boundary.
-		int skipped = 0;	//counting skipped white spaces.
 		int read = 0;		//how many data were read.
 		loop:
 		while(length>0)
@@ -1023,15 +1122,21 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 			char c = read();
 			if (Character.isWhitespace(c))
 			{
-				 skipped++;
-				 if (skipped==maximum_idle_characters)
+				 skipped_idle_character++;
+				 if (skipped_idle_character==maximum_idle_characters)
 				 	throw new EFormatBoundaryExceeded("Too many skippable white spaces, possible Denial Of Service attack?"); 
 				 continue loop;
 			}else
 			{
-				skipped=0;
+				skipped_idle_character=0;
 			}
-			if (c=='<') { unread(c); break loop; };
+			if (c=='<')
+			{ 
+				if (tryCommentTag()) continue loop;
+			 	if (tryProcessingTag()) continue loop;
+				unread(c); 
+				break loop; 
+			};
 			int digit_1 = HEX2D(c);
 			if (digit_1==-1) throw new ECorruptedFormat("Invalid character \""+c+"\" in byte block");
 			c = read();	//note: no inside byte termination allowed.
@@ -1049,7 +1154,6 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	{
 		validateReadable();
 		//Blocks do allow skipping white-spaces in a body, but only at values boundary.
-		int skipped = 0;	//counting skipped white spaces.
 		int read = 0;		//how many data were read.
 		loop:
 		for(;;)
@@ -1057,15 +1161,21 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 			char c = read();
 			if (Character.isWhitespace(c))
 			{
-				 skipped++;
-				 if (skipped==maximum_idle_characters)
+				 skipped_idle_character++;
+				 if (skipped_idle_character==maximum_idle_characters)
 				 	throw new EFormatBoundaryExceeded("Too many skippable white spaces, possible Denial Of Service attack?"); 
 				 continue loop;
 			}else
 			{
-				skipped=0;
+				skipped_idle_character=0;
 			}
-			if (c=='<') { unread(c); return -1; };
+			if (c=='<')
+			{ 
+				if (tryCommentTag()) continue loop;
+			 	if (tryProcessingTag()) continue loop;
+				unread(c); 
+				return -1; 
+			};
 			int digit_1 = HEX2D(c);
 			if (digit_1==-1) throw new ECorruptedFormat("Invalid character \""+c+"\" in byte block");
 			c = read();	//note: no inside byte termination allowed.
@@ -1081,7 +1191,6 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		//Character block has a bit special white-space treatment.
 		//that is they do replace any sequence of white spaces with single
 		//d32 space.
-		int skipped = 0;	//counting skipped white spaces.
 		int read = 0;		//how many data were read.
 		loop:
 		while(length>0)
@@ -1094,27 +1203,33 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 				c =(char)ci;
 				if (Character.isWhitespace(c))
 				{
-					 if (skipped++==1)
+					 if (skipped_idle_character++==1)
 					 {
 						//This is a first whie space. We process it
 						//normally
 						c = ' ';
 					 }else
 					 {
-					 if (skipped==maximum_idle_characters)
+					 if (skipped_idle_character==maximum_idle_characters)
 						throw new EFormatBoundaryExceeded("Too many skippable white spaces, possible Denial Of Service attack?"); 
 					 continue loop;
 					 };
 				}else
 				{
-					skipped = 0;
+					skipped_idle_character = 0;
 				};
-				if (c=='<') { unread(c); break loop; };
+				if (c=='<')
+				{ 
+					if (tryCommentTag()) continue loop;
+					if (tryProcessingTag()) continue loop;
+					unread(c); 
+					break loop; 
+				};
 			}else
 			{
 				//escaped
 				c = (char)(-ci -1);
-				skipped=0;
+				skipped_idle_character=0;
 			};
 			buffer[offset++]= c;
 			length--;
@@ -1129,7 +1244,6 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		//Character block has a bit special white-space treatment.
 		//that is they do replace any sequence of white spaces with single
 		//d32 space.
-		int skipped = 0;	//counting skipped white spaces.
 		int read = 0;		//how many data were read.
 		loop:
 		while(length>0)
@@ -1142,27 +1256,33 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 				c =(char)ci;
 				if (Character.isWhitespace(c))
 				{
-					 if (skipped++==1)
+					 if (skipped_idle_character++==1)
 					 {
 						//This is a first whie space. We process it
 						//normally
 						c = ' ';
 					 }else
 					 {
-					 if (skipped==maximum_idle_characters)
+					 if (skipped_idle_character==maximum_idle_characters)
 						throw new EFormatBoundaryExceeded("Too many skippable white spaces, possible Denial Of Service attack?"); 
 					 continue loop;
 					 };
 				}else
 				{
-					skipped = 0;
+					skipped_idle_character = 0;
 				};
-				if (c=='<') { unread(c); break loop; };
+				if (c=='<')
+				{ 
+					if (tryCommentTag()) continue loop;
+					if (tryProcessingTag()) continue loop;
+					unread(c); 
+					break loop; 
+				};
 			}else
 			{
 				//escaped
 				c = (char)(-ci -1);
-				skipped=0;
+				skipped_idle_character=0;
 			};
 			buffer.append(c);
 			length--;
@@ -1179,7 +1299,6 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		//The short block is a numeric block, which is just a sequence of numeric
 		//primitives. However we can't use plain numeric primitive fetches
 		//because they fail if there is no data at all.
-		int skipped = 0;	//counting skipped white spaces.
 		int read = 0;		//how many data were read.
 		loop:
 		while(length>0)
