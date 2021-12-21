@@ -133,6 +133,23 @@ abstract class AXMLIndicatorWriteFormatBase extends AXMLFormat
 	*/
 	protected void writeEscapedChar(char character)throws IOException
 	{
+		writeEscapedChar(character, false);
+	};
+	/** Unconditionally escapes <code>character</code>
+	as described in  <A href="doc-files/xml-syntax.html">syntax definition</a>
+	by writing {@link CXMLSettings#ESCAPE_CHARACTER}, up to four upper case hext digits
+	and {@link CXMLSettings#ESCAPE_END_CHARACTER}, or, if <code>character</code>
+	is escape char by <code>escape,escape,end_escape;</code>. Alternatively
+	if character can be escape with standard &amp;xxx; escape it is preferred.
+	@param ommit_escape_end_character if true the traling escape character
+		is ommited in hex escapes (but remains in standard AMP escapes to 
+		be fully XML compatible). Set this to true if writing a single, elementary
+		character primitive in described stream. 
+	@param character what to escape
+	@throws IOException if Appendable failed.
+	*/
+	protected void writeEscapedChar(char character, boolean ommit_escape_end_character)throws IOException
+	{
 		//Check if standard or custom escape?
 		String amp_escape = getStandardAmpEscape(character);
 		if (amp_escape!=null)
@@ -159,7 +176,7 @@ abstract class AXMLIndicatorWriteFormatBase extends AXMLFormat
 				if (d1!='0'){ o.write(d1); }
 				o.write(d0);
 			};
-			o.write(settings.ESCAPE_END_CHARACTER);
+			if (!ommit_escape_end_character) o.write(settings.ESCAPE_END_CHARACTER);
 		};
 	};
 	

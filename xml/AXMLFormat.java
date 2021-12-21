@@ -152,7 +152,7 @@ abstract class AXMLFormat
 		//it must be in XML charset.
 		if (!isValidXMLCharacter(c)) return false;
 		//first check if it is an escape char
-		if (c==settings.ESCAPE_END_CHARACTER) return false;
+		if (c==settings.ESCAPE_CHARACTER) return false;
 		//standard XML elements which needs to be escaped.
 		//This must include < >	
 		if (isStandardAmpEscapeChar(c)) return false;

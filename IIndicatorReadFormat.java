@@ -150,6 +150,7 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	</ul>
 	This method may be called only if cursor is at data and this condition must
 	be validated by calling {@link #getIndicator} prior to calling this method.
+	If this method is called without checking indicator the effect may be unpredictable.
 	
 	@throws ENoMoreData if reached indicator inside a single element.	
 	@throws EUnexpectedEof if there is not enough data physically in stream to complete
@@ -179,6 +180,7 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	</ul>
 	This method may be called only if cursor is at data and this condition must
 	be validated by calling {@link #getIndicator} prior to calling this method.
+	If this method is called without checking indicator the effect may be unpredictable.
 	<p>
 	Reading blocks from indicator streams should be done in a sequence
 	of calls of block reads of the same type and this sequence

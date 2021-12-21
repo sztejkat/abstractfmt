@@ -240,12 +240,19 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 	@Override public void writeChar(char v)throws IOException
 	{
 		startElementaryPrimitive();
-		if ((v==settings.PRIMITIVE_SEPARATOR)||(!isValidUnescapedTextChar(v)))
+		if (((v==settings.PRIMITIVE_SEPARATOR)&&(!isDescribed()))||(!isValidUnescapedTextChar(v)))
 		{
-			writeEscapedChar(v);
-			//now detect if we can optimize out pending sequence terminator.
-			if (settings.ESCAPE_END_CHARACTER!=settings.PRIMITIVE_SEPARATOR)
+			if (isDescribed())
+			{
+				//Even more optimization in described mode.
+				writeEscapedChar(v,true);
+			}else
+			{
+				writeEscapedChar(v);
+				//now detect if we can optimize out pending sequence terminator.
+				if (settings.ESCAPE_END_CHARACTER!=settings.PRIMITIVE_SEPARATOR)
 													endElementaryPrimitive();
+			};
 		}
 		else
 		{

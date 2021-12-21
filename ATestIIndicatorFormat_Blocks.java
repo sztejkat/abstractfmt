@@ -163,13 +163,17 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		for(int i=0;i<16;i++)
-		{
+		{   
+			//Note: API requires that cursor is tested before each call.   
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 			Assert.assertTrue(p.read.readByteBlock()!=-1);
 		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//run all, trigger partial read.
 		for(int i=0;i<64-16;i++)
 		{
+			//Note: API requires that cursor is tested before each call.
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 			Assert.assertTrue(p.read.readByteBlock()!=-1);
 		};
 		//Should be getting end indicator and calls should be not allowed, but 

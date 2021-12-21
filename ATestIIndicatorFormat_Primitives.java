@@ -192,138 +192,23 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 	
 	
 	
-	@Test public void testEUnexpectedEof_boolean()throws IOException
+	@Test public void testEUnexpectedEof()throws IOException
 	{
 		enter();
-		/* Test if layer properly report unexpected end-of-file if there is no data */
+		/* Test if layer properly report unexpected end-of-file if there is no data.
+		
+			Notice, since contract requires that getIndicator is called 
+			before any primitive read and primitive read is required to
+			be called only when curstor is at data we may not expect
+			primitive reads to behave in a consitent way on eof.
+		
+		 */
 		Pair p = create();
 		p.write.writeBoolean(false);
 		p.write.close();
-		
+		p.read.getIndicator();
 		p.read.readBoolean();
-		try{
-			p.read.readBoolean();
-			Assert.fail();
-		}catch(EUnexpectedEof ex){};
-		
-		leave();
-	};
-	
-	@Test public void testEUnexpectedEof_byte()throws IOException
-	{
-		enter();
-		/* Test if layer properly report unexpected end-of-file if there is no data */
-		Pair p = create();
-		p.write.writeByte((byte)0);
-		p.write.close();
-		
-		p.read.readByte();
-		try{
-			p.read.readByte();
-			Assert.fail();
-		}catch(EUnexpectedEof ex){};
-		
-		leave();
-	};
-	
-	@Test public void testEUnexpectedEof_short()throws IOException
-	{
-		enter();
-		/* Test if layer properly report unexpected end-of-file if there is no data */
-		Pair p = create();
-		p.write.writeShort((short)0);
-		p.write.close();
-		
-		p.read.readShort();
-		try{
-			p.read.readShort();
-			Assert.fail();
-		}catch(EUnexpectedEof ex){};
-		
-		leave();		
-	};
-	@Test public void testEUnexpectedEof_char()throws IOException
-	{
-		enter();
-		/* Test if layer properly report unexpected end-of-file if there is no data */
-		Pair p = create();
-		p.write.writeChar('v');
-		p.write.close();
-		
-		p.read.readChar();
-		try{
-			p.read.readChar();
-			Assert.fail();
-		}catch(EUnexpectedEof ex){};
-		
-		leave();
-	};
-	
-	@Test public void testEUnexpectedEof_int()throws IOException
-	{
-		enter();
-		/* Test if layer properly report unexpected end-of-file if there is no data */
-		Pair p = create();
-		p.write.writeInt(0);
-		p.write.close();
-		
-		p.read.readInt();
-		try{
-			p.read.readInt();
-			Assert.fail();
-		}catch(EUnexpectedEof ex){};
-		
-		leave();
-	};
-	
-	@Test public void testEUnexpectedEof_long()throws IOException
-	{
-		enter();
-		/* Test if layer properly report unexpected end-of-file if there is no data */
-		Pair p = create();
-		p.write.writeLong(0);
-		p.write.close();
-		
-		p.read.readLong();
-		try{
-			p.read.readLong();
-			Assert.fail();
-		}catch(EUnexpectedEof ex){};
-		
-		leave();
-	};
-	
-	@Test public void testEUnexpectedEof_float()throws IOException
-	{
-		enter();
-		/* Test if layer properly report unexpected end-of-file if there is no data */
-		Pair p = create();
-		p.write.writeFloat(0);
-		p.write.close();
-		
-		p.read.readFloat();
-		try{
-			p.read.readFloat();
-			Assert.fail();
-		}catch(EUnexpectedEof ex){};
-		
-		leave();
-	};
-	
-	@Test public void testEUnexpectedEof_double()throws IOException
-	{
-		enter();
-		/* Test if layer properly report unexpected end-of-file if there is no data */
-		Pair p = create();
-		p.write.writeDouble(0);
-		p.write.close();
-		
-		p.read.readDouble();
-		try{
-			p.read.readDouble();
-			Assert.fail();
-		}catch(EUnexpectedEof ex){};
-		
+		Assert.assertTrue(p.read.getIndicator()==TIndicator.EOF);
 		leave();
 	};
 	
