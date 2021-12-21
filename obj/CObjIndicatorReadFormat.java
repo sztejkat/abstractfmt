@@ -29,6 +29,9 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 			processes block on {@link #media} */
 			private int array_op_ptr;			
 			
+			/** Used to validate if primitive read methods are called in 
+			correct conditions. */
+			private TIndicator recent_indicator; 
 			
 		/** Creates
 		@param media non null media to read from
@@ -85,6 +88,7 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 				//have to invalidate signal info
 				this.signal_name=null;	
 				this.signal_number=-1;
+				recent_indicator = TIndicator.EOF; 
 				return TIndicator.EOF;
 			};
 			Object at_cursor = media.getFirst();
@@ -134,12 +138,14 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 					//have to invalidate signal info
 					this.signal_name=null;
 				};
+				recent_indicator = indicator;
 				return indicator;
 			}else
 			{
 				//have to invalidate signal info
 				this.signal_name=null;
 				this.signal_number=-1;
+				recent_indicator = TIndicator.DATA;
 				return TIndicator.DATA;
 			}			
 		};
@@ -148,6 +154,7 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 			this.signal_data_valid=false;	//<-- do not invalidate cache,
 										//but make sure it is refreshed from
 										//signal.
+			recent_indicator = null;
 			if (media.isEmpty()) throw new EUnexpectedEof();
 			//check what are we skipping?
 			Object at_cursor = media.removeFirst();
@@ -201,6 +208,8 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 			if (media.isEmpty()) throw new EUnexpectedEof();			
 			Object at_cursor = media.getFirst();
 			if (at_cursor instanceof TIndicator) throw new AssertionError("at_cursor="+at_cursor);
+			if (recent_indicator!=TIndicator.DATA) throw new AssertionError("getIndicator() has to be used to validate cursor position");
+			recent_indicator=null;
 		};
 		public boolean readBoolean()throws IOException
 		{
