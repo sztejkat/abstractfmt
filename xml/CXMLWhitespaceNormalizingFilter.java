@@ -36,47 +36,61 @@ class CXMLWhitespaceNormalizingFilter extends AAdaptiveFilterReader
 			  the whitespace is removed
 			4.If there is a whitespace after right after
 			 the whitespace, the whitespace is removed
+			 
+			Note:
+			
+			We should not return with an empty
+			fill buffer, because it will create numerous fragmented
+			reads by generating numerous fake EOF in upper level
+			class which returns eof if fill() returns empty.
+			
+			On the other hand we can't fetch ahead too much, so
+			we spin until we read at least one character or input
+			returns eof.
 		*/
-		int ci = in.read();
-		if (ci==-1) return;
-		char c = (char)ci;
-		switch(state)
+		for(;;)
 		{
-			case STATE_CHAR:
-					if (c=='>')
-					{
-						state = STATE_TAG;
+			int ci = in.read();
+			if (ci==-1) return;
+			char c = (char)ci;
+			switch(state)
+			{
+				case STATE_CHAR:
+						if (c=='>')
+						{
+							state = STATE_TAG;
+							write(c);
+							return;
+						};
+						if (Character.isWhitespace(c))
+						{
+							state = STATE_WHITESPACE;
+							continue;
+						}
 						write(c);
-						return;
-					};
-					if (Character.isWhitespace(c))
-					{
-						state = STATE_WHITESPACE;
-						return;
-					}
-					write(c);
-					break;
-			case STATE_WHITESPACE:
-					if ((c=='<')||(c=='>'))
-					{
+						break;
+				case STATE_WHITESPACE:
+						if ((c=='<')||(c=='>'))
+						{
+							state = STATE_CHAR;
+							write(c);
+							return;
+						};
+						if (Character.isWhitespace(c)) return;
+						//write pending white space
+						write(' ');
+						write(c);
+						state = STATE_CHAR;
+						break;
+				case STATE_TAG:
+						if (Character.isWhitespace(c))
+						{
+							 continue;
+						};
 						state = STATE_CHAR;
 						write(c);
-						return;
-					};
-					if (Character.isWhitespace(c)) return;
-					//write pending white space
-					write(' ');
-					write(c);
-					state = STATE_CHAR;
-					break;
-			case STATE_TAG:
-					if (Character.isWhitespace(c))
-					{
-						 return;
-					};
-					state = STATE_CHAR;
-					write(c);
-					break;
+						break;
+			}
 		}
 	};
 	@Override public void close()throws IOException

@@ -1,16 +1,20 @@
 package sztejkat.abstractfmt.xml;
 import sztejkat.abstractfmt.util.CAdaptivePushBackReader;
+import sztejkat.abstractfmt.util.CBoundAppendable;
 import sztejkat.abstractfmt.EBrokenFormat;
 import sztejkat.abstractfmt.EUnexpectedEof;
 import java.io.IOException;
 import java.io.Reader;
 
 /**
-	XML reader with characters deconding capaibilities.
+	XML reader with characters decoding capaibilities.
+	<p>
+	NOT thread safe.
 */
 class CDecodingXMLReader extends CAdaptivePushBackReader
 {	
 				private final CXMLSettings settings;
+				private final CBoundAppendable escape_completion_buffer;
 	/** 
 	Creates	
 	@param in source to read from
@@ -23,6 +27,7 @@ class CDecodingXMLReader extends CAdaptivePushBackReader
 		super(in, initial_size, size_increment);
 		assert(settings!=null);
 		this.settings=settings;
+		this.escape_completion_buffer= new CBoundAppendable(settings.getMaxAmpEscapeLength());
 	};
 	/* -------------------------------------------------------------------
 	
@@ -104,7 +109,12 @@ class CDecodingXMLReader extends CAdaptivePushBackReader
 						int nibble = HEX2D(digit);
 						if (nibble==-1)
 						{
-							if (digit!=end_esc) unread(digit);	//non-consumable end.
+							if (digit!=end_esc)
+							{
+								//Non-consumable end can be only the < 
+								if (digit!='<')  throw new EBrokenFormat("Found in character escape sequence "+digit+" but either "+end_esc+" or < are expected");
+								unread(digit);	//non-consumable end.
+							};
 							return -unescaped-1;
 						}
 						{	//and it should be a digit.
@@ -118,28 +128,32 @@ class CDecodingXMLReader extends CAdaptivePushBackReader
 		if (c=='&')	//standard XML escape.
 		{
 				String [] escapes  = settings.AMP_XML_ESCAPES;
-				int at = 1;
+				escape_completion_buffer.reset();
+				escape_completion_buffer.append('&');
 				characters_fetching:
 				for(;;)
 				{
 					c = readChar();
+					escape_completion_buffer.append(c);
 					for(int i=escapes.length;--i>=0;)
 					{
 						String s = escapes[i];
-						if (s.length()<=at) continue;	//too short, can't match.
-						if (s.charAt(at)==c)
+						switch(escape_completion_buffer.isStartOf(s))
 						{
-							//Surely starts with, so either equal or begins with.
-							at++;	// next comparison must be with next character.
-							if (s.length()==at+1)
-							{	
-								//found match.
-								return -settings.AMP_XML_ESCAPED_CHAR[i]-1;
-							}else
-								continue characters_fetching;
+							case -1:	break;//does not.
+							case  0: //starts, but not equals.
+							 	//Note: theoretically this is incorrect, if
+							 	//we would compare generic strings. But in this
+							 	//specific case we compare strings which ends with
+							 	//a very specific terminator (;) so it is fine.
+							 	continue characters_fetching;
+							 case 1: //equals
+							 	return -settings.AMP_XML_ESCAPED_CHAR[i]-1;
+							 default: throw new AssertionError();
 						}
 					}	
-					throw new EBrokenFormat("Uknown &xx; escape");
+					//None did capture partial match
+					throw new EBrokenFormat("Uknown "+escape_completion_buffer+" amp escape");
 				}
 		}else
 			return c;

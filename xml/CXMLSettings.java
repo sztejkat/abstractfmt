@@ -262,6 +262,18 @@ public class CXMLSettings
 	{
 		return max_length_cache;
 	};
+	/** Maximum length of string kept in {@link #AMP_XML_ESCAPES}
+	@return length */
+	public int getMaxAmpEscapeLength()
+	{
+		int L = 0;
+		for(String S: AMP_XML_ESCAPES)
+		{
+			int l = S.length();
+			if (l>L) L=l; 
+		};
+		return L;
+	};
 	/** Retrives element selected by indicator
 	@param indicator with either {@link TIndicator#TYPE}
 		or {@link TIndicator#FLUSH} set.

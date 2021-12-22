@@ -345,7 +345,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		if (!isValidStartingTagChar(c)) throw new EBrokenFormat("\""+c+"\" is not a valid first character in XML tag");
 		token_buffer.append(c);
 		for(;;)
-		{
+		{			
 			c = input.readChar();
 			if (isValidTagChar(c))
 				token_buffer.append(c);	//this will be somewhat limited against DoS attack.
@@ -353,7 +353,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 			{	
 				//Valid elements are ' ' before attribute name or '>'
 				if ((c!=' ')&&(c!='>')) throw new EBrokenFormat("\""+c+"\" is not valid tag terminator");
-				if (c!=' ') input.unread(c);				
+				if (c!=' ') input.unread(c);	//we need to leave > unprocessed.	
 				return token_buffer;
 			} 
 		}
@@ -380,15 +380,13 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 			else
 			{
 				//Valid elements are ' ' before = or '='
-				if ((c!=' ')&&(c!='=')) throw new EBrokenFormat("\""+c+"\" is not valid attribute terminator");
-				if (c!=' ') input.unread(c);
-				assert(c=='=');
+				if (c==' '){ c = input.readChar(); };				
+				if (c!='=') throw new EBrokenFormat("Expected = but found \""+c+"\" ");
 				//Now after = we expecte either ' ' or "
 				c = input.readChar();
-				if ((c!=' ')&&(c!='\"')) throw new EBrokenFormat("\""+c+"\" is not valid start of attribute value");
-				if (c!=' ') input.unread(c);
-				assert(c=='\"');
-				input.unread(c);
+				if (c==' '){ c= input.readChar(); };
+				if (c!='\"') throw new EBrokenFormat("Expected \" but found \""+c+"\" ");
+				input.unread(c);	//this must be not consumed.
 				return token_buffer;
 			} 
 		}
@@ -421,7 +419,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 					//so it is either space or >
 					c = input.readChar();
 					if ((c!=' ')&&(c!='>')) throw new EBrokenFormat("\""+c+"\" is not valid character after attribute value");				
-					if (c!=' ')input.unread(c);					
+					if (c!=' ')input.unread(c);	//leave > unconsumed.	
 					return token_buffer;
 				}
 			}else

@@ -15,7 +15,10 @@ abstract class ATestAAdaptiveFilterReader extends sztejkat.utils.test.ATest
 	@Test(timeout=1000) public void test_1()throws IOException
 	{
 		enter();
-		
+		/*
+			Just test if two fills will returns a consistent, continous block
+			when read char-by char.
+		*/
 		AAdaptiveFilterReader f = create(new String[]{"Plasma","Dragon"});
 		
 		StringBuilder sb = new StringBuilder();
@@ -36,7 +39,10 @@ abstract class ATestAAdaptiveFilterReader extends sztejkat.utils.test.ATest
 	@Test(timeout=1000) public void test_2()throws IOException
 	{
 		enter();
-		
+		/*
+			Just test if two fills will returns a consistent, continous block
+			when read in bulk single operation
+		*/
 		AAdaptiveFilterReader f = create(new String[]{"Plasma","Dragon"});
 		
 		StringBuilder sb = new StringBuilder();
@@ -53,7 +59,10 @@ abstract class ATestAAdaptiveFilterReader extends sztejkat.utils.test.ATest
 	@Test(timeout=1000) public void test_3()throws IOException
 	{
 		enter();
-		
+		/*
+			Just test if a sequence of block reads will reconstruct 
+			a complete text.
+		*/
 		AAdaptiveFilterReader f = create(new String[]{"Plasma","Dragon"});
 		
 		StringBuilder sb = new StringBuilder();
@@ -75,7 +84,9 @@ abstract class ATestAAdaptiveFilterReader extends sztejkat.utils.test.ATest
 	@Test(timeout=1000) public void test_4()throws IOException
 	{
 		enter();
-		
+		/*
+			Test if read char-by char will then continously return eof.
+		*/
 		AAdaptiveFilterReader f = create(new String[]{"Plasma","Dragon"});
 		
 		StringBuilder sb = new StringBuilder();
@@ -105,7 +116,9 @@ abstract class ATestAAdaptiveFilterReader extends sztejkat.utils.test.ATest
 	@Test(timeout=1000) public void test_5()throws IOException
 	{
 		enter();
-		
+		/*
+			Test if read bulk will then continously return eof.
+		*/
 		AAdaptiveFilterReader f = create(new String[]{"Plasma","Dragon"});
 		
 		StringBuilder sb = new StringBuilder();

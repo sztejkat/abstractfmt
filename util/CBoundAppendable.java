@@ -143,6 +143,41 @@ public class CBoundAppendable implements Appendable,CharSequence
         }
         return h;
     }
+    /** Checks if it starts with string. Avoids any buffers creation.
+    @param s starts with what
+    @return -1 does not start with, 0 starts with, 1 equals to.
+    */
+    public int startsWith(String s)
+    {
+    	final int n = s.length();
+    	final int len = length();
+    	if (len<n) return -1; //shorter can't match.
+    	for(int i=0; i<n; i++)
+    	{
+    		if (buffer[i]!=s.charAt(i)) return -1;
+    	};
+    	//Now all characters in s have found match.
+    	return (n==len) ? 1 : 0; 
+    };
+    
+     /** Checks if it string starts with this buffer. Avoids any buffers creation.
+    @param s string to check
+    @return -1 does not start with, 0 starts with, 1 equals to.
+    */
+    public int isStartOf(String s)
+    {
+    	final int n = s.length();
+    	final int len = length();
+    	if (len>n) return -1; //shorter can't match.
+    	for(int i=0; i<len; i++)
+    	{
+    		if (buffer[i]!=s.charAt(i)) return -1;
+    	};
+    	//Now all characters in s have found match.
+    	return (n==len) ? 1 : 0; 
+    };
+    
+    
     /** A quick test, faster than 
     <code>s.equals(this.toString)</code>
     because it avoids creation of a temporary object

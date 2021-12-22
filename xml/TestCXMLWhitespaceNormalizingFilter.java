@@ -6,6 +6,9 @@ import java.io.StringReader;
 import org.junit.Test;
 import org.junit.Assert;
 
+/**
+	Test for {@link CXMLWhitespaceNormalizingFilter} 
+*/
 public class TestCXMLWhitespaceNormalizingFilter extends sztejkat.utils.test.ATest
 {
 	private void testWithEof(String [] texts, String expected)throws IOException
@@ -48,6 +51,58 @@ public class TestCXMLWhitespaceNormalizingFilter extends sztejkat.utils.test.ATe
 				System.out.println("stitching...");
 			};
 		};		
+		String s = sb.toString();
+		System.out.println(s);		
+		Assert.assertTrue(expected.equals(s));		
+		leave();
+	};
+	
+	private void testWithEofCharByChar(String [] texts, String expected, int stitches_expected)throws IOException
+	{
+		enter();
+		Reader [] readers = new Reader[texts.length];
+		for(int i=0;i<texts.length;i++)
+		{
+			readers[i]=texts[i]!=null ? new StringReader(texts[i]) : null;
+		};
+		CXMLWhitespaceNormalizingFilter f = new CXMLWhitespaceNormalizingFilter(
+									new CEofInjectingSequenceReader(
+									//Note: very sub-optimial, but acceptable in tests.
+											java.util.Arrays.asList(readers).iterator()
+											)
+									);
+		/* Note:
+			The nature of AAdaptiveFilterReader is such, that after encountering
+			first partial read it will re-try and will report partial read itself
+			only if AAdaptiveFilterReader.filter() did not fill buffer with any data
+			at all.
+			
+			Thous if there is a single eof it is getting stitched.
+			So we try up to 5 stitches before returning.
+		*/ 
+		StringBuilder sb = new StringBuilder();
+		int cont_eofs =0;
+		for(;;)
+		{ 
+			int r = f.read();
+			if (r>0)
+			{
+				cont_eofs =0;		
+				System.out.print((char)r);
+				sb.append((char)r);
+			}else
+			{
+				if (sb.length()<expected.length()) 
+				{
+					System.out.println("stitching inside text...");
+					stitches_expected--;
+				}
+				if (cont_eofs==5) break;
+				cont_eofs++;
+				System.out.println("eof?...");
+			};
+		};		
+		Assert.assertTrue(stitches_expected==0);
 		String s = sb.toString();
 		System.out.println(s);		
 		Assert.assertTrue(expected.equals(s));		
@@ -132,6 +187,20 @@ public class TestCXMLWhitespaceNormalizingFilter extends sztejkat.utils.test.ATe
 		enter();
 		testWithEof( new String[]
 						{ "\t\truskie<voter  >stinking"}," ruskie<voter>stinking");
+		leave();
+	};
+	@Test public void testNothingSkipped()throws IOException
+	{
+		enter();
+		testWithEof( new String[]
+						{ "<event name=\"Monet\"></event>"},"<event name=\"Monet\"></event>");
+		leave();
+	};
+	@Test public void testWithEofCharByChar()throws IOException
+	{
+		enter();
+		testWithEofCharByChar( new String[]
+						{ "<event name=\"Monet\"></event>"},"<event name=\"Monet\"></event>",0);
 		leave();
 	};
 };

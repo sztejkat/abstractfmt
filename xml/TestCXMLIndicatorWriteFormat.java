@@ -66,6 +66,56 @@ public class TestCXMLIndicatorWriteFormat extends sztejkat.utils.test.ATest
 	};
 	
 	
+	
+	@Test public void testEventWithStrangeName()throws IOException
+	{
+		enter();
+		/*
+			A test which checks if LONG_BARE correctly 
+			writes event which can't be written directly
+			because carries characters which can't be encoded.
+		*/
+		StringWriter o = new StringWriter(); 
+		CXMLIndicatorWriteFormat f = new CXMLIndicatorWriteFormat(o,
+																  Charset.forName("ASCII"),
+																  SXMLSettings.LONG_BARE,
+																  true);
+		f.open();
+			f.writeBeginDirect("MĘŻATKA");
+			f.writeEnd();
+		f.close();
+		
+		String r = o.toString();
+		System.out.println(r);		
+		Assert.assertTrue(r.equals("<event name=\"M%118;%17B;ATKA\"></event>"));
+		leave();
+	};
+	
+	@Test public void testEventWithXMLConflictingName()throws IOException
+	{
+		enter();
+		/*
+			A test which checks if LONG_BARE correctly 
+			writes event which can't be written directly
+			because carries characters which are bad XML
+		*/
+		StringWriter o = new StringWriter(); 
+		CXMLIndicatorWriteFormat f = new CXMLIndicatorWriteFormat(o,
+																  Charset.forName("UTF-8"),
+																  SXMLSettings.LONG_BARE,
+																  true);
+		f.open();
+			f.writeBeginDirect("<>");
+			f.writeEnd();
+		f.close();
+		
+		String r = o.toString();
+		System.out.println(r);		
+		Assert.assertTrue(r.equals("<event name=\"&lt;&gt;\"></event>"));
+		leave();
+	};
+	
+	
 	@Test public void testPrimitiveExampleDescribed()throws IOException
 	{
 		enter();
@@ -343,6 +393,34 @@ public class TestCXMLIndicatorWriteFormat extends sztejkat.utils.test.ATest
 		String r = o.toString();
 		System.out.println(r);		
 		Assert.assertTrue(r.equals(";SPIR&lt;&gt;OMETRY%4F4A;;MARCI%%;E"));
+		leave();
+	};
+	
+	
+	
+	@Test public void testIntBlock()throws IOException
+	{
+		enter();
+		/*
+			Now we run a bit of numeric block, but inside and event to see
+			if trailing separator is optimized out
+		*/
+		StringWriter o = new StringWriter(); 
+		CXMLIndicatorWriteFormat f = new CXMLIndicatorWriteFormat(o,
+																  Charset.forName("UTF-8"),
+																  SXMLSettings.LONG_BARE,
+																  false);
+		f.open();
+			f.writeBeginDirect("MARCIE");
+			f.writeType(TIndicator.TYPE_INT_BLOCK);
+			f.writeIntBlock(new int[]{1,2,3,45,6,7,8});
+			f.writeFlush(TIndicator.FLUSH_INT_BLOCK);
+			f.writeEnd();	
+		f.close();
+		
+		String r = o.toString();
+		System.out.println(r);		
+		Assert.assertTrue(r.equals("<MARCIE>1;2;3;45;6;7;8</MARCIE>"));
 		leave();
 	};
 };

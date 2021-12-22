@@ -1,6 +1,10 @@
 package sztejkat.abstractfmt.util;
 import java.io.IOException;
 
+/**
+	Test for {@link AAdaptiveFilterReader} which fills buffer on <code>fill()</code>
+	using <code>write(char)</code>
+*/
 public class TestAAdaptiveFilterReader_Chr extends ATestAAdaptiveFilterReader
 {
 		private static final class DUT extends AAdaptiveFilterReader
