@@ -63,6 +63,8 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 				private String signal_name_cache;
 				
 	/** Creates 
+	@param input see {@link AXMLIndicatorReadFormat#AXMLIndicatorReadFormat(Reader,CXMLSettings)}
+	@param settings --//--
 	*/
 	protected AXMLIndicatorReadFormat(
 					final Reader input,
@@ -183,7 +185,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	*/
 	private TIndicator processTag()throws IOException
 	{
-		//Split to begin and end tags.
+		//Split to begin and end tags.		
 		char c = input.readChar();
 		if (c=='/')
 			return processClosingTag();
@@ -194,10 +196,10 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		}
 	};
 	/** Helper for {@link #processOpeningTag}/{@link #processClosingTag}
-	checking if there are no attributes
+	checking if there are no (more) attributes
 	@param element used to format error message in thrown exception
 	@throws EBrokenFormat if there are attributes */
-	private void validateNoAttributes(String element)throws IOException
+	private void validateNoMoreAttributes(String element)throws IOException
 	{
 		if (input.read()!='>')
 			throw new EBrokenFormat("<"+element+"> element does not take attributes"); 
@@ -224,7 +226,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 			if (!b.equalsString(settings.SIGNAL_NAME_ATTR))
 				throw new EBrokenFormat("<"+settings.EVENT+"> requires "+settings.SIGNAL_NAME_ATTR+" attribute while \""+b+"\" was found");
 			b = readAttributeValue();
-			validateNoAttributes(settings.EVENT);
+			validateNoMoreAttributes(settings.EVENT);
 			//prepare it.
 			String n  = b.toString();
 			if (n.length()>max_signal_name_length)
@@ -236,7 +238,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 			return TIndicator.BEGIN_DIRECT;			
 		}else
 		{
-			validateNoAttributes(settings.BOOLEAN_ELEMENT);			
+			validateNoMoreAttributes(settings.BOOLEAN_ELEMENT);			
 			if (b.equalsString(settings.BOOLEAN_ELEMENT))
 			{
 				xml_elements_stack.add(settings.BOOLEAN_ELEMENT);
@@ -416,7 +418,8 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 				if (c=='\"')
 				{
 					//end of attribute. Input layer does normalize spaces
-					//so it is either space or >
+					//so it is > or, eventually, there can be a space if 
+					//second attribute would follow.
 					c = input.readChar();
 					if ((c!=' ')&&(c!='>')) throw new EBrokenFormat("\""+c+"\" is not valid character after attribute value");				
 					if (c!=' ')input.unread(c);	//leave > unconsumed.	
@@ -451,7 +454,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		{
 			if (!b.equalsString(closed)) throw new EBrokenFormat("Closing tag does not match, expected \""+closed+"\" found \""+b+"\"");	
 		};
-		validateNoAttributes(closed);
+		validateNoMoreAttributes(closed);
 		//act accordingly.
 		if (closed.equals(settings.EVENT))
 		{
@@ -535,11 +538,23 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		///Note: space normalization is handled by input, but
 		//in un-described streams inner spaces may still be present
 		//in a form of a single ' ', so we have to skip them.
-		char c;
-		do{
-				c = input.readChar();
-			}while(c==' ');
-		input.unread(c);
+		//We loop, just in case, even tough a single ' ' should be
+		//just enough to skip. 
+		//Notice, skipping may reach eof, and must be eof proof
+		//because primitive may end the file and we skip spaces
+		//after primitives to make sure getIndicator can peek
+		//the < character.
+		for(;;)
+		{
+			 int r= input.read();
+			 if (r==-1) break;
+			 char c = (char)r;
+			 if (c!=' ')
+			 {
+			 	input.unread(c);
+			 	break;
+			 };	 
+		}
 	};
 	/** Is invoked at the begininng of each elementary fetch.
 	Validates if operation is allowed and clears indicators cache.

@@ -20,7 +20,7 @@ class CDecodingXMLReader extends CAdaptivePushBackReader
 	@param in source to read from
 	@param initial_size intial buffer capacity
 	@param size_increment buffer growth increment.
-	@param CXMLSettings settings
+	@param settings settings which will be used to decode special characters in {@link readBodyChar}.
 	*/
 	public CDecodingXMLReader(Reader in, int initial_size,int size_increment, CXMLSettings settings)
 	{
@@ -35,7 +35,10 @@ class CDecodingXMLReader extends CAdaptivePushBackReader
 	
 	-------------------------------------------------------------------*/
 	/** Returns character which would be read next, without reading it.
+	Technically speaking either checks a push-back buffer or reads
+	from stream and pushes result back.
 	@return -1 if eof, otherwise 0....0xffff
+	@throws IOException if failed to peek into a stream
 	*/
 	public final int peek()throws IOException
 	{
@@ -46,6 +49,7 @@ class CDecodingXMLReader extends CAdaptivePushBackReader
 	};
 	/** Checks if end-of-file is reached 
 	@return true if it is
+	@throws IOException if failed to peek into a stream
 	*/
 	public final boolean isEof()throws IOException
 	{

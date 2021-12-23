@@ -5,6 +5,26 @@ import java.io.Reader;
 
 /**
 	A filter which performs XML white-space normalization
+	<p>
+	Whitespace normalization rules are:
+	<ul>
+		<li>Each whitespace is replaced with ' ' (d32), where
+		whitespace is any Java whitespace what includes tabs,
+		eol, page-feed and etc;</li>
+		<li>If there is &gt; or &lt; right before the whitespace
+		the whitespace is removed;</li>
+		<li>If there is &lt; or &gt; right after the whitespace,
+		the whitespace is removed;</li>
+		<li>If there is a whitespace after right after
+		 the whitespace, the whitespace is removed;</li>
+	</ul>
+	Examples:
+	<ol>
+		<li><code>&lt;  x  &gt; &rarr; &lt;x&gt;</code></li>
+		<li><code>&lt;x&gt;     &lt;x&gt; &rarr; &lt;x&gt;&lt;x&gt;</code></li>
+		<li><code>&lt;x  name   =   x   &gt; &rarr; &lt;x name = x&gt;</code></li>
+		<li><code>&lt;x&gt; Mary   had a   pony.  &lt;/x&gt;  &rarr; &lt;x&gt;Mary had a pony.&lt;/x&gt; </code></li>
+	</ol>
 */
 class CXMLWhitespaceNormalizingFilter extends AAdaptiveFilterReader
 {
@@ -28,15 +48,6 @@ class CXMLWhitespaceNormalizingFilter extends AAdaptiveFilterReader
 	@Override protected void filter()throws IOException
 	{
 		/*
-			Whitespace normalization rules are:
-			1.Each whitespace is replaced with ' ' (d32)
-			2.If there is > right before the whitespace
-			  the whitespace is removed.
-			3.If there is < or > right after the whitespace,
-			  the whitespace is removed
-			4.If there is a whitespace after right after
-			 the whitespace, the whitespace is removed
-			 
 			Note:
 			
 			We should not return with an empty
@@ -56,7 +67,7 @@ class CXMLWhitespaceNormalizingFilter extends AAdaptiveFilterReader
 			switch(state)
 			{
 				case STATE_CHAR:
-						if (c=='>')
+						if ((c=='<')||(c=='>'))
 						{
 							state = STATE_TAG;
 							write(c);
@@ -76,7 +87,7 @@ class CXMLWhitespaceNormalizingFilter extends AAdaptiveFilterReader
 							write(c);
 							return;
 						};
-						if (Character.isWhitespace(c)) return;
+						if (Character.isWhitespace(c)) continue;
 						//write pending white space
 						write(' ');
 						write(c);

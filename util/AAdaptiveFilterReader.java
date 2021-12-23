@@ -30,9 +30,8 @@ public abstract class AAdaptiveFilterReader extends Reader
 			
 	/** 
 	Creates
-	@param in source to read from
-	@param initial_size intial buffer capacity
-	@param size_increment buffer growth increment.
+	@param initial_size intial buffer capacity, non zero positive
+	@param size_increment buffer growth increment, non zero positive
 	*/
 	public AAdaptiveFilterReader(int initial_size,int size_increment)
 	{
@@ -50,8 +49,7 @@ public abstract class AAdaptiveFilterReader extends Reader
 	reading from input and offer data with {@link #write(char)} 
 	{@link #write(char [], int, int)} or {@link #write(CharSequence, int l)}.
 	If this method does not write anything reading methods will return
-	either partial read or end-of-file condition.
-	@return --//--
+	either partial read or end-of-file. 
 	@throws IOException --//--
 	*/
 	protected abstract void filter()throws IOException;	
@@ -102,7 +100,6 @@ public abstract class AAdaptiveFilterReader extends Reader
 	/** Makes sure, that there is enough place in a buffer
 	for data specified number of data
 	@param characters number of required characters
-	@throws IOException if failed
 	*/
 	private void ensureCapacity(int characters)
 	{

@@ -185,7 +185,13 @@ public class CXMLSettings
 					     DOUBLE_BLOCK_ELEMENT.length()))))))))))))))))));
 	};
 	/** Creates, taking everything from specified settings
-	except prolog and root.
+	except prolog and root. Used to create "full" settings of
+	previously known "bare" settings.
+	<p>
+	For what is "full" and "bare" see package description.
+	@param copy_from from where to take all settings except PROLOG and ROOT_ELEMENT
+	@param PROLOG optiona XML prolog to set
+	@param ROOT_ELEMENT optiona XML root element to set
 	*/
 	public CXMLSettings(
 				 CXMLSettings copy_from,

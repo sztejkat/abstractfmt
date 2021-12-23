@@ -63,7 +63,9 @@ abstract class AXMLIndicatorReadFormatBase extends AXMLFormat
 	/* *************************************************************************
 			State validation	
 	* *************************************************************************/
-	/** Throws if closed */
+	/** Throws if closed 
+	@throws EClosed if closed.
+	*/
 	protected void validateNotClosed()throws EClosed
 	{
 		if (is_closed) throw new EClosed();

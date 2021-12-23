@@ -55,7 +55,8 @@ abstract class AXMLFormat
 	escapes
 	@param c char to test
 	@return true if it is
-	@see #getAMP_XML_ESCAPED_CHAR
+	@see #settings
+	@see CXMLSettings#AMP_XML_ESCAPED_CHAR	
 	*/
 	protected final boolean isStandardAmpEscapeChar(char c)
 	{
@@ -70,8 +71,9 @@ abstract class AXMLFormat
 	escapes and returns that escape
 	@param c char to test
 	@return null if it is not.
-	@see #getAMP_XML_ESCAPES
-	@see #getAMP_XML_ESCAPED_CHAR
+	@see #settings
+	@see CXMLSettings#AMP_XML_ESCAPED_CHAR
+	@see CXMLSettings#AMP_XML_ESCAPES
 	*/
 	protected final String getStandardAmpEscape(char c)
 	{

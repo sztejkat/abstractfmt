@@ -8,7 +8,7 @@ import java.io.*;
 	Thread safe.
 	<p>
 	<i>Note: This is a real pain in behind that all
-	<code>Reader</code> subclasses must be thread safe. 
+	<code>Reader</code> subclasses must be thread safe.</i> 
 */
 public class CAdaptivePushBackReader extends Reader
 {

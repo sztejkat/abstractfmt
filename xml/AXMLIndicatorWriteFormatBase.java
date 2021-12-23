@@ -30,7 +30,7 @@ abstract class AXMLIndicatorWriteFormatBase extends AXMLFormat
 	
 	*****************************************************/
 	/** Creates
-	@param out output to which write.
+	@param output output to which write.
 	@param charset optional charset which will be used to detect
 		characters which can't be correctly encoded by output.
 		If this value is null this format assumes that <code>out</code>

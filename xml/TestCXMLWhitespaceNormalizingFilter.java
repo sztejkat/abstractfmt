@@ -199,8 +199,74 @@ public class TestCXMLWhitespaceNormalizingFilter extends sztejkat.utils.test.ATe
 	@Test public void testWithEofCharByChar()throws IOException
 	{
 		enter();
+		/*
+			Ensure that no eof is reported (this is a regression bug test)
+		*/
 		testWithEofCharByChar( new String[]
 						{ "<event name=\"Monet\"></event>"},"<event name=\"Monet\"></event>",0);
+		leave();
+	};
+	@Test public void testWithEofCharByChar2()throws IOException
+	{
+		enter();
+		/*
+			Ensure that no eof if there are streams of skippable
+			elements is reported (this is a regression bug test)
+		*/
+		testWithEofCharByChar( new String[]
+						{ "<marcie  >    </marcie  >"},"<marcie></marcie>",0);
+		leave();
+	};
+	@Test public void testWithEofCharByChar3()throws IOException
+	{
+		enter();
+		/*
+			Ensure that no eof if there are streams of skippable
+			elements is reported (this is a regression bug test)
+		*/
+		testWithEofCharByChar( new String[]
+						{ "<marcie  name  =  \"mark\"   >    </marcie  >"},"<marcie name = \"mark\"></marcie>",0);
+		leave();
+	};
+	
+	@Test public void testRuleExample_1()throws IOException
+	{
+		enter();
+		/*
+			Tests class description examples, example 1.
+		*/
+		testWithEofCharByChar( new String[]
+						{ "<    x   >"},"<x>",0);
+		leave();
+	};
+	@Test public void testRuleExample_2()throws IOException
+	{
+		enter();
+		/*
+			Tests class description examples, example 2
+		*/
+		testWithEofCharByChar( new String[]
+						{ "<x>    <x>"},"<x><x>",0);
+		leave();
+	};
+	@Test public void testRuleExample_3()throws IOException
+	{
+		enter();
+		/*
+			Tests class description examples, example 3
+		*/
+		testWithEofCharByChar( new String[]
+						{ "<x   name   =   x  >"},"<x name = x>",0);
+		leave();
+	};
+	@Test public void testRuleExample_4()throws IOException
+	{
+		enter();
+		/*
+			Tests class description examples, example 4
+		*/
+		testWithEofCharByChar( new String[]
+						{ "<x> Mary    had  \n\t a   pony.  </x>"},"<x>Mary had a pony.</x>",0);
 		leave();
 	};
 };
