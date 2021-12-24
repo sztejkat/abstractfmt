@@ -9,7 +9,8 @@ import java.io.IOException;
 	requirements and restrictions. This is assumed that
 	they do explain it in {@link #readBoolean} and {@link #readBooleanBlock}.
 	<p>
-	All the <code>readXXXX</code> behave as thier boolean counterparts. 
+	All the <code>readXXXX</code> methods do behave as their <code>boolean</code>
+	counterparts. 
 */
 public interface IPrimitiveReadFormat extends Closeable
 {
@@ -29,6 +30,10 @@ public interface IPrimitiveReadFormat extends Closeable
 	===============================================================*/
 		
 		/** An elementary primitive read.
+		<p>
+		<i>Note:The exact behaviour on end-of-file condition and I/O exceptions
+		is implementation specific and classes which implement this must describe it.</i>
+		
 		@return value read from stream.
 		@throws IOException if low level i/o fails.
 		*/
@@ -75,12 +80,14 @@ public interface IPrimitiveReadFormat extends Closeable
 			
 		=============================================================*/		
 		/** Reads a part of a primitive data block.
-		
+		<p>
+		<i>Note:The exact behaviour on end-of-file condition and I/O exceptions
+		is implementation specific and classes which implement this must describe it.</i>
 		@param buffer place to store data, non-null.
 		@param offset first byte to write in <code>buffer</code>
 		@param length number of bytes to read
 		@return number of read primitives, can return a partial read if there is no
-				data.
+				data. 
 		@throws AssertionError if <code>buffer</code> is null
 		@throws AssertionError if <code>offset</code> or <code>length</code> are negative
 		@throws AssertionError if <code>buffer.length</code> with <code>offset</code> and <code>length</code>

@@ -275,6 +275,45 @@ public class TestCXMLIndicatorWriteFormat extends sztejkat.utils.test.ATest
 		leave();
 	};
 	
+	
+	@Test public void testCharactersWhitespaces()throws IOException
+	{
+		enter();
+		/*
+			A test which checks if LONG_BARE correctly generates escaped characters,
+			especially considerig escape end optimization in described format.
+			
+			This test is run with whitespaces, which has to be encoded
+			due to white-space optimitzation during read which in simple primitive
+			operation would wipe out any whitespace between <a>here</a>
+		*/
+		StringWriter o = new StringWriter(); 
+		CXMLIndicatorWriteFormat f = new CXMLIndicatorWriteFormat(o,
+																  Charset.forName("ASCII"),
+																  SXMLSettings.LONG_BARE,
+																  true);
+		f.open();
+			f.writeType(TIndicator.TYPE_CHAR);
+			f.writeChar(' ');
+			f.writeFlush(TIndicator.FLUSH_CHAR);
+			f.writeType(TIndicator.TYPE_CHAR);
+			f.writeChar('\n');
+			f.writeFlush(TIndicator.FLUSH_CHAR);
+			f.writeType(TIndicator.TYPE_CHAR);
+			f.writeChar('\r');
+			f.writeFlush(TIndicator.FLUSH_CHAR);
+			f.writeType(TIndicator.TYPE_CHAR);
+			f.writeChar('\t');	
+			f.writeFlush(TIndicator.FLUSH_CHAR);			
+		f.close();
+		
+		String r = o.toString();
+		System.out.println(r);
+		Assert.assertTrue(r.equals("<char>%20</char><char>%A</char><char>%D</char><char>%9</char>"));
+		leave();
+	};
+	
+	
 	@Test public void testCharactersEscapesUndescribed()throws IOException
 	{
 		enter();

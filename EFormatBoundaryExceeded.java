@@ -5,11 +5,9 @@ package sztejkat.abstractfmt;
 	is that certain format imposed limits are exceeded.
 	<p>
 	For an example a name of a signal is too long or recursion
-	is too deep and etc.
-	<p>
-	If stream can recover from this error is not specified.
+	is too deep and etc. This is a non-recoverable error.	
 */
-public class EFormatBoundaryExceeded extends ECorruptedFormat
+public class EFormatBoundaryExceeded extends EBrokenFormat
 {
 		private static final long serialVersionUID=1L;
 	public EFormatBoundaryExceeded(){};

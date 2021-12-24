@@ -157,7 +157,7 @@ class CDecodingXMLReader extends CAdaptivePushBackReader
 						}
 					}	
 					//None did capture partial match
-					throw new EBrokenFormat("Uknown "+escape_completion_buffer+" amp escape");
+					throw new EBrokenFormat("The "+escape_completion_buffer+" does not match any known &xx; escape");
 				}
 		}else
 			return c;

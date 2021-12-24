@@ -7,8 +7,7 @@ import org.junit.Test;
 import org.junit.Assert;
 
 /**
-	A test of {@link CXMLIndicatorReadFormat} over known good and 
-	known bad hand crafted text files.
+	A test of {@link CXMLIndicatorReadFormat} over known good hand crafted text files.
 */
 public class TestCXMLIndicatorReadFormat extends sztejkat.utils.test.ATest
 {
@@ -32,6 +31,32 @@ public class TestCXMLIndicatorReadFormat extends sztejkat.utils.test.ATest
 		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
 			new StringReader(
 					"<marcie></marcie>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								false //boolean is_described
+								);
+			Assert.assertTrue(f.isDescribed()==false);
+			Assert.assertTrue(f.isFlushing()==false);
+			expect(f.getIndicator(), TIndicator.BEGIN_DIRECT);
+			expect(f.getIndicator(), TIndicator.BEGIN_DIRECT);	//double check if cursor did not move
+			Assert.assertTrue("marcie".equals(f.getSignalName()));
+			f.next();
+			expect(f.getIndicator(), TIndicator.END);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+		leave();
+	};
+	
+	
+	@Test public void testBaseEventAnonymous()throws IOException
+	{
+		enter();
+		/*
+			This is a plain begin-end test with anonymous end
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<marcie></>"
 								),//final Reader input,
 								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
 								false //boolean is_described
@@ -318,4 +343,1759 @@ public class TestCXMLIndicatorReadFormat extends sztejkat.utils.test.ATest
 			expect(f.getIndicator(), TIndicator.EOF);
 		leave();
 	};
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	@Test public void testPrimitiveBooleanBlockDescribed()throws IOException
+	{
+		enter();
+		/*
+			Test reading boolean block in one operation.
+		
+			Note:Boolean, char and byte blocks are specific, so we need to
+			test them separately.
+		
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<boolean_array>tfttf</boolean_array>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								true //boolean is_described
+								);
+			Assert.assertTrue(f.isDescribed()==true);
+			Assert.assertTrue(f.isFlushing()==true);
+			
+			expect(f.getIndicator(), TIndicator.TYPE_BOOLEAN_BLOCK);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			
+			{
+				boolean [] x = new boolean[10];
+				int r= f.readBooleanBlock(x,1, 10);
+				System.out.println(r);
+				Assert.assertTrue(r==5);
+				Assert.assertTrue(x[1]==true);
+				Assert.assertTrue(x[2]==false);
+				Assert.assertTrue(x[3]==true);
+				Assert.assertTrue(x[4]==true);
+				Assert.assertTrue(x[5]==false);
+			};
+			expect(f.getIndicator(), TIndicator.FLUSH_BOOLEAN_BLOCK);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};
+	
+	@Test public void testPrimitiveBooleanBlockUnDescribed()throws IOException
+	{
+		enter();
+		/*
+			Test reading boolean block in one operation 
+			
+			Note: Even in undescribed mode block must be surrounded by events.
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<x>tfttf</x>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								false //boolean is_described
+								);
+			Assert.assertTrue(f.isDescribed()==false);
+			Assert.assertTrue(f.isFlushing()==false);
+			expect(f.getIndicator(), TIndicator.BEGIN_DIRECT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			
+			{
+				boolean [] x = new boolean[10];
+				int r= f.readBooleanBlock(x,1, 10);
+				System.out.println(r);
+				Assert.assertTrue(r==5);
+				Assert.assertTrue(x[1]==true);
+				Assert.assertTrue(x[2]==false);
+				Assert.assertTrue(x[3]==true);
+				Assert.assertTrue(x[4]==true);
+				Assert.assertTrue(x[5]==false);
+			};
+			expect(f.getIndicator(), TIndicator.END);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};
+	
+	@Test public void testPrimitiveBooleanBlockUnDescribedWithSpaces()throws IOException
+	{
+		enter();
+		/*
+			Test reading boolean block in one operation when there are gaps and spaces
+			
+			Note: Even in undescribed mode block must be surrounded by events.
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<x>tf\n\n\t\ttf\n\tt</x>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								false //boolean is_described
+								);
+			Assert.assertTrue(f.isDescribed()==false);
+			Assert.assertTrue(f.isFlushing()==false);
+			expect(f.getIndicator(), TIndicator.BEGIN_DIRECT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			
+			{
+				boolean [] x = new boolean[10];
+				int r= f.readBooleanBlock(x,1, 10);
+				System.out.println(r);
+				Assert.assertTrue(r==5);
+				Assert.assertTrue(x[1]==true);
+				Assert.assertTrue(x[2]==false);
+				Assert.assertTrue(x[3]==true);
+				Assert.assertTrue(x[4]==false);
+				Assert.assertTrue(x[5]==true);
+			};
+			expect(f.getIndicator(), TIndicator.END);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};
+	
+	
+	@Test public void testPrimitiveBooleanBlockUnDescribedSplit()throws IOException
+	{
+		enter();
+		/*
+			Test reading boolean block in many operation when there are gaps and spaces
+			
+			Note: Even in undescribed mode block must be surrounded by events.
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<x>tf tf t</x>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								false //boolean is_described
+								);
+			Assert.assertTrue(f.isDescribed()==false);
+			Assert.assertTrue(f.isFlushing()==false);
+			expect(f.getIndicator(), TIndicator.BEGIN_DIRECT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			
+			{
+				boolean [] x = new boolean[10];
+				int r= f.readBooleanBlock(x,1, 2);
+				System.out.println(r);
+				Assert.assertTrue(r==2);
+				Assert.assertTrue(x[1]==true);
+				Assert.assertTrue(x[2]==false);
+			};
+			
+			{
+				boolean [] x = new boolean[10];
+				int r= f.readBooleanBlock(x,1, 3);
+				System.out.println(r);
+				Assert.assertTrue(r==3);
+				Assert.assertTrue(x[1]==true);
+				Assert.assertTrue(x[2]==false);
+				Assert.assertTrue(x[3]==true);
+			};
+			
+			expect(f.getIndicator(), TIndicator.END);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};
+	
+	
+	
+	
+	
+	
+	
+	@Test public void testPrimitiveBooleanBlockDescribedWithAltSyntax()throws IOException
+	{
+		enter();
+		/*
+			Test reading boolean block in one operation, using alternate
+			allowed synatx TF01
+		
+			Note:Boolean, char and byte blocks are specific, so we need to
+			test them separately.
+		
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<boolean_array>TF1t0</boolean_array>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								true //boolean is_described
+								);
+			Assert.assertTrue(f.isDescribed()==true);
+			Assert.assertTrue(f.isFlushing()==true);
+			
+			expect(f.getIndicator(), TIndicator.TYPE_BOOLEAN_BLOCK);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			
+			{
+				boolean [] x = new boolean[10];
+				int r= f.readBooleanBlock(x,1, 10);
+				System.out.println(r);
+				Assert.assertTrue(r==5);
+				Assert.assertTrue(x[1]==true);
+				Assert.assertTrue(x[2]==false);
+				Assert.assertTrue(x[3]==true);
+				Assert.assertTrue(x[4]==true);
+				Assert.assertTrue(x[5]==false);
+			};
+			expect(f.getIndicator(), TIndicator.FLUSH_BOOLEAN_BLOCK);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};
+	
+	@Test public void testPrimitiveBooleanBlockDescribedFullRead()throws IOException
+	{
+		enter();
+		/*
+			Test reading boolean block in one operation, when read reads
+			everything exactly.
+		
+			
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<boolean_array>TF1t0</boolean_array>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								true //boolean is_described
+								);
+			Assert.assertTrue(f.isDescribed()==true);
+			Assert.assertTrue(f.isFlushing()==true);
+			
+			expect(f.getIndicator(), TIndicator.TYPE_BOOLEAN_BLOCK);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			
+			{
+				boolean [] x = new boolean[10];
+				int r= f.readBooleanBlock(x,1, 5);
+				System.out.println(r);
+				Assert.assertTrue(r==5);
+				Assert.assertTrue(x[1]==true);
+				Assert.assertTrue(x[2]==false);
+				Assert.assertTrue(x[3]==true);
+				Assert.assertTrue(x[4]==true);
+				Assert.assertTrue(x[5]==false);
+			};
+			expect(f.getIndicator(), TIndicator.FLUSH_BOOLEAN_BLOCK);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};
+	
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	@Test public void testPrimitiveByteDescribed()throws IOException
+	{
+		enter();
+		/*
+			Test reading byte primitive. 
+			Remember, byte primtive support normal decimal convention.		
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<byte>33</byte>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								true //byte is_described
+								);
+			Assert.assertTrue(f.isDescribed()==true);
+			Assert.assertTrue(f.isFlushing()==true);
+			
+			expect(f.getIndicator(), TIndicator.TYPE_BYTE);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readByte()==(byte)33);		
+			expect(f.getIndicator(), TIndicator.FLUSH_BYTE);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	@Test public void testPrimitiveByteDescribedWithAdditionalSeparator()throws IOException
+	{
+		enter();
+		/*
+			Test reading byte primitive, but when separator was not optimized out.
+			Remember, byte primtive support normal decimal convention.		
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<byte>-34;</byte>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								true //byte is_described
+								);
+			Assert.assertTrue(f.isDescribed()==true);
+			Assert.assertTrue(f.isFlushing()==true);
+			
+			expect(f.getIndicator(), TIndicator.TYPE_BYTE);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readByte()==(byte)-34);		
+			expect(f.getIndicator(), TIndicator.FLUSH_BYTE);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	
+	@Test public void testPrimitiveByteUndescribed()throws IOException
+	{
+		enter();
+		/*
+			Test reading byte primitives sequence
+			Remember, byte primtive support normal decimal convention.		
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"-34;22;-100;"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								true //byte is_described
+								);
+			Assert.assertTrue(f.isDescribed()==true);
+			Assert.assertTrue(f.isFlushing()==true);
+			
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readByte()==(byte)-34);		
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readByte()==(byte)22);	
+			
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readByte()==(byte)-100);
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	
+	
+	
+	
+	
+	@Test public void testPrimitiveByteBlockDescribed()throws IOException
+	{
+		enter();
+		/*
+			Test reading byte block in one operation.
+		
+			Note:Boolean, char and byte blocks are specific, so we need to
+			test them separately.
+		
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<byte_array>10abcdEF</byte_array>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								true //byte is_described
+								);
+			Assert.assertTrue(f.isDescribed()==true);
+			Assert.assertTrue(f.isFlushing()==true);
+			
+			expect(f.getIndicator(), TIndicator.TYPE_BYTE_BLOCK);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			
+			{
+				byte [] x = new byte[10];
+				int r= f.readByteBlock(x,1, 10);
+				System.out.println(r);
+				Assert.assertTrue(r==4);
+				Assert.assertTrue(x[1]==(byte)0x10);
+				Assert.assertTrue(x[2]==(byte)0xab);
+				Assert.assertTrue(x[3]==(byte)0xcd);
+				Assert.assertTrue(x[4]==(byte)0xEF);
+			};
+			expect(f.getIndicator(), TIndicator.FLUSH_BYTE_BLOCK);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	
+	@Test public void testPrimitiveByteBlockDescribedWithSpaces()throws IOException
+	{
+		enter();
+		/*
+			Test reading  byte block in one operation, when there are spaces
+			in block in ALLOWED places. Notice, spaces are NOT allowed within a
+			byte itself.
+		
+			Note:Boolean, char and byte blocks are specific, so we need to
+			test them separately.
+		
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<byte_array>10 ab cd EF </byte_array>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								true //byte is_described
+								);
+			Assert.assertTrue(f.isDescribed()==true);
+			Assert.assertTrue(f.isFlushing()==true);
+			
+			expect(f.getIndicator(), TIndicator.TYPE_BYTE_BLOCK);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			
+			{
+				byte [] x = new byte[10];
+				int r= f.readByteBlock(x,1, 10);
+				System.out.println(r);
+				Assert.assertTrue(r==4);
+				Assert.assertTrue(x[1]==(byte)0x10);
+				Assert.assertTrue(x[2]==(byte)0xab);
+				Assert.assertTrue(x[3]==(byte)0xcd);
+				Assert.assertTrue(x[4]==(byte)0xEF);
+			};
+			expect(f.getIndicator(), TIndicator.FLUSH_BYTE_BLOCK);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	
+	@Test public void testPrimitiveByteBlockDescribedWithSpacesPartial()throws IOException
+	{
+		enter();
+		/*
+			Test reading  byte block in more operation, when there are spaces
+			in block in ALLOWED places. Notice, spaces are NOT allowed within a
+			byte itself.
+		
+			Note:Boolean, char and byte blocks are specific, so we need to
+			test them separately.
+		
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<byte_array>10 ab cd EF </byte_array>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								true //byte is_described
+								);
+			Assert.assertTrue(f.isDescribed()==true);
+			Assert.assertTrue(f.isFlushing()==true);
+			
+			expect(f.getIndicator(), TIndicator.TYPE_BYTE_BLOCK);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			
+			{
+				byte [] x = new byte[10];
+				int r= f.readByteBlock(x,1, 2);
+				System.out.println(r);
+				Assert.assertTrue(r==2);
+				Assert.assertTrue(x[1]==(byte)0x10);
+				Assert.assertTrue(x[2]==(byte)0xab);
+			};
+			{
+				byte [] x = new byte[10];
+				int r= f.readByteBlock(x,1, 2);
+				System.out.println(r);
+				Assert.assertTrue(r==2);
+				Assert.assertTrue(x[1]==(byte)0xCD);
+				Assert.assertTrue(x[2]==(byte)0xEF);
+			};			
+			expect(f.getIndicator(), TIndicator.FLUSH_BYTE_BLOCK);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};
+	
+	
+	
+	@Test public void testPrimitiveByteBlockUnDescribedByteByByte()throws IOException
+	{
+		enter();
+		/*
+			Test reading  byte block in byte-by-byte mode.
+		
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<x>10 ab cd EF </x>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								false //byte is_described
+								);
+			Assert.assertTrue(f.isDescribed()==false);
+			Assert.assertTrue(f.isFlushing()==false);
+			
+			expect(f.getIndicator(), TIndicator.BEGIN_DIRECT);
+			f.next();
+			
+			expect(f.getIndicator(), TIndicator.DATA);			
+			Assert.assertTrue(f.readByteBlock()==0x10);
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readByteBlock()==0xAB);
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readByteBlock()==0xCD);
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readByteBlock()==0xEF);						
+			expect(f.getIndicator(), TIndicator.END);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	@Test public void testPrimitiveCharDescribed()throws IOException
+	{
+		enter();
+		/*
+			We check how system detects primitive characters.
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<char>Z</char>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								true //boolean is_described
+								);
+			Assert.assertTrue(f.isDescribed()==true);
+			Assert.assertTrue(f.isFlushing()==true);
+			
+			expect(f.getIndicator(), TIndicator.TYPE_CHAR);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readChar()=='Z');
+			expect(f.getIndicator(), TIndicator.FLUSH_CHAR);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	@Test public void testPrimitiveCharDescribedEscaped()throws IOException
+	{
+		enter();
+		/*
+			We check how system detects primitive characters.
+			Notice, due to how the whitespaces are optimized
+			whitespaces MUST be escaped in characters.
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<char>%20</char>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								true //boolean is_described
+								);
+			Assert.assertTrue(f.isDescribed()==true);
+			Assert.assertTrue(f.isFlushing()==true);
+			
+			expect(f.getIndicator(), TIndicator.TYPE_CHAR);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readChar()==' ');
+			expect(f.getIndicator(), TIndicator.FLUSH_CHAR);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	@Test public void testPrimitiveCharDescribedAmpEscape()throws IOException
+	{
+		enter();	
+		/*
+			We check how system detects primitive char using amp escape.
+		*/	
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<char>&lt;</char>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								true //boolean is_described
+								);
+			Assert.assertTrue(f.isDescribed()==true);
+			Assert.assertTrue(f.isFlushing()==true);
+			
+			expect(f.getIndicator(), TIndicator.TYPE_CHAR);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readChar()=='<');
+			expect(f.getIndicator(), TIndicator.FLUSH_CHAR);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	@Test public void testPrimitiveCharDescribedSpaces()throws IOException
+	{
+		enter();
+		/*
+			We check how system detects primitive characters
+			when there are optimized out white spaces, especially
+			trailing and leading.
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<char> a\n\tbc </char>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								true //boolean is_described
+								);
+			Assert.assertTrue(f.isDescribed()==true);
+			Assert.assertTrue(f.isFlushing()==true);
+			
+			expect(f.getIndicator(), TIndicator.TYPE_CHAR);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readChar()=='a');
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readChar()==' ');//<- Notice SINGLE white space turned to ' '
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readChar()=='b');
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readChar()=='c');				 
+			expect(f.getIndicator(), TIndicator.FLUSH_CHAR);	//<-- notice skipped trailing whitespaces.
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};
+	
+	
+	
+	
+	@Test public void testPrimitiveCharBlockDescribed()throws IOException
+	{
+		enter();
+		/*
+			Test reading characters block.
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<char_array>aBC   </char_array>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								true //byte is_described
+								);
+			Assert.assertTrue(f.isDescribed()==true);
+			Assert.assertTrue(f.isFlushing()==true);
+			
+			expect(f.getIndicator(), TIndicator.TYPE_CHAR_BLOCK);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			
+			{
+				char [] x = new char[10];
+				int r= f.readCharBlock(x,1, 4);
+				System.out.println(r);
+				Assert.assertTrue(r==3);
+				Assert.assertTrue(x[1]=='a');
+				Assert.assertTrue(x[2]=='B');
+				Assert.assertTrue(x[3]=='C');
+			};
+			expect(f.getIndicator(), TIndicator.FLUSH_CHAR_BLOCK);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};
+	
+	
+	@Test public void testPrimitiveCharBlockUnDescribed()throws IOException
+	{
+		enter();
+		/*
+			Test reading characters block.
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<x>aBC %20;&gt;   </x>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								false //byte is_described
+								);
+			Assert.assertTrue(f.isDescribed()==false);
+			Assert.assertTrue(f.isFlushing()==false);
+			
+			expect(f.getIndicator(), TIndicator.BEGIN_DIRECT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			
+			{
+				char [] x = new char[10];
+				int r= f.readCharBlock(x,1, 4);
+				System.out.println(r);
+				Assert.assertTrue(r==4);
+				Assert.assertTrue(x[1]=='a');
+				Assert.assertTrue(x[2]=='B');
+				Assert.assertTrue(x[3]=='C');
+				Assert.assertTrue(x[4]==' ');
+			};
+			{
+				char [] x = new char[10];
+				int r= f.readCharBlock(x,1, 4);
+				System.out.println(r);
+				Assert.assertTrue(r==2);
+				Assert.assertTrue(x[1]==' ');
+				Assert.assertTrue(x[2]=='>');
+			};
+			expect(f.getIndicator(), TIndicator.END);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+	@Test public void testPrimitiveShortDescribed()throws IOException
+	{
+		enter();
+		/*
+			We check how system detects short primitives.
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<short>"+Short.MAX_VALUE+"</short>\n<short>"+Short.MIN_VALUE+"</short>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								true //short is_described
+								);
+			Assert.assertTrue(f.isDescribed()==true);
+			Assert.assertTrue(f.isFlushing()==true);
+			
+			expect(f.getIndicator(), TIndicator.TYPE_SHORT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readShort()==Short.MAX_VALUE);
+			expect(f.getIndicator(), TIndicator.FLUSH_SHORT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.TYPE_SHORT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readShort()==Short.MIN_VALUE);
+			expect(f.getIndicator(), TIndicator.FLUSH_SHORT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	@Test public void testPrimitiveShortUnDescribed()throws IOException
+	{
+		enter();
+		/*
+			We check how system detects short primitives.
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					" "+Short.MAX_VALUE+";"+Short.MIN_VALUE+";"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								false //short is_described
+								);
+			Assert.assertTrue(f.isDescribed()==false);
+			Assert.assertTrue(f.isFlushing()==false);
+			
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readShort()==Short.MAX_VALUE);
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readShort()==Short.MIN_VALUE);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	
+	@Test public void testPrimitiveShortUnDescribedEvent()throws IOException
+	{
+		enter();
+		/*
+			We check how system detects short primitives.
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<x>"+Short.MAX_VALUE+";"+Short.MIN_VALUE+"</x>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								false //short is_described
+								);
+			Assert.assertTrue(f.isDescribed()==false);
+			Assert.assertTrue(f.isFlushing()==false);
+			
+			expect(f.getIndicator(), TIndicator.BEGIN_DIRECT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readShort()==Short.MAX_VALUE);
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readShort()==Short.MIN_VALUE);
+			expect(f.getIndicator(), TIndicator.END);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	
+	
+	@Test public void testPrimitiveShortBlockDescribed()throws IOException
+	{
+		enter();
+		/*
+			Test reading short block in one operation.
+		
+		
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<short_array>33;1000;-32763</short_array>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								true //short is_described
+								);
+			Assert.assertTrue(f.isDescribed()==true);
+			Assert.assertTrue(f.isFlushing()==true);
+			
+			expect(f.getIndicator(), TIndicator.TYPE_SHORT_BLOCK);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			
+			{
+				short [] x = new short[10];
+				int r= f.readShortBlock(x,1, 10);
+				System.out.println(r);
+				Assert.assertTrue(r==3);
+				Assert.assertTrue(x[1]==(short)33);
+				Assert.assertTrue(x[2]==(short)1000);
+				Assert.assertTrue(x[3]==(short)-32763);
+			};
+			expect(f.getIndicator(), TIndicator.FLUSH_SHORT_BLOCK);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	
+	@Test public void testPrimitiveShortBlockUnDescribed()throws IOException
+	{
+		enter();
+		/*
+			Test reading short block in two operations.
+		
+		
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<x>33;1000;-32763</x>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								false //short is_described
+								);
+			Assert.assertTrue(f.isDescribed()==false);
+			Assert.assertTrue(f.isFlushing()==false);
+			
+			expect(f.getIndicator(), TIndicator.BEGIN_DIRECT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			
+			{
+				short [] x = new short[10];
+				int r= f.readShortBlock(x,1, 2);
+				System.out.println(r);
+				Assert.assertTrue(r==2);
+				Assert.assertTrue(x[1]==(short)33);
+				Assert.assertTrue(x[2]==(short)1000);
+			};
+			{
+				short [] x = new short[10];
+				int r= f.readShortBlock(x,0, 1);
+				System.out.println(r);
+				Assert.assertTrue(r==1);
+				Assert.assertTrue(x[0]==(short)-32763);
+			};
+			expect(f.getIndicator(), TIndicator.END);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	@Test public void testPrimitiveIntDescribed()throws IOException
+	{
+		enter();
+		/*
+			We check how system detects int primitives.
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<int>"+Integer.MAX_VALUE+"</int>\n<int>"+Integer.MIN_VALUE+"</int>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								true //int is_described
+								);
+			Assert.assertTrue(f.isDescribed()==true);
+			Assert.assertTrue(f.isFlushing()==true);
+			
+			expect(f.getIndicator(), TIndicator.TYPE_INT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readInt()==Integer.MAX_VALUE);
+			expect(f.getIndicator(), TIndicator.FLUSH_INT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.TYPE_INT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readInt()==Integer.MIN_VALUE);
+			expect(f.getIndicator(), TIndicator.FLUSH_INT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	@Test public void testPrimitiveIntUnDescribed()throws IOException
+	{
+		enter();
+		/*
+			We check how system detects int primitives.
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					" "+Integer.MAX_VALUE+";"+Integer.MIN_VALUE+";"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								false //int is_described
+								);
+			Assert.assertTrue(f.isDescribed()==false);
+			Assert.assertTrue(f.isFlushing()==false);
+			
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readInt()==Integer.MAX_VALUE);
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readInt()==Integer.MIN_VALUE);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	
+	@Test public void testPrimitiveIntUnDescribedEvent()throws IOException
+	{
+		enter();
+		/*
+			We check how system detects int primitives.
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<x>"+Integer.MAX_VALUE+";"+Integer.MIN_VALUE+"</x>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								false //int is_described
+								);
+			Assert.assertTrue(f.isDescribed()==false);
+			Assert.assertTrue(f.isFlushing()==false);
+			
+			expect(f.getIndicator(), TIndicator.BEGIN_DIRECT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readInt()==Integer.MAX_VALUE);
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readInt()==Integer.MIN_VALUE);
+			expect(f.getIndicator(), TIndicator.END);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	
+	
+	@Test public void testPrimitiveIntBlockDescribed()throws IOException
+	{
+		enter();
+		/*
+			Test reading int block in one operation.
+		
+		
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<int_array>33;1000;-32763</int_array>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								true //int is_described
+								);
+			Assert.assertTrue(f.isDescribed()==true);
+			Assert.assertTrue(f.isFlushing()==true);
+			
+			expect(f.getIndicator(), TIndicator.TYPE_INT_BLOCK);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			
+			{
+				int [] x = new int[10];
+				int r= f.readIntBlock(x,1, 10);
+				System.out.println(r);
+				Assert.assertTrue(r==3);
+				Assert.assertTrue(x[1]==33);
+				Assert.assertTrue(x[2]==1000);
+				Assert.assertTrue(x[3]==-32763);
+			};
+			expect(f.getIndicator(), TIndicator.FLUSH_INT_BLOCK);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	
+	@Test public void testPrimitiveIntBlockUnDescribed()throws IOException
+	{
+		enter();
+		/*
+			Test reading int block in two operations.
+		
+		
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<x>33;1000;-32763</x>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								false //int is_described
+								);
+			Assert.assertTrue(f.isDescribed()==false);
+			Assert.assertTrue(f.isFlushing()==false);
+			
+			expect(f.getIndicator(), TIndicator.BEGIN_DIRECT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			
+			{
+				int [] x = new int[10];
+				int r= f.readIntBlock(x,1, 2);
+				System.out.println(r);
+				Assert.assertTrue(r==2);
+				Assert.assertTrue(x[1]==33);
+				Assert.assertTrue(x[2]==1000);
+			};
+			{
+				int [] x = new int[10];
+				int r= f.readIntBlock(x,0, 1);
+				System.out.println(r);
+				Assert.assertTrue(r==1);
+				Assert.assertTrue(x[0]==-32763);
+			};
+			expect(f.getIndicator(), TIndicator.END);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};		
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	@Test public void testPrimitiveLongDescribed()throws IOException
+	{
+		enter();
+		/*
+			We check how system detects long primitives.
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<long>"+Long.MAX_VALUE+"</long>\n<long>"+Long.MIN_VALUE+"</long>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								true //long is_described
+								);
+			Assert.assertTrue(f.isDescribed()==true);
+			Assert.assertTrue(f.isFlushing()==true);
+			
+			expect(f.getIndicator(), TIndicator.TYPE_LONG);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readLong()==Long.MAX_VALUE);
+			expect(f.getIndicator(), TIndicator.FLUSH_LONG);
+			f.next();
+			expect(f.getIndicator(), TIndicator.TYPE_LONG);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readLong()==Long.MIN_VALUE);
+			expect(f.getIndicator(), TIndicator.FLUSH_LONG);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	@Test public void testPrimitiveLongUnDescribed()throws IOException
+	{
+		enter();
+		/*
+			We check how system detects long primitives.
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					" "+Long.MAX_VALUE+";"+Long.MIN_VALUE+";"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								false //long is_described
+								);
+			Assert.assertTrue(f.isDescribed()==false);
+			Assert.assertTrue(f.isFlushing()==false);
+			
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readLong()==Long.MAX_VALUE);
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readLong()==Long.MIN_VALUE);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	
+	@Test public void testPrimitiveLongUnDescribedEvent()throws IOException
+	{
+		enter();
+		/*
+			We check how system detects long primitives.
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<x>"+Long.MAX_VALUE+";"+Long.MIN_VALUE+"</x>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								false //long is_described
+								);
+			Assert.assertTrue(f.isDescribed()==false);
+			Assert.assertTrue(f.isFlushing()==false);
+			
+			expect(f.getIndicator(), TIndicator.BEGIN_DIRECT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readLong()==Long.MAX_VALUE);
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readLong()==Long.MIN_VALUE);
+			expect(f.getIndicator(), TIndicator.END);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	
+	
+	@Test public void testPrimitiveLongBlockDescribed()throws IOException
+	{
+		enter();
+		/*
+			Test reading long block in one operation.
+		
+		
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<long_array>33;1000;-32763</long_array>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								true //long is_described
+								);
+			Assert.assertTrue(f.isDescribed()==true);
+			Assert.assertTrue(f.isFlushing()==true);
+			
+			expect(f.getIndicator(), TIndicator.TYPE_LONG_BLOCK);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			
+			{
+				long [] x = new long[10];
+				int r= f.readLongBlock(x,1, 10);
+				System.out.println(r);
+				Assert.assertTrue(r==3);
+				Assert.assertTrue(x[1]==(long)33);
+				Assert.assertTrue(x[2]==(long)1000);
+				Assert.assertTrue(x[3]==(long)-32763);
+			};
+			expect(f.getIndicator(), TIndicator.FLUSH_LONG_BLOCK);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	
+	@Test public void testPrimitiveLongBlockUnDescribed()throws IOException
+	{
+		enter();
+		/*
+			Test reading long block in two operations.
+		
+		
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<x>33;1000;-32763</x>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								false //long is_described
+								);
+			Assert.assertTrue(f.isDescribed()==false);
+			Assert.assertTrue(f.isFlushing()==false);
+			
+			expect(f.getIndicator(), TIndicator.BEGIN_DIRECT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			
+			{
+				long [] x = new long[10];
+				int r= f.readLongBlock(x,1, 2);
+				System.out.println(r);
+				Assert.assertTrue(r==2);
+				Assert.assertTrue(x[1]==(long)33);
+				Assert.assertTrue(x[2]==(long)1000);
+			};
+			{
+				long [] x = new long[10];
+				int r= f.readLongBlock(x,0, 1);
+				System.out.println(r);
+				Assert.assertTrue(r==1);
+				Assert.assertTrue(x[0]==(long)-32763);
+			};
+			expect(f.getIndicator(), TIndicator.END);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	@Test public void testPrimitiveFloatDescribed()throws IOException
+	{
+		enter();
+		/*
+			We check how system detects float primitives.
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<float>"+Float.MAX_VALUE+"</float>\n<float>"+Float.MIN_VALUE+"</float>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								true //float is_described
+								);
+			Assert.assertTrue(f.isDescribed()==true);
+			Assert.assertTrue(f.isFlushing()==true);
+			
+			expect(f.getIndicator(), TIndicator.TYPE_FLOAT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readFloat()==Float.MAX_VALUE);
+			expect(f.getIndicator(), TIndicator.FLUSH_FLOAT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.TYPE_FLOAT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readFloat()==Float.MIN_VALUE);
+			expect(f.getIndicator(), TIndicator.FLUSH_FLOAT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	@Test public void testPrimitiveFloatUnDescribed()throws IOException
+	{
+		enter();
+		/*
+			We check how system detects float primitives.
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					" "+(-Float.MAX_VALUE)+";"+Float.MIN_VALUE+";"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								false //float is_described
+								);
+			Assert.assertTrue(f.isDescribed()==false);
+			Assert.assertTrue(f.isFlushing()==false);
+			
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readFloat()==-Float.MAX_VALUE);
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readFloat()==Float.MIN_VALUE);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	
+	@Test public void testPrimitiveFloatUnDescribedEvent()throws IOException
+	{
+		enter();
+		/*
+			We check how system detects float primitives.
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<x>"+Float.MAX_VALUE+";"+Float.MIN_VALUE+"</x>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								false //float is_described
+								);
+			Assert.assertTrue(f.isDescribed()==false);
+			Assert.assertTrue(f.isFlushing()==false);
+			
+			expect(f.getIndicator(), TIndicator.BEGIN_DIRECT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readFloat()==Float.MAX_VALUE);
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readFloat()==Float.MIN_VALUE);
+			expect(f.getIndicator(), TIndicator.END);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	
+	
+	@Test public void testPrimitiveFloatBlockDescribed()throws IOException
+	{
+		enter();
+		/*
+			Test reading float block in one operation.
+		
+		
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<float_array>33;1000;-32763</float_array>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								true //float is_described
+								);
+			Assert.assertTrue(f.isDescribed()==true);
+			Assert.assertTrue(f.isFlushing()==true);
+			
+			expect(f.getIndicator(), TIndicator.TYPE_FLOAT_BLOCK);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			
+			{
+				float [] x = new float[10];
+				int r= f.readFloatBlock(x,1, 10);
+				System.out.println(r);
+				Assert.assertTrue(r==3);
+				Assert.assertTrue(x[1]==(float)33);
+				Assert.assertTrue(x[2]==(float)1000);
+				Assert.assertTrue(x[3]==(float)-32763);
+			};
+			expect(f.getIndicator(), TIndicator.FLUSH_FLOAT_BLOCK);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	
+	@Test public void testPrimitiveFloatBlockUnDescribed()throws IOException
+	{
+		enter();
+		/*
+			Test reading float block in two operations.
+		
+		
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<x>33;1000;-32763</x>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								false //float is_described
+								);
+			Assert.assertTrue(f.isDescribed()==false);
+			Assert.assertTrue(f.isFlushing()==false);
+			
+			expect(f.getIndicator(), TIndicator.BEGIN_DIRECT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			
+			{
+				float [] x = new float[10];
+				int r= f.readFloatBlock(x,1, 2);
+				System.out.println(r);
+				Assert.assertTrue(r==2);
+				Assert.assertTrue(x[1]==(float)33);
+				Assert.assertTrue(x[2]==(float)1000);
+			};
+			{
+				float [] x = new float[10];
+				int r= f.readFloatBlock(x,0, 1);
+				System.out.println(r);
+				Assert.assertTrue(r==1);
+				Assert.assertTrue(x[0]==(float)-32763);
+			};
+			expect(f.getIndicator(), TIndicator.END);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	@Test public void testPrimitiveDoubleDescribed()throws IOException
+	{
+		enter();
+		/*
+			We check how system detects double primitives.
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<double>"+Double.MAX_VALUE+"</double>\n<double>"+Double.MIN_VALUE+"</double>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								true //double is_described
+								);
+			Assert.assertTrue(f.isDescribed()==true);
+			Assert.assertTrue(f.isFlushing()==true);
+			
+			expect(f.getIndicator(), TIndicator.TYPE_DOUBLE);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readDouble()==Double.MAX_VALUE);
+			expect(f.getIndicator(), TIndicator.FLUSH_DOUBLE);
+			f.next();
+			expect(f.getIndicator(), TIndicator.TYPE_DOUBLE);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readDouble()==Double.MIN_VALUE);
+			expect(f.getIndicator(), TIndicator.FLUSH_DOUBLE);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	@Test public void testPrimitiveDoubleUnDescribed()throws IOException
+	{
+		enter();
+		/*
+			We check how system detects double primitives.
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					" "+(-Double.MAX_VALUE)+";"+Double.MIN_VALUE+";"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								false //double is_described
+								);
+			Assert.assertTrue(f.isDescribed()==false);
+			Assert.assertTrue(f.isFlushing()==false);
+			
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readDouble()==-Double.MAX_VALUE);
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readDouble()==Double.MIN_VALUE);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	
+	@Test public void testPrimitiveDoubleUnDescribedEvent()throws IOException
+	{
+		enter();
+		/*
+			We check how system detects double primitives.
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<x>"+Double.MAX_VALUE+";"+Double.MIN_VALUE+"</x>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								false //double is_described
+								);
+			Assert.assertTrue(f.isDescribed()==false);
+			Assert.assertTrue(f.isFlushing()==false);
+			
+			expect(f.getIndicator(), TIndicator.BEGIN_DIRECT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readDouble()==Double.MAX_VALUE);
+			expect(f.getIndicator(), TIndicator.DATA);
+			Assert.assertTrue(f.readDouble()==Double.MIN_VALUE);
+			expect(f.getIndicator(), TIndicator.END);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	
+	
+	@Test public void testPrimitiveDoubleBlockDescribed()throws IOException
+	{
+		enter();
+		/*
+			Test reading double block in one operation.
+		
+		
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<double_array>33;1000;-32763</double_array>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								true //double is_described
+								);
+			Assert.assertTrue(f.isDescribed()==true);
+			Assert.assertTrue(f.isFlushing()==true);
+			
+			expect(f.getIndicator(), TIndicator.TYPE_DOUBLE_BLOCK);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			
+			{
+				double [] x = new double[10];
+				int r= f.readDoubleBlock(x,1, 10);
+				System.out.println(r);
+				Assert.assertTrue(r==3);
+				Assert.assertTrue(x[1]==(double)33);
+				Assert.assertTrue(x[2]==(double)1000);
+				Assert.assertTrue(x[3]==(double)-32763);
+			};
+			expect(f.getIndicator(), TIndicator.FLUSH_DOUBLE_BLOCK);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
+	
+	
+	@Test public void testPrimitiveDoubleBlockUnDescribed()throws IOException
+	{
+		enter();
+		/*
+			Test reading double block in two operations.
+		
+		
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<x>33;1000;-32763</x>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								false //double is_described
+								);
+			Assert.assertTrue(f.isDescribed()==false);
+			Assert.assertTrue(f.isFlushing()==false);
+			
+			expect(f.getIndicator(), TIndicator.BEGIN_DIRECT);
+			f.next();
+			expect(f.getIndicator(), TIndicator.DATA);
+			
+			{
+				double [] x = new double[10];
+				int r= f.readDoubleBlock(x,1, 2);
+				System.out.println(r);
+				Assert.assertTrue(r==2);
+				Assert.assertTrue(x[1]==(double)33);
+				Assert.assertTrue(x[2]==(double)1000);
+			};
+			{
+				double [] x = new double[10];
+				int r= f.readDoubleBlock(x,0, 1);
+				System.out.println(r);
+				Assert.assertTrue(r==1);
+				Assert.assertTrue(x[0]==(double)-32763);
+			};
+			expect(f.getIndicator(), TIndicator.END);
+			f.next();
+			expect(f.getIndicator(), TIndicator.EOF);
+			
+		leave();
+	};	
 };
+

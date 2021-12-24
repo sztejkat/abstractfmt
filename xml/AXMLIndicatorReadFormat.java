@@ -101,13 +101,13 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		assert(characters>0):"characters="+characters;
 		//Note: Contract allows unpredictable results when
 		//setting it during work, so we don't have to preserve
-		//previously buffered data.
+		//previously buffered data.	
 		assert(token_buffer.isEmpty()):"Can't set name length when processing is in progress.";
+		//Limit must be set two fold: by adjusting capactity of name buffer (upwards)
+		//and by setting hard limit for testing.
+		this.max_signal_name_length = characters;
 		//no re-allocate other buffers if necessary
-		if (characters>token_buffer.capacity())
-		{
-			token_buffer = new CBoundAppendable(characters);
-		};
+		token_buffer = new CBoundAppendable(Math.max(characters,settings.getMaximumTokenLength()));
 	};
 	/* -------------------------------------------------		
 				Indicators	
@@ -199,10 +199,10 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	checking if there are no (more) attributes
 	@param element used to format error message in thrown exception
 	@throws EBrokenFormat if there are attributes */
-	private void validateNoMoreAttributes(String element)throws IOException
+	private void validateNoMoreAttributes()throws IOException
 	{
 		if (input.read()!='>')
-			throw new EBrokenFormat("<"+element+"> element does not take attributes"); 
+			throw new EBrokenFormat("element does not take attributes"); 
 	};
 	/** Invoked after <code>&gt;</code> was read from stream. Is expected
 	to read and process start tag. This method will be called only 
@@ -226,7 +226,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 			if (!b.equalsString(settings.SIGNAL_NAME_ATTR))
 				throw new EBrokenFormat("<"+settings.EVENT+"> requires "+settings.SIGNAL_NAME_ATTR+" attribute while \""+b+"\" was found");
 			b = readAttributeValue();
-			validateNoMoreAttributes(settings.EVENT);
+			validateNoMoreAttributes();
 			//prepare it.
 			String n  = b.toString();
 			if (n.length()>max_signal_name_length)
@@ -238,7 +238,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 			return TIndicator.BEGIN_DIRECT;			
 		}else
 		{
-			validateNoMoreAttributes(settings.BOOLEAN_ELEMENT);			
+			validateNoMoreAttributes();			
 			if (b.equalsString(settings.BOOLEAN_ELEMENT))
 			{
 				xml_elements_stack.add(settings.BOOLEAN_ELEMENT);
@@ -332,8 +332,11 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 			}
 		}
 	};
-	/** Buffers tag in {@link #token_buffer}. Once this
-	method return the stream cursor is at the first non-whitespace
+	/** Buffers remaning content of a tag in {@link #token_buffer}.
+	This method is called when cursor is at first character after <code>&lt;</code>
+	or <code>&lt;/</code>.
+	 <p>
+	Once this method return the stream cursor is at the first non-whitespace
 	character after the tag which may be &gt; or a first character
 	of attribute name.
 	@return {@link #token_buffer} filled with tag
@@ -344,6 +347,12 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		//Note: input normalizes spaces to single ' '
 		token_buffer.reset();
 		char c= input.readChar();
+		if (c=='>') 
+		{	
+			//this is anonymous tag. We allow it.
+			input.unread(c);
+			return token_buffer;
+		} 
 		if (!isValidStartingTagChar(c)) throw new EBrokenFormat("\""+c+"\" is not a valid first character in XML tag");
 		token_buffer.append(c);
 		for(;;)
@@ -454,7 +463,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		{
 			if (!b.equalsString(closed)) throw new EBrokenFormat("Closing tag does not match, expected \""+closed+"\" found \""+b+"\"");	
 		};
-		validateNoMoreAttributes(closed);
+		validateNoMoreAttributes();
 		//act accordingly.
 		if (closed.equals(settings.EVENT))
 		{
@@ -619,18 +628,18 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 			case 'f':
 			case 'F':			
 			case '0':	return false;
-			default: throw new AssertionError();
+			default: throw new AssertionError();	//fetchNumeric should defend against it.
 		}
 	}; 
 	@Override public byte readByte()throws IOException
 	{
 		startElementaryPrimitive();
-		CBoundAppendable b = fetchNumericPrimitive("-0123456789",1);
+		CBoundAppendable b = fetchNumericPrimitive("-0123456789",4);
 		if (b.length()==0) throw new ENoMoreData();
 		String s = b.toString();
 		try{
 			return Byte.parseByte(s);
-		}catch(NumberFormatException ex){ throw new EDataMissmatch("Could not decode \""+s+"\" as byte"); }
+		}catch(NumberFormatException ex){ throw new EBrokenFormat("Could not decode \""+s+"\" as byte"); }
 	};
 	@Override public char readChar()throws IOException
 	{
@@ -641,10 +650,18 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		if (ci>=0)
 		{
 			c =(char)ci;
-			if (c=='<')
+			if (c=='<')	 
 			{ 
+				//Considering this method as a stand-alone this _may_ happen
+				//if user supplied stream like <c> </c> and the whitespace was optimized
+				//to nothing.
+				//If however API is used correctly then the getIndicator() must be called
+				//prior to this read and it must return DATA. In case of optimized out
+				//single space it will return some other indicator.
+				//
+				//Also if user supplied <e>abcfer  </e> it will be read as <e>abcfer</e>
 				input.unread(c); 
-				throw new ENoMoreData();
+				throw new AssertionError("This method reached XML tag. Did You forgot to poll the getIndicator()?");
 			};
 		}else
 		{
@@ -665,47 +682,47 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		String s = b.toString();
 		try{
 			return Short.parseShort(s);
-		}catch(NumberFormatException ex){ throw new EDataMissmatch("Could not decode \""+s+"\" as short"); }
+		}catch(NumberFormatException ex){ throw new EBrokenFormat("Could not decode \""+s+"\" as short"); }
 	};
 	@Override public int readInt()throws IOException
 	{
 		startElementaryPrimitive();
-		CBoundAppendable b = fetchNumericPrimitive("-0123456789",12);
+		CBoundAppendable b = fetchNumericPrimitive("-0123456789",13);
 		if (b.length()==0) throw new ENoMoreData();
 		String s = b.toString();
 		try{
 			return Integer.parseInt(s);
-		}catch(NumberFormatException ex){ throw new EDataMissmatch("Could not decode \""+s+"\" as int"); }
+		}catch(NumberFormatException ex){ throw new EBrokenFormat("Could not decode \""+s+"\" as int"); }
 	};
 	@Override public long readLong()throws IOException
 	{
 		startElementaryPrimitive();
-		CBoundAppendable b = fetchNumericPrimitive("-0123456789",21);
+		CBoundAppendable b = fetchNumericPrimitive("-0123456789",22);
 		if (b.length()==0) throw new ENoMoreData();
 		String s = b.toString();
 		try{
 			return Long.parseLong(s);
-		}catch(NumberFormatException ex){ throw new EDataMissmatch("Could not decode \""+s+"\" as long"); }
+		}catch(NumberFormatException ex){ throw new EBrokenFormat("Could not decode \""+s+"\" as long"); }
 	};
 	@Override public float readFloat()throws IOException
 	{
 		startElementaryPrimitive();
-		CBoundAppendable b = fetchNumericPrimitive("-0123456789.eE",40);
+		CBoundAppendable b = fetchNumericPrimitive("-0123456789.eE",41);
 		if (b.length()==0) throw new ENoMoreData();
 		String s = b.toString();
 		try{
 			return Float.parseFloat(s);
-		}catch(NumberFormatException ex){ throw new EDataMissmatch("Could not decode \""+s+"\" as float"); }
+		}catch(NumberFormatException ex){ throw new EBrokenFormat("Could not decode \""+s+"\" as float"); }
 	};
 	@Override public double readDouble()throws IOException
 	{
 		startElementaryPrimitive();
-		CBoundAppendable b = fetchNumericPrimitive("-0123456789.eE",40);
+		CBoundAppendable b = fetchNumericPrimitive("-0123456789.eE",41);
 		if (b.length()==0) throw new ENoMoreData();
 		String s = b.toString();
 		try{
 			return Double.parseDouble(s);
-		}catch(NumberFormatException ex){ throw new EDataMissmatch("Could not decode \""+s+"\" as double"); }
+		}catch(NumberFormatException ex){ throw new EBrokenFormat("Could not decode \""+s+"\" as double"); }
 	};
 	/* -------------------------------------------------		
 				block primitives
@@ -740,7 +757,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 				case '0': v=false; break;
 				case '<': input.unread(c); break loop;
 				case ' ': continue loop;
-				default: throw new ECorruptedFormat("Invalid character \""+c+"\" in boolean block");
+				default: throw new EBrokenFormat("Invalid character \""+c+"\" in boolean block");
 			}
 			buffer[offset++]=v;
 			length--;
@@ -788,15 +805,16 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 			char c = input.readChar();
 			switch(c)
 			{
-				case '<': input.unread(c); return -1;
+				case '<': input.unread(c);//see notes in getChar.
+						 throw new AssertionError("This method must be called when cursor is at DATA. Did You forget to validate it with getIndicator()?");
 				case ' ': continue loop;
 			};
 			int digit_1 = HEX2D(c);
-			if (digit_1==-1) throw new EBrokenFormat("Invalid character \""+c+"\" in byte block");
+			if (digit_1==-1) throw new EBrokenFormat("Invalid character \""+c+"\" in byte inside a byte block");
 			c = input.readChar();	//note: no inside byte termination allowed.
 			int digit_0 = HEX2D(c);
-			if (digit_0==-1) throw new EBrokenFormat("Invalid character \""+c+"\" in byte block");			
-			return (byte)((digit_1<<4) | (digit_0));
+			if (digit_0==-1) throw new EBrokenFormat("Invalid character \""+c+"\" in byte inside a byte block");		
+			return ((digit_1<<4) | (digit_0));
 		}
 	};
 	
@@ -884,7 +902,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 				buffer[offset++]= Short.parseShort(s);
 				length--;
 				read++;
-			}catch(NumberFormatException ex){ throw new EDataMissmatch("Could not decode \""+s+"\" as short"); }
+			}catch(NumberFormatException ex){ throw new EBrokenFormat("Could not decode \""+s+"\" as short"); }
 		}
 		return read;
 	};
@@ -903,7 +921,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 				buffer[offset++]= Integer.parseInt(s);
 				length--;
 				read++;
-			}catch(NumberFormatException ex){ throw new EDataMissmatch("Could not decode \""+s+"\" as int"); }
+			}catch(NumberFormatException ex){ throw new EBrokenFormat("Could not decode \""+s+"\" as int"); }
 		}
 		return read;
 	};
@@ -922,7 +940,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 				buffer[offset++]= Long.parseLong(s);
 				length--;
 				read++;
-			}catch(NumberFormatException ex){ throw new EDataMissmatch("Could not decode \""+s+"\" as long"); }
+			}catch(NumberFormatException ex){ throw new EBrokenFormat("Could not decode \""+s+"\" as long"); }
 		}
 		return read;
 	};
@@ -941,7 +959,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 				buffer[offset++]= Float.parseFloat(s);
 				length--;
 				read++;
-			}catch(NumberFormatException ex){ throw new EDataMissmatch("Could not decode \""+s+"\" as float"); }
+			}catch(NumberFormatException ex){ throw new EBrokenFormat("Could not decode \""+s+"\" as float"); }
 		}
 		return read;
 	};
@@ -960,7 +978,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 				buffer[offset++]= Double.parseDouble(s);
 				length--;
 				read++;
-			}catch(NumberFormatException ex){ throw new EDataMissmatch("Could not decode \""+s+"\" as double"); }
+			}catch(NumberFormatException ex){ throw new EBrokenFormat("Could not decode \""+s+"\" as double"); }
 		}
 		return read;
 	};

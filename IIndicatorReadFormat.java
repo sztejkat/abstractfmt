@@ -40,6 +40,11 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	/** Allows to set limit for signal name. Default
 	value is 1024. Adjusting this value during stream
 	processing may have unpredictable results.
+	<p>
+	<i>Note:Setting this limit should, internally, stop fetching
+	input data when limit is reached since this is
+	a defense against "out of memory" attacks on name
+	buffers.</i>
 	@param characters name limit, non-zero positive. 
 	*/
 	public void setMaxSignalNameLength(int characters);
@@ -150,16 +155,16 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	</ul>
 	This method may be called only if cursor is at data and this condition must
 	be validated by calling {@link #getIndicator} prior to calling this method.
-	If this method is called without checking indicator the effect may be unpredictable.
+	If this method is called without checking indicator the effect may be unpredictable.	
 	
-	@throws ENoMoreData if reached indicator inside a single element.	
+	@throws ENoMoreData if reached indicator <u>inside</u> a single element.	
 	@throws EUnexpectedEof if there is not enough data physically in stream to complete
 		read.
 	@throws ECorruptedFormat if could initialize operation, but
 		reached the indicator before completion of an operation.
 		In such case the indicator must be available for {@link #readIndicator}
 	*/
-	public boolean readBoolean()throws IOException;
+	@Override public boolean readBoolean()throws IOException;
 	/**
 	Reads part of block, moves cursor.
 	<p>
@@ -178,9 +183,12 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 		<li> an indicator with {@link TIndicator#FLUSH}, if {@link #isFlushing} or;</li>
 		<li> an indicator with {@link TIndicator#SIGNAL} flag set if not {@link #isFlushing};</li>
 	</ul>
-	This method may be called only if cursor is at data and this condition must
+	This method may be called <u>only if cursor is at DATA</u> and this condition must
 	be validated by calling {@link #getIndicator} prior to calling this method.
 	If this method is called without checking indicator the effect may be unpredictable.
+	Effectively there is no such behaviour like: 
+	<i>"if it returns partial read, then subsequent calls will return 0"</i>
+	 but instead the effect is unpredictable.
 	<p>
 	Reading blocks from indicator streams should be done in a sequence
 	of calls of block reads of the same type and this sequence
@@ -192,6 +200,9 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	
 	@return number of read elements. Partial read can be returned only 
 			if at an attempt to read an item the cursor was at an indicator. 
+			Due to the fact, that this call is not allowed when cursor
+			is not at data zero is returned only if <code>length</code>
+			was zero.
 		
 	@throws EUnexpectedEof if there is not enough data physically in stream
 		to complete operation for a single element.
@@ -200,6 +211,10 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 		if an interger.	In such case the indicator must be available 
 		for {@link #getIndicator}
 	*/
-	public int readBooleanBlock(boolean [] buffer, int offset, int length)throws IOException;		
-		
+	@Override public int readBooleanBlock(boolean [] buffer, int offset, int length)throws IOException;		
+	/**
+	@return 0...255, byte which was read. Due to the fact, that calling this method is allowed only
+		when indicator is at DATA this method never returns -1.
+	*/
+	@Override public int readByteBlock()throws IOException;	
 };
