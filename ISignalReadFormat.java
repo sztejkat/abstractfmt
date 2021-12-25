@@ -103,75 +103,6 @@ public interface ISignalReadFormat extends Closeable, IPrimitiveReadFormat
 		};
 		
 		
-		
-				/** Indicates that {@link #next} would not skip anything
-				and would return a signal.
-				<p>
-				This constant is cast in stone zero.*/
-				public static final int SIGNAL=0;
-				/** Indicates that {@link #next} would have thrown {@link EUnexpectedEof}
-				if called right now. This condition may change if stream is
-				a network connection or other produced-on-demand stream. This condition
-				<u>must</u> appear if no data about next signal is present in stream, but
-				is not expected to detect the possibility of an EOF inside a begin
-				signal itself, ie. when reading a name of a signal.
-				<p>
-				This constant is cast in stone -1.
-				*/
-				public static final int EOF=-1;				
-				/** Indicates that next element in stream is an elementary primitive
-				which should be processed by {@link #readBoolean} */
-				public static final int PRMTV_BOOLEAN=1;
-				/** Indicates that next element in stream is an elementary primitive
-				which should be processed by {@link #readByte} */
-				public static final int PRMTV_BYTE=2;
-				/** Indicates that next element in stream is an elementary primitive
-				which should be processed by {@link #readChar} */
-				public static final int PRMTV_CHAR=3;
-				/** Indicates that next element in stream is an elementary primitive
-				which should be processed by {@link #readShort} */
-				public static final int PRMTV_SHORT=4;
-				/** Indicates that next element in stream is an elementary primitive
-				which should be processed by {@link #readInt} */
-				public static final int PRMTV_INT=5;
-				/** Indicates that next element in stream is an elementary primitive
-				which should be processed by {@link #readLong} */
-				public static final int PRMTV_LONG=6;
-				/** Indicates that next element in stream is an elementary primitive
-				which should be processed by {@link #readFloat} */
-				public static final int PRMTV_FLOAT=7;
-				/** Indicates that next element in stream is an elementary primitive
-				which should be processed by {@link #readDouble} */
-				public static final int PRMTV_DOUBLE=8;
-				/** Indicates that next PRMTV in stream is a block operation
-				which should be processed by {@link #readBooleanBlock}.*/
-				public static final int PRMTV_BOOLEAN_BLOCK=9;
-				/** Indicates that next PRMTV in stream is a block operation
-				which should be processed by {@link #readByteBlock}. */
-				public static final int PRMTV_BYTE_BLOCK=10;				
-				/** Indicates that next PRMTV in stream is a block operation
-				which should be processed by {@link #readCharBlock}. */
-				public static final int PRMTV_CHAR_BLOCK=11;
-				/** Indicates that next PRMTV in stream is a block operation
-				which should be processed by {@link #readShortBlock}. */
-				public static final int PRMTV_SHORT_BLOCK=12;
-				/** Indicates that next PRMTV in stream is a block operation
-				which should be processed by {@link #readIntBlock}. */
-				public static final int PRMTV_INT_BLOCK=13;
-				/** Indicates that next PRMTV in stream is a block operation
-				which should be processed by {@link #readLongBlock}.*/
-				public static final int PRMTV_LONG_BLOCK=14;
-				/** Indicates that next PRMTV in stream is a block operation
-				which should be processed by {@link #readFloatBlock}.*/
-				public static final int PRMTV_FLOAT_BLOCK=15;
-				/** Indicates that next PRMTV in stream is a block operation
-				which should be processed by {@link #readDoubleBlock}.*/
-				public static final int PRMTV_DOUBLE_BLOCK=16;
-				/** Indicates stread carries no type information about what
-				is under cursor, but surely this is not a signal.
-				<p>
-				Note: All PRMTV_xxx constants are &gt;0*/
-				public static final int PRMTV_UNTYPED=0xFFFF;
 		/** 
 			Tests what kind of information is under a cursor and what methods
 			are safe to call.
@@ -179,56 +110,29 @@ public interface ISignalReadFormat extends Closeable, IPrimitiveReadFormat
 			Subsequent calls to this method must return the same value and must neither 
 			affect the stream nor move stream cursor. They may however cause
 			some data to be read from a low level stream if necessary.
-		@return one of:
-				<ul>
-					<li>{@link #EOF} (this constant is -1)</li>
-					<li>{@link #SIGNAL} (this constant is zero);</li>
-					<li>if stream is {@link #isDescribed}:
-							<ul>
-								<li>{@link #PRMTV_BOOLEAN};</li>
-								<li>{@link #PRMTV_BYTE};</li>
-								<li>{@link #PRMTV_CHAR};</li>
-								<li>{@link #PRMTV_SHORT};</li>
-								<li>{@link #PRMTV_INT};</li>
-								<li>{@link #PRMTV_LONG};</li>
-								<li>{@link #PRMTV_FLOAT};</li>
-								<li>{@link #PRMTV_DOUBLE};</li>
-								<li>{@link #PRMTV_BYTE_BLOCK};</li>
-								<li>{@link #PRMTV_BOOLEAN_BLOCK};</li>
-								<li>{@link #PRMTV_CHAR_BLOCK};</li>
-								<li>{@link #PRMTV_SHORT_BLOCK};</li>
-								<li>{@link #PRMTV_INT_BLOCK};</li>
-								<li>{@link #PRMTV_LONG_BLOCK};</li>
-								<li>{@link #PRMTV_FLOAT_BLOCK};</li>
-								<li>{@link #PRMTV_DOUBLE_BLOCK};</li>
-							</ul>
-							Note:All above constants are &gt;0.
-					<li>
-					<li>if stream is not {@link #isDescribed}:
-							<ul>
-								<li>{@link #PRMTV_UNTYPED};</li>
-							</ul>
-							Note:Above constant is &gt;0.
-					</li>
-				</ul>
+			
+		@return content type, non null.
+				<p>
+				{@link #isDescribed}==true streams are returning content
+				types with {@link TContentType#CONTENT_TYPED} bit set in
+				{@link TContentType#FLAGS}. 
+				<p>
 				Specifically if if block operation is in progress this operation 
-				is expected to return <code>PRMTV_UNTYPED</code>(undescribed)
-				or <code>PRMTV_XXX_BLOCK</code>.. 
+				is expected to return {@link TContentType#PRMTV_UNTYPED}
+				in non-described stream and a propert <code>PRMTV_xxx_BLOCK</code>
+				in described streams.
 				<p>
 				If the partial block read <u>was returned</u> or the entire
 				data block was consumed this method	should return what is
 				next in a stream after a block.	Since block is terminated 
-				with "end signal" only {@link #SIGNAL} or {@link #EOF}
+				with "end signal" only {@link TContentType#SIGNAL} or {@link TContentType#EOF}
 				are allowed.
 				
 		@throws IOException if low level i/o failed, except of end-of-stream condition in allowed
 							places which is indicated by a dedicated return value.
-		@throws EUnexpectedEof when end of stream is not expected, ie. within data block
-							and etc.
-		@throws ECorruptedFormat if could not decode content due to other errors.
 		@see #isDescribed
 		*/
-		public int whatNext()throws IOException;
+		public TContentType whatNext()throws IOException;
 		
 		
 	

@@ -99,7 +99,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 					/** A names registry, hash codes for registered names.
 					Null if registry is not used.*/
 					private final int [] names_registry_hash;
-					/** State variable initially {@link TState#NONE}*/
+					/** State variable initially {@link TState#READY}*/
 					private TState state;
 				
 		/* *******************************************************

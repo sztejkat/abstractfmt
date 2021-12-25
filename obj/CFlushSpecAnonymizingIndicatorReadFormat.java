@@ -2,7 +2,7 @@ package sztejkat.abstractfmt.obj;
 import sztejkat.abstractfmt.*;
 import java.io.IOException;
 /**
-	An adapter which changes all flushes to {@link TIndicator.FLUSH_BLOCK} or  {@link TIndicator.FLUSH_ELEMENTARY} 
+	An adapter which changes all flushes to {@link TIndicator#FLUSH_BLOCK} or  {@link TIndicator#FLUSH_ELEMENTARY} 
 	respectively.
 */
 public class CFlushSpecAnonymizingIndicatorReadFormat extends CIndicatorReadFormatAdapter

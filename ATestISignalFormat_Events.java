@@ -59,12 +59,12 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 		p.read.open();
 		for(int i=0;i<16;i++)
 		{
-			org.junit.Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+			org.junit.Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			org.junit.Assert.assertTrue(("event"+i).equals(p.read.next()));
-			org.junit.Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+			org.junit.Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			org.junit.Assert.assertTrue(p.read.next()==null);
 		};
-		org.junit.Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+		org.junit.Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 		p.read.close();
 		leave();
 	}; 
@@ -123,15 +123,15 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 		p.read.open();
 		for(int i=0;i<63;i++)
 		{
-			org.junit.Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+			org.junit.Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			org.junit.Assert.assertTrue(("event"+i).equals(p.read.next()));
 		};
 		for(int i=0;i<63;i++)
 		{
-			org.junit.Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+			org.junit.Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			org.junit.Assert.assertTrue(p.read.next()==null);
 		};
-		org.junit.Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+		org.junit.Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 		p.read.close();
 		leave();
 	}; 
@@ -344,23 +344,23 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 		p.read.open();
 		for(int i=0;i<16;i++)
 		{
-			org.junit.Assert.assertTrue(p.read.whatNext()>0);	//type agnostic test!
+			org.junit.Assert.assertTrue(p.read.whatNext().isData());	//type agnostic test!
 			org.junit.Assert.assertTrue(p.read.readInt()==i);
-			org.junit.Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+			org.junit.Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			org.junit.Assert.assertTrue(("event"+i).equals(p.read.next()));
-			org.junit.Assert.assertTrue(p.read.whatNext()>0);	//type agnostic test!
+			org.junit.Assert.assertTrue(p.read.whatNext().isData());	//type agnostic test!
 			org.junit.Assert.assertTrue(p.read.readInt()==-100+i);
-				org.junit.Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+				org.junit.Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 				org.junit.Assert.assertTrue(("deep").equals(p.read.next()));
-				org.junit.Assert.assertTrue(p.read.whatNext()>0);	//type agnostic test!
+				org.junit.Assert.assertTrue(p.read.whatNext().isData());	//type agnostic test!
 				org.junit.Assert.assertTrue(p.read.readInt()==-300);
-				org.junit.Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+				org.junit.Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 				org.junit.Assert.assertTrue(p.read.next()==null);
-				org.junit.Assert.assertTrue(p.read.whatNext()>0);	//type agnostic test!
+				org.junit.Assert.assertTrue(p.read.whatNext().isData());	//type agnostic test!
 				org.junit.Assert.assertTrue(p.read.readInt()==-200+i);
-			org.junit.Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+			org.junit.Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			org.junit.Assert.assertTrue(p.read.next()==null);			
-			org.junit.Assert.assertTrue(p.read.whatNext()>0);	//type agnostic test!
+			org.junit.Assert.assertTrue(p.read.whatNext().isData());	//type agnostic test!
 			org.junit.Assert.assertTrue(p.read.readInt()==1000+i);
 		};
 		p.read.close();

@@ -206,7 +206,6 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	};
 	/** Helper for {@link #processOpeningTag}/{@link #processClosingTag}
 	checking if there are no (more) attributes
-	@param element used to format error message in thrown exception
 	@throws EBrokenFormat if there are attributes */
 	private void validateNoMoreAttributes()throws IOException
 	{

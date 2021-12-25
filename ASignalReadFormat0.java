@@ -28,23 +28,23 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 					/** End signal was returned, but hidden begin is pending */
 					END_BEGIN(),
 					/** Elementary primitive read of this type was initialized */
-					BOOLEAN(TState.ELEMENT, ISignalReadFormat.PRMTV_BOOLEAN, TIndicator.TYPE_BOOLEAN,  TIndicator.FLUSH_BOOLEAN ),
-					BYTE(TState.ELEMENT, ISignalReadFormat.PRMTV_BYTE, TIndicator.TYPE_BYTE,  TIndicator.FLUSH_BYTE ),
-					CHAR(TState.ELEMENT, ISignalReadFormat.PRMTV_CHAR, TIndicator.TYPE_CHAR,  TIndicator.FLUSH_CHAR ),
-					SHORT(TState.ELEMENT, ISignalReadFormat.PRMTV_SHORT, TIndicator.TYPE_SHORT,  TIndicator.FLUSH_SHORT ),
-					INT(TState.ELEMENT, ISignalReadFormat.PRMTV_INT, TIndicator.TYPE_INT,  TIndicator.FLUSH_INT ),
-					LONG(TState.ELEMENT, ISignalReadFormat.PRMTV_LONG, TIndicator.TYPE_LONG,  TIndicator.FLUSH_LONG ),
-					FLOAT(TState.ELEMENT, ISignalReadFormat.PRMTV_FLOAT, TIndicator.TYPE_FLOAT,  TIndicator.FLUSH_FLOAT ),
-					DOUBLE(TState.ELEMENT, ISignalReadFormat.PRMTV_DOUBLE, TIndicator.TYPE_DOUBLE,  TIndicator.FLUSH_DOUBLE ),
+					BOOLEAN(TState.ELEMENT, TContentType.PRMTV_BOOLEAN, TIndicator.TYPE_BOOLEAN,  TIndicator.FLUSH_BOOLEAN ),
+					BYTE(TState.ELEMENT, TContentType.PRMTV_BYTE, TIndicator.TYPE_BYTE,  TIndicator.FLUSH_BYTE ),
+					CHAR(TState.ELEMENT, TContentType.PRMTV_CHAR, TIndicator.TYPE_CHAR,  TIndicator.FLUSH_CHAR ),
+					SHORT(TState.ELEMENT, TContentType.PRMTV_SHORT, TIndicator.TYPE_SHORT,  TIndicator.FLUSH_SHORT ),
+					INT(TState.ELEMENT, TContentType.PRMTV_INT, TIndicator.TYPE_INT,  TIndicator.FLUSH_INT ),
+					LONG(TState.ELEMENT, TContentType.PRMTV_LONG, TIndicator.TYPE_LONG,  TIndicator.FLUSH_LONG ),
+					FLOAT(TState.ELEMENT, TContentType.PRMTV_FLOAT, TIndicator.TYPE_FLOAT,  TIndicator.FLUSH_FLOAT ),
+					DOUBLE(TState.ELEMENT, TContentType.PRMTV_DOUBLE, TIndicator.TYPE_DOUBLE,  TIndicator.FLUSH_DOUBLE ),
 					/** Block primitive read of this type was initialized */
-					BOOLEAN_BLOCK(TState.BLOCK, ISignalReadFormat.PRMTV_BOOLEAN_BLOCK, TIndicator.TYPE_BOOLEAN_BLOCK,  TIndicator.FLUSH_BOOLEAN_BLOCK ),
-					BYTE_BLOCK(TState.BLOCK, ISignalReadFormat.PRMTV_BYTE_BLOCK, TIndicator.TYPE_BYTE_BLOCK,  TIndicator.FLUSH_BYTE_BLOCK ),
-					CHAR_BLOCK(TState.BLOCK, ISignalReadFormat.PRMTV_CHAR_BLOCK, TIndicator.TYPE_CHAR_BLOCK,  TIndicator.FLUSH_CHAR_BLOCK ),
-					SHORT_BLOCK(TState.BLOCK, ISignalReadFormat.PRMTV_SHORT_BLOCK, TIndicator.TYPE_SHORT_BLOCK,  TIndicator.FLUSH_SHORT_BLOCK ),
-					INT_BLOCK(TState.BLOCK, ISignalReadFormat.PRMTV_INT_BLOCK, TIndicator.TYPE_INT_BLOCK,  TIndicator.FLUSH_INT_BLOCK ),
-					LONG_BLOCK(TState.BLOCK, ISignalReadFormat.PRMTV_LONG_BLOCK, TIndicator.TYPE_LONG_BLOCK,  TIndicator.FLUSH_LONG_BLOCK ),
-					FLOAT_BLOCK(TState.BLOCK, ISignalReadFormat.PRMTV_FLOAT_BLOCK, TIndicator.TYPE_FLOAT_BLOCK,  TIndicator.FLUSH_FLOAT_BLOCK ),
-					DOUBLE_BLOCK(TState.BLOCK, ISignalReadFormat.PRMTV_DOUBLE_BLOCK, TIndicator.TYPE_DOUBLE_BLOCK,  TIndicator.FLUSH_DOUBLE_BLOCK ),
+					BOOLEAN_BLOCK(TState.BLOCK, TContentType.PRMTV_BOOLEAN_BLOCK, TIndicator.TYPE_BOOLEAN_BLOCK,  TIndicator.FLUSH_BOOLEAN_BLOCK ),
+					BYTE_BLOCK(TState.BLOCK, TContentType.PRMTV_BYTE_BLOCK, TIndicator.TYPE_BYTE_BLOCK,  TIndicator.FLUSH_BYTE_BLOCK ),
+					CHAR_BLOCK(TState.BLOCK, TContentType.PRMTV_CHAR_BLOCK, TIndicator.TYPE_CHAR_BLOCK,  TIndicator.FLUSH_CHAR_BLOCK ),
+					SHORT_BLOCK(TState.BLOCK, TContentType.PRMTV_SHORT_BLOCK, TIndicator.TYPE_SHORT_BLOCK,  TIndicator.FLUSH_SHORT_BLOCK ),
+					INT_BLOCK(TState.BLOCK, TContentType.PRMTV_INT_BLOCK, TIndicator.TYPE_INT_BLOCK,  TIndicator.FLUSH_INT_BLOCK ),
+					LONG_BLOCK(TState.BLOCK, TContentType.PRMTV_LONG_BLOCK, TIndicator.TYPE_LONG_BLOCK,  TIndicator.FLUSH_LONG_BLOCK ),
+					FLOAT_BLOCK(TState.BLOCK, TContentType.PRMTV_FLOAT_BLOCK, TIndicator.TYPE_FLOAT_BLOCK,  TIndicator.FLUSH_FLOAT_BLOCK ),
+					DOUBLE_BLOCK(TState.BLOCK, TContentType.PRMTV_DOUBLE_BLOCK, TIndicator.TYPE_DOUBLE_BLOCK,  TIndicator.FLUSH_DOUBLE_BLOCK ),
 					CLOSED();
 					
 					
@@ -52,7 +52,7 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 					final int FLAGS;
 					/** What to return in {@link #whatNext} in that state
 					(block states only ) in described */
-					final int PRMTV;
+					final TContentType PRMTV;
 					/** Type indicator for operation */
 					final TIndicator TYPE;
 					/** Flush indicator for operation */
@@ -65,16 +65,16 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 					
 					TState(int flags,  TIndicator t, TIndicator f)
 					{
-						this(flags,0,t,f);
+						this(flags,null,t,f);
 					};
-					TState(int flags, int p, TIndicator t, TIndicator f)
+					TState(int flags, TContentType p, TIndicator t, TIndicator f)
 					{
 						this.FLAGS = flags;
 						this.PRMTV = p;
 						this.TYPE = t;
 						this.FLUSH = f;
 					};
-					TState(){ this(0,0,null,null); };
+					TState(){ this(0,null,null,null); };
 			};
 			
 			/* ----------------------------------------------------
@@ -94,7 +94,7 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 			/* ---------------------------------------------------
 							State
 			-----------------------------------------------------*/
-			/** State variable initially {@link TState#IDLE}*/
+			/** State variable initially {@link TState#READY}*/
 			private TState state;
 			/** Used to handle end-begin optimized events */
 			private String pending_signal_name;
@@ -326,7 +326,7 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 		}
 	};
 		
-	@Override public int whatNext()throws IOException
+	@Override public TContentType whatNext()throws IOException
 	{
 		validateReady();
 		/*
@@ -341,7 +341,7 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 		{ 
 			switch(indicator)
 			{
-				case EOF: return ISignalReadFormat.EOF;
+				case EOF: return TContentType.EOF;
 				case DATA:
 						if ((state.FLAGS & TState.BLOCK)!=0)
 								return state.PRMTV;
@@ -349,26 +349,26 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 								throw new EDataTypeRequired("Described format requires type information");
 						// break;
 				//now process known type indicators
-				case TYPE_BOOLEAN: return ISignalReadFormat.PRMTV_BOOLEAN;
-				case TYPE_BYTE: return ISignalReadFormat.PRMTV_BYTE;
-				case TYPE_CHAR: return ISignalReadFormat.PRMTV_CHAR;
-				case TYPE_SHORT: return ISignalReadFormat.PRMTV_SHORT;
-				case TYPE_INT: return ISignalReadFormat.PRMTV_INT;
-				case TYPE_LONG: return ISignalReadFormat.PRMTV_LONG;
-				case TYPE_FLOAT: return ISignalReadFormat.PRMTV_FLOAT;
-				case TYPE_DOUBLE: return ISignalReadFormat.PRMTV_DOUBLE;
+				case TYPE_BOOLEAN: return TContentType.PRMTV_BOOLEAN;
+				case TYPE_BYTE: return TContentType.PRMTV_BYTE;
+				case TYPE_CHAR: return TContentType.PRMTV_CHAR;
+				case TYPE_SHORT: return TContentType.PRMTV_SHORT;
+				case TYPE_INT: return TContentType.PRMTV_INT;
+				case TYPE_LONG: return TContentType.PRMTV_LONG;
+				case TYPE_FLOAT: return TContentType.PRMTV_FLOAT;
+				case TYPE_DOUBLE: return TContentType.PRMTV_DOUBLE;
 				//and for blocks.
-				case TYPE_BOOLEAN_BLOCK: return ISignalReadFormat.PRMTV_BOOLEAN_BLOCK;
-				case TYPE_BYTE_BLOCK: return ISignalReadFormat.PRMTV_BYTE_BLOCK;
-				case TYPE_CHAR_BLOCK: return ISignalReadFormat.PRMTV_CHAR_BLOCK;
-				case TYPE_SHORT_BLOCK: return ISignalReadFormat.PRMTV_SHORT_BLOCK;
-				case TYPE_INT_BLOCK: return ISignalReadFormat.PRMTV_INT_BLOCK;
-				case TYPE_LONG_BLOCK: return ISignalReadFormat.PRMTV_LONG_BLOCK;
-				case TYPE_FLOAT_BLOCK: return ISignalReadFormat.PRMTV_FLOAT_BLOCK;
-				case TYPE_DOUBLE_BLOCK: return ISignalReadFormat.PRMTV_DOUBLE_BLOCK;
+				case TYPE_BOOLEAN_BLOCK: return TContentType.PRMTV_BOOLEAN_BLOCK;
+				case TYPE_BYTE_BLOCK: return TContentType.PRMTV_BYTE_BLOCK;
+				case TYPE_CHAR_BLOCK: return TContentType.PRMTV_CHAR_BLOCK;
+				case TYPE_SHORT_BLOCK: return TContentType.PRMTV_SHORT_BLOCK;
+				case TYPE_INT_BLOCK: return TContentType.PRMTV_INT_BLOCK;
+				case TYPE_LONG_BLOCK: return TContentType.PRMTV_LONG_BLOCK;
+				case TYPE_FLOAT_BLOCK: return TContentType.PRMTV_FLOAT_BLOCK;
+				case TYPE_DOUBLE_BLOCK: return TContentType.PRMTV_DOUBLE_BLOCK;
 				//finally we allow signal related indicators.
 				default:
-					if ((indicator.FLAGS & TIndicator.SIGNAL)!=0) return ISignalReadFormat.SIGNAL;
+					if ((indicator.FLAGS & TIndicator.SIGNAL)!=0) return TContentType.SIGNAL;
 					//but no flush indicators whastoever.
 					throw new ECorruptedFormat("Unexpected indicator "+indicator);
 			}
@@ -376,12 +376,12 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 		{
 			switch(indicator)
 			{
-				case EOF: return ISignalReadFormat.EOF;
-				case DATA: return ISignalReadFormat.PRMTV_UNTYPED;
+				case EOF: return TContentType.EOF;
+				case DATA: return TContentType.PRMTV_UNTYPED;
 				//No type indicators are allowed.
 				//finally we allow signal related indicators
 				default:
-					if ((indicator.FLAGS & TIndicator.SIGNAL)!=0) return ISignalReadFormat.SIGNAL;
+					if ((indicator.FLAGS & TIndicator.SIGNAL)!=0) return TContentType.SIGNAL;
 					//but no flush indicators whastoever.
 					throw new ECorruptedFormat("Unexpected indicator "+indicator);
 			}

@@ -7,7 +7,7 @@
  content="text/html; charset=UTF-8">
 </head>
 <body>
-	This package defines basic contracts for event based data format.
+	This package defines basic contracts for signal/event based data format.
 
 	<h1>Definitions</h1>
 	<h2>Event base format</h1>
@@ -17,21 +17,49 @@
 	sequence of <a href="#primitives"><i>primitive data</i></a>
 	<p>
 	This is a three tire format.
+	<h3>Three tire format</h3>
 	<p>
 	First tire are <a href="#event">"events"</a> and their primiary task is to identify
 	and arrange data by giving them some <i>names</i>.
 	<p>
 	Second tire are <a href="#signals">"signals"</a> which are used to detect events boundaries.
-	This is a tire at which public API is defined. Check <a href="ISignalReadFormat.html">ISignalReadFormat</a>
-	and <a href="ISignalWriteFormat.html">ISignalWriteFormat</a>.
+	This is a tire at which public API in this package is defined. 
+	Check <a href="ISignalReadFormat.html">ISignalReadFormat</a> and <a href="ISignalWriteFormat.html">ISignalWriteFormat</a>
+	for details.
 	<p>
 	And a last tire is made of <a href="#indicators">"indicators"</a> which are used
 	to indicate where signals, names and primitives are located and in what form they are
 	described. This last tire is used as a possible back-end for upper level tires,
-	but does not have to be. Check <a href="IIndicatorWriteFormat.html">IIndicatorWriteFormat</a>
+	but does not have to be. Check <a href="IIndicatorReadFormat.html">IIndicatorReadFormat</a>
 	and <a href="IIndicatorWriteFormat.html">IIndicatorWriteFormat</a>.
 	
 	
+	<h1>Properties of an event based format</h1>
+	<ul>
+		<li>the set of operations necessary to write data is bound, known and simple;</li>
+		<li>operations which may benefit from a specific data packing are defined 
+		as <a href="#block"><i>block</i></a> operations;</li>
+		<li>the format does not know anything about objects, references and etc;</li>
+		<li>any binary or textual representation can be used, providing there is a proper back-end;</li>
+	</ul>
+	Additionally the <a href="#fullydescribed"><i>described format</i></a> allows:
+	<ul>
+		<li>strong, type based validation;</li>
+		<li>format transcoding without the need of any additional knowledge about what data are contained in stream;</li>
+	</ul>
+	
+	
+	
+	<h1>Standards used in this package and sub-packages</h1>
+	<h2>Exceptions</h2>
+	In generic <code>AssertionError</code> is thrown by <code>assert</code> and is a required
+	minimum of defense against coder errors. The implementations are allowed to
+	use strictier, always enabled error testing and may throw any subclass of 
+	<code>RuntimeException</code>.
+	
+	
+	
+	<hr></hr>
 	<a name="event"><h1>Events</h1></a>
 	An <a href="#event"><i>event</i></a> is a <i>named</i> block of possibly nested events
 	interlaved with a non-interruptible sequence of <a href="#primitives"><i>primitive data</i></a>.
@@ -67,19 +95,21 @@
 	<p>
 	This mapping is not visible through API and handled transparently by formats.
 	<p>
-	The formats may limit the length of event to defend against "out-of-memory" attacks
+	The formats may limit the length of signal name to defend against "out-of-memory" attacks
 	but the limit may not be smaller than 8 characters and must be directly reported through API.
 	
+	
 	<h4>Decodnig signals and acting according to the names</h4>
-        In plenty of use scenarios stream writeers will have to react on names of incomming signals.
-        If there is a signal X do one thing, if there is a signal Y do the other thing.
-        <p>
-        This package have chose signal names to be strings rather than numbers,
-        because this do let us to be less prone to <i>name clash</i> between different
-        segments of code naming different signals.
-        <p>
-        The price for using strings is a less efficient comparison.
-        <p>
+	
+	In plenty of use scenarios stream readers will have to react on names of incomming signals.
+	If there is a signal X do one thing, if there is a signal Y do the other thing.
+	<p>
+	This package have chosen signal names to be strings rather than numbers
+	because this do let us to be less prone to <i>name clash</i> if different pieces
+	of code are written by different persons, projects or teams.
+	<p>
+	The price for using strings is a less efficient comparison.
+	<p>
 	Since JDK 7 there is the <code>switch(String)</code> is using <u>cached hash code</u>:
 	<pre>
 		switch(<i>some string</i>)
@@ -111,14 +141,13 @@
         </pre>
         This is quite efficient when there is a large switch statement
         over short strings. The primary cost comes from the need of
-        computing hashCode which takes ages for very, very long strings
-        and from the possibility that all <code>case</code> hash codes
-        will be the same and from the fact, that at least one <code>equals(...)</code>
+        computing hashCode which takes ages for very, very long strings.
+        Second cost comes from the possibility that all <code>case:</code> hash codes
+        will be the same. And at last, from the fact, that at least one <code>String.equals(...)</code>
         will have to be executed.
         <p>
-        If this performance is not good for You and You can live with
-        a more probable name clash and You like human writebale names then
-        You may restrict Your names length. For an example
+        If this performance is not good for You may restrict Your names length
+        and still keep them somehow human readable. For an example
         if You will restrict recognized names to up to 4 ASCII letters,
         where each ASCII is 0...255 number You may easily transform
         the string to 1:1 identity mapped integer:
@@ -131,7 +160,7 @@
         six letters long unique names identity mapped to single integer.
         <p>
         And finally You may make a use from a fact, that even tough names <u>are</u>
-        strings, they do <u>not have to be human writeable</u>. A single character long
+        strings, they do <u>not have to be human readable</u>. A single character long
         string may be good enough for You if You just use it as a number like:
         <pre>
              if (x.length()==1)
@@ -172,7 +201,7 @@
 	Those operations are <a href="#uninterruptible"><i>un-interruptible</i></a>.
 	
 	<a name="elementary"><h3>An elementary primitive</h3></a>
-	Elementary primitive data consists of sequences of data representing following java data types:
+	Elementary primitive data consists of sequences of data representing following Java data types:
 	<ul>
 			<li>boolean</li>
 			<li>byte</li>
@@ -185,7 +214,7 @@
 	</ul>
 	
 	<a name="block"><h3>A block operation</h3></a>
-	A block operation is a continous sequence of data taken from following java types:
+	A block operation is a continous sequence of data taken from following Java types:
 	<ul>
 			<li>boolean[]</li>
 			<li>byte[]</li>
@@ -199,15 +228,22 @@
 	A block operation terminates with an <a href="#end"><i>end signal</i></a> 
 	of an enclosing	<a href="#event"><i>event</i></a> or with <a href="#begin">begin signal</a> of next event.
 	<p>
-	Of them <code>byte[],boolean[],char[]</code> are <i>primary</i> block operations, which
-	must be always implemented in a compact way, and remaning are <i>secondary</i> which may
-	be implemented over <code>byte[]</code> providing that primitive block type is still
-	correctly recognized.
+	Of them <code>byte[],char[]</code> are <i>primary</i> block operations which
+	should be always implemented in as compact way as possible.
 	<p>
-	Use of primitive block operation indicates to format, that this operation
-	should be as compact as possible. On the contrary, use of sequence of elementary
-	primitives indicates that it should be written in as human friendly way as
-	possible in that format.
+	<i>This is because if You start playing with it, You will notice, that
+	in many cases You will use <code>byte[]</code> to store raw data (aka <code>InputStream/OutputStream</code>)
+	and <code>char[]</code> to preserve class names, structure names and etc, which are usually
+	ASCII.</i>
+	
+	
+	<h4>Difference between <code>byte[]</code> and <code>byte,byte,...</code></h4>
+	This package assumes, that when user writes data using sequnce of elementary primitives,
+	user is focused on preserving it's readability to humans, give them names and etc.
+	<p>
+	On the contrary, if user is using block operation, he/se is suggesting that each element
+	in block has less of importance and that this is important, that whole block is properly
+	named, indentified, described and etc.
 	<p>
 	See also <a href="doc-files/block-operations.html">this document for some discussion.</a>
 	<p>
@@ -215,8 +251,8 @@
 	
 	<a name="uninterruptible"><h3>Un-interruptible primitives</h3></a>
 	Each primitive operation is <i>un-interruptible</i> what means, that stream format requires that
-	primitive of a certain written type must be write by an operation of the same type. This has a side
-	effect prevents from fetching "long" by a sequence of "byte" fetches and etc.
+	primitive written with operation of type X must be read by an operation of the same type. This has a side
+	effect which prevents from fetching "long" by a sequence of "byte" fetches and etc.
 	<p>
 	For block operation  <i>un-interruptible</i> means additionally, that one cannot mix block operations
 	of different types nor introduce a non-block operation until the next <a href="#begin"><i>begin signal</i></a> 
@@ -230,26 +266,23 @@
 	<ul>
 			<li>regardless of in what state it is, there is always a possibility to move to next signal
 			skipping the un-processed content without any complaints. This should be true
-			also if primitives are write with incorrect methods;</li>
-			<li>to ensure that if any <i>primitive operation</i> attempts to initiate a write when there is no data 
+			also if primitives are read with incorrect methods;</li>
+			<li>to ensure that if any <i>primitive operation</i> attempts to initiate a read when there is no data 
 			due to presence of a <a href="#signal"><i>signal</i></a> the <a href="ENoMoreData.html">ENoMoreData</a>
 			exception is thrown;</li>
-			<li>to ensure that if any <i>non-block primitive operation</i> encounters end-of-stream condition
+			<li>to ensure that if any primitive operation encounters end-of-stream condition
 			the <a href="EUnexpectedEof.html">EUnexpectedEof</a> exception is thrown;</li>
-			<li>to ensure that <i>block operations</i> do detect end-of-stream condition by returning some
-			partial write;</li>
-			<li>to ensure that initiated block operation is correctly used and not interrupted until the next signal;</li>
-			<li>Note: The effect of encountering signal inside a primitive element body is unspecified and 
-			should result in some subclass of <a href="ECorruptedFormat.html">ECorruptedFormat</a> to be thrown;</li>
+			<li>to ensure that once block operation initiated only block operation of same type is allowed till next signal;</li>			
 	</ul>
+	<i>Note: The effect of encountering signal inside a primitive element body is unspecified.</i>
 	
 	<a name="fullydescribed"><h2>Described formats</h2></a>
 	Fully described format extends functionality of <a href="#nondescribed"><i>non-described format</i></a> and
 	is bound to use means which can ensure that:
 	<ul>
-		<li>an attempt to write primitive data of non matching type (breaking the interruptibility)
+		<li>an attempt to read primitive data with method non matching type in stream (breaking the interruptibility)
 		results in <a href="EDataMissmatch.html">EDataMissmatch</a> exception;</li>
-		<li>user may ask stream format, while writeing, if next stream content is a <a href="#signal"><i>signal</i></a> or
+		<li>user may ask stream format, while reading, if next stream content is a <a href="#signal"><i>signal</i></a> or
 		a <a href="#primititves"><i>primitive</i></a> and may get information what primitive type is is;</li>
 	</ul>
 	
@@ -261,9 +294,15 @@
 	
 	
 	
-	
+	<hr></hr>
 	<h1 id="indicators">Indicators</h1>
-	Indicators are part of implementation and are almost invisible in public API.
+	Indicators are third-tier API and usually will be part of implementation and will not
+	be used by users directly. If You are however going to implement own back-end format,
+	then the easiest way will be to make it by providing Your own implementation of
+	indicators.
+	<p>
+	<i>See <a href="IIndicatorReadFormat.html">IIndicatorReadFormat</a> and 
+	<a href="IIndicatorWriteFormat.html">IIndicatorWriteFormat</a>.</i>
 	<p>
 	Indicators are used to compose signals and tell about primitives.
 	<p>
@@ -273,7 +312,7 @@
 		<li>stream should be always able to look for an indicator;</li>
 		<li>stream should be always able to check if and what indicator is under cursor;</li> 
 	</ul>
-	For an informat discussions see <a href="doc-files/core-implementation.html">this document</a>.
+	For an informat discussions see <a href="doc-files/escapes-chunks-and-signals.html">this document</a>.
 	
 	<h2>Indicators used to build signals</h2>
 	The begin signal is built with following indicators:
@@ -285,18 +324,17 @@
 		<i>signal-name-data</i>
 	</pre>
 	</li>
-	<li>if names are encoded witht re-use optimization and name is used for a first time
+	<li>if names are encoded with re-use optimization and name is used for a first time
 	<pre>
 		begin-indicator <i>or</i> end-begin-indicator
 		register-indicator (with re-use identifier)
 		<i>signal-name-data</i>
 	</pre>
 	</li>
-	<li>if names are encoded witht re-use optimization and name is reused
+	<li>if names are encoded with re-use optimization and name is reused
 	<pre>
 		begin-indicator <i>or</i> end-begin-indicator
 		register-use (with re-use identifier)
-		<i>signal-name-data</i>
 	</pre>
 	</li>
 	</ul>
@@ -314,49 +352,28 @@
 	</li>
 	</ul>
 	
-	<h2>Indicators used provide information about primitives</h2>
+	<h2>Indicators used to provide information about primitives</h2>
 	Indicators can be also use to provide informations about
-	primitives if format is to be described.
+	primitives if format is <a href="fullydescribed">described.</a>
 	<p>
 	Following indicators are used in following sequence.
 	<pre>
 		type-indicator <i>separate for each elementary and array primitive</i>
 		<i>actual primitive data</i>
+		flush-type-indicator <i>separate for each elementary and array primitive</i>
 	</pre>
-	Note: There is no type-end indicator, as elementary primitives are always
-	write as a whole and blocks are terminated by a signal.
+	<p>
+	<i>Note: flush-type-indicator indicator is optional. Can be type specific, class generic (elementary/block),
+	generic or not present at all.</i>
+	<p>
+	<i>Note: flush-type-indicator indicator is introduced to API because of some formats which require to
+	surround data with proper, matched indicators. Signal streams are using it, but indicator formats may
+	ignore them if not used in their specific context.</i>
+	<p>
 	
 	
 	
 	
-	
-	<h1>Properties of an event based format</h1>
-	<ul>
-		<li>the set of operations necessary to write data is bound, known and simple;</li>
-		<li>operations which may benefit from a specific data packing are defined 
-		as <a href="#block"><i>block</i></a> operations;</li>
-		<li>the format does not know anything about objects, references and etc;</li>
-		<li>any binary or textual representation can be used;</li>
-	</ul>
-	Additionally the <a href="#fullydescribed"><i>fully described format</i></a> allows:
-	<ul>
-		<li>strong, type based validation;</li>
-		<li>format transcoding without the need of any additional knowledge about what data are contained in stream;</li>
-	</ul>
-	
-	
-	
-	<h1>Standards</h1>
-	<h2>Exceptions</h2>
-	In generic <code>AssertionError</code> is thrown by <code>assert</code> and is a required
-	mininum of defense against coder errors. The implementations are allowed to
-	use strictier, always enabled error testing and may throw any subclass of <Code>RuntimeException</code>.
-	
-	<h1>Ints instead of Enum</h1>
-	This API is using closed sets of <code>int</code> values instead of <code>Enum</code>
-	as ints are tiny bit faster in this use while still safe and easy to use enough. Plus
-	the <code>Enum</code> are closed sets and can't be extended by subclassing while
-	ints areo open.
 
 </body>
 </html>

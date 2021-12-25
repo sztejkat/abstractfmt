@@ -1,0 +1,94 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>sztejkat.abstractfmt - escapes, chunks and signals</title>
+      
+  <meta http-equiv="content-type"
+ content="text/html; charset=UTF-8">
+</head>
+<body>
+		<h1>Escapes, chunks and signals</h1>
+		In this document I will tell You about different possible means 
+		means of implementing signal and indicators which are behind them.
+		
+		<h1>Finding signals</h1>
+		A primary means which are necessary to handle signals in stream
+		is to provide an ability to indiate that signal do happen.
+		<p>
+		The specification requires that:
+		<p>
+		<i>
+		(...)
+		This is requied that a mechanism used for storig signals must be designed in such way,
+		that there must be a possibility to	iterate through the stream from signal to signal 
+		without the need of understanding anything of a stream content between signals.(...)
+		</i>
+		<p>
+		See <a href="../package-summary.html">package description.</a>
+		<p>
+		Due to this requirement we must be able to clearly tell where the signal is
+		<u>regardless of from which position in stream we do start looking for a signal</u>.
+		<p>
+		We have two possiblities:
+		<ul>
+			<li>escape sequence;</li>
+			<li>data chunks.</li>
+		</ul>
+		
+		<h2 id="escaped">Escape sequence</h2>
+		An escape sequence is a sequence of raw data (chars or bytes) which absolutely under
+		no condition can appear in stream elsewhere except at the signal.
+		<p>
+		A good example of escape sequences are XML tags.
+		
+		<h2>Data chunks</h2>
+		Data chunks are fixed blocks of which size is given at the beginning of a block
+		and about which we know, that the signal may appear only at the header of a data chunk.
+		
+		<h2>Pros and cons</h2>
+		
+		<table border="1">
+		<tr><td></td><td>Escape sequences</td><td>Chunks</td></tr>
+		<tr><td>size</td>
+		    <td>
+			- escapes present in stream data must be escaped
+			so the stream size may be enlarged and will varry depending
+			on data carried in stream. For an example an XML file
+			which will carry in its body "&lt;&lt;&lt;&lt;&lt;....&lt;"
+			string will be tripple size than a file which is carying
+			the "aaaaa.....a" body of the same number of characters.
+			</td>
+			<td>
+			- chunk size must be stored in chunk, what makes stream larger
+			than raw data, but
+			<p>
+			+ we can select "tiny", "small", "large" types of chunks, so
+			the chunk header overhead may be limited;
+			<p>
+			+ size of stream does not depend on content, but only on the
+			size of data stored and a number of chunks used to store it.
+			</td>
+		</tr>
+		<tr><td>robustness</td>
+			<td> + even if decoder will "get lost" in stream the unique 
+			character of escape sequence allows easy synchronisation on
+			the next signal
+			</td>
+			<td> - if for some reason decoder is lost the chunk size information
+			will be incorrect and data which are to be interpreted as next chunk header
+			will be wrong
+			</td>
+		</tr>
+		<tr><td>scanning</td>
+			<td> - stream must be processed char-by-char or byte-by-byte to find 
+			signals, so skipping remaning content of an event do require reading it,
+			altough without understanding
+			</td>
+			<td> + this is enough to read chunk header and skip, ie. using low level
+			file i/o to next chunk to find a possible signal.
+			</td>
+		</tr>
+		</table>
+			
+</body>
+</html>

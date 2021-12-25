@@ -244,7 +244,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 				System.out.println("fetching end...");
 					Assert.assertTrue(null==p.read.next());
 				System.out.println("polling for eof...");
-					Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+					Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 					
 			}finally{ p.close(); };
 			
@@ -316,18 +316,18 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 					if (wlength<=rlength)
 					{
 						Assert.assertTrue(p.read.readBooleanBlock(res,0,1)==0);	//subseqent read shuld be stuck.
-						Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+						Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 					}else
 					{
 						Assert.assertTrue(
 									p.read.isDescribed() ?
-										(p.read.whatNext()==ISignalReadFormat.PRMTV_BOOLEAN_BLOCK)
+										(p.read.whatNext()==TContentType.PRMTV_BOOLEAN_BLOCK)
 										:
-										(p.read.whatNext()==ISignalReadFormat.PRMTV_UNTYPED)
+										(p.read.whatNext()==TContentType.PRMTV_UNTYPED)
 									);
 					};
 					Assert.assertTrue(p.read.next()==null);
-					Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+					Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			}finally{ p.close(); };
 			leave();
 		};
@@ -423,18 +423,18 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 					if (wlength<=rlength)
 					{
 						Assert.assertTrue(p.read.readByteBlock(res,0,1)==0);	//subseqent read shuld be stuck.
-						Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+						Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 					}else
 					{
 						Assert.assertTrue(
 									p.read.isDescribed() ?
-										(p.read.whatNext()==ISignalReadFormat.PRMTV_BYTE_BLOCK)
+										(p.read.whatNext()==TContentType.PRMTV_BYTE_BLOCK)
 										:
-										(p.read.whatNext()==ISignalReadFormat.PRMTV_UNTYPED)
+										(p.read.whatNext()==TContentType.PRMTV_UNTYPED)
 									);
 					};
 					Assert.assertTrue(p.read.next()==null);
-					Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+					Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			}finally{ p.close(); };
 			leave();
 		};
@@ -519,18 +519,18 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 					};
 					if (wlength<=rlength)
 					{
-						Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+						Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 					}else
 					{
 						Assert.assertTrue(
 									p.read.isDescribed() ?
-										(p.read.whatNext()==ISignalReadFormat.PRMTV_BYTE_BLOCK)
+										(p.read.whatNext()==TContentType.PRMTV_BYTE_BLOCK)
 										:
-										(p.read.whatNext()==ISignalReadFormat.PRMTV_UNTYPED)
+										(p.read.whatNext()==TContentType.PRMTV_UNTYPED)
 									);
 					};
 					Assert.assertTrue(p.read.next()==null);
-					Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+					Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			}finally{ p.close(); };
 			leave();
 		};
@@ -610,18 +610,18 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 					};
 					if (wlength<=rlength)
 					{
-						Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+						Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 					}else
 					{
 						Assert.assertTrue(
 									p.read.isDescribed() ?
-										(p.read.whatNext()==ISignalReadFormat.PRMTV_CHAR_BLOCK)
+										(p.read.whatNext()==TContentType.PRMTV_CHAR_BLOCK)
 										:
-										(p.read.whatNext()==ISignalReadFormat.PRMTV_UNTYPED)
+										(p.read.whatNext()==TContentType.PRMTV_UNTYPED)
 									);
 					};
 					Assert.assertTrue(p.read.next()==null);
-					Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+					Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			}finally{ p.close(); };
 			leave();
 		};
@@ -717,18 +717,18 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 					};
 					if (wlength<=rlength)
 					{
-						Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+						Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 					}else
 					{
 						Assert.assertTrue(
 									p.read.isDescribed() ?
-										(p.read.whatNext()==ISignalReadFormat.PRMTV_SHORT_BLOCK)
+										(p.read.whatNext()==TContentType.PRMTV_SHORT_BLOCK)
 										:
-										(p.read.whatNext()==ISignalReadFormat.PRMTV_UNTYPED)
+										(p.read.whatNext()==TContentType.PRMTV_UNTYPED)
 									);
 					};
 					Assert.assertTrue(p.read.next()==null);
-					Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+					Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			}finally{ p.close(); };
 			leave();
 		};
@@ -820,18 +820,18 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 					};
 					if (wlength<=rlength)
 					{
-						Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+						Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 					}else
 					{
 						Assert.assertTrue(
 									p.read.isDescribed() ?
-										(p.read.whatNext()==ISignalReadFormat.PRMTV_INT_BLOCK)
+										(p.read.whatNext()==TContentType.PRMTV_INT_BLOCK)
 										:
-										(p.read.whatNext()==ISignalReadFormat.PRMTV_UNTYPED)
+										(p.read.whatNext()==TContentType.PRMTV_UNTYPED)
 									);
 					};
 					Assert.assertTrue(p.read.next()==null);
-					Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+					Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			}finally{ p.close(); };
 			leave();
 		};
@@ -927,18 +927,18 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 					};
 					if (wlength<=rlength)
 					{
-						Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+						Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 					}else
 					{
 						Assert.assertTrue(
 									p.read.isDescribed() ?
-										(p.read.whatNext()==ISignalReadFormat.PRMTV_LONG_BLOCK)
+										(p.read.whatNext()==TContentType.PRMTV_LONG_BLOCK)
 										:
-										(p.read.whatNext()==ISignalReadFormat.PRMTV_UNTYPED)
+										(p.read.whatNext()==TContentType.PRMTV_UNTYPED)
 									);
 					};
 					Assert.assertTrue(p.read.next()==null);
-					Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+					Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			}finally{ p.close(); };
 			leave();
 		};
@@ -1041,18 +1041,18 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 					};
 					if (wlength<=rlength)
 					{
-						Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+						Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 					}else
 					{
 						Assert.assertTrue(
 									p.read.isDescribed() ?
-										(p.read.whatNext()==ISignalReadFormat.PRMTV_FLOAT_BLOCK)
+										(p.read.whatNext()==TContentType.PRMTV_FLOAT_BLOCK)
 										:
-										(p.read.whatNext()==ISignalReadFormat.PRMTV_UNTYPED)
+										(p.read.whatNext()==TContentType.PRMTV_UNTYPED)
 									);
 					};
 					Assert.assertTrue(p.read.next()==null);
-					Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+					Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			}finally{ p.close(); };
 			leave();
 		};
@@ -1149,18 +1149,18 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 					};
 					if (wlength<=rlength)
 					{
-						Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+						Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 					}else
 					{
 						Assert.assertTrue(
 									p.read.isDescribed() ?
-										(p.read.whatNext()==ISignalReadFormat.PRMTV_DOUBLE_BLOCK)
+										(p.read.whatNext()==TContentType.PRMTV_DOUBLE_BLOCK)
 										:
-										(p.read.whatNext()==ISignalReadFormat.PRMTV_UNTYPED)
+										(p.read.whatNext()==TContentType.PRMTV_UNTYPED)
 									);
 					};
 					Assert.assertTrue(p.read.next()==null);
-					Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+					Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			}finally{ p.close(); };
 			leave();
 		};

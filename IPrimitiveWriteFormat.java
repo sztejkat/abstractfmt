@@ -125,7 +125,16 @@ public interface IPrimitiveWriteFormat
 		
 		
 		
-		/**  See {@link #writeBooleanBlock(boolean[],int,int)}
+		/**  See {@link #writeBooleanBlock(boolean[],int,int)}.
+		<p>
+		Note implementations may use this method as an indication
+		that "compact" string model should be used (see also {@link #writeCharBlock(char[],int,int)})
+		<p>
+		Even tough it is possible to use different models
+		for <code>char[]</code> and <code>CharSequence</code> they must be fully transparent
+		at the reading end and reading with any <code>readCharBlock</code> method, even interlaved,
+		must be supported.
+		
 		@param characters --//--
 		@param offset --//--
 		@param length --//--
@@ -142,6 +151,11 @@ public interface IPrimitiveWriteFormat
 				writeCharBlock(characters,0,characters.length());
 		}
 		/**  See {@link #writeBooleanBlock(boolean[],int,int)}
+		<p>
+		Note implementations may use this method as an indication
+		that "plain" string model should be used.
+		See notes in {@link #writeCharBlock(CharSequence,int,int)}.
+		<p>
 		@param buffer --//--
 		@param offset --//--
 		@param length --//--

@@ -2,7 +2,7 @@ package sztejkat.abstractfmt;
 import java.io.Closeable;
 import java.io.IOException;
 /**
-	A generic contract for writing primitives.
+	A generic contract for reading primitives.
 	<p>
 	This interface is used just to save typing.
 	Specific uses of this interface may declare different

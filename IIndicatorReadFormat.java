@@ -253,6 +253,7 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	{@link #getMaxSupportedSignalNameLength}
 	 without calling {@link #open}
 	may have unpredictable results.
+	@throws IOException if failed at low level
 	*/
 	public void open()throws IOException;
 	/**
@@ -268,6 +269,7 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	<p>
 	Calling it without calling open is allowed and should
 	release resources.
+	@throws IOException if failed at low level
 	*/
 	@Override public void close()throws IOException;
 };

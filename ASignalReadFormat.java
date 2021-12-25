@@ -50,7 +50,7 @@ public abstract class ASignalReadFormat extends ASignalReadFormat0
 			return super.next();
 		}catch(EBrokenFormat ex){ breakFormat(); throw ex; }
 	};		
-	@Override public int whatNext()throws IOException
+	@Override public TContentType whatNext()throws IOException
 	{
 		validateNotBroken();
 		try{

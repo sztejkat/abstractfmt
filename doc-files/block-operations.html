@@ -7,45 +7,85 @@
  content="text/html; charset=UTF-8">
 </head>
 <body>
-	In this chapter I will discuss some rationales behind block operations
-        <ul>
-            <li><code>byte[]</code>:
-                 <ul>
-                    <li>because almost all raw binary
-                     data (ie. images) are represented as byte-blocks;</li>
-                    <li>any binary data, if necessary can be turned to
-                    byte blocks;</li>
-                    <li>in XML like format encoding raw binary data
-                    as sequence of:
-                    <pre>
-                         &lt;byte&gt;0x34&lt;byte/&gt;
-                    </pre>
-                    is not only a waste of resources but also pointless since
-                    human may not benefit from reading raw binary data
-                    </li>
-                 </ul>
-            </li>
-            <li><code>char[]</code>:
-                 <ul>
-                 <li>because they are used in <code>Strings</code>
-                     and <code>Strings</code> may greatly benefit from UTF-8 encoding;</li>
-                 <li>because exactly the same primitive operation code may be used
-                 to write "signal names" and other data which are internal to format;</li>
-                 </ul>
-            </li>
-            <li><code>boolean[]</code> because they can be bit-packed,
-            but bit packing of sequences of bits into sequences of bytes is
-            not trivial when multiple writes are used.</li>
-            <li>other arrays:
-            <ul>
-            	 <li>they can be implemented either over primitive writes or
-            	 over <code>byte[]</code> at low overhead;</li>
-            	 <li>they are not used to represent raw data, so in XML like
-            	 format human may benefit from reading them and encoding
-            	 them in compact way may be not a best idea;</li>
-            </ul>
-            </li>
-        </ul>
-
+	<h1>Block operations</h1>
+	In this document I will discuss some rationales behind adding a dedicated
+	block transfer API to signal formats.
+	
+	<h2>Could block API be not present?</h2>
+	Of course, yes.
+	Imagine an API:
+	<pre>
+		public void writeByte(byte v);
+	</pre>
+	A block of bytes could be written with:
+	<pre>
+		for(int i=0;i&lt;a.length; i++)
+			writeByte(a[i])
+	</pre>
+	No problem, You are allowed to implement it in such way.
+	
+	<h2>Type information</h2>
+	As I already mentioned in an overview document I would like to have 
+	an ability to store "type information" to be able to run a "dub transaltion".
+	<p>
+	So internally, as You probably expect, the:  
+	<pre>
+		public void writeByte();
+	</pre>
+	would become something like this:
+	<pre>
+		public void writeByte(byte v)
+		{
+			writeType(BYTE);
+			writeDataByte(v)
+		}
+	</pre>
+	Now there should be obvious, that:
+	<pre>
+		for(int i=0;i&lt;a.length; i++)
+			writeByte(a[i])
+	</pre>
+	will produce far too many completely not necessary type information:
+	<pre>
+		BYTE,v,BYTE,v,BYTE,v....
+	</pre>
+	instead of:
+	<pre>
+		BYTE[],v,v,v,v....
+	</pre>
+	
+	<h2>Use scenarios</h2>
+	Below there are some use scenarios which also made me to add a block API
+	
+	<h3>Use of <code>byte[]</code></h3>
+	 <ul>
+		<li>almost all raw binary data (ie. images) are represented as byte-blocks;</li>
+		<li>such binary data are, by definition, not human readable so there is no benefit
+		for having them shown in clear way;</li>		
+		<li>any binary data, if necessary can be turned to byte blocks;</li>
+		<li>in XML like, human readable formats encoding raw binary data as sequence of:
+		<pre>
+			 &lt;byte&gt;0x34&lt;byte/&gt;
+		</pre>
+		is not only a waste of resources but also pointless since
+		human may not benefit from reading raw binary data;</li>
+	 </ul>
+	 
+	<h3>Use of <code>char[]</code></h3>
+	 <ul>
+		 <li>because they are used in <code>Strings</code> and <code>Strings</code> may greatly benefit from UTF-8 encoding;</li>
+		 <li>because exactly the same primitive operation code may be used to write "signal names" and other data which are
+		   internal to format;</li>
+		 <li>because this signal format may be used as an efficient back-end for serialization engines
+		 and serialization engines must store field names, class names, types and other <code>String</code> represented
+		 information. By convention (until China will dominate over the world) UTF-8 like encoding can compact strings
+		 a lot.</li> 
+	 </ul>
+	 This is also why I provided a separate API to work on <code>char[]</code> and <code>CharacterSequence</code>,
+	 altough at reading end they must be fully interchangable.
+	 
+	 <h3>Use of <code>boolean[]</code></h3>		
+       Because they can be bit-packed, but bit packing of sequences of bits into sequences of bytes is
+       not trivial when multiple writes are used, so it should not be put on user shoulders.
 </body>
 </html>

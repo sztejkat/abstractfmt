@@ -47,26 +47,26 @@ public abstract class ATestISignalFormat_Descr extends ATestISignalFormatBase
 			
 			//we just ask few times to ensure that cursor is not moved.
 			p.read.open();
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_BOOLEAN);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_BOOLEAN);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_BOOLEAN);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_BOOLEAN);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_BOOLEAN);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_BOOLEAN);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_BOOLEAN);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_BOOLEAN);
 			Assert.assertTrue(p.read.readBoolean()==false);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_BYTE);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_BYTE);
 			Assert.assertTrue(p.read.readByte()==(byte)-7);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_CHAR);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_CHAR);
 			Assert.assertTrue(p.read.readChar()=='c');
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_SHORT);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_SHORT);
 			Assert.assertTrue(p.read.readShort()==(short)44);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_INT);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_INT);
 			Assert.assertTrue(p.read.readInt()==20394);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_LONG);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_LONG);
 			Assert.assertTrue(p.read.readLong()==3344909);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_FLOAT);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_FLOAT);
 			Assert.assertTrue(p.read.readFloat()==3.555f);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_DOUBLE);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_DOUBLE);
 			Assert.assertTrue(p.read.readDouble()==49.5);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			leave();
 		};
 		
@@ -90,25 +90,25 @@ public abstract class ATestISignalFormat_Descr extends ATestISignalFormatBase
 			p.write.close();
 			
 			p.read.open();
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+			Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			Assert.assertTrue("Angie".equals(p.read.next()));
 			//we just ask few times to ensure that cursor is not moved.
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_BOOLEAN_BLOCK);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_BOOLEAN_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_BOOLEAN_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_BOOLEAN_BLOCK);
 			//Now read a bit of this array
 			{
 				int r = p.read.readBooleanBlock(new boolean[16],0,9);
 				Assert.assertTrue(r==9);
 				//The information about safe call to array should be retained.
-				Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_BOOLEAN_BLOCK);
+				Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_BOOLEAN_BLOCK);
 				//Now we should read array to the end, triggering partial read.
 				r = p.read.readBooleanBlock(new boolean[16],0,16);
 				Assert.assertTrue(9+r==16);
 				//and after a partial read 
-				Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+				Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			};
 			Assert.assertTrue(p.read.next()==null);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			
 			leave();
 		};
@@ -128,29 +128,29 @@ public abstract class ATestISignalFormat_Descr extends ATestISignalFormatBase
 			p.write.close();
 			
 			p.read.open();
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+			Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			Assert.assertTrue("Angie".equals(p.read.next()));
 			//we just ask few times to ensure that cursor is not moved.
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_BOOLEAN_BLOCK);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_BOOLEAN_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_BOOLEAN_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_BOOLEAN_BLOCK);
 			//Now read a bit of this array
 			{
 				int r = p.read.readBooleanBlock(new boolean[16],0,9);
 				Assert.assertTrue(r==9);
 				//The information about safe call to array should be retained.
-				Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_BOOLEAN_BLOCK);
+				Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_BOOLEAN_BLOCK);
 				//Now we should read array to the end, but NOT triggering partial read.
 				r = p.read.readBooleanBlock(new boolean[16],0,16-9);
 				Assert.assertTrue(9+r==16);
 				//There had to be NO partial read, but whole block was read 
 				Assert.assertTrue(
 							" "+p.read.whatNext(),
-							p.read.whatNext()==ISignalReadFormat.SIGNAL
+							p.read.whatNext()==TContentType.SIGNAL
 							);
 			};
 			//However NEXT should skip data block.
 			Assert.assertTrue(p.read.next()==null);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			
 			leave();
 		};
@@ -174,25 +174,25 @@ public abstract class ATestISignalFormat_Descr extends ATestISignalFormatBase
 			p.write.close();
 			
 			p.read.open();
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+			Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			Assert.assertTrue("Angie".equals(p.read.next()));
 			//we just ask few times to ensure that cursor is not moved.
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_BYTE_BLOCK);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_BYTE_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_BYTE_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_BYTE_BLOCK);
 			//Now read a bit of this array
 			{
 				int r = p.read.readByteBlock(new byte[16],0,9);
 				Assert.assertTrue(r==9);
 				//The information about safe call to array should be retained.
-				Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_BYTE_BLOCK);
+				Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_BYTE_BLOCK);
 				//Now we should read array to the end, triggering partial read.
 				r = p.read.readByteBlock(new byte[16],0,16);
 				Assert.assertTrue(9+r==16);
 				//and after a partial read 
-				Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+				Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			};
 			Assert.assertTrue(p.read.next()==null);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			
 			leave();
 		};
@@ -212,29 +212,29 @@ public abstract class ATestISignalFormat_Descr extends ATestISignalFormatBase
 			p.write.close();
 			
 			p.read.open();
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+			Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			Assert.assertTrue("Angie".equals(p.read.next()));
 			//we just ask few times to ensure that cursor is not moved.
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_BYTE_BLOCK);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_BYTE_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_BYTE_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_BYTE_BLOCK);
 			//Now read a bit of this array
 			{
 				int r = p.read.readByteBlock(new byte[16],0,9);
 				Assert.assertTrue(r==9);
 				//The information about safe call to array should be retained.
-				Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_BYTE_BLOCK);
+				Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_BYTE_BLOCK);
 				//Now we should read array to the end, but NOT triggering partial read.
 				r = p.read.readByteBlock(new byte[16],0,16-9);
 				Assert.assertTrue(9+r==16);
 				//There had to be NO partial read, but whole block was read 
 				Assert.assertTrue(
 							" "+p.read.whatNext(),
-							p.read.whatNext()==ISignalReadFormat.SIGNAL
+							p.read.whatNext()==TContentType.SIGNAL
 							);
 			};
 			//However NEXT should skip data block.
 			Assert.assertTrue(p.read.next()==null);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			
 			leave();
 		};
@@ -262,25 +262,25 @@ public abstract class ATestISignalFormat_Descr extends ATestISignalFormatBase
 			p.write.close();
 			
 			p.read.open();
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+			Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			Assert.assertTrue("Angie".equals(p.read.next()));
 			//we just ask few times to ensure that cursor is not moved.
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_CHAR_BLOCK);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_CHAR_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_CHAR_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_CHAR_BLOCK);
 			//Now read a bit of this array
 			{
 				int r = p.read.readCharBlock(new char[16],0,9);
 				Assert.assertTrue(r==9);
 				//The information about safe call to array should be retained.
-				Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_CHAR_BLOCK);
+				Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_CHAR_BLOCK);
 				//Now we should read array to the end, triggering partial read.
 				r = p.read.readCharBlock(new char[16],0,16);
 				Assert.assertTrue(9+r==16);
 				//and after a partial read 
-				Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+				Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			};
 			Assert.assertTrue(p.read.next()==null);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			
 			leave();
 		};
@@ -300,29 +300,29 @@ public abstract class ATestISignalFormat_Descr extends ATestISignalFormatBase
 			p.write.close();
 			
 			p.read.open();
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+			Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			Assert.assertTrue("Angie".equals(p.read.next()));
 			//we just ask few times to ensure that cursor is not moved.
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_CHAR_BLOCK);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_CHAR_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_CHAR_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_CHAR_BLOCK);
 			//Now read a bit of this array
 			{
 				int r = p.read.readCharBlock(new char[16],0,9);
 				Assert.assertTrue(r==9);
 				//The information about safe call to array should be retained.
-				Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_CHAR_BLOCK);
+				Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_CHAR_BLOCK);
 				//Now we should read array to the end, but NOT triggering partial read.
 				r = p.read.readCharBlock(new char[16],0,16-9);
 				Assert.assertTrue(9+r==16);
 				//There had to be NO partial read, but whole block was read 
 				Assert.assertTrue(
 							" "+p.read.whatNext(),
-							p.read.whatNext()==ISignalReadFormat.SIGNAL
+							p.read.whatNext()==TContentType.SIGNAL
 							);
 			};
 			//However NEXT should skip data block.
 			Assert.assertTrue(p.read.next()==null);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			
 			leave();
 		};
@@ -350,25 +350,25 @@ public abstract class ATestISignalFormat_Descr extends ATestISignalFormatBase
 			p.write.close();
 			
 			p.read.open();
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+			Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			Assert.assertTrue("Angie".equals(p.read.next()));
 			//we just ask few times to ensure that cursor is not moved.
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_SHORT_BLOCK);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_SHORT_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_SHORT_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_SHORT_BLOCK);
 			//Now read a bit of this array
 			{
 				int r = p.read.readShortBlock(new short[16],0,9);
 				Assert.assertTrue(r==9);
 				//The information about safe call to array should be retained.
-				Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_SHORT_BLOCK);
+				Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_SHORT_BLOCK);
 				//Now we should read array to the end, triggering partial read.
 				r = p.read.readShortBlock(new short[16],0,16);
 				Assert.assertTrue(9+r==16);
 				//and after a partial read 
-				Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+				Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			};
 			Assert.assertTrue(p.read.next()==null);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			
 			leave();
 		};
@@ -388,29 +388,29 @@ public abstract class ATestISignalFormat_Descr extends ATestISignalFormatBase
 			p.write.close();
 			
 			p.read.open();
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+			Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			Assert.assertTrue("Angie".equals(p.read.next()));
 			//we just ask few times to ensure that cursor is not moved.
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_SHORT_BLOCK);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_SHORT_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_SHORT_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_SHORT_BLOCK);
 			//Now read a bit of this array
 			{
 				int r = p.read.readShortBlock(new short[16],0,9);
 				Assert.assertTrue(r==9);
 				//The information about safe call to array should be retained.
-				Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_SHORT_BLOCK);
+				Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_SHORT_BLOCK);
 				//Now we should read array to the end, but NOT triggering partial read.
 				r = p.read.readShortBlock(new short[16],0,16-9);
 				Assert.assertTrue(9+r==16);
 				//There had to be NO partial read, but whole block was read 
 				Assert.assertTrue(
 							" "+p.read.whatNext(),
-							p.read.whatNext()==ISignalReadFormat.SIGNAL
+							p.read.whatNext()==TContentType.SIGNAL
 							);
 			};
 			//However NEXT should skip data block.
 			Assert.assertTrue(p.read.next()==null);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			
 			leave();
 		};
@@ -437,25 +437,25 @@ public abstract class ATestISignalFormat_Descr extends ATestISignalFormatBase
 			p.write.close();
 			
 			p.read.open();
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+			Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			Assert.assertTrue("Angie".equals(p.read.next()));
 			//we just ask few times to ensure that cursor is not moved.
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_INT_BLOCK);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_INT_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_INT_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_INT_BLOCK);
 			//Now read a bit of this array
 			{
 				int r = p.read.readIntBlock(new int[16],0,9);
 				Assert.assertTrue(r==9);
 				//The information about safe call to array should be retained.
-				Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_INT_BLOCK);
+				Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_INT_BLOCK);
 				//Now we should read array to the end, triggering partial read.
 				r = p.read.readIntBlock(new int[16],0,16);
 				Assert.assertTrue(9+r==16);
 				//and after a partial read 
-				Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+				Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			};
 			Assert.assertTrue(p.read.next()==null);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			
 			leave();
 		};
@@ -475,29 +475,29 @@ public abstract class ATestISignalFormat_Descr extends ATestISignalFormatBase
 			p.write.close();
 			
 			p.read.open();			
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+			Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			Assert.assertTrue("Angie".equals(p.read.next()));
 			//we just ask few times to ensure that cursor is not moved.
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_INT_BLOCK);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_INT_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_INT_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_INT_BLOCK);
 			//Now read a bit of this array
 			{
 				int r = p.read.readIntBlock(new int[16],0,9);
 				Assert.assertTrue(r==9);
 				//The information about safe call to array should be retained.
-				Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_INT_BLOCK);
+				Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_INT_BLOCK);
 				//Now we should read array to the end, but NOT triggering partial read.
 				r = p.read.readIntBlock(new int[16],0,16-9);
 				Assert.assertTrue(9+r==16);
 				//There had to be NO partial read, but whole block was read 
 				Assert.assertTrue(
 							" "+p.read.whatNext(),
-							p.read.whatNext()==ISignalReadFormat.SIGNAL
+							p.read.whatNext()==TContentType.SIGNAL
 							);
 			};
 			//However NEXT should skip data block.
 			Assert.assertTrue(p.read.next()==null);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			
 			leave();
 		};
@@ -524,25 +524,25 @@ public abstract class ATestISignalFormat_Descr extends ATestISignalFormatBase
 			p.write.close();
 			
 			p.read.open();
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+			Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			Assert.assertTrue("Angie".equals(p.read.next()));
 			//we just ask few times to ensure that cursor is not moved.
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_LONG_BLOCK);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_LONG_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_LONG_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_LONG_BLOCK);
 			//Now read a bit of this array
 			{
 				int r = p.read.readLongBlock(new long[16],0,9);
 				Assert.assertTrue(r==9);
 				//The information about safe call to array should be retained.
-				Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_LONG_BLOCK);
+				Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_LONG_BLOCK);
 				//Now we should read array to the end, triggering partial read.
 				r = p.read.readLongBlock(new long[16],0,16);
 				Assert.assertTrue(9+r==16);
 				//and after a partial read 
-				Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+				Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			};
 			Assert.assertTrue(p.read.next()==null);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			
 			leave();
 		};
@@ -562,29 +562,29 @@ public abstract class ATestISignalFormat_Descr extends ATestISignalFormatBase
 			p.write.close();
 			
 			p.read.open();
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+			Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			Assert.assertTrue("Angie".equals(p.read.next()));
 			//we just ask few times to ensure that cursor is not moved.
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_LONG_BLOCK);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_LONG_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_LONG_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_LONG_BLOCK);
 			//Now read a bit of this array
 			{
 				int r = p.read.readLongBlock(new long[16],0,9);
 				Assert.assertTrue(r==9);
 				//The information about safe call to array should be retained.
-				Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_LONG_BLOCK);
+				Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_LONG_BLOCK);
 				//Now we should read array to the end, but NOT triggering partial read.
 				r = p.read.readLongBlock(new long[16],0,16-9);
 				Assert.assertTrue(9+r==16);
 				//There had to be NO partial read, but whole block was read 
 				Assert.assertTrue(
 							" "+p.read.whatNext(),
-							p.read.whatNext()==ISignalReadFormat.SIGNAL
+							p.read.whatNext()==TContentType.SIGNAL
 							);
 			};
 			//However NEXT should skip data block.
 			Assert.assertTrue(p.read.next()==null);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			
 			leave();
 		};
@@ -610,25 +610,25 @@ public abstract class ATestISignalFormat_Descr extends ATestISignalFormatBase
 			p.write.close();
 			
 			p.read.open();
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+			Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			Assert.assertTrue("Angie".equals(p.read.next()));
 			//we just ask few times to ensure that cursor is not moved.
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_FLOAT_BLOCK);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_FLOAT_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_FLOAT_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_FLOAT_BLOCK);
 			//Now read a bit of this array
 			{
 				int r = p.read.readFloatBlock(new float[16],0,9);
 				Assert.assertTrue(r==9);
 				//The information about safe call to array should be retained.
-				Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_FLOAT_BLOCK);
+				Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_FLOAT_BLOCK);
 				//Now we should read array to the end, triggering partial read.
 				r = p.read.readFloatBlock(new float[16],0,16);
 				Assert.assertTrue(9+r==16);
 				//and after a partial read 
-				Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+				Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			};
 			Assert.assertTrue(p.read.next()==null);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			
 			leave();
 		};
@@ -648,29 +648,29 @@ public abstract class ATestISignalFormat_Descr extends ATestISignalFormatBase
 			p.write.close();
 			
 			p.read.open();
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+			Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			Assert.assertTrue("Angie".equals(p.read.next()));
 			//we just ask few times to ensure that cursor is not moved.
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_FLOAT_BLOCK);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_FLOAT_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_FLOAT_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_FLOAT_BLOCK);
 			//Now read a bit of this array
 			{
 				int r = p.read.readFloatBlock(new float[16],0,9);
 				Assert.assertTrue(r==9);
 				//The information about safe call to array should be retained.
-				Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_FLOAT_BLOCK);
+				Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_FLOAT_BLOCK);
 				//Now we should read array to the end, but NOT triggering partial read.
 				r = p.read.readFloatBlock(new float[16],0,16-9);
 				Assert.assertTrue(9+r==16);
 				//There had to be NO partial read, but whole block was read 
 				Assert.assertTrue(
 							" "+p.read.whatNext(),
-							p.read.whatNext()==ISignalReadFormat.SIGNAL
+							p.read.whatNext()==TContentType.SIGNAL
 							);
 			};
 			//However NEXT should skip data block.
 			Assert.assertTrue(p.read.next()==null);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			
 			leave();
 		};
@@ -697,25 +697,25 @@ public abstract class ATestISignalFormat_Descr extends ATestISignalFormatBase
 			p.write.close();
 			
 			p.read.open();
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+			Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			Assert.assertTrue("Angie".equals(p.read.next()));
 			//we just ask few times to ensure that cursor is not moved.
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_DOUBLE_BLOCK);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_DOUBLE_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_DOUBLE_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_DOUBLE_BLOCK);
 			//Now read a bit of this array
 			{
 				int r = p.read.readDoubleBlock(new double[16],0,9);
 				Assert.assertTrue(r==9);
 				//The information about safe call to array should be retained.
-				Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_DOUBLE_BLOCK);
+				Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_DOUBLE_BLOCK);
 				//Now we should read array to the end, triggering partial read.
 				r = p.read.readDoubleBlock(new double[16],0,16);
 				Assert.assertTrue(9+r==16);
 				//and after a partial read 
-				Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+				Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			};
 			Assert.assertTrue(p.read.next()==null);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			
 			leave();
 		};
@@ -735,29 +735,29 @@ public abstract class ATestISignalFormat_Descr extends ATestISignalFormatBase
 			p.write.close();
 			
 			p.read.open();
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
+			Assert.assertTrue(p.read.whatNext()==TContentType.SIGNAL);
 			Assert.assertTrue("Angie".equals(p.read.next()));
 			//we just ask few times to ensure that cursor is not moved.
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_DOUBLE_BLOCK);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_DOUBLE_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_DOUBLE_BLOCK);
+			Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_DOUBLE_BLOCK);
 			//Now read a bit of this array
 			{
 				int r = p.read.readDoubleBlock(new double[16],0,9);
 				Assert.assertTrue(r==9);
 				//The information about safe call to array should be retained.
-				Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.PRMTV_DOUBLE_BLOCK);
+				Assert.assertTrue(p.read.whatNext()==TContentType.PRMTV_DOUBLE_BLOCK);
 				//Now we should read array to the end, but NOT triggering partial read.
 				r = p.read.readDoubleBlock(new double[16],0,16-9);
 				Assert.assertTrue(9+r==16);
 				//There had to be NO partial read, but whole block was read 
 				Assert.assertTrue(
 							" "+p.read.whatNext(),
-							p.read.whatNext()==ISignalReadFormat.SIGNAL
+							p.read.whatNext()==TContentType.SIGNAL
 							);
 			};
 			//However NEXT should skip data block.
 			Assert.assertTrue(p.read.next()==null);
-			Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+			Assert.assertTrue(p.read.whatNext()==TContentType.EOF);
 			
 			leave();
 		};
