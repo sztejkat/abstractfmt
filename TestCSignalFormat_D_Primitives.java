@@ -14,7 +14,7 @@ public class TestCSignalFormat_D_Primitives extends ATestISignalFormat_Primitive
 		
 		return new Pair(
 						new CSignalWriteFormat(
-								 10000, //int max_events_recursion_depth,
+								 0, //int max_events_recursion_depth,
 								new CIndicatorWriteFormatProtector(								 
 								 new CObjIndicatorWriteFormat(
 										media,
@@ -32,7 +32,7 @@ public class TestCSignalFormat_D_Primitives extends ATestISignalFormat_Primitive
 								 };
 								 },//ISignalWriteFormat write,
 						new CSignalReadFormat(
-								 10000,//int max_events_recursion_depth,
+								 0,//int max_events_recursion_depth,
 								new CIndicatorReadFormatProtector(
 								 new CObjIndicatorReadFormat(
 										media,//CObjListFormat media, 

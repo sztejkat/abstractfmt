@@ -108,8 +108,8 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 			
 	/** Creates read format		
 		@param max_events_recursion_depth specifies the allowed depth of events
-		nesting. -1 disables limit, 0 sets limit to: "no events allowed",
-		1 allows event but no events inside and so on. If this limit is exceed
+		nesting.Zero disables limit, 1 sets limit to: "no nested elements allowed",
+		2 allows element within an element and so on. If this limit is exceed
 		the {@link #next} will throw {@link EFormatBoundaryExceeded} if stream
 		contains too deep recursion of elements.	
 		@param input output to set. If null will be set to <code>(IIndicatorWriteFormat)this</code>.
@@ -212,7 +212,7 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 	-------------------------------------------------------------*/
 	@Override public String next()throws IOException
 	{
-		if (max_events_recursion_depth>=0)
+		if (max_events_recursion_depth>0)
 		{
 			if (depth>max_events_recursion_depth)
 				throw new EFormatBoundaryExceeded("Too deep recursion");

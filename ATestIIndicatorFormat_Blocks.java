@@ -24,15 +24,15 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.close();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BOOLEAN_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_BOOLEAN_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readBooleanBlock(new boolean[16])==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//run all, trigger partial read.
 		Assert.assertTrue(p.read.readBooleanBlock(new boolean[100])==32+32-16);		
 		//Should be getting end indicator and calls should be not allowed, but 
@@ -41,8 +41,8 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -64,23 +64,23 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.flush();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BOOLEAN_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_BOOLEAN_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readBooleanBlock(new boolean[16])==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//run all, NOT trigger partial read.
 		Assert.assertTrue(p.read.readBooleanBlock(new boolean[32+16])==32+16);
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -100,20 +100,20 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.flush();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BOOLEAN_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_BOOLEAN_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readBooleanBlock(new boolean[64])==64);
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -136,23 +136,23 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.close();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BOOLEAN_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_BOOLEAN_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readBooleanBlock(new boolean[16])==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//skip rest.
 		p.read.next();
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		leave();
 	};
 	
@@ -190,15 +190,15 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.close();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BYTE_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_BYTE_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readByteBlock(new byte[16])==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//run all, trigger partial read.
 		Assert.assertTrue(p.read.readByteBlock(new byte[100])==32+32-16);		
 	//Should be getting end indicator and calls should be not allowed, but 
@@ -207,8 +207,8 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -231,25 +231,25 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.close();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BYTE_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_BYTE_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		for(int i=0;i<16;i++)
 		{   
 			//Note: API requires that cursor is tested before each call.   
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+			expect(p.read.readIndicator(),TIndicator.DATA);
 			Assert.assertTrue(p.read.readByteBlock()!=-1);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//run all, trigger partial read.
 		for(int i=0;i<64-16;i++)
 		{
 			//Note: API requires that cursor is tested before each call.
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+			expect(p.read.readIndicator(),TIndicator.DATA);
 			Assert.assertTrue(p.read.readByteBlock()!=-1);
 		};
 		//Should be getting end indicator and calls should be not allowed, but 
@@ -258,8 +258,8 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		leave();
 	};
 	
@@ -281,23 +281,23 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.close();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BYTE_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_BYTE_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readByteBlock(new byte[16])==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//run all, NOT trigger partial read.
 		Assert.assertTrue(p.read.readByteBlock(new byte[32+16])==32+16);
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		leave();
 	};
 	
@@ -316,20 +316,20 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.flush();
 		p.write.close();
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BYTE_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_BYTE_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readByteBlock(new byte[64])==64);
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		leave();
 	};
 	
@@ -351,23 +351,23 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.close();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BYTE_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_BYTE_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readByteBlock(new byte[16])==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//skip rest.
 		p.read.skip();
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		leave();
 	};
 	
@@ -403,15 +403,15 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.close();
 		
 		p.read.open();		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_CHAR_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_CHAR_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readCharBlock(new char[16])==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//run all, trigger partial read.
 		Assert.assertTrue(p.read.readCharBlock(new char[100])==32+32-16);		
 		//Should be getting end indicator and calls should be not allowed, but 
@@ -420,8 +420,8 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -442,15 +442,15 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.close();
 		
 		p.read.open();	
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_CHAR_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_CHAR_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readCharBlock(new StringBuilder(),16)==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//run all, trigger partial read.
 		Assert.assertTrue(p.read.readCharBlock(new StringBuilder(),100)==32+32-16);		
 		//Should be getting end indicator and calls should be not allowed, but 
@@ -459,8 +459,8 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -483,23 +483,23 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.close();
 		
 		p.read.open();			
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_CHAR_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_CHAR_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readCharBlock(new char[16])==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//run all, NOT trigger partial read.
 		Assert.assertTrue(p.read.readCharBlock(new char[32+16])==32+16);
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -520,20 +520,20 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.close();
 		
 		p.read.open();			
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_CHAR_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_CHAR_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readCharBlock(new char[64])==64);
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};	
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		leave();
 	};
 	
@@ -556,23 +556,23 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		
 		p.read.open();		
 		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_CHAR_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_CHAR_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readCharBlock(new char[16])==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//skip rest.
 		p.read.skip();
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};	
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -618,15 +618,15 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.close();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_SHORT_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_SHORT_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readShortBlock(new short[16])==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//run all, trigger partial read.
 		Assert.assertTrue(p.read.readShortBlock(new short[100])==32+32-16);		
 		//Should be getting end indicator and calls should be not allowed, but 
@@ -635,8 +635,8 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -658,23 +658,23 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.flush();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_SHORT_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_SHORT_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readShortBlock(new short[16])==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//run all, NOT trigger partial read.
 		Assert.assertTrue(p.read.readShortBlock(new short[32+16])==32+16);
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -694,20 +694,20 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.flush();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_SHORT_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_SHORT_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readShortBlock(new short[64])==64);
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -730,23 +730,23 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.close();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_SHORT_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_SHORT_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readShortBlock(new short[16])==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//skip rest.
 		p.read.next();
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		leave();
 	};
 	
@@ -783,15 +783,15 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.close();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_INT_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_INT_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readIntBlock(new int[16])==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//run all, trigger partial read.
 		Assert.assertTrue(p.read.readIntBlock(new int[100])==32+32-16);		
 		//Should be getting end indicator and calls should be not allowed, but 
@@ -800,8 +800,8 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -823,23 +823,23 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.flush();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_INT_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_INT_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readIntBlock(new int[16])==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//run all, NOT trigger partial read.
 		Assert.assertTrue(p.read.readIntBlock(new int[32+16])==32+16);
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -859,20 +859,20 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.flush();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_INT_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_INT_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readIntBlock(new int[64])==64);
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -895,23 +895,23 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.close();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_INT_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_INT_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readIntBlock(new int[16])==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//skip rest.
 		p.read.next();
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		leave();
 	};
 	
@@ -953,15 +953,15 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.close();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_LONG_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_LONG_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readLongBlock(new long[16])==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//run all, trigger partial read.
 		Assert.assertTrue(p.read.readLongBlock(new long[100])==32+32-16);		
 		//Should be getting end indicator and calls should be not allowed, but 
@@ -970,8 +970,8 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -993,23 +993,23 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.flush();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_LONG_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_LONG_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readLongBlock(new long[16])==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//run all, NOT trigger partial read.
 		Assert.assertTrue(p.read.readLongBlock(new long[32+16])==32+16);
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -1029,20 +1029,20 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.flush();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_LONG_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_LONG_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readLongBlock(new long[64])==64);
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -1065,23 +1065,23 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.close();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_LONG_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_LONG_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readLongBlock(new long[16])==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//skip rest.
 		p.read.next();
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		leave();
 	};
 	
@@ -1121,15 +1121,15 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.close();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_FLOAT_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_FLOAT_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readFloatBlock(new float[16])==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//run all, trigger partial read.
 		Assert.assertTrue(p.read.readFloatBlock(new float[100])==32+32-16);		
 		//Should be getting end indicator and calls should be not allowed, but 
@@ -1138,8 +1138,8 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -1161,23 +1161,23 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.flush();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_FLOAT_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_FLOAT_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readFloatBlock(new float[16])==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//run all, NOT trigger partial read.
 		Assert.assertTrue(p.read.readFloatBlock(new float[32+16])==32+16);
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -1197,20 +1197,20 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.flush();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_FLOAT_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_FLOAT_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readFloatBlock(new float[64])==64);
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -1233,23 +1233,23 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.close();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_FLOAT_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_FLOAT_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readFloatBlock(new float[16])==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//skip rest.
 		p.read.next();
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		leave();
 	};
 	
@@ -1288,15 +1288,15 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.close();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_DOUBLE_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_DOUBLE_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readDoubleBlock(new double[16])==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//run all, trigger partial read.
 		Assert.assertTrue(p.read.readDoubleBlock(new double[100])==32+32-16);		
 		//Should be getting end indicator and calls should be not allowed, but 
@@ -1305,8 +1305,8 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -1328,23 +1328,23 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.flush();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_DOUBLE_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_DOUBLE_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readDoubleBlock(new double[16])==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//run all, NOT trigger partial read.
 		Assert.assertTrue(p.read.readDoubleBlock(new double[32+16])==32+16);
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -1364,20 +1364,20 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.flush();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_DOUBLE_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_DOUBLE_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readDoubleBlock(new double[64])==64);
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -1400,23 +1400,23 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		p.write.close();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_DOUBLE_BLOCK);
+			expect(p.read.readIndicator(),TIndicator.TYPE_DOUBLE_BLOCK);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readDoubleBlock(new double[16])==16);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		//skip rest.
 		p.read.next();
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		leave();
 	};
 	

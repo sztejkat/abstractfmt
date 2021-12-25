@@ -10,6 +10,9 @@ public abstract class ATestISignalFormatBase extends sztejkat.utils.test.ATest
 		streams. Whatever is written with {@link #write}
 		must be available to {@link #read} no
 		later than after {@link ISignalWriteFormat#flush}.
+		<p>
+		Any limiting should be disabled to maximum physical 
+		format boundaries.
 		*/
 		public static final class Pair
 		{

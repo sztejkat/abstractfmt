@@ -63,8 +63,14 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 				private String signal_name_cache;
 				
 	/** Creates 
-	@param input see {@link AXMLIndicatorReadFormat#AXMLIndicatorReadFormat(Reader,CXMLSettings)}
-	@param settings --//--
+	@param input reader from which to read content.
+	@param settings XML settings to use.
+		If those settings carry non-null value in 
+		{@link CXMLSettings#ROOT_ELEMENT} then
+		this class will ensure to check if root element
+		is opened before every operation and will
+		start returning EOF/UnexpectedEof if root
+		element is closed.	
 	*/
 	protected AXMLIndicatorReadFormat(
 					final Reader input,
@@ -142,8 +148,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	};
 	
 	@Override public void next()throws IOException
-	{
-		
+	{		
 		//Now in our processing style if a logic cursor is
 		//at non-data indicator, then physical cursor is
 		//at first character after it. So this is enough to 
@@ -153,6 +158,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 			indicator_cache = null;
 		}else
 		{
+			indicator_cache = null;
 			//Now if we are inside data we should be able scan to next
 			// < regardles of what is there.
 			for(;;)

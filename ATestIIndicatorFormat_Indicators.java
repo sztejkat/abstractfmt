@@ -19,7 +19,7 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		p.write.close();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		leave();
 	};
 	
@@ -39,17 +39,17 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		p.write.close();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		Assert.assertTrue("arabica".equals(p.read.getSignalName()));
 		Assert.assertTrue("arabica".equals(p.read.getSignalName()));	//valid till different indicator.
 		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		Assert.assertTrue("jamaica".equals(p.read.getSignalName()));
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.END);
 		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF); //intentionally double
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.EOF); //intentionally double
 		p.read.close();
 		leave();
 	};
@@ -69,13 +69,13 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		Assert.assertTrue("arabica".equals(p.read.getSignalName()));
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.END);		
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		Assert.assertTrue("jamaica".equals(p.read.getSignalName()));		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -93,12 +93,12 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		p.write.close();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		Assert.assertTrue("arabica".equals(p.read.getSignalName()));
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END_BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.END_BEGIN_DIRECT);
 		Assert.assertTrue("jamaica".equals(p.read.getSignalName()));		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};       
@@ -124,15 +124,15 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		p.write.close();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_REGISTER);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_REGISTER);
 		Assert.assertTrue("arabica".equals(p.read.getSignalName()));
 		Assert.assertTrue(p.read.getSignalNumber()==0);
 		p.read.getSignalNumber(); //if can do twice.			
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END_BEGIN_REGISTER);
+		expect(p.read.readIndicator(),TIndicator.END_BEGIN_REGISTER);
 		Assert.assertTrue(p.read.getSignalNumber()==1);
 		Assert.assertTrue("jamaica".equals(p.read.getSignalName()));				
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -154,21 +154,21 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		p.write.close();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_REGISTER);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_REGISTER);
 		Assert.assertTrue("arabica".equals(p.read.getSignalName()));
 		Assert.assertTrue(p.read.getSignalNumber()==0);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END_BEGIN_REGISTER);
+		expect(p.read.readIndicator(),TIndicator.END_BEGIN_REGISTER);
 		Assert.assertTrue(p.read.getSignalNumber()==1);
 		Assert.assertTrue("jamaica".equals(p.read.getSignalName()));		
 		
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_USE);
+			expect(p.read.readIndicator(),TIndicator.BEGIN_USE);
 			Assert.assertTrue(p.read.getSignalNumber()==1);
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.END_BEGIN_USE);
+			expect(p.read.readIndicator(),TIndicator.END_BEGIN_USE);
 			Assert.assertTrue(p.read.getSignalNumber()==0);
-			Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
+			expect(p.read.readIndicator(),TIndicator.END);
 				
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};
@@ -199,15 +199,15 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		p.write.close();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		
 		p.read.skip();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		Assert.assertTrue("arabica".equals(p.read.getSignalName()));
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		expect(p.read.readIndicator(),TIndicator.END);		
+		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
 		leave();
 	};	
@@ -227,9 +227,9 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		p.write.close();
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		try{
 			p.read.skip();
 			Assert.fail();
@@ -288,44 +288,44 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		writeTypesAndFlushes(p.write);
 		
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BOOLEAN);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.TYPE_BOOLEAN);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		p.read.skip();
 		Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0); //because any flush may be read.
 		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BYTE);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.TYPE_BYTE);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		p.read.skip();
 		Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0); //because any flush may be read.
 		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_CHAR);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.TYPE_CHAR);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		p.read.skip();
 		Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0); //because any flush may be read.
 		
 		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_SHORT);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.TYPE_SHORT);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		p.read.skip();
 		Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0); //because any flush may be read.
 		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_INT);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.TYPE_INT);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		p.read.skip();
 		Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0); //because any flush may be read.
 		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_LONG);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.TYPE_LONG);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		p.read.skip();
 		Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0); //because any flush may be read.
 		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_FLOAT);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.TYPE_FLOAT);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		p.read.skip();
 		Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0); //because any flush may be read.
 		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_DOUBLE);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.TYPE_DOUBLE);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		p.read.skip();
 		Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0); //because any flush may be read.
 		p.read.close();
@@ -344,36 +344,36 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		writeTypesAndFlushes(p.write);
 			
 		p.read.open();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BOOLEAN);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.TYPE_BOOLEAN);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		p.read.skip();
 		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BYTE);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.TYPE_BYTE);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		p.read.skip();
 		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_CHAR);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.TYPE_CHAR);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		p.read.skip();
 		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_SHORT);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.TYPE_SHORT);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		p.read.skip();
 		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_INT);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.TYPE_INT);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		p.read.skip();
 		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_LONG);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.TYPE_LONG);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		p.read.skip();
 		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_FLOAT);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.TYPE_FLOAT);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		p.read.skip();
 		
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_DOUBLE);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.TYPE_DOUBLE);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		p.read.skip();
 		p.read.close();
 		leave();
@@ -393,8 +393,8 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		Assert.assertTrue(p.read.getIndicator()==TIndicator.TYPE_BOOLEAN);
 		Assert.assertTrue(p.read.getIndicator()==TIndicator.TYPE_BOOLEAN);
 		p.read.next();
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
-		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
+		expect(p.read.readIndicator(),TIndicator.DATA);
 		p.read.next();
 				
 		Assert.assertTrue(p.read.getIndicator()==TIndicator.TYPE_BYTE);

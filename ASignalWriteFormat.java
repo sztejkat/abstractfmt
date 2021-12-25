@@ -375,7 +375,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			if (signal.length()>max_name_length) 
 				throw new IllegalArgumentException("Signal name too long. \""+signal+"\", max="+max_name_length);
 			//validate depth
-			if ((max_events_recursion_depth!=0)&&(max_events_recursion_depth<=current_depth))
+			if ((max_events_recursion_depth>0)&&(max_events_recursion_depth<=current_depth))
 				throw new IllegalStateException("Too deep events recursion, limit set to "+max_events_recursion_depth);
 			
 			

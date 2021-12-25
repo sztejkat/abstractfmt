@@ -1,5 +1,6 @@
 package sztejkat.abstractfmt;
 import java.io.IOException;
+import org.junit.Assert;
 /**
 	A test bed for paired {@link IIndicatorReadFormat}/{@link IIndicatorWriteFormat}
 	using only a contract to read data through reading end writtten with write end.
@@ -35,8 +36,21 @@ public abstract class ATestIIndicatorFormatBase extends sztejkat.utils.test.ATes
 					read.close();
 				};				
 		};
-		/** Creates a pair which is to be used for testing purposes.			
-		@return created, coupled pair. 
-		*/
-		protected abstract Pair create();
+	/** Creates a pair which is to be used for testing purposes.			
+	@return created, coupled pair. 
+	*/
+	protected abstract Pair create();
+		
+		
+	/** Validates if <code>is</code> is same as <code>expected</code>
+		and prints state information.
+		@param is what is read from format
+		@param expected what is expected from format.
+		@throws AssertionError if not the same.
+	*/
+	protected static void expect(TIndicator is, TIndicator expected)
+	{
+		System.out.println("Expected indicator "+expected+" found "+is);
+		Assert.assertTrue(is==expected);
+	};
 };
