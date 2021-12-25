@@ -84,12 +84,14 @@ abstract class AXMLIndicatorReadFormatBase extends AXMLFormat
 				do{
 					 c = input.readChar();
 				}while(Character.isWhitespace(c));
+				input.unread(c);
 				//Now compare. We can do it char-by-char, because we are using the same whitespace normalization.
 				for(int i=0,n = normalized_prolog.length();i<n;i++)
 				{
-					if (c!=normalized_prolog.charAt(i)) 
-						throw new EBrokenFormat("Expecting \""+normalized_prolog+"\" but \""+c+"\" does not match "+i+"-th prolog character");
 					c = input.readChar();
+					if (c!=normalized_prolog.charAt(i)) 
+						throw new EBrokenFormat("Expecting \""+normalized_prolog+"\" but \""+c+"\" does not match "+i+"-th (\""+normalized_prolog.charAt(i)+"\") prolog character");
+					
 				};
 				//Fine, prolog matched.
 			}finally{ xml_processing_filter.setBypassEnabled(false);}
@@ -101,15 +103,16 @@ abstract class AXMLIndicatorReadFormatBase extends AXMLFormat
 			do{
 				 c = input.readChar();
 			}while(Character.isWhitespace(c));
-			if (c!='<') throw new EBrokenFormat("expected <"+settings.ROOT_ELEMENT+">");
+			if (c!='<') throw new EBrokenFormat("expected <"+settings.ROOT_ELEMENT+">, but \""+c+"\" found instead of opening < ");
 			//Now normalization will ensure, we can directly compare it with 
 			for(int i=0,n = settings.ROOT_ELEMENT.length();i<n;i++)
 			{
 				c = input.readChar();
-				if (c!=settings.ROOT_ELEMENT.charAt(i)) throw new EBrokenFormat("expected <"+settings.ROOT_ELEMENT+">");
+				if (c!=settings.ROOT_ELEMENT.charAt(i)) 
+					throw new EBrokenFormat("expected <"+settings.ROOT_ELEMENT+"> but at "+i+"-th position found \""+c+"\" instead of \""+settings.ROOT_ELEMENT.charAt(i)+"\"");
 			};
 			c = input.readChar();
-			if (c!='>') throw new EBrokenFormat("expected <"+settings.ROOT_ELEMENT+">");
+			if (c!='>') throw new EBrokenFormat("expected <"+settings.ROOT_ELEMENT+">, but \""+c+"\" found instead of closing >");
 		};
 	};
 	

@@ -1,5 +1,6 @@
 package sztejkat.abstractfmt.xml;
 import sztejkat.abstractfmt.IIndicatorWriteFormat;
+import sztejkat.abstractfmt.CIndicatorWriteFormatProtector;
 import sztejkat.abstractfmt.TIndicator;
 import java.io.StringWriter;
 import java.io.IOException;
@@ -19,10 +20,11 @@ public class TestCXMLIndicatorWriteFormat extends sztejkat.utils.test.ATest
 			stream with prolog and root.
 		*/
 		StringWriter o = new StringWriter(); 
-		CXMLIndicatorWriteFormat f = new CXMLIndicatorWriteFormat(o,
+		IIndicatorWriteFormat f= new CIndicatorWriteFormatProtector(
+										 new CXMLIndicatorWriteFormat(o,
 																  Charset.forName("UTF-8"),
 																  SXMLSettings.LONG_FULL_UTF8,
-																  true);
+																  true));
 		f.open();
 			f.writeBeginDirect("PONY");
 			//Note: remember, writing type is up to caller!
@@ -30,6 +32,7 @@ public class TestCXMLIndicatorWriteFormat extends sztejkat.utils.test.ATest
 			f.writeBoolean(false);
 			f.writeFlush(TIndicator.FLUSH_BOOLEAN);
 			f.writeEnd();
+		f.flush();
 		f.close();
 		
 		String r = o.toString();
@@ -46,10 +49,11 @@ public class TestCXMLIndicatorWriteFormat extends sztejkat.utils.test.ATest
 			stream with prolog and root.
 		*/
 		StringWriter o = new StringWriter(); 
-		CXMLIndicatorWriteFormat f = new CXMLIndicatorWriteFormat(o,
+		IIndicatorWriteFormat f= new CIndicatorWriteFormatProtector( 
+										new CXMLIndicatorWriteFormat(o,
 																  Charset.forName("UTF-8"),
 																  SXMLSettings.LONG_BARE,
-																  true);
+																  true));
 		f.open();
 			f.writeBeginDirect("PONY");
 			//Note: remember, writing type is up to caller!
@@ -57,6 +61,7 @@ public class TestCXMLIndicatorWriteFormat extends sztejkat.utils.test.ATest
 			f.writeFloat(-1.34f);
 			f.writeFlush(TIndicator.FLUSH_FLOAT);
 			f.writeEnd();
+		f.flush();
 		f.close();
 		
 		String r = o.toString();
@@ -76,13 +81,15 @@ public class TestCXMLIndicatorWriteFormat extends sztejkat.utils.test.ATest
 			because carries characters which can't be encoded.
 		*/
 		StringWriter o = new StringWriter(); 
-		CXMLIndicatorWriteFormat f = new CXMLIndicatorWriteFormat(o,
+		IIndicatorWriteFormat f= new CIndicatorWriteFormatProtector( 
+										new CXMLIndicatorWriteFormat(o,
 																  Charset.forName("ASCII"),
 																  SXMLSettings.LONG_BARE,
-																  true);
+																  true));
 		f.open();
 			f.writeBeginDirect("MĘŻATKA");
 			f.writeEnd();
+		f.flush();
 		f.close();
 		
 		String r = o.toString();
@@ -100,13 +107,15 @@ public class TestCXMLIndicatorWriteFormat extends sztejkat.utils.test.ATest
 			because carries characters which are bad XML
 		*/
 		StringWriter o = new StringWriter(); 
-		CXMLIndicatorWriteFormat f = new CXMLIndicatorWriteFormat(o,
+		IIndicatorWriteFormat f= new CIndicatorWriteFormatProtector( 
+											new CXMLIndicatorWriteFormat(o,
 																  Charset.forName("UTF-8"),
 																  SXMLSettings.LONG_BARE,
-																  true);
+																  true));
 		f.open();
 			f.writeBeginDirect("<>");
 			f.writeEnd();
+		f.flush();
 		f.close();
 		
 		String r = o.toString();
@@ -123,10 +132,11 @@ public class TestCXMLIndicatorWriteFormat extends sztejkat.utils.test.ATest
 			A test which checks if  LONG_BARE correctly generates a certain example
 		*/
 		StringWriter o = new StringWriter(); 
-		CXMLIndicatorWriteFormat f = new CXMLIndicatorWriteFormat(o,
+		IIndicatorWriteFormat f= new CIndicatorWriteFormatProtector(
+											 new CXMLIndicatorWriteFormat(o,
 																  Charset.forName("UTF-8"),
 																  SXMLSettings.LONG_BARE,
-																  true);
+																  true));
 		f.open();
 			f.writeType(TIndicator.TYPE_BOOLEAN);
 			f.writeBoolean(false);
@@ -163,6 +173,7 @@ public class TestCXMLIndicatorWriteFormat extends sztejkat.utils.test.ATest
 			f.writeType(TIndicator.TYPE_DOUBLE);
 			f.writeDouble(-2.4090459E3);
 			f.writeFlush(TIndicator.FLUSH_DOUBLE);
+		f.flush();
 		f.close();
 		
 		String r = o.toString();
@@ -180,10 +191,11 @@ public class TestCXMLIndicatorWriteFormat extends sztejkat.utils.test.ATest
 			A test which checks if  LONG_BARE correctly generates a certain example
 		*/
 		StringWriter o = new StringWriter(); 
-		CXMLIndicatorWriteFormat f = new CXMLIndicatorWriteFormat(o,
+		IIndicatorWriteFormat f= new CIndicatorWriteFormatProtector( 
+										new CXMLIndicatorWriteFormat(o,
 																  Charset.forName("UTF-8"),
 																  SXMLSettings.LONG_BARE,
-																  false);
+																  false));
 		f.open();
 			f.writeType(TIndicator.TYPE_BOOLEAN);
 			f.writeBoolean(false);
@@ -220,6 +232,7 @@ public class TestCXMLIndicatorWriteFormat extends sztejkat.utils.test.ATest
 			f.writeType(TIndicator.TYPE_DOUBLE);
 			f.writeDouble(-2.4090459E3);
 			f.writeFlush(TIndicator.FLUSH_DOUBLE);
+		f.flush();
 		f.close();
 		
 		String r = o.toString();
@@ -241,10 +254,11 @@ public class TestCXMLIndicatorWriteFormat extends sztejkat.utils.test.ATest
 			To trigger more precise case we restric charset using ASCII encoding
 		*/
 		StringWriter o = new StringWriter(); 
-		CXMLIndicatorWriteFormat f = new CXMLIndicatorWriteFormat(o,
+		IIndicatorWriteFormat f= new CIndicatorWriteFormatProtector( 
+										new CXMLIndicatorWriteFormat(o,
 																  Charset.forName("ASCII"),
 																  SXMLSettings.LONG_BARE,
-																  true);
+																  true));
 		f.open();
 			f.writeType(TIndicator.TYPE_CHAR);
 			f.writeChar((char)0x08);
@@ -261,6 +275,7 @@ public class TestCXMLIndicatorWriteFormat extends sztejkat.utils.test.ATest
 			f.writeType(TIndicator.TYPE_CHAR);
 			f.writeChar('<');	//standard AMP escape.
 			f.writeFlush(TIndicator.FLUSH_CHAR);			
+		f.flush();
 		f.close();
 		
 		String r = o.toString();
@@ -288,10 +303,11 @@ public class TestCXMLIndicatorWriteFormat extends sztejkat.utils.test.ATest
 			operation would wipe out any whitespace between <a>here</a>
 		*/
 		StringWriter o = new StringWriter(); 
-		CXMLIndicatorWriteFormat f = new CXMLIndicatorWriteFormat(o,
+		IIndicatorWriteFormat f= new CIndicatorWriteFormatProtector(
+									 new CXMLIndicatorWriteFormat(o,
 																  Charset.forName("ASCII"),
 																  SXMLSettings.LONG_BARE,
-																  true);
+																  true));
 		f.open();
 			f.writeType(TIndicator.TYPE_CHAR);
 			f.writeChar(' ');
@@ -305,6 +321,7 @@ public class TestCXMLIndicatorWriteFormat extends sztejkat.utils.test.ATest
 			f.writeType(TIndicator.TYPE_CHAR);
 			f.writeChar('\t');	
 			f.writeFlush(TIndicator.FLUSH_CHAR);			
+		f.flush();
 		f.close();
 		
 		String r = o.toString();
@@ -324,10 +341,11 @@ public class TestCXMLIndicatorWriteFormat extends sztejkat.utils.test.ATest
 			To trigger more precise case we restric charset using ASCII encoding
 		*/
 		StringWriter o = new StringWriter(); 
-		CXMLIndicatorWriteFormat f = new CXMLIndicatorWriteFormat(o,
+		IIndicatorWriteFormat f= new CIndicatorWriteFormatProtector(
+										 new CXMLIndicatorWriteFormat(o,
 																  Charset.forName("ASCII"),
 																  SXMLSettings.LONG_BARE,
-																  false);
+																  false));
 		f.open();
 			f.writeType(TIndicator.TYPE_CHAR);
 			f.writeChar((char)0x08);
@@ -347,6 +365,7 @@ public class TestCXMLIndicatorWriteFormat extends sztejkat.utils.test.ATest
 			f.writeType(TIndicator.TYPE_CHAR);
 			f.writeChar('a');	//standard AMP escape.
 			f.writeFlush(TIndicator.FLUSH_CHAR);			
+		f.flush();
 		f.close();
 		
 		String r = o.toString();
@@ -370,14 +389,16 @@ public class TestCXMLIndicatorWriteFormat extends sztejkat.utils.test.ATest
 			A test which checks if LONG_BARE correctly wite described boolean block
 		*/
 		StringWriter o = new StringWriter(); 
-		CXMLIndicatorWriteFormat f = new CXMLIndicatorWriteFormat(o,
+		IIndicatorWriteFormat f= new CIndicatorWriteFormatProtector( 
+											new CXMLIndicatorWriteFormat(o,
 																  Charset.forName("UTF-8"),
 																  SXMLSettings.LONG_BARE,
-																  true);
+																  true));
 		f.open();
 			f.writeType(TIndicator.TYPE_BOOLEAN_BLOCK);
 			f.writeBooleanBlock(new boolean[]{true,false,false,true});
 			f.writeFlush(TIndicator.FLUSH_BOOLEAN_BLOCK);	
+		f.flush();
 		f.close();
 		
 		String r = o.toString();
@@ -394,14 +415,16 @@ public class TestCXMLIndicatorWriteFormat extends sztejkat.utils.test.ATest
 			A test which checks if LONG_BARE correctly writes undescribed byte block
 		*/
 		StringWriter o = new StringWriter(); 
-		CXMLIndicatorWriteFormat f = new CXMLIndicatorWriteFormat(o,
+		IIndicatorWriteFormat f= new CIndicatorWriteFormatProtector( 
+										new CXMLIndicatorWriteFormat(o,
 																  Charset.forName("UTF-8"),
 																  SXMLSettings.LONG_BARE,
-																  false);
+																  false));
 		f.open();
 			f.writeType(TIndicator.TYPE_BYTE_BLOCK);
 			f.writeByteBlock(new byte[]{(byte)0x00,(byte)0xAB,(byte)0x3F});
 			f.writeFlush(TIndicator.FLUSH_BYTE_BLOCK);	
+		f.flush();
 		f.close();
 		
 		String r = o.toString();
@@ -419,14 +442,16 @@ public class TestCXMLIndicatorWriteFormat extends sztejkat.utils.test.ATest
 			character block with escapes
 		*/
 		StringWriter o = new StringWriter(); 
-		CXMLIndicatorWriteFormat f = new CXMLIndicatorWriteFormat(o,
+		IIndicatorWriteFormat f= new CIndicatorWriteFormatProtector( 
+										new CXMLIndicatorWriteFormat(o,
 																  Charset.forName("ASCII"),
 																  SXMLSettings.LONG_BARE,
-																  false);
+																  false));
 		f.open();
-			f.writeType(TIndicator.TYPE_BYTE_BLOCK);
+			f.writeType(TIndicator.TYPE_CHAR_BLOCK);
 			f.writeCharBlock(";SPIR<>OMETRY"+(char)0x4f4a+";MARCI%E");
-			f.writeFlush(TIndicator.FLUSH_BYTE_BLOCK);	
+			f.writeFlush(TIndicator.FLUSH_CHAR_BLOCK);	
+		f.flush();
 		f.close();
 		
 		String r = o.toString();
@@ -445,16 +470,18 @@ public class TestCXMLIndicatorWriteFormat extends sztejkat.utils.test.ATest
 			if trailing separator is optimized out
 		*/
 		StringWriter o = new StringWriter(); 
-		CXMLIndicatorWriteFormat f = new CXMLIndicatorWriteFormat(o,
+		IIndicatorWriteFormat f= new CIndicatorWriteFormatProtector( 
+										new CXMLIndicatorWriteFormat(o,
 																  Charset.forName("UTF-8"),
 																  SXMLSettings.LONG_BARE,
-																  false);
+																  false));
 		f.open();
 			f.writeBeginDirect("MARCIE");
 			f.writeType(TIndicator.TYPE_INT_BLOCK);
 			f.writeIntBlock(new int[]{1,2,3,45,6,7,8});
 			f.writeFlush(TIndicator.FLUSH_INT_BLOCK);
 			f.writeEnd();	
+		f.flush();
 		f.close();
 		
 		String r = o.toString();
