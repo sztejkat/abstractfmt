@@ -32,8 +32,11 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			*/			
 			Pair p = create();
 			try{
+				p.write.open();
 				p.write.writeByte((byte)-45);
-				p.write.close();			
+				p.write.close();
+							
+				p.read.open();
 				Assert.assertTrue(p.read.readByte()==(byte)-45);
 				}finally{ p.close(); };
 		};
@@ -53,12 +56,13 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			*/			
 			Pair p = create();
 			try{
-			
+					p.write.open();
 					for(int i=-100;i<100;i+=10)
 					{
 							p.write.writeByte((byte)(i));
 					};
-					p.write.close();			
+					p.write.close();
+					p.read.open();			
 					for(int i=-100;i<100;i+=10)
 					{
 							Assert.assertTrue( p.read.readByte()==(byte)(i));
@@ -76,11 +80,13 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			*/			
 			Pair p = create();
 			try{
+					p.write.open();
 					for(int i=0;i<65536;i+=37)
 					{
 							p.write.writeChar((char)i);
 					};
-					p.write.close();					
+					p.write.close();
+					p.read.open();					
 					for(int i=0;i<65536;i+=37)
 					{
 							Assert.assertTrue( p.read.readChar()==(char)i);
@@ -97,11 +103,13 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			*/			
 			Pair p = create();
 			try{
+					p.write.open();
 					for(int i=-32767;i<32768;i+=97)
 					{
 							p.write.writeShort((short)i);
 					};
-					p.write.close();					
+					p.write.close();
+					p.read.open();					
 					for(int i=-32767;i<32768;i+=97)
 					{
 							Assert.assertTrue( p.read.readShort()==(short)i);
@@ -119,11 +127,13 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			*/			
 			Pair p = create();
 			try{
+					p.write.open();
 					for(int i=-32767;i<32768;i+=97)
 					{
 							p.write.writeInt(i + 37*i);
 					};
-					p.write.close();					
+					p.write.close();
+					p.read.open();					
 					for(int i=-32767;i<32768;i+=97)
 					{
 							Assert.assertTrue( p.read.readInt()==i + 37*i);
@@ -141,11 +151,13 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			*/			
 			Pair p = create();
 			try{
+					p.write.open();
 					for(long i=-32767;i<32768;i+=97)
 					{
 							p.write.writeLong(i + 37*i + 997*i);
 					};
-					p.write.close();					
+					p.write.close();	
+					p.read.open();				
 					for(long i=-32767;i<32768;i+=97)
 					{
 							Assert.assertTrue( p.read.readLong()==i + 37*i+ 997*i);
@@ -163,11 +175,13 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			*/			
 			Pair p = create();
 			try{
+					p.write.open();
 					for(long i=-32767;i<32768;i+=97)
 					{
 							p.write.writeFloat((1e-2f*(i + 37*i + 997*i)-i));
 					};
-					p.write.close();					
+					p.write.close();	
+					p.read.open();				
 					for(long i=-32767;i<32768;i+=97)
 					{
 							Assert.assertTrue( p.read.readFloat()==(1e-2f*(i + 37*i + 997*i)-i));
@@ -184,12 +198,13 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			*/			
 			Pair p = create();
 			try{
+					p.write.open();
 					for(long i=-32767;i<32768;i+=97)
 					{
 							p.write.writeDouble((double)(1e-2f*(i + 37*i + 997*i)-i));
 					};
 					p.write.flush();
-					
+					p.read.open();
 					for(long i=-32767;i<32768;i+=97)
 					{
 							Assert.assertTrue( p.read.readDouble()==(double)(1e-2f*(i + 37*i + 997*i)-i));
@@ -218,11 +233,12 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			*/			
 			Pair p = create();
 			try{
-				
+					p.write.open();
 					p.write.begin("pershing");
 					p.write.end();
 					p.write.close();
 				
+					p.read.open();
 				System.out.println("fetching begin...");	
 					Assert.assertTrue("pershing".equals(p.read.next()));
 				System.out.println("fetching end...");
@@ -276,7 +292,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 				int rL = wlength/3;	//<-- intentionally wlength
 				int rH = rlength - rL;
 				
-				
+					p.write.open();
 					p.write.begin("block");
 					System.out.println("write??Block(..,"+woffset+","+wlength+")");
 					boolean [] blk = prepareBooleanBlock(woffset+wlength);
@@ -285,6 +301,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 					p.write.end();
 					p.write.close();
 					
+					p.read.open();
 					Assert.assertTrue("block".equals(p.read.next()));
 					boolean [] res = new boolean[rlength+roffset];
 					System.out.println("read??Block(..,"+roffset+","+rlength+")");
@@ -382,7 +399,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 				int rL = wlength/3;	//<-- intentionally wlength
 				int rH = rlength - rL;
 				
-				
+					p.write.open();
 					p.write.begin("block");
 					System.out.println("write??Block(..,"+woffset+","+wlength+")");
 					byte [] blk = prepareByteBlock(woffset+wlength);
@@ -391,6 +408,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 					p.write.end();
 					p.write.close();
 					
+					p.read.open();
 					Assert.assertTrue("block".equals(p.read.next()));
 					byte [] res = new byte[rlength+roffset];
 					System.out.println("read??Block(..,"+roffset+","+rlength+")");
@@ -472,9 +490,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			*/	
 			Pair p = create();
 			try{
-				
-				
-				
+					p.write.open();
 					p.write.begin("block");
 					System.out.println("write??Block(..,"+woffset+","+wlength+")");
 					byte [] blk = prepareByteBlock(woffset+wlength);
@@ -483,6 +499,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 					p.write.end();
 					p.write.close();
 					
+					p.read.open();
 					Assert.assertTrue("block".equals(p.read.next()));
 					byte [] res = new byte[rlength+roffset];
 					System.out.println("read??Block(..,"+roffset+","+rlength+")");
@@ -570,7 +587,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 				int rL = wlength/3;	//<-- intentionally wlength
 				int rH = rlength - rL;
 				
-				
+					p.write.open();
 					p.write.begin("block");
 					System.out.println("write??Block(..,"+woffset+","+wlength+")");
 					char [] blk = prepareCharBlock(woffset+wlength);
@@ -579,6 +596,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 					p.write.end();
 					p.write.close();
 					
+					p.read.open();
 					Assert.assertTrue("block".equals(p.read.next()));
 					char [] res = new char[rlength+roffset];
 					System.out.println("read??Block(..,"+roffset+","+rlength+")");
@@ -676,7 +694,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 				int rL = wlength/3;	//<-- intentionally wlength
 				int rH = rlength - rL;
 				
-				
+					p.write.open();
 					p.write.begin("block");
 					System.out.println("write??Block(..,"+woffset+","+wlength+")");
 					short [] blk = prepareShortBlock(woffset+wlength);
@@ -685,6 +703,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 					p.write.end();
 					p.write.close();
 					
+					p.read.open();
 					Assert.assertTrue("block".equals(p.read.next()));
 					short [] res = new short[rlength+roffset];
 					System.out.println("read??Block(..,"+roffset+","+rlength+")");
@@ -778,7 +797,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 				int rL = wlength/3;	//<-- intentionally wlength
 				int rH = rlength - rL;
 				
-				
+					p.write.open();
 					p.write.begin("block");
 					System.out.println("write??Block(..,"+woffset+","+wlength+")");
 					int [] blk = prepareIntBlock(woffset+wlength);
@@ -787,6 +806,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 					p.write.end();
 					p.write.close();
 					
+					p.read.open();
 					Assert.assertTrue("block".equals(p.read.next()));
 					int [] res = new int[rlength+roffset];
 					System.out.println("read??Block(..,"+roffset+","+rlength+")");
@@ -884,7 +904,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 				int rL = wlength/3;	//<-- intentionally wlength
 				int rH = rlength - rL;
 				
-				
+					p.write.open();
 					p.write.begin("block");
 					System.out.println("write??Block(..,"+woffset+","+wlength+")");
 					long [] blk = prepareLongBlock(woffset+wlength);
@@ -893,6 +913,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 					p.write.end();
 					p.write.close();
 					
+					p.read.open();
 					Assert.assertTrue("block".equals(p.read.next()));
 					long [] res = new long[rlength+roffset];
 					System.out.println("read??Block(..,"+roffset+","+rlength+")");
@@ -997,7 +1018,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 				int rL = wlength/3;	//<-- intentionally wlength
 				int rH = rlength - rL;
 				
-				
+					p.write.open();
 					p.write.begin("block");
 					System.out.println("write??Block(..,"+woffset+","+wlength+")");
 					float [] blk = prepareFloatBlock(woffset+wlength);
@@ -1006,6 +1027,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 					p.write.end();
 					p.write.close();
 					
+					p.read.open();
 					Assert.assertTrue("block".equals(p.read.next()));
 					float [] res = new float[rlength+roffset];
 					System.out.println("read??Block(..,"+roffset+","+rlength+")");
@@ -1104,7 +1126,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 				int rL = wlength/3;	//<-- intentionally wlength
 				int rH = rlength - rL;
 				
-				
+					p.write.open();
 					p.write.begin("block");
 					System.out.println("write??Block(..,"+woffset+","+wlength+")");
 					double [] blk = prepareDoubleBlock(woffset+wlength);
@@ -1113,6 +1135,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 					p.write.end();
 					p.write.close();
 					
+					p.read.open();
 					Assert.assertTrue("block".equals(p.read.next()));
 					double [] res = new double[rlength+roffset];
 					System.out.println("read??Block(..,"+roffset+","+rlength+")");
@@ -1194,9 +1217,12 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			*/			
 			Pair p = create();
 			try{
+					p.write.open();
 					p.write.writeBoolean(false);
 					p.write.flush();
+					p.write.close();
 					
+					p.read.open();
 					Assert.assertTrue( p.read.readBoolean()==false);
 					try{
 							p.read.readBoolean();
@@ -1214,9 +1240,12 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			*/			
 			Pair p = create();
 			try{
+					p.write.open();
 					p.write.writeByte((byte)34);
 					p.write.flush();
+					p.write.close();
 					
+					p.read.open();
 					Assert.assertTrue( p.read.readByte()==(byte)34);
 					try{
 							p.read.readByte();
@@ -1234,9 +1263,12 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			*/			
 			Pair p = create();
 			try{
+					p.write.open();
 					p.write.writeChar((char)34);
 					p.write.flush();
+					p.write.close();
 					
+					p.read.open();
 					Assert.assertTrue( p.read.readChar()==(char)34);
 					try{
 							p.read.readChar();
@@ -1254,9 +1286,12 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			*/			
 			Pair p = create();
 			try{
+					p.write.open();
 					p.write.writeShort((short)34);
 					p.write.flush();
+					p.write.close();
 					
+					p.read.open();
 					Assert.assertTrue( p.read.readShort()==(short)34);
 					try{
 							p.read.readShort();
@@ -1274,9 +1309,12 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			*/			
 			Pair p = create();
 			try{
+					p.write.open();
 					p.write.writeInt(34);
 					p.write.flush();
+					p.write.close();
 					
+					p.read.open();
 					Assert.assertTrue( p.read.readInt()==34);
 					try{
 							p.read.readInt();
@@ -1294,9 +1332,12 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			*/			
 			Pair p = create();
 			try{
+					p.write.open();
 					p.write.writeLong((long)34);
 					p.write.flush();
+					p.write.close();
 					
+					p.read.open();
 					Assert.assertTrue( p.read.readLong()==(long)34);
 					try{
 							p.read.readLong();
@@ -1314,9 +1355,12 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			*/			
 			Pair p = create();
 			try{
+					p.write.open();
 					p.write.writeFloat((float)34);
 					p.write.flush();
+					p.write.close();
 					
+					p.read.open();
 					Assert.assertTrue( p.read.readFloat()==(float)34);
 					try{
 							p.read.readFloat();
@@ -1334,9 +1378,12 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			*/			
 			Pair p = create();
 			try{
+					p.write.open();
 					p.write.writeDouble((double)34);
 					p.write.flush();
+					p.write.close();
 					
+					p.read.open();
 					Assert.assertTrue( p.read.readDouble()==(double)34);
 					try{
 							p.read.readDouble();
@@ -1362,44 +1409,47 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			*/			
 			Pair p = create();
 			try{
+					p.write.open();
 					p.write.begin("paris");
 					p.write.end();
 					p.write.flush();
+					p.write.close();
 					
+					p.read.open();
 					Assert.assertTrue( p.read.next()!=null);
 					try{
 							p.read.readBoolean();
-							Assert.fail("");
+							Assert.fail();
 					}catch(ENoMoreData ex){ System.out.println(ex); };
 					
 					try{
 							p.read.readByte();
-							Assert.fail("");
+							Assert.fail();
 					}catch(ENoMoreData ex){ System.out.println(ex); };
 					
 					try{
 							p.read.readChar();
-							Assert.fail("");
+							Assert.fail();
 					}catch(ENoMoreData ex){ System.out.println(ex); };
 					
 					try{
 							p.read.readInt();
-							Assert.fail("");
+							Assert.fail();
 					}catch(ENoMoreData ex){ System.out.println(ex); };
 					
 					try{
 							p.read.readLong();
-							Assert.fail("");
+							Assert.fail();
 					}catch(ENoMoreData ex){ System.out.println(ex); };
 					
 					try{
 							p.read.readFloat();
-							Assert.fail("");
+							Assert.fail();
 					}catch(ENoMoreData ex){ System.out.println(ex); };
 					
 					try{
 							p.read.readDouble();
-							Assert.fail("");
+							Assert.fail();
 					}catch(ENoMoreData ex){ System.out.println(ex); };
 					
 					Assert.assertTrue( p.read.next()==null);
@@ -1419,54 +1469,57 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 			*/			
 			Pair p = create();
 			try{
+					p.write.open();
 					p.write.begin("paris");
 					p.write.end();
 					p.write.flush();
+					p.write.close();
 					
+					p.read.open();
 					Assert.assertTrue( p.read.next()!=null);
 					try{
 							p.read.readBooleanBlock(new boolean[3],0,1);
-							Assert.fail("");
+							Assert.fail();
 					}catch(ENoMoreData ex){ System.out.println(ex); };
 					
 					try{
 							p.read.readByteBlock();
-							Assert.fail("");
+							Assert.fail();
 					}catch(ENoMoreData ex){ System.out.println(ex); };
 					
 					try{
 							p.read.readByteBlock(new byte[3],0,1);
-							Assert.fail("");
+							Assert.fail();
 					}catch(ENoMoreData ex){ System.out.println(ex); };
 					
 					try{
 							p.read.readCharBlock(new char[3],0,1);
-							Assert.fail("");
+							Assert.fail();
 					}catch(ENoMoreData ex){ System.out.println(ex); };
 					
 					try{
 							p.read.readCharBlock(new StringBuilder(),3);
-							Assert.fail("");
+							Assert.fail();
 					}catch(ENoMoreData ex){ System.out.println(ex); };
 					
 					try{
 							p.read.readIntBlock(new int[3],0,1);
-							Assert.fail("");
+							Assert.fail();
 					}catch(ENoMoreData ex){ System.out.println(ex); };
 					
 					try{
 							p.read.readLongBlock(new long[5],1,3);
-							Assert.fail("");
+							Assert.fail();
 					}catch(ENoMoreData ex){ System.out.println(ex); };
 					
 					try{
 							p.read.readFloatBlock(new float[4],0,2);
-							Assert.fail("");
+							Assert.fail();
 					}catch(ENoMoreData ex){ System.out.println(ex); };
 					
 					try{
 							p.read.readDoubleBlock(new double[5],0,4);
-							Assert.fail("");
+							Assert.fail();
 					}catch(ENoMoreData ex){ System.out.println(ex); };
 					
 					Assert.assertTrue( p.read.next()==null);

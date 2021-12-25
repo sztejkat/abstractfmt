@@ -23,17 +23,20 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			significant amount of non-nested events.
 		*/	
 		Pair  p = create();
+		p.write.open();
 		for(int i=0;i<16;i++)
 		{
 			p.write.begin("event"+i);
 			p.write.end();
 		};
 		p.write.close();
+		p.read.open();
 		for(int i=0;i<16;i++)
 		{
 			org.junit.Assert.assertTrue(("event"+i).equals(p.read.next()));
 			org.junit.Assert.assertTrue(p.read.next()==null);
 		};
+		p.read.close();
 		leave();
 	};    
 	
@@ -46,12 +49,14 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			and check how whatNext() works.
 		*/	
 		Pair  p = create();
+		p.write.open();
 		for(int i=0;i<16;i++)
 		{
 			p.write.begin("event"+i);
 			p.write.end();
 		};
 		p.write.close();
+		p.read.open();
 		for(int i=0;i<16;i++)
 		{
 			org.junit.Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
@@ -60,6 +65,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			org.junit.Assert.assertTrue(p.read.next()==null);
 		};
 		org.junit.Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
+		p.read.close();
 		leave();
 	}; 
 	
@@ -73,6 +79,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			significant amount of nested events.
 		*/	
 		Pair  p = create();
+		p.write.open();
 		for(int i=0;i<63;i++)
 		{
 			p.write.begin("event"+i);			
@@ -82,6 +89,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			p.write.end();			
 		};
 		p.write.close();
+		p.read.open();
 		for(int i=0;i<63;i++)
 		{
 			org.junit.Assert.assertTrue(("event"+i).equals(p.read.next()));
@@ -90,6 +98,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 		{
 			org.junit.Assert.assertTrue(p.read.next()==null);
 		};
+		p.read.close();
 		leave();
 	}; 
 	
@@ -101,6 +110,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			significant amount of nested events and pool how whatNext() works.
 		*/	
 		Pair  p = create();
+		p.write.open();
 		for(int i=0;i<63;i++)
 		{
 			p.write.begin("event"+i);			
@@ -110,6 +120,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			p.write.end();			
 		};
 		p.write.close();
+		p.read.open();
 		for(int i=0;i<63;i++)
 		{
 			org.junit.Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.SIGNAL);
@@ -121,7 +132,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			org.junit.Assert.assertTrue(p.read.next()==null);
 		};
 		org.junit.Assert.assertTrue(p.read.whatNext()==ISignalReadFormat.EOF);
-		
+		p.read.close();
 		leave();
 	}; 
 	
@@ -137,6 +148,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			moves correctly.
 		*/	
 		Pair  p = create();
+		p.write.open();
 		for(int i=0;i<16;i++)
 		{
 			p.write.begin("event"+i);
@@ -145,12 +157,14 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			p.write.end();
 		};
 		p.write.close();
+		p.read.open();
 		for(int i=0;i<16;i++)
 		{
 			org.junit.Assert.assertTrue(("event"+i).equals(p.read.next()));
 			//Now we skip "event" and the deeper events.
 			p.read.skip();
 		};
+		p.read.close();
 		leave();
 	};
 	
@@ -170,6 +184,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			are primitive data.
 		*/	
 		Pair  p = create();
+		p.write.open();
 		for(int i=0;i<16;i++)
 		{
 			p.write.writeInt(i);
@@ -179,6 +194,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			p.write.writeInt(1000+i);
 		};
 		p.write.close();
+		p.read.open();
 		for(int i=0;i<16;i++)
 		{
 			//by calling next now we skip integers in front of event.
@@ -188,6 +204,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 		};
 		//We should be able to read last int.
 		org.junit.Assert.assertTrue(p.read.readInt()==1000+15);
+		p.read.close();
 		leave();
 	};     
 	
@@ -200,6 +217,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			are primitive data, but this time we read a part of those data.
 		*/	
 		Pair  p = create();
+		p.write.open();
 		for(int i=0;i<16;i++)
 		{
 			p.write.writeInt(i);
@@ -209,6 +227,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			p.write.writeInt(1000+i);
 		};
 		p.write.close();
+		p.read.open();
 		for(int i=0;i<16;i++)
 		{
 			//by calling next now we skip integers in front of event.
@@ -218,6 +237,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			//Now we always read some of data.
 			org.junit.Assert.assertTrue(p.read.readInt()==1000+i);
 		};
+		p.read.close();
 		leave();
 	};  
 	
@@ -230,6 +250,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			are primitive data, but this time we read a part of those data.
 		*/	
 		Pair  p = create();
+		p.write.open();
 		for(int i=0;i<16;i++)
 		{
 			p.write.writeInt(i);
@@ -239,6 +260,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			p.write.writeInt(1000+i);
 		};
 		p.write.close();
+		p.read.open();
 		for(int i=0;i<16;i++)
 		{
 			//by calling next now we skip integers in front of event.
@@ -248,6 +270,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			//Now we always read some of data.
 			org.junit.Assert.assertTrue(p.read.readInt()==1000+i);
 		};
+		p.read.close();
 		leave();
 	};     
 	
@@ -261,6 +284,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			are primitive data and we read it as it should.
 		*/	
 		Pair  p = create();
+		p.write.open();
 		for(int i=0;i<16;i++)
 		{
 			p.write.writeInt(i);
@@ -274,6 +298,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			p.write.writeInt(1000+i);
 		};
 		p.write.close();
+		p.read.open();
 		for(int i=0;i<16;i++)
 		{
 			org.junit.Assert.assertTrue(p.read.readInt()==i);
@@ -286,6 +311,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			org.junit.Assert.assertTrue(p.read.next()==null);			
 			org.junit.Assert.assertTrue(p.read.readInt()==1000+i);
 		};
+		p.read.close();
 		leave();
 	};     
 	
@@ -301,6 +327,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			We also check what is returned from whatNext();
 		*/	
 		Pair  p = create();
+		p.write.open();
 		for(int i=0;i<16;i++)
 		{
 			p.write.writeInt(i);
@@ -314,6 +341,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			p.write.writeInt(1000+i);
 		};
 		p.write.close();
+		p.read.open();
 		for(int i=0;i<16;i++)
 		{
 			org.junit.Assert.assertTrue(p.read.whatNext()>0);	//type agnostic test!
@@ -335,6 +363,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			org.junit.Assert.assertTrue(p.read.whatNext()>0);	//type agnostic test!
 			org.junit.Assert.assertTrue(p.read.readInt()==1000+i);
 		};
+		p.read.close();
 		leave();
 	};   
 	
@@ -348,6 +377,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			are primitive data, but we don't read some of them.
 		*/	
 		Pair  p = create();
+		p.write.open();
 		for(int i=0;i<16;i++)
 		{
 			p.write.writeInt(i);
@@ -361,6 +391,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			p.write.writeInt(1000+i);
 		};
 		p.write.close();
+		p.read.open();
 		for(int i=0;i<16;i++)
 		{
 			org.junit.Assert.assertTrue(p.read.readInt()==i);
@@ -373,6 +404,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			org.junit.Assert.assertTrue(p.read.next()==null);			
 			org.junit.Assert.assertTrue(p.read.readInt()==1000+i);
 		};
+		p.read.close();
 		leave();
 	};     
 	
@@ -385,6 +417,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			are primitive data and we skip whole events.
 		*/	
 		Pair  p = create();
+		p.write.open();
 		for(int i=0;i<16;i++)
 		{
 			p.write.writeInt(i);
@@ -401,6 +434,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			p.write.writeInt(1000+i);
 		};
 		p.write.close();
+		p.read.open();
 		for(int i=0;i<16;i++)
 		{
 			org.junit.Assert.assertTrue(p.read.readInt()==i);
@@ -410,6 +444,7 @@ public abstract class ATestISignalFormat_Events extends ATestISignalFormatBase
 			//and we just should get integer after the end.			
 			org.junit.Assert.assertTrue(p.read.readInt()==1000+i);
 		};
+		p.read.close();
 		leave();
 	};     
 };
