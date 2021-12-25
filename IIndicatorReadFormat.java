@@ -5,11 +5,18 @@ import java.io.IOException;
 /**
 	A reading counterpart for {@link IIndicatorWriteFormat}.
 	<p>
+	This is a "third-tire" API as described in <a href="package-summary.html#tree-tire">package summary</a>
+	<p>
 	This is up to a caller to take care about proper order 
-	of methods invocation and to defend against missues
-	and implementations of this class should provide little if
+	of methods invocation and to defend against missues.
+	Implementations of this class may provide little if
 	any defense against missuse and may fail misserably if
 	abused.
+	<p>
+	For defensive layer see {@link CIndicatorReadFormatProtector}.
+	
+	<h1>Thread safety</h1>
+	Format are <u>not thread safe</u>.	
 */
 public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 {
@@ -21,8 +28,8 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	/** A maximum of times the {@link #getIndicator}
 	 can return name registration indicators and a maxium number
 	 of registered names. Also a maxium number returned from
-	 {@link #getSignalNumber}.
-	@return non-negative, can be zero.
+	 {@link #getSignalNumber}+1.
+	@return non-negative, can be zero, life time constant.
 	*/
 	public int getMaxRegistrations();	
 	/** Informative method which can be used to tell
@@ -42,20 +49,19 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	/** Returns maximum supported signal name length by this format.
 	This limit is non-adjustable and relates to physcial boundaries
 	of format.
-	@return length limit, non-zero positive */
+	@return length limit, non-zero positive, life time constant. */
 	public int getMaxSupportedSignalNameLength();
 	
 	/** Allows to set limit for signal name. Default
 	value is 1024 or {@link #getMaxSupportedSignalNameLength},
-	which is smaller.
+	whatever is smaller.
 	<p>
 	Adjusting value when {@link #open} was called may result
 	in unpredictable effects. 
 	<p>
-	<i>Note:Setting this limit should, internally, stop fetching
-	input data when limit is reached since this is
-	a defense against "out of memory" attacks on name
-	buffers.</i>
+	<i>Note:Setting this limit should, internally, make format to 
+	stop fetching input data when limit is reached since this is
+	a defense against "out of memory" attacks on name buffers.</i>
 	
 	@param characters name limit, non-zero positive.
 			Passing value greater than {@link #getMaxSupportedSignalNameLength}
@@ -76,10 +82,10 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	/**
 	Checks what is under a cursor in a stream.
 	<p>
-	If the indicator is with {@link TIndicator#NAME} flag set
+	If returned indicator has {@link TIndicator#NAME} flag set
 	updates data accessible through {@link #getSignalName}.
 	<p>
-	If the indicator is with {@link TIndicator#REGISTER} flag set
+	If returned indicator has {@link TIndicator#REGISTER} flag set
 	updates data accessible through {@link #getSignalNumber}.
 	<p>
 	If there is no indicator under cursor but some data (including block body)
@@ -90,7 +96,7 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	<p>
 	Under no condition cursor is moved. 
 	
-	@return enum representing state of a stream
+	@return enum representing content of a stream at cursor.
 	@throws EFormatBoundaryExceeded if name or number related
 	with a signal are out of allowed boundaries.	
 	@see #next()
@@ -127,7 +133,7 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	If cursor is at an indicator this indicator is skipped and cursor
 	is set to an element after it which may be either data or indicator.	 	
 	@throws EUnexpectedEof if hit physical end of stream
-		before reaching indicator.
+		before reaching next element.
 	*/
 	public void next()throws IOException;
 		
@@ -136,7 +142,10 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	indicator with {@link TIndicator#NAME} flag set.
 	<p>
 	Calling it for other indicators may have unpredictable results.
-	@return name of signal. 
+	@return name of signal. Implementations <u>are required</u>
+			to valiate if name is in limit specified  by
+			{@link #setMaxSignalNameLength} and to not make any
+			attempts to buffer longer names in memory. 
 	*/
 	public String getSignalName();
 	/** Returns most recently read number during processing
@@ -144,8 +153,9 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	indicator with {@link TIndicator#REGISTER} flag set.
 	<p>
 	Calling it for other indicators may have unpredictable results.
-	@return index of signal, non-negative, but may be out of order
-			which shows that stream is malformed.
+	@return index of signal, normally 0...{@link getMaxRegistrations}-1
+			range. Implementations are not expected to validate if signal
+			is in range.
 	*/
 	public int getSignalNumber();
 	
@@ -158,22 +168,24 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	* *************************************************************/
 	/** Read primitive and moves cursor at the element after it.
 	<p>
-	In undescribed ({@link #isDescribed}==false) streams after
-	return from this method curstor can be:
+	In format is undescribed ({@link #isDescribed}==false) then after
+	return from this method cursor can be at:
 	<ul>
 		<li>data - in such case {@link #getIndicator} returns
 		{@link TIndicator#DATA};</li>
 		<li>an indicator with {@link TIndicator#SIGNAL} flag set;</li>
 	</ul> 
-	In described ({@link #isDescribed}==true) stream 
-	after return from this method curstor must be at an indicator:
+	In format is described ({@link #isDescribed}==true) then
+	after return from this method cursor must be at an indicator:
 	<ul>
-		<li>with {@link TIndicator#FLUSH}, if {@link #isFlushing} or;</li>
+		<li>with {@link TIndicator#FLUSH} flag set if {@link #isFlushing} or;</li>
 		<li>with {@link TIndicator#SIGNAL} flag set if not {@link #isFlushing};</li>
 	</ul>
-	This method may be called only if cursor is at data and this condition must
+	This method may be called <u>only if cursor is at {@link TIndicator#DATA}</u> and this condition must
 	be validated by calling {@link #getIndicator} prior to calling this method.
-	If this method is called without checking indicator the effect may be unpredictable.	
+	If this method is called without checking it the effect may be unpredictable.
+	<p>
+	<i>Note: All remaining block reads do behave alike.</i>	
 	
 	@throws ENoMoreData if reached indicator <u>inside</u> a single element.	
 	@throws EUnexpectedEof if there is not enough data physically in stream to complete
@@ -186,24 +198,25 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	/**
 	Reads part of block, moves cursor.
 	<p>
-	In undescribed ({@link #isDescribed}==false) streams after
-	return from this method curstor can be:
+	In format is undescribed ({@link #isDescribed}==false) then after
+	return from this method curstor can be at:
 	<ul>
 		<li>data - in such case {@link #getIndicator} returns
 		{@link TIndicator#DATA};</li>
 		<li>an indicator with {@link TIndicator#SIGNAL} flag set;</li>
 	</ul> 
-	In described ({@link #isDescribed}==true) stream 
+	In format is  described ({@link #isDescribed}==true) then 
 	after return from this method curstor must be at:
 	<ul>
 		<li>data - if some data remains un-read. In such case {@link #getIndicator} returns
 		{@link TIndicator#DATA};</li>
-		<li> an indicator with {@link TIndicator#FLUSH}, if {@link #isFlushing} or;</li>
+		<li> an indicator with {@link TIndicator#FLUSH} flag set if {@link #isFlushing} or;</li>
 		<li> an indicator with {@link TIndicator#SIGNAL} flag set if not {@link #isFlushing};</li>
 	</ul>
-	This method may be called <u>only if cursor is at DATA</u> and this condition must
+	This method may be called <u>only if cursor is at {@link TIndicator#DATA}</u> and this condition must
 	be validated by calling {@link #getIndicator} prior to calling this method.
-	If this method is called without checking indicator the effect may be unpredictable.
+	If this method is called without checking it the effect may be unpredictable.
+	<p>
 	Effectively there is no such behaviour like: 
 	<i>"if it returns partial read, then subsequent calls will return 0"</i>
 	 but instead the effect is unpredictable.
@@ -211,26 +224,25 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	Reading blocks from indicator streams should be done in a sequence
 	of calls of block reads of the same type and this sequence
 	may be terminated only by an indicator. If it is done otherwise
-	the behavior is unspecified and format may fail to work.
+	the behavior is unspecified.
 	<p>
 	This method reads data item by item, as long as the requested number
 	of items is read <u>or</u> and indicator is reached.
 	
 	@return number of read elements. Partial read can be returned only 
-			if at an attempt to read an item the cursor was at an indicator. 
-			Due to the fact, that this call is not allowed when cursor
+			if at an attempt to read a next item the cursor was at an indicator. 
+			Due to the fact that this call is not allowed to be made when cursor
 			is not at data zero is returned only if <code>length</code>
 			was zero.
 		
 	@throws EUnexpectedEof if there is not enough data physically in stream
 		to complete operation for a single element.
-	@throws ECorruptedFormat if could initialize operation, but
-		reached the indicator inside a single element read, ie. between bytes
-		if an interger.	In such case the indicator must be available 
-		for {@link #getIndicator}
 	*/
 	@Override public int readBooleanBlock(boolean [] buffer, int offset, int length)throws IOException;		
 	/**
+	See {@link #readBooleanBlock(boolean[],int,int)} for generic informations
+	about block reads.
+	
 	@return 0...255, byte which was read. Due to the fact, that calling this method is allowed only
 		when indicator is at DATA this method never returns -1.
 	*/
@@ -243,8 +255,10 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 		
 	*************************************************/
 	/** Reads and validates opening sequence, if any.
+	<p>
 	Calling this method more than once may fail.
-	Calling any method of this class except
+	<p>
+	Calling any method of this class except informative ones like:
 	{@link #getMaxRegistrations},
 	{@link #isDescribed},
 	{@link #isFlushing},
@@ -259,7 +273,7 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	/**
 	Closes format, makes it unusable.
 	<p>
-	Once closed calling all all except {@link #getMaxRegistrations},
+	Once closed calling all methods except informative ones like:{@link #getMaxRegistrations},
 	{@link #isDescribed},{@link #isFlushing},
 	{@link #getMaxSignalNameLength},
 	{@link #getMaxSupportedSignalNameLength} 
@@ -267,8 +281,9 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	<p>
 	Calling it multiple times may have unpredictable results.
 	<p>
-	Calling it without calling open is allowed and should
-	release resources.
+	Calling it without calling {@link #open} is allowed and should
+	release low level resources.
+	
 	@throws IOException if failed at low level
 	*/
 	@Override public void close()throws IOException;

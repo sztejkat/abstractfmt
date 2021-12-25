@@ -295,9 +295,8 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		---------------------------------------------------------*/
 		@Override public void setMaxSignalNameLength(int characters)
 		{ 
-			assert(characters>=0);
+			assert(characters>0);
 			assert(characters<=getMaxSupportedSignalNameLength());
-			if (state==TState.CLOSED) throw new IllegalStateException("closed");
 			this.max_name_length = characters; 
 		};		
 		@Override final public int getMaxSignalNameLength()

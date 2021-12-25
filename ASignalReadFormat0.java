@@ -192,7 +192,7 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 	/** Passes down to input */
 	@Override public void setMaxSignalNameLength(int characters)
 	{
-		assert(characters>=0);
+		assert(characters>0);
 		assert(characters<=getMaxSupportedSignalNameLength());
 		if (state==TState.CLOSED) throw new IllegalStateException("closed");
 		input.setMaxSignalNameLength(characters);

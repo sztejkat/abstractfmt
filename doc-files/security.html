@@ -7,16 +7,17 @@
  content="text/html; charset=UTF-8">
 </head>
 <body>
-	In this chapter I will discuss some security/safety issues.
+		<h1>Security issues</h1>
+		In this document I will discuss some security/safety issues.
 
-        <h1 id="OOMEVENT_NAME">Event name out of memory attack</h1>
-        Since the stream <a href="../ISignalWriter.html#BEGIN">writer</a>
+        <h2 id="OOMEVENT_NAME">Event name out of memory attack</h2>
+        Since the stream <a href="../ISignalWriteFormat.html#BEGIN">writer</a>
         declares an ability to write an arbitraty name to a stream
         the reading end must be prepared to read it from a stream and
         return to a user.
         <p>
         The reading of a signal name takes place in reader
-        <a href="../ISignalReader.html#NEXT">next()</a> method and
+        <a href="../ISignalReadFormat.html#NEXT">next()</a> method and
         the entire process is hidden from a user.
         <p>
         One may imagine than an attacker may formulate a fake stream
@@ -41,7 +42,7 @@
             probability trigger OutOfMemory exception.
         </ul>
 
-       <h1 id="OOMEVENT_API">Sequence API out of memory attack</h1>
+       <h2 id="OOMEVENT_API">Sequence API out of memory attack</h2>
        The analogous to <a href="#OOMEVENT_NAME">event name attack</a>
        could have happen in any API which would look like:
        <pre>
@@ -54,7 +55,7 @@
        directly the maximum length of an operation as an argument.
        
        
-       <h1 id="OOMEVENT_XML">XML attribute out-of-memory attack</h1>
+       <h2 id="OOMEVENT_XML">XML attribute out-of-memory attack</h2>
        Whatever to say about XML it is very difficoult to say
        that parsers are robust. The good example is the 
        plain good old:
@@ -67,9 +68,9 @@
        
        
        
-        <h1 id="STACK_OVERFLOW_ATTACK">Stack overflow attack</h1>
+        <h2 id="STACK_OVERFLOW_ATTACK">Stack overflow attack</h2>
         If the format allows nesting elements inside element, like for
-        an example XML do and this proposed format does then there is always
+        an example XML do and this proposed format does, then there is always
         a probability that users will decide to parse the incomming stream
         as:
         <pre>
@@ -87,7 +88,7 @@
         and is clear and easy to write.
         <p>
         The problem is that attacker may form a stream which so much nested 
-        "structure" elements that the thread control stack will overflow.
+        "structure" elements that the control stack will overflow.
         <p>
         The depth necessary to trigger stack overflow is tens of orders of magnitude
         smaller that the size of data necessary to trigger OutOfMemory attacks and

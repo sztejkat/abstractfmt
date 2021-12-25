@@ -3,21 +3,21 @@ import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
 /**
-	A lower level write format used as a "driver" 
-	to implement {@link ISignalWriteFormat}.
+	A <a href="package-summary.html#tree-tire">third-tire</a> service which is 
+	used to implement {@link ISignalWriteFormat}.
 	<p>
-	This is based on concept of <a href="doc-file/indicator-format.html">"indicators"</a>.
+	This is based on concept of <a href="package-summary.html#indicators">indicators</a>.
 	<p>
 	This is up to a caller to take care about proper order 
-	of methods invocation and to defend against missues
-	and implementations of this class should provide little if
+	of methods invocation and to defend against missues.
+	Implementations of this class may provide little if
 	any defense against missuse and may fail misserably if
 	abused.
+	<p>
+	For defensive layer see {@link CIndicatorWriteFormatProtector}.
 	
-	<h2>Described versus un-described</h2>
-	The indicator format decides by itself if it is described 
-	or not. Writing classes should always assume format is
-	described and call all methods in a proper way.
+	<h1>Thread safety</h1>
+	Format are <u>not thread safe</u>.	
 */
 public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveWriteFormat
 {
@@ -26,30 +26,37 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 			Information and settings.
 	
 	****************************************************/
-	/** A maximum of calls to {@link #writeBeginRegister}
-	 and a maximum number to be passed there.
-	@return non-negative, can be zero.
+	/** A maximum of calls to {@link #writeBeginRegister} and
+	{@link #writeEndBeginRegister} and a maximum number to be passed there +1.
+	@return non-negative, can be zero, life-time constat.
 	*/
 	public int getMaxRegistrations();	
+	
 	/** Informative method which can be used to tell
 	if this indicator format is doing any job in
 	{@link #writeType} and/or {@link #writeFlush}.
-	Notice both methods <u>must be called</u> regardless
-	of what is returned here.
-	@return true if generates described stream.
+	Notice both methods <u>must be called</u> regardless of what is returned here.
+	@return true if generates described stream, life-time constat.
 	*/
 	public boolean isDescribed();
+	
 	/** Informative method which can be used to tell
 	if this indicator format is doing any job in
 	{@link #writeFlush}.
-	@return this method may not return true if 
-	{@link #isDescribed} is false. */			
+	<p>
+	This method may not return true if	{@link #isDescribed} is false.
+	@return true if generates flushing informatio, life-time constat.
+	
+	@see #isDescribed */			
 	public boolean isFlushing();
+	
 	/** Returns maximum supported signal name length by this format.
 	This limit is non-adjustable and relates to physcial boundaries
 	of format.
-	@return length limit, non-zero positive */
+	@return length limit, non-zero positive, life-time constat. */
 	public int getMaxSupportedSignalNameLength();
+	
+	
 	
 	/* ****************************************************
 	
@@ -83,8 +90,8 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 		<ul>
 			<li>calls with the same name are made only once;</li>
 			<li>number assigned to to name equals to number of already
-			made calls to this method. This allows format
-			to use <i>implict</i> numbering;</li>
+			made calls to this method (ie <code>writeBeginRegister("a",0),writeBeginRegister("b",1)</code>
+			and so on. This allows format to use <i>implict</i> numbering and ignore this value;</li>
 		</ul>
 		This number is in 0...{@link #getMaxRegistrations}-1 range
 		@throws IOException if failed at low level.			
@@ -99,10 +106,10 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 	public void writeEndBeginRegister(String signal_name, int number)throws IOException;		
 	/**
 		Writes to a stream {@link TIndicator#BEGIN_USE}
-		@param number a numeric value under which this signal name
-		is registered. Callers must call this method passing
-		number which was previously registered with
-		{@link #writeBeginRegister}.
+		@param number a numeric value under which signal name used here 
+		was previously is registered. Callers must call this method passing
+		number which was previously registered with	{@link #writeBeginRegister} or
+		{@link #writeEndBeginRegister}
 		@throws IOException if failed at low level.
 	*/
 	public void writeBeginUse(int number)throws IOException;
@@ -124,27 +131,33 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 	
 	****************************************************/
 	/** Writes indicator telling that specific type start information
-	is to be stored. This method should be called in following sequence:
+	is to be stored. This method must be always called in following sequence:
 	<pre>
 		writeType(X)
 		<i>write primitive or block</i>
 		writeFlush(X)
 	</pre>
-	regardless if upper level format is described or not.
+	<u>regardless if format is described</u> or not.
+	<p>
+	Even tough this method looks like "do-nothing" in non-described formats,
+	implementations are allowed to use it to do some housekeeping so it
+	must be called.
 	
-	@param type indicator with {@link TIndicator#TYPE} flag set 
+	@param type indicator with {@link TIndicator#TYPE} flag set.
+		Passing other indicators may have unpredictable efects. 
 	@throws IOException if failed at low level.
-	@throws AssertionError if indicator has no specified flags set
 	*/ 
 	public void writeType(TIndicator type)throws IOException;
-	/** Writes indicator telling that specific data end information
-	is to be stored. Un-described formats may ignore it,
-	but if {@link #writeType} is called this method must also be
-	called.
+	/** 
+	Writes indicator telling that specific end-of-data information
+	is to be stored. 
+	<p>
+	See {@link #writeType} for use requirements.
+	
 	@param flush indicator with {@link TIndicator#FLUSH} flag set
 			and  {@link TIndicator#READ_ONLY} not set.
+			Passing other indicators may have unpredictable efects.
 	@throws IOException if failed at low level.
-	@throws AssertionError if indicator has no specified flags set
 	*/ 
 	public void writeFlush(TIndicator flush)throws IOException;
 	
@@ -153,7 +166,8 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 			IPrimitiveWriteFormat	
 	
 	****************************************************/
-	/** 
+	/** Writes boolean primivtive.
+	<p>
 	It is up to caller to always call it in sequence
 	regardless if is described stream or not:
 	<pre>
@@ -161,10 +175,18 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 		writeBoolean(....)
 		writeFlush(...)
 	</pre>
+	Not writing type information may have unpredictable results.
+	<p>
+	<i>Note: All other elementary primitive writes do behave alike.</i>
 	@see #isDescribed
+	@see #writeType
+	@see #writeFlush
 	*/
 	@Override public void writeBoolean(boolean v)throws IOException;		
-	/** It is up to caller to invoke this method only if there
+	/**
+	Writes boolean primitives block.
+	<p>
+	It is up to caller to invoke this method only if there
 	is an unclosed "begin" signal.		
 	<p>
 	It is up to caller to always call it in sequence
@@ -176,6 +198,9 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 		....
 		writeFlush(...)
 	</pre>
+	Not writing type information may have unpredictable results.
+	<p>
+	<i>Note: All other primitive block writes do behave alike.</i>
 	@see #isDescribed
 	*/
 	@Override public void writeBooleanBlock(boolean [] buffer, int offset, int length)throws IOException;		
@@ -186,27 +211,32 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 	
 	*************************************************/
 	/** Writes opening sequence, if any.
+	<p>
 	Calling this method more than once may fail.
-	Calling any method of this class except
+	<p>
+	Calling any method of this class except informative like:
 	{@link #getMaxRegistrations},
 	{@link #isDescribed},{@link #isFlushing},
 	{@link #getMaxSupportedSignalNameLength} 
 	may have unpredictable results if made before calling {@link #open}
+	<p>
 	@throws IOException if failed at low level
 	*/
 	public void open()throws IOException;
 	/**
-	Closes format, makes it unusable.
+	Closes format, makes it unusable. If format was open ({@link #open} was called)
+	writes closing sequence, if any.
 	<p>
-	Once closed calling all except {@link #getMaxRegistrations},
+	Once format is closed calling all except informative like: {@link #getMaxRegistrations},
 	{@link #isDescribed},{@link #isFlushing},{@link #getMaxSupportedSignalNameLength} 
-	 may have unpredictable results.
+	may have unpredictable results.
 	<p>
-	This method may just close resources without flushing buffers.
+	This method may just close resources without flushing buffers,
+	so calling {@link #flush} is up to user.
 	<p>
 	Calling it multiple times may have unpredictable results.
 	<p>
-	Calling it without calling open is allowed and should
+	Calling it without calling {@link #open} is allowed and should
 	release resources, but produced stream may be malformed.
 	@throws IOException if failed at low level
 	*/
