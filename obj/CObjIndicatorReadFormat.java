@@ -4,6 +4,7 @@ import java.io.IOException;
 
 /**
 	An indicator format implementation over {@link CObjListFormat} media.
+	For best results wrap it into {@link CIndicatorReadFormatProtector}
 */
 public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 {
@@ -14,6 +15,8 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 			
 			/** Active name length limit */
 			private int max_signal_name_length = 1024;
+			/** Design limit */
+			private final int max_supported_signal_name_length;
 			
 			/** Name and number cache for indicators */
 			private String signal_name;
@@ -21,38 +24,36 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 			/** Controls if above have to be re-read */
 			private boolean signal_data_valid;
 			
-			/** Used to validate registrations contract */
-			private int registration_count;
-			
 			/** Used to implement array operations stitching.
 			Carries pointer from which return data in currently
 			processes block on {@link #media} */
-			private int array_op_ptr;			
+			private int array_op_ptr;	
 			
-			/** Used to validate if primitive read methods are called in 
-			correct conditions. */
-			private TIndicator recent_indicator; 
 			
 		/** Creates
 		@param media non null media to read from
 		@param max_registrations number returned from {@link #getMaxRegistrations}
+		@param max_supported_signal_name_length number returned from {@link #getMaxSupportedSignalNameLength}
 		@param is_described returned from {@link #isDescribed}. If false
 			type writes are non-op
 		@param is_flushing returned from {@link #isFlushing}. If false
 			type writes are non-op
 		@throws AssertionError is something is wrong. 
 		*/
-		public CObjIndicatorReadFormat(CObjListFormat media, 
+		public CObjIndicatorReadFormat( final CObjListFormat media, 
 										final int max_registrations,
+										final int max_supported_signal_name_length,
 										final boolean is_described,
 										final boolean is_flushing
 										)
 		{ 
 			assert(media!=null);
 			assert(max_registrations>=0);
+			assert(max_supported_signal_name_length>0);
 			assert( !is_flushing || (is_flushing && is_described)):"invalid is_described/is_flushing combination";
 			this.media = media; 
 			this.max_registrations=max_registrations;
+			this.max_supported_signal_name_length = max_supported_signal_name_length;
 			this.is_described=is_described;
 			this.is_flushing=is_flushing;
 		};
@@ -73,7 +74,16 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 		@Override public void setMaxSignalNameLength(int characters)
 		{
 			assert(characters>0);
+			assert(characters<=max_supported_signal_name_length);
 			this.max_signal_name_length=max_signal_name_length;
+		};
+		@Override final public int getMaxSignalNameLength()
+		{
+			return this.max_signal_name_length;
+		};
+		@Override final public int getMaxSupportedSignalNameLength()
+		{
+			return max_supported_signal_name_length;
 		};
 		/* ------------------------------------------------------
 		
@@ -87,8 +97,7 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 			{
 				//have to invalidate signal info
 				this.signal_name=null;	
-				this.signal_number=-1;
-				recent_indicator = TIndicator.EOF; 
+				this.signal_number=-1; 
 				return TIndicator.EOF;
 			};
 			Object at_cursor = media.getFirst();
@@ -106,14 +115,6 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 						if (media.size()<offset+1) throw new EUnexpectedEof();					
 						int n = ((Number)media.get(offset)).intValue();
 						if (n<0) throw new ECorruptedFormat("signal number="+n);
-						if ((indicator.FLAGS & TIndicator.USE_REGISTER)==0)
-						{
-							if (n!=registration_count) throw new ECorruptedFormat("signal number="+n+" out of sequence "+registration_count);
-							this.registration_count++;
-						}else
-						{
-							if (n>=registration_count) throw new ECorruptedFormat("signal number="+n+" out of sequence "+registration_count);
-						};						
 						this.signal_number = n;
 						this.signal_data_valid=true;
 					};
@@ -138,14 +139,12 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 					//have to invalidate signal info
 					this.signal_name=null;
 				};
-				recent_indicator = indicator;
 				return indicator;
 			}else
 			{
 				//have to invalidate signal info
 				this.signal_name=null;
 				this.signal_number=-1;
-				recent_indicator = TIndicator.DATA;
 				return TIndicator.DATA;
 			}			
 		};
@@ -154,7 +153,6 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 			this.signal_data_valid=false;	//<-- do not invalidate cache,
 										//but make sure it is refreshed from
 										//signal.
-			recent_indicator = null;
 			if (media.isEmpty()) throw new EUnexpectedEof();
 			//check what are we skipping?
 			Object at_cursor = media.removeFirst();
@@ -208,8 +206,6 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 			if (media.isEmpty()) throw new EUnexpectedEof();			
 			Object at_cursor = media.getFirst();
 			if (at_cursor instanceof TIndicator) throw new AssertionError("at_cursor="+at_cursor);
-			if (recent_indicator!=TIndicator.DATA) throw new AssertionError("getIndicator() has to be used to validate cursor position");
-			recent_indicator=null;
 		};
 		public boolean readBoolean()throws IOException
 		{
@@ -736,4 +732,9 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 		
 		********************************************************/
 		public void close(){};
+		public void open()throws IOException
+		{
+			if (media.isEmpty()) throw new EUnexpectedEof();
+			if (media.removeFirst()!=CObjListFormat.OPEN) throw new EBrokenFormat("No OPEN STREAM marker");
+		};
 };

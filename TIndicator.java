@@ -235,4 +235,34 @@ public enum TIndicator
 			this.FLAGS = FLAGS;
 		};
 		
+		/** Returns matching FLUSH indicator for TYPE indicator
+		@param type TYPE indicator
+		@return flush indicator
+		@throws AssertionError if param is not type.
+		*/
+		public static TIndicator getFlush(TIndicator type)
+		{
+			switch(type)
+			{
+				case TYPE_BOOLEAN: return FLUSH_BOOLEAN;
+				case TYPE_BYTE: return FLUSH_BYTE;
+				case TYPE_CHAR: return FLUSH_CHAR;
+				case TYPE_SHORT: return FLUSH_SHORT;
+				case TYPE_INT: return FLUSH_INT;
+				case TYPE_LONG: return FLUSH_LONG;
+				case TYPE_FLOAT: return FLUSH_FLOAT;
+				case TYPE_DOUBLE: return FLUSH_DOUBLE;
+				
+				case TYPE_BOOLEAN_BLOCK: return FLUSH_BOOLEAN_BLOCK;
+				case TYPE_BYTE_BLOCK: return FLUSH_BYTE_BLOCK;
+				case TYPE_CHAR_BLOCK: return FLUSH_CHAR_BLOCK;
+				case TYPE_SHORT_BLOCK: return FLUSH_SHORT_BLOCK;
+				case TYPE_INT_BLOCK: return FLUSH_INT_BLOCK;
+				case TYPE_LONG_BLOCK: return FLUSH_LONG_BLOCK;
+				case TYPE_FLOAT_BLOCK: return FLUSH_FLOAT_BLOCK;
+				case TYPE_DOUBLE_BLOCK: return FLUSH_DOUBLE_BLOCK;
+				
+				default: throw new AssertionError(type+" is not TYPE");
+			}
+		};
 }

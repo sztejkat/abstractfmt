@@ -37,17 +37,36 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	@return true if flushing. Life time constant.
 	*/			
 	public boolean isFlushing();
+	
+	
+	/** Returns maximum supported signal name length by this format.
+	This limit is non-adjustable and relates to physcial boundaries
+	of format.
+	@return length limit, non-zero positive */
+	public int getMaxSupportedSignalNameLength();
+	
 	/** Allows to set limit for signal name. Default
-	value is 1024. Adjusting this value during stream
-	processing may have unpredictable results.
+	value is 1024 or {@link #getMaxSupportedSignalNameLength},
+	which is smaller.
+	<p>
+	Adjusting value when {@link #open} was called may result
+	in unpredictable effects. 
 	<p>
 	<i>Note:Setting this limit should, internally, stop fetching
 	input data when limit is reached since this is
 	a defense against "out of memory" attacks on name
 	buffers.</i>
-	@param characters name limit, non-zero positive. 
+	
+	@param characters name limit, non-zero positive.
+			Passing value greater than {@link #getMaxSupportedSignalNameLength}
+			may have unpredictable effects.
 	*/
 	public void setMaxSignalNameLength(int characters);
+	
+	/** Returns value set in {@link #setMaxSignalNameLength}
+	@return value set in {@link #setMaxSignalNameLength} */
+	public int getMaxSignalNameLength();
+	
 	/* ***************************************************
 	
 			Indicators.			
@@ -116,18 +135,17 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	the {@link #getIndicator} which returned 
 	indicator with {@link TIndicator#NAME} flag set.
 	<p>
-	This value is cleared if returned indicator has no such flag set.
+	Calling it for other indicators may have unpredictable results.
 	@return name of signal. 
-	@throws IllegalStateException if cursor is not at indicator carrying signal name.
 	*/
 	public String getSignalName();
 	/** Returns most recently read number during processing
 	the {@link #getIndicator} which returned 
 	indicator with {@link TIndicator#REGISTER} flag set.
 	<p>
-	This value is cleared if returned indicator has no such flag set.
-	@return name of signal. 
-	@throws IllegalStateException if cursor is not at indicator carrying signal number.
+	Calling it for other indicators may have unpredictable results.
+	@return index of signal, non-negative, but may be out of order
+			which shows that stream is malformed.
 	*/
 	public int getSignalNumber();
 	
@@ -217,4 +235,39 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 		when indicator is at DATA this method never returns -1.
 	*/
 	@Override public int readByteBlock()throws IOException;	
+	
+	
+	/* ************************************************
+		
+				State, Closeable		
+		
+	*************************************************/
+	/** Reads and validates opening sequence, if any.
+	Calling this method more than once may fail.
+	Calling any method of this class except
+	{@link #getMaxRegistrations},
+	{@link #isDescribed},
+	{@link #isFlushing},
+	{@link #setMaxSignalNameLength},
+	{@link #getMaxSignalNameLength},
+	{@link #getMaxSupportedSignalNameLength}
+	 without calling {@link #open}
+	may have unpredictable results.
+	*/
+	public void open()throws IOException;
+	/**
+	Closes format, makes it unusable.
+	<p>
+	Once closed calling all all except {@link #getMaxRegistrations},
+	{@link #isDescribed},{@link #isFlushing},
+	{@link #getMaxSignalNameLength},
+	{@link #getMaxSupportedSignalNameLength} 
+	 may have unpredictable results.
+	<p>
+	Calling it multiple times may have unpredictable results.
+	<p>
+	Calling it without calling open is allowed and should
+	release resources.
+	*/
+	@Override public void close()throws IOException;
 };

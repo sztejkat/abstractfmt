@@ -10,6 +10,7 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 {
 	private void writeTypesAndFlushes(IIndicatorWriteFormat w)throws IOException
 	{
+		w.open();
 		w.writeType(TIndicator.TYPE_BOOLEAN);
 		w.writeBoolean(false);
 		w.writeFlush(TIndicator.FLUSH_BOOLEAN);
@@ -41,6 +42,8 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 		w.writeType(TIndicator.TYPE_DOUBLE);
 		w.writeDouble(-2.4090459E3);
 		w.writeFlush(TIndicator.FLUSH_DOUBLE);
+		w.flush();
+		w.close();
 	};
 	@Test public void testTypesAndFlushes_Df()throws IOException
 	{
@@ -50,9 +53,9 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 		Pair p = create();
 		Assume.assumeTrue("must be described",p.write.isDescribed());
 		Assume.assumeTrue("must be flushing",p.write.isFlushing());
-		writeTypesAndFlushes(p.write);		
-		p.write.close();		
+		writeTypesAndFlushes(p.write);
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BOOLEAN);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		Assert.assertTrue(p.read.readBoolean()==false);
@@ -94,7 +97,7 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 		Assert.assertTrue(p.read.readDouble()==-2.4090459E3);
 		Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0); //because any flush may be read.
 		
-			
+		p.read.close();
 		leave();
 	};	
 	
@@ -109,8 +112,8 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 		Assume.assumeTrue("must be described",p.write.isDescribed());
 		Assume.assumeTrue("must be not flushing",!p.write.isFlushing());
 		writeTypesAndFlushes(p.write);		
-		p.write.close();		
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BOOLEAN);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		Assert.assertTrue(p.read.readBoolean()==false);
@@ -143,7 +146,7 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_DOUBLE);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		Assert.assertTrue(p.read.readDouble()==-2.4090459E3);
-					
+		p.read.close();		
 		leave();
 	};	
 	
@@ -156,8 +159,8 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 		Pair p = create();
 		Assume.assumeTrue("must be not described",!p.write.isDescribed());
 		writeTypesAndFlushes(p.write);		
-		p.write.close();		
-		
+				
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		Assert.assertTrue(p.read.readBoolean()==false);
 		
@@ -182,7 +185,8 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 		
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		Assert.assertTrue(p.read.readDouble()==-2.4090459E3);
-					
+		p.read.close();
+				
 		leave();
 	};	
 	
@@ -200,14 +204,28 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 			Notice, since contract requires that getIndicator is called 
 			before any primitive read and primitive read is required to
 			be called only when curstor is at data we may not expect
-			primitive reads to behave in a consitent way on eof.
-		
+			primitive reads to behave in a consitent way on eof.		
 		 */
 		Pair p = create();
+		p.write.open();
+		p.write.writeType(TIndicator.TYPE_BOOLEAN);
 		p.write.writeBoolean(false);
+		p.write.writeFlush(TIndicator.FLUSH_BOOLEAN);
+		p.write.flush();
 		p.write.close();
-		p.read.getIndicator();
+		p.read.open();
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.getIndicator()==TIndicator.TYPE_BOOLEAN);
+			p.read.next();
+		};
+		Assert.assertTrue(p.read.getIndicator()==TIndicator.DATA);
 		p.read.readBoolean();
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.getIndicator().FLAGS & TIndicator.FLUSH)!=0);
+			p.read.next();
+		};
 		Assert.assertTrue(p.read.getIndicator()==TIndicator.EOF);
 		leave();
 	};

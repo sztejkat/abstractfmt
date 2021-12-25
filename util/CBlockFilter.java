@@ -9,8 +9,10 @@ import java.io.Reader;
 */
 public class CBlockFilter extends AAdaptiveFilterReader
 {
-				/** Input armend with read-back capabilities */
-				private final CAdaptivePushBackReader in;
+				/** Input armend with read-back capabilities.
+				This input is always feed back with characters
+				which were not processed. */
+				protected final CAdaptivePushBackReader in;
 				/** Buffer for matching sequences */
 				private final char [] temp;
 				/** Begin sequence */
@@ -19,6 +21,18 @@ public class CBlockFilter extends AAdaptiveFilterReader
 				private final String end;
 				/** True if skipping is in progress */
 				private boolean skipping;
+				
+	/** Creates.
+	@param in input which is to be filtered. If it is a {@link CAdaptivePushBackReader}
+		it will be used directly. If it is not, it will be wrapped in new instance
+		and this instance will be used to do processing. Having push-back reader
+		is necessary, because begin/end detection requires some read-ahead processing.
+		
+	@param begin begin sequence which starts block which must be removed from 
+		data served to output.
+	@param end sequence which terminates block which must be removed from 
+		data served to output.
+	*/
 	public CBlockFilter(Reader in,String begin, String end)
 	{
 		super(4,32);	//we need very little buffering,
@@ -35,6 +49,7 @@ public class CBlockFilter extends AAdaptiveFilterReader
 		int L = Math.max(end.length(),begin.length());	
 		this.temp = new char[L];
 	};
+	
 	/** Checks if part 0...len of c is beginning of s.
 	@param c buffer
 	@param len chars in buffer, less or equal to size of s
@@ -51,7 +66,7 @@ public class CBlockFilter extends AAdaptiveFilterReader
 		return true;
 	};
 	@Override protected void filter()throws IOException
-	{
+	{		
 		for(;;)
 		{
 			if (skipping)

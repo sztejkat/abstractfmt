@@ -14,13 +14,15 @@ public class TestCSignalFormat_Primitives extends ATestISignalFormat_Primitives
 		
 		return new Pair(
 						new CSignalWriteFormat(
-								 10000, //int max_events_recursion_depth,								 
+								 10000, //int max_events_recursion_depth,
+							new CIndicatorWriteFormatProtector(								 
 								 new CObjIndicatorWriteFormat(
 										media,
 										4,//final int max_registrations,
+										1024,  //final int max_supported_signal_name_length
 										false,//final boolean is_described,
 										false //final boolean is_flushing
-										)//IIndicatorWriteFormat output,
+										))//IIndicatorWriteFormat output,
 								 )
 								 {
 								 public void closeOnce()throws IOException
@@ -31,12 +33,14 @@ public class TestCSignalFormat_Primitives extends ATestISignalFormat_Primitives
 								 },//ISignalWriteFormat write,
 						new CSignalReadFormat(
 								 10000,//int max_events_recursion_depth,
+								new CIndicatorReadFormatProtector(
 								 new CObjIndicatorReadFormat(
 										media,//CObjListFormat media, 
 										4,//final int max_registrations,
+										1024,//final int max_supported_signal_name_length
 										false,//final boolean is_described,
 										false //final boolean is_flushing
-										)//  IIndicatorReadFormat input,
+										))//  IIndicatorReadFormat input,
 								 )			//ISignalReadFormat read
 						);
 	};

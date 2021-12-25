@@ -10,18 +10,28 @@ import java.io.IOException;
 */
 public interface ISignalReadFormat extends Closeable, IPrimitiveReadFormat
 {	
-		/* ************************************************************
+	/* ************************************************************
 	
 			Information
 	
-		* *************************************************************/
+	* *************************************************************/
 		/** Allows to set limit for signal name. Default
 		value is 1024. 
 		@param characters name limit, non-negative. Zero is silly,
 		no signal names can be read 
+		@throws AssertionError if characters exceeds {@link #getMaxSupportedSignalNameLength} 
 		*/
 		public void setMaxSignalNameLength(int characters);
-	/** True if stream implementation is "described".
+		/** Returns value set in {@link #setMaxSignalNameLength}
+		@return value set in {@link #setMaxSignalNameLength} */
+		public int getMaxSignalNameLength();
+		/** Returns maximum supported signal name length by this format.
+		This limit is non-adjustable and relates to physcial boundaries
+		of format.
+		@return length limit, non-zero positive */
+		public int getMaxSupportedSignalNameLength();
+		
+		/** True if stream implementation is "described".
 		A described implementation <u>do require</u> type information
 		and <u>do validate</u> type information. They must throw
 		{@link EDataMissmatch} if type validation failed and 
@@ -280,5 +290,43 @@ public interface ISignalReadFormat extends Closeable, IPrimitiveReadFormat
 		 		format is {@link #isDescribed} but there is no type	information.
 		*/
 		public int readBooleanBlock(boolean [] buffer, int offset, int length)throws IOException;
+	
+		/* ***********************************************************
 		
+			Status, Closable
+			
+		************************************************************/
+		/**
+		This method prepares format and makes it usable.
+		<p>
+		This method depending on state should:
+		<ul>
+			<li>if format is already open, don't do anything;</li>
+			<li>if format is not open, reads necessary opening sequence if any and validates it;</li>
+			<li>if format is closed, thorw.</li>
+		</ul>		 	
+		<p>
+		Until format is open all methods except <code>close</code>
+		should throw IOException. Throwing {@link ENotOpen} is recommended.
+		@throws IOException if failed.
+		*/ 
+		public void open()throws IOException;
+		/**
+		This method closes format and makes it unusable.
+		<p>
+		This method depending on state should:
+		<ul>
+			<li>if format is already closed, don't do anything;</li>
+			<li>if format is not open, close low level resources without doing anything;</li>
+			<li>if format is open close low level resources.
+			<p>
+			<i>Note:there is specifically NO request to read and validate closing sequence
+			because premature closing is a normal condition.</i>
+			</li>
+		</ul>		 	
+		<p>
+		Once format is closed all methods except <code>close</code>
+		should throw IOException. Throwing {@link EClosed} is recommended.
+		*/
+		public void close()throws IOException;	
 };

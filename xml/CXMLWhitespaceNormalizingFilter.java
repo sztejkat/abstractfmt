@@ -39,6 +39,10 @@ class CXMLWhitespaceNormalizingFilter extends AAdaptiveFilterReader
 				/** State variable */
 				private byte state;	
 				
+	/** Creates.
+	@param in input to filter. This processing does not require read-ahead
+			so input is used directly without any wrapping.
+	*/
 	CXMLWhitespaceNormalizingFilter(Reader in)
 	{
 		super(2,2);

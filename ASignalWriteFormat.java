@@ -13,11 +13,9 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 					
 					-------------------------------------------------------*/
 					private enum TState
-					{
-							/** State indicating that elementary
-							primitive element was written (of unspecified type). This is 
-							also an initial state of a stream */
-							NONE(TState.ELEMENT+TState.CAN_START_BLOCK),
+					{		
+							NOT_OPEN(),
+							READY(TState.CAN_START_BLOCK),
 							
 							BOOLEAN(TState.ELEMENT+TState.CAN_START_BLOCK, TIndicator.TYPE_BOOLEAN, TIndicator.FLUSH_BOOLEAN),
 							BYTE(TState.ELEMENT+TState.CAN_START_BLOCK,  TIndicator.TYPE_BYTE,TIndicator.FLUSH_BYTE),
@@ -140,7 +138,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 				this.names_registry_hash=null;
 			}
 			this.max_events_recursion_depth=max_events_recursion_depth;			
-			this.state = TState.NONE;
+			this.state = TState.NOT_OPEN;
 		};
 		/* ********************************************************
 		
@@ -158,6 +156,15 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		protected void closeOnce()throws IOException
 		{
 			output.close();
+		};
+		/** Called inside {@link #open} but only one time
+		Default opens {@link #output}
+		@see #open
+		@throws IOException if failed.
+		*/
+		protected void openOnce()throws IOException
+		{
+			output.open();
 		};
 		
 		/* *******************************************************
@@ -223,6 +230,22 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		{
 			if (state==TState.CLOSED) throw new EClosed("Already closed");
 		};
+		/** Throws if not open
+		@throws ENotOpen if not open
+		*/
+		private final void validateOpen()throws ENotOpen
+		{
+			if (state==TState.NOT_OPEN) throw new ENotOpen("Not opened.");
+		};
+		/** Throws if not open or closed.
+		@throws ENotOpen if not open
+		@throws EClosed if closed
+		*/
+		private final void validateReady()throws EClosed,ENotOpen
+		{
+		 	validateOpen();
+			validateNotClosed();
+		};
 		
 		/* ********************************************************
 		
@@ -273,11 +296,18 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		@Override public void setMaxSignalNameLength(int characters)
 		{ 
 			assert(characters>=0);
+			assert(characters<=getMaxSupportedSignalNameLength());
+			if (state==TState.CLOSED) throw new IllegalStateException("closed");
 			this.max_name_length = characters; 
+		};		
+		@Override final public int getMaxSignalNameLength()
+		{ 
+			return this.max_name_length;
 		};
 		/** Returns what output returns.	*/
-		@Override public final boolean isDescribed(){ return output.isDescribed(); };
-		
+		@Override final public boolean isDescribed(){ return output.isDescribed(); };
+		/** Returns what output returns.	*/
+		@Override final public int getMaxSupportedSignalNameLength(){ return output.getMaxSupportedSignalNameLength(); };
 		/* ---------------------------------------------------------
 					Signals
 		---------------------------------------------------------*/
@@ -338,7 +368,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		
 		@Override public void begin(String signal,boolean do_not_optimize)throws IOException
 		{
-			validateNotClosed();
+			validateReady();
 			
 			assert(signal!=null):"null signal name";
 			//Validate length
@@ -404,7 +434,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		*/
 		@Override public void end()throws IOException
 		{
-			validateNotClosed();
+			validateReady();
 			
 			//Flush any pending end signal operation.
 			//This operation should be done prior to depth
@@ -434,7 +464,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		*/
 		private void startElementaryPrimitiveWrite(TState state)throws IllegalStateException,IOException
 		{			
-			validateNotClosed();
+			validateReady();
 			flushPendingEnd();//this might be pending.
 			
 			if ((this.state.FLAGS & TState.BLOCK)!=0) 
@@ -509,7 +539,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		*/
 		private void startBlockPrimitiveWrite(TState target_state)throws IOException
 		{
-			validateNotClosed();
+			validateReady();
 			if (state==target_state) return;	//continuation
 			//initialization
 			flushPendingEnd();
@@ -629,13 +659,23 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			if (state!=TState.CLOSED)
 			{
 				try{
-					flush(); 					
+					if (state!=TState.NOT_OPEN)
+										flush(); 					
 				}finally{ 
 						try{
 							closeOnce();
 							}finally{ state=TState.CLOSED; }; 
 					};
 			};
+		};
+		@Override public final void open()throws IOException
+		{
+			validateNotClosed();
+			if (state==TState.NOT_OPEN)
+			{
+				openOnce();
+				state = TState.READY;//intentionally not in finally
+			}; 
 		};
 		/* **********************************************************************
 		
@@ -647,7 +687,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		/** Flushes the output */
 		@Override public void flush()throws IOException
 		{
-			validateNotClosed();
+			validateReady();
 			flushPendingEnd();
 			output.flush();
 		};	

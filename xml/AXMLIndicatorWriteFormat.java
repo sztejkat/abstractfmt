@@ -10,7 +10,7 @@ import java.util.ArrayList;
 	An indicator writer using XML as specified in 
 	<A href="doc-files/xml-syntax.html">syntax definition</a>.
 	<p>
-	Adds "bare" format writing.
+	Adds actuall format writing.
 */
 public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatBase
 {
@@ -58,6 +58,8 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 	/** Returns {@link #isDescribed} since XML describing element
 	must surround primitive from both ends */ 
 	@Override public final boolean isFlushing(){ return isDescribed(); };
+	/** Set to 1024*1024 characters */
+	@Override public int getMaxSupportedSignalNameLength(){ return 1024*1024; }
 	/* --------------------------------------------------
 			Signals related indicators
 	--------------------------------------------------*/
@@ -99,7 +101,7 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 	@Override public void writeBeginDirect(String signal_name)throws IOException
 	{
 		assert(signal_name!=null);
-		validateNotClosed();
+		
 		clearPendingPrimitiveSeparator();
 		final Writer o = output;
 		o.write('<');
@@ -152,7 +154,7 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 	};
 	@Override public void writeEnd()throws IOException
 	{
-		validateNotClosed();
+		
 		clearPendingPrimitiveSeparator();
 		final Writer o = output;
 		o.write("</");
@@ -168,7 +170,7 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 	--------------------------------------------------*/
 	@Override public void writeType(TIndicator type)throws IOException
 	{
-		validateNotClosed();
+		
 		if (isDescribed())
 		{
 			clearPendingPrimitiveSeparator();
@@ -180,7 +182,7 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 	};
 	@Override public void writeFlush(TIndicator flush)throws IOException
 	{
-		validateNotClosed();
+		
 		if (isDescribed())
 		{
 			clearPendingPrimitiveSeparator();
@@ -217,7 +219,7 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 	
 	private void startElementaryPrimitive()throws IOException
 	{
-		validateNotClosed();
+		
 		flushPendingPrimitiveSeparator();
 	};
 	private void endElementaryPrimitive()throws IOException
@@ -305,7 +307,7 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 	@throws IOException if failed */
 	private void startBlockPrimitive()throws IOException
 	{
-		validateNotClosed();
+		
 		flushPendingPrimitiveSeparator();
 	};
 	@Override public void writeBooleanBlock(boolean [] buffer, int offset, int length)throws IOException
@@ -419,13 +421,35 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 	
 	/* ****************************************************
 	
-			Closable & Flushable
+			State, Closeable, Flushable		
 	
 	*****************************************************/
+	@Override public void open()throws IOException
+	{
+		if (settings.PROLOG!=null)
+				output.write(settings.PROLOG);
+		if (settings.ROOT_ELEMENT!=null)
+		{
+				output.write('<');
+				output.write(settings.ROOT_ELEMENT);
+				output.write('>');
+		};
+	};
+	@Override public void close()throws IOException
+	{
+		if (settings.ROOT_ELEMENT!=null)
+		{
+				output.write("</");
+				output.write(settings.ROOT_ELEMENT);
+				output.write('>');
+				output.flush();
+		};
+		super.close();
+	};
 	/** Flushes pending separator if any */
 	@Override public void flush()throws IOException
 	{
-		validateNotClosed();
+		
 		flushPendingPrimitiveSeparator();
 		super.flush();
 	};

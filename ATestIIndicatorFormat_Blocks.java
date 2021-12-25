@@ -13,13 +13,22 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a partial read.*/
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_BOOLEAN_BLOCK);
 		p.write.writeBooleanBlock(new boolean[32],0,32);
 		p.write.writeBooleanBlock(new boolean[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_BOOLEAN_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BOOLEAN_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readBooleanBlock(new boolean[16])==16);
@@ -28,8 +37,13 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		Assert.assertTrue(p.read.readBooleanBlock(new boolean[100])==32+32-16);		
 		//Should be getting end indicator and calls should be not allowed, but 
 		//calls are allowed to not throw directly because it is up to us to check it.
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -40,21 +54,34 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a completion read */
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_BOOLEAN_BLOCK);
 		p.write.writeBooleanBlock(new boolean[32],0,32);
 		p.write.writeBooleanBlock(new boolean[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_BOOLEAN_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BOOLEAN_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readBooleanBlock(new boolean[16])==16);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//run all, NOT trigger partial read.
-		Assert.assertTrue(p.read.readBooleanBlock(new boolean[32+16])==32+16);		
+		Assert.assertTrue(p.read.readBooleanBlock(new boolean[32+16])==32+16);
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};		
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -63,18 +90,31 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to full read again */
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_BOOLEAN_BLOCK);
 		p.write.writeBooleanBlock(new boolean[32],0,32);
 		p.write.writeBooleanBlock(new boolean[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_BOOLEAN_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BOOLEAN_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readBooleanBlock(new boolean[64])==64);
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -85,19 +125,32 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to skipping
 		when we use a partial read.*/
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_BOOLEAN_BLOCK);
 		p.write.writeBooleanBlock(new boolean[32],0,32);
 		p.write.writeBooleanBlock(new boolean[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_BOOLEAN_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BOOLEAN_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readBooleanBlock(new boolean[16])==16);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//skip rest.
 		p.read.next();
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
 		leave();
@@ -126,13 +179,22 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a partial read.*/
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_BYTE_BLOCK);
 		p.write.writeByteBlock(new byte[32],0,32);
 		p.write.writeByteBlock(new byte[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_BYTE_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BYTE_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readByteBlock(new byte[16])==16);
@@ -141,8 +203,13 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		Assert.assertTrue(p.read.readByteBlock(new byte[100])==32+32-16);		
 	//Should be getting end indicator and calls should be not allowed, but 
 		//calls are allowed to not throw directly because it is up to us to check it.
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -153,13 +220,22 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a partial read.*/
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_BYTE_BLOCK);
 		p.write.writeByteBlock(new byte[32],0,32);
 		p.write.writeByteBlock(new byte[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_BYTE_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BYTE_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		for(int i=0;i<16;i++)
@@ -178,6 +254,10 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		};
 		//Should be getting end indicator and calls should be not allowed, but 
 		//calls are allowed to not throw directly because it is up to us to check it.
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
 		leave();
@@ -190,19 +270,32 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a completion read */
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_BYTE_BLOCK);
 		p.write.writeByteBlock(new byte[32],0,32);
 		p.write.writeByteBlock(new byte[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_BYTE_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BYTE_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readByteBlock(new byte[16])==16);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//run all, NOT trigger partial read.
-		Assert.assertTrue(p.read.readByteBlock(new byte[32+16])==32+16);		
+		Assert.assertTrue(p.read.readByteBlock(new byte[32+16])==32+16);
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};		
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
 		leave();
@@ -213,16 +306,28 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to full read again */
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_BYTE_BLOCK);
 		p.write.writeByteBlock(new byte[32],0,32);
 		p.write.writeByteBlock(new byte[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_BYTE_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
-		
+		p.write.close();
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BYTE_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readByteBlock(new byte[64])==64);
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
 		leave();
@@ -235,19 +340,32 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to skipping
 		when we use a partial read.*/
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_BYTE_BLOCK);
 		p.write.writeByteBlock(new byte[32],0,32);
 		p.write.writeByteBlock(new byte[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_BYTE_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BYTE_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readByteBlock(new byte[16])==16);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//skip rest.
 		p.read.skip();
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
 		leave();
@@ -274,13 +392,22 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a partial read.*/
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_CHAR_BLOCK);
 		p.write.writeCharBlock(new char[32],0,32);
 		p.write.writeCharBlock(new char[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_CHAR_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();		
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_CHAR_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readCharBlock(new char[16])==16);
@@ -289,8 +416,13 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		Assert.assertTrue(p.read.readCharBlock(new char[100])==32+32-16);		
 		//Should be getting end indicator and calls should be not allowed, but 
 		//calls are allowed to not throw directly because it is up to us to check it.
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	@Test public void testBlockChar_1a()throws IOException
@@ -299,13 +431,22 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a partial read.*/
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_CHAR_BLOCK);
 		p.write.writeCharBlock("12345678901234567890123456789012",0,32);
 		p.write.writeCharBlock(new char[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_CHAR_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();	
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_CHAR_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readCharBlock(new StringBuilder(),16)==16);
@@ -314,8 +455,13 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		Assert.assertTrue(p.read.readCharBlock(new StringBuilder(),100)==32+32-16);		
 		//Should be getting end indicator and calls should be not allowed, but 
 		//calls are allowed to not throw directly because it is up to us to check it.
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -326,21 +472,35 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a completion read */
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_CHAR_BLOCK);
 		p.write.writeCharBlock(new char[32],0,32);
 		p.write.writeCharBlock(new char[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_CHAR_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();			
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_CHAR_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readCharBlock(new char[16])==16);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//run all, NOT trigger partial read.
-		Assert.assertTrue(p.read.readCharBlock(new char[32+16])==32+16);		
+		Assert.assertTrue(p.read.readCharBlock(new char[32+16])==32+16);
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};		
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -349,16 +509,29 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to full read again */
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_CHAR_BLOCK);
 		p.write.writeCharBlock(new char[32],0,32);
 		p.write.writeCharBlock(new char[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_CHAR_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();			
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_CHAR_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readCharBlock(new char[64])==64);
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};	
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
 		leave();
@@ -371,23 +544,41 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to skipping
 		when we use a partial read.*/
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_CHAR_BLOCK);
 		p.write.writeCharBlock(new char[32],0,32);
 		p.write.writeCharBlock(new char[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_CHAR_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
+		
+		p.read.open();		
 		
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_CHAR_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readCharBlock(new char[16])==16);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//skip rest.
 		p.read.skip();
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};	
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
+	
+	
+	
 	
 	
 	
@@ -416,13 +607,22 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a partial read.*/
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_SHORT_BLOCK);
 		p.write.writeShortBlock(new short[32],0,32);
 		p.write.writeShortBlock(new short[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_SHORT_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_SHORT_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readShortBlock(new short[16])==16);
@@ -431,8 +631,13 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		Assert.assertTrue(p.read.readShortBlock(new short[100])==32+32-16);		
 		//Should be getting end indicator and calls should be not allowed, but 
 		//calls are allowed to not throw directly because it is up to us to check it.
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -443,21 +648,34 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a completion read */
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_SHORT_BLOCK);
 		p.write.writeShortBlock(new short[32],0,32);
 		p.write.writeShortBlock(new short[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_SHORT_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_SHORT_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readShortBlock(new short[16])==16);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//run all, NOT trigger partial read.
-		Assert.assertTrue(p.read.readShortBlock(new short[32+16])==32+16);		
+		Assert.assertTrue(p.read.readShortBlock(new short[32+16])==32+16);
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};		
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -466,18 +684,31 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to full read again */
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_SHORT_BLOCK);
 		p.write.writeShortBlock(new short[32],0,32);
 		p.write.writeShortBlock(new short[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_SHORT_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_SHORT_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readShortBlock(new short[64])==64);
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -488,19 +719,32 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to skipping
 		when we use a partial read.*/
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_SHORT_BLOCK);
 		p.write.writeShortBlock(new short[32],0,32);
 		p.write.writeShortBlock(new short[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_SHORT_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_SHORT_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readShortBlock(new short[16])==16);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//skip rest.
-		p.read.skip();
+		p.read.next();
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
 		leave();
@@ -528,13 +772,22 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a partial read.*/
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_INT_BLOCK);
 		p.write.writeIntBlock(new int[32],0,32);
 		p.write.writeIntBlock(new int[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_INT_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_INT_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readIntBlock(new int[16])==16);
@@ -543,8 +796,13 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		Assert.assertTrue(p.read.readIntBlock(new int[100])==32+32-16);		
 		//Should be getting end indicator and calls should be not allowed, but 
 		//calls are allowed to not throw directly because it is up to us to check it.
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -555,21 +813,34 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a completion read */
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_INT_BLOCK);
 		p.write.writeIntBlock(new int[32],0,32);
 		p.write.writeIntBlock(new int[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_INT_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_INT_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readIntBlock(new int[16])==16);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//run all, NOT trigger partial read.
-		Assert.assertTrue(p.read.readIntBlock(new int[32+16])==32+16);		
+		Assert.assertTrue(p.read.readIntBlock(new int[32+16])==32+16);
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};		
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -578,18 +849,31 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to full read again */
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_INT_BLOCK);
 		p.write.writeIntBlock(new int[32],0,32);
 		p.write.writeIntBlock(new int[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_INT_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_INT_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readIntBlock(new int[64])==64);
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -600,23 +884,37 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to skipping
 		when we use a partial read.*/
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_INT_BLOCK);
 		p.write.writeIntBlock(new int[32],0,32);
 		p.write.writeIntBlock(new int[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_INT_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_INT_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readIntBlock(new int[16])==16);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//skip rest.
-		p.read.skip();
+		p.read.next();
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
 		leave();
 	};
+	
 	
 	
 	
@@ -644,13 +942,22 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a partial read.*/
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_LONG_BLOCK);
 		p.write.writeLongBlock(new long[32],0,32);
 		p.write.writeLongBlock(new long[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_LONG_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_LONG_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readLongBlock(new long[16])==16);
@@ -659,8 +966,13 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		Assert.assertTrue(p.read.readLongBlock(new long[100])==32+32-16);		
 		//Should be getting end indicator and calls should be not allowed, but 
 		//calls are allowed to not throw directly because it is up to us to check it.
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -671,21 +983,34 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a completion read */
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_LONG_BLOCK);
 		p.write.writeLongBlock(new long[32],0,32);
 		p.write.writeLongBlock(new long[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_LONG_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_LONG_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readLongBlock(new long[16])==16);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//run all, NOT trigger partial read.
-		Assert.assertTrue(p.read.readLongBlock(new long[32+16])==32+16);		
+		Assert.assertTrue(p.read.readLongBlock(new long[32+16])==32+16);
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};		
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -694,18 +1019,31 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to full read again */
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_LONG_BLOCK);
 		p.write.writeLongBlock(new long[32],0,32);
 		p.write.writeLongBlock(new long[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_LONG_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_LONG_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readLongBlock(new long[64])==64);
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -716,23 +1054,48 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to skipping
 		when we use a partial read.*/
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_LONG_BLOCK);
 		p.write.writeLongBlock(new long[32],0,32);
 		p.write.writeLongBlock(new long[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_LONG_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_LONG_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readLongBlock(new long[16])==16);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//skip rest.
-		p.read.skip();
+		p.read.next();
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
 		leave();
 	};
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	
@@ -747,13 +1110,22 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a partial read.*/
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_FLOAT_BLOCK);
 		p.write.writeFloatBlock(new float[32],0,32);
 		p.write.writeFloatBlock(new float[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_FLOAT_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_FLOAT_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readFloatBlock(new float[16])==16);
@@ -762,8 +1134,13 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		Assert.assertTrue(p.read.readFloatBlock(new float[100])==32+32-16);		
 		//Should be getting end indicator and calls should be not allowed, but 
 		//calls are allowed to not throw directly because it is up to us to check it.
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -774,21 +1151,34 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a completion read */
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_FLOAT_BLOCK);
 		p.write.writeFloatBlock(new float[32],0,32);
 		p.write.writeFloatBlock(new float[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_FLOAT_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_FLOAT_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readFloatBlock(new float[16])==16);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//run all, NOT trigger partial read.
-		Assert.assertTrue(p.read.readFloatBlock(new float[32+16])==32+16);		
+		Assert.assertTrue(p.read.readFloatBlock(new float[32+16])==32+16);
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};		
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -797,18 +1187,31 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to full read again */
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_FLOAT_BLOCK);
 		p.write.writeFloatBlock(new float[32],0,32);
 		p.write.writeFloatBlock(new float[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_FLOAT_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_FLOAT_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readFloatBlock(new float[64])==64);
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -819,23 +1222,37 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to skipping
 		when we use a partial read.*/
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_FLOAT_BLOCK);
 		p.write.writeFloatBlock(new float[32],0,32);
 		p.write.writeFloatBlock(new float[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_FLOAT_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_FLOAT_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readFloatBlock(new float[16])==16);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//skip rest.
-		p.read.skip();
+		p.read.next();
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
 		leave();
 	};
+	
 	
 	
 	
@@ -860,23 +1277,37 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a partial read.*/
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_DOUBLE_BLOCK);
 		p.write.writeDoubleBlock(new double[32],0,32);
 		p.write.writeDoubleBlock(new double[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_DOUBLE_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_DOUBLE_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readDoubleBlock(new double[16])==16);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//run all, trigger partial read.
-		Assert.assertTrue(p.read.readDoubleBlock(new double[100])==32+32-16);
+		Assert.assertTrue(p.read.readDoubleBlock(new double[100])==32+32-16);		
 		//Should be getting end indicator and calls should be not allowed, but 
-		//calls are allowed to not throw directly because it is up to us to check it.		
+		//calls are allowed to not throw directly because it is up to us to check it.
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -887,21 +1318,34 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to signaling
 		when we use a completion read */
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_DOUBLE_BLOCK);
 		p.write.writeDoubleBlock(new double[32],0,32);
 		p.write.writeDoubleBlock(new double[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_DOUBLE_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_DOUBLE_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readDoubleBlock(new double[16])==16);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//run all, NOT trigger partial read.
-		Assert.assertTrue(p.read.readDoubleBlock(new double[32+16])==32+16);		
+		Assert.assertTrue(p.read.readDoubleBlock(new double[32+16])==32+16);
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};		
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -910,18 +1354,31 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		enter();
 		/* Test if layer properly handles block writes when it comes to full read again */
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_DOUBLE_BLOCK);
 		p.write.writeDoubleBlock(new double[32],0,32);
 		p.write.writeDoubleBlock(new double[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_DOUBLE_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_DOUBLE_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readDoubleBlock(new double[64])==64);
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -932,21 +1389,38 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		/* Test if layer properly handles block writes when it comes to skipping
 		when we use a partial read.*/
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_DOUBLE_BLOCK);
 		p.write.writeDoubleBlock(new double[32],0,32);
 		p.write.writeDoubleBlock(new double[32],0,32);
+		p.write.writeFlush(TIndicator.FLUSH_DOUBLE_BLOCK);
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_DOUBLE_BLOCK);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//pick a piece of block
 		Assert.assertTrue(p.read.readDoubleBlock(new double[16])==16);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		//skip rest.
-		p.read.skip();
+		p.read.next();
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
 		leave();
 	};
+	
+	
+	
+	
 }

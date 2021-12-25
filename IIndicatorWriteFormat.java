@@ -45,36 +45,46 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 		@return this method may not return true if 
 		{@link #isDescribed} is false. */			
 		public boolean isFlushing();
+		/** Returns maximum supported signal name length by this format.
+		This limit is non-adjustable and relates to physcial boundaries
+		of format.
+		@return length limit, non-zero positive */
+		public int getMaxSupportedSignalNameLength();
+		
 		/* ****************************************************
 		
 				Signals related indicators.
 		
-		****************************************************/
-		
+		****************************************************/		
 		/**
 			Writes to a stream {@link TIndicator#BEGIN_DIRECT}.
-			@param signal_name name of a signal
+			@param signal_name name of a signal. Passing null or
+				name longer than {@link #getMaxSupportedSignalNameLength}
+				may have unpredictable results.
 			@throws IOException if failed at low level.
 		*/
 		public void writeBeginDirect(String signal_name)throws IOException;
 		/**
 			Writes to a stream {@link TIndicator#END_BEGIN_DIRECT}.
-			@param signal_name name of a signal
+			@param signal_name name of a signal. Passing null or
+				name longer than {@link #getMaxSupportedSignalNameLength}
+				may have unpredictable results.
 			@throws IOException if failed at low level.
 		*/
 		public void writeEndBeginDirect(String signal_name)throws IOException;		
 		/**
 			Writes to a stream {@link TIndicator#BEGIN_REGISTER}
-			@param signal_name name of a signal
+			@param signal_name name of a signal. Passing null or
+				name longer than {@link #getMaxSupportedSignalNameLength}
+				may have unpredictable results.
 			@param number a numeric value under which this signal name
 			is to be registered. Callers must call this method in such
 			a way, that:
 			<ul>
 				<li>calls with the same name are made only once;</li>
-				<li>number assigned to to name equals to number of calls
-				to this method since inside a caller. With this this 
-				driver may decide to not pass this value inside a stream
-				and use;</li>
+				<li>number assigned to to name equals to number of already
+				made calls to this method. This allows format
+				to use <i>implict</i> numbering;</li>
 			</ul>
 			This number is in 0...{@link #getMaxRegistrations}-1 range
 			@throws IOException if failed at low level.			
@@ -172,9 +182,31 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 		
 		/* ************************************************
 		
-				Closeable		
+				State, Closeable, Flushable		
 		
 		*************************************************/
-		/** Must call {@link #flush} before closing */
+		/** Writes opening sequence, if any.
+		Calling this method more than once may fail.
+		Calling any method of this class except
+		{@link #getMaxRegistrations},
+		{@link #isDescribed},{@link #isFlushing},
+		{@link #getMaxSupportedSignalNameLength} 
+		may have unpredictable results if made before calling {@link #open}
+		*/
+		public void open()throws IOException;
+		/**
+		Closes format, makes it unusable.
+		<p>
+		Once closed calling all except {@link #getMaxRegistrations},
+		{@link #isDescribed},{@link #isFlushing},{@link #getMaxSupportedSignalNameLength} 
+		 may have unpredictable results.
+		<p>
+		This method may just close resources without flushing buffers.
+		<p>
+		Calling it multiple times may have unpredictable results.
+		<p>
+		Calling it without calling open is allowed and should
+		release resources, but produced stream may be malformed.
+		*/
 		@Override public void close()throws IOException;
 };

@@ -21,8 +21,6 @@ abstract class AXMLIndicatorWriteFormatBase extends AXMLFormat
 				protected final Writer output;
 				/** Used to implement {@link #canWrite}. Can be null. */
 				private final CharsetEncoder charset_enc;
-				/** Set to true once closed */
-				private boolean is_closed;
 	/* ****************************************************
 	
 			Creation
@@ -65,33 +63,8 @@ abstract class AXMLIndicatorWriteFormatBase extends AXMLFormat
 		if (charset_enc==null) return true;
 		return charset_enc.canEncode(c);
 	};
-	/* ****************************************************
-		
-			Services tunable from subclasses
-			
-	*****************************************************/
-	/** Called in {@link #close} when closed for a first 
-	time. Default implementation closes output.
-	@throws IOException if failed.
-	*/
-	protected void closeOnce()throws IOException
-	{
-			output.close();
-	};
-	/* ****************************************************
-		
-			State
-			
-	*****************************************************/
-	/** Tests if format is usable
-	@throws EClosed if closed
-	@see #is_closed
-	@see #close 
-	*/
-	protected void validateNotClosed()throws EClosed
-	{
-		if (is_closed) throw new EClosed();
-	};
+	
+	
 	
 	/* ****************************************************
 	
@@ -230,26 +203,13 @@ abstract class AXMLIndicatorWriteFormatBase extends AXMLFormat
 	/** Flushes pending separator if any */
 	@Override public void flush()throws IOException
 	{
-		validateNotClosed();
 		output.flush();
 	};
 	
-	/** Flushes, Sets closed status to true.
-	If it was false calls {@link #closeOnce}
-	@see #validateNotClosed
-	*/
+	/** Closes output */
 	@Override public void close()throws IOException
 	{
-		if (!is_closed)
-		{
-			try{
-				flush();
-			}finally{
-					try{
-					closeOnce();
-				}finally{is_closed = true; };
-			}
-		};
+		output.close();
 	};
 	
 };

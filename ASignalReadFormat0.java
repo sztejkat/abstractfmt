@@ -17,8 +17,10 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 			------------------------------------------------------*/
 			private enum TState
 			{
-					/** No information about action in progress */
-					IDLE(),
+					/** Not open yet */
+					NOT_OPEN(),
+					/** No information about action in progress, but ready */
+					READY(),
 					/** Begin signal was returned */
 					BEGIN(),
 					/** End signal was returned */
@@ -124,17 +126,60 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 		this.input = input;					
 		this.max_events_recursion_depth=max_events_recursion_depth;
 		this.names_registry= new String[input.getMaxRegistrations()];			
-		this.state = TState.IDLE;
+		this.state = TState.NOT_OPEN;
+	};
+	/* ********************************************************
+		
+		
+				Tunable services	
+				
+		
+		**********************************************************/
+	/** Invoked in {@link #close}.
+	Closes input 
+	@throws IOException if {@link #input} have thrown.
+	*/
+	protected void closeOnce()throws IOException
+	{
+		input.close();
+	};
+	/** Called inside {@link #open} but only one time
+	Default opens {@link #input}
+	@see #open
+	@throws IOException if failed.
+	*/
+	protected void openOnce()throws IOException
+	{
+		input.open();
 	};
 	/* ****************************************************************
 	
 				Tooling
 	
 	*****************************************************************/
+	/** Throws if closed
+		@throws EClosed if closed
+	*/
 	private void validateNotClosed()throws EClosed
 	{
 		if (state==TState.CLOSED) throw new EClosed();
 	};		
+	/** Throws if not open
+	@throws ENotOpen if not open
+	*/
+	private final void validateOpen()throws ENotOpen
+	{
+		if (state==TState.NOT_OPEN) throw new ENotOpen("Not opened.");
+	};
+	/** Throws if not open or closed.
+	@throws ENotOpen if not open
+	@throws EClosed if closed
+	*/
+	private final void validateReady()throws EClosed,ENotOpen
+	{
+		validateOpen();
+		validateNotClosed();
+	};
 	/* ****************************************************************
 	
 				ISignalReadFormat
@@ -147,10 +192,21 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 	/** Passes down to input */
 	@Override public void setMaxSignalNameLength(int characters)
 	{
+		assert(characters>=0);
+		assert(characters<=getMaxSupportedSignalNameLength());
+		if (state==TState.CLOSED) throw new IllegalStateException("closed");
 		input.setMaxSignalNameLength(characters);
 	};
-	/** Returns what input return */
+	/** Returns what input returns. */
+	@Override final public int getMaxSignalNameLength()
+	{ 
+		return input.getMaxSignalNameLength();
+	};
+	/** Returns what input returns. */
 	@Override final public boolean isDescribed(){ return input.isDescribed(); };
+	/** Returns what input returns.	*/
+	@Override final public int getMaxSupportedSignalNameLength(){ return input.getMaxSupportedSignalNameLength(); };
+		
 	/* -------------------------------------------------------------
 				Signals
 	-------------------------------------------------------------*/
@@ -180,7 +236,7 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 	*/
 	private String nextImpl()throws IOException
 	{
-		validateNotClosed();
+		validateReady();
 		//Handle fake state
 		if (state == TState.END_BEGIN)
 		{
@@ -272,7 +328,7 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 		
 	@Override public int whatNext()throws IOException
 	{
-		validateNotClosed();
+		validateReady();
 		/*
 				What is allowed next depends both on state
 				and indicator under a cursor. Specifically
@@ -345,7 +401,7 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 	@throws IOException if failed or detected problems*/
 	private void startElementaryPrimitive(TState required_state)throws IOException
 	{		
-		validateNotClosed();
+		validateReady();
 		if ((state.FLAGS & TState.BLOCK)!=0) throw new IllegalStateException("Block operation in progress, cant do primitive read.");
 		startPrimitive(required_state);
 	};
@@ -357,7 +413,7 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 	@throws IOException if failed or detected problems*/
 	private boolean startBlockPrimitive(TState required_state)throws IOException
 	{		
-		validateNotClosed();
+		validateReady();
 		//decide if continue or initialize?
 		if (state!=required_state)
 		{
@@ -411,7 +467,7 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 	private void endElementaryPrimitive()throws IOException
 	{
 		if((state.FLAGS & TState.ELEMENT)==0) throw new EBrokenFormat("Broken, something wrong with states, can't recover from that");
-		endPrimtive(TState.IDLE);
+		endPrimtive(TState.READY);
 	};
 	/** Checks if block is at the end, regardless of returned partial read or not.
 	If it is at the end, validates flush condictions. 
@@ -670,13 +726,14 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 			Closeable
 	
 	**************************************************************/
-	/** Invoked in {@link #close}.
-	Closes input 
-	@throws IOException if {@link #input} have thrown.
-	*/
-	protected void closeOnce()throws IOException
+	@Override public final void open()throws IOException
 	{
-		input.close();
+		validateNotClosed();
+		if (state==TState.NOT_OPEN)
+		{
+			openOnce();
+			state = TState.READY;//intentionally not in finally
+		}; 
 	};
 	/** Calls {@link #closeOnce}, but only one time.
 	Makes stream unusable */
@@ -684,8 +741,9 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 	{
 		if (state!=TState.CLOSED)
 		{
-			state=TState.CLOSED;
-			closeOnce();
+			try{
+				closeOnce();
+			}finally{ state=TState.CLOSED; }; 
 		};
 	};
 }

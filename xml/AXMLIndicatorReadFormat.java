@@ -92,11 +92,11 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 				Information and settings.		
 	-------------------------------------------------*/
 	/** Always zero, this format does not support registrations */
-	public final int getMaxRegistrations(){ return 0; };
+	@Override public final int getMaxRegistrations(){ return 0; };
 	/** Returns {@link #isDescribed} because it is always flushing */
-	public final boolean isFlushing(){ return isDescribed(); };
+	@Override public final boolean isFlushing(){ return isDescribed(); };
 	
-	public void setMaxSignalNameLength(int characters)
+	@Override public void setMaxSignalNameLength(int characters)
 	{
 		assert(characters>0):"characters="+characters;
 		//Note: Contract allows unpredictable results when
@@ -109,6 +109,9 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		//no re-allocate other buffers if necessary
 		token_buffer = new CBoundAppendable(Math.max(characters,settings.getMaximumTokenLength()));
 	};
+	@Override public int getMaxSignalNameLength(){ return max_signal_name_length;}
+	/** Set to 1024*1024 characters */
+	@Override public int getMaxSupportedSignalNameLength(){ return 1024*1024; }
 	/* -------------------------------------------------		
 				Indicators	
 	-------------------------------------------------*/
@@ -116,7 +119,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	
 	public TIndicator getIndicator()throws IOException
 	{				
-		validateNotClosed();		
+				
 		if (indicator_cache!=null) return indicator_cache;		
 		int ci = input.read();
 		if (ci==-1)return TIndicator.EOF;
@@ -140,7 +143,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	
 	@Override public void next()throws IOException
 	{
-		validateNotClosed();
+		
 		//Now in our processing style if a logic cursor is
 		//at non-data indicator, then physical cursor is
 		//at first character after it. So this is enough to 
@@ -456,7 +459,26 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		//Notice, processing root tag should also be done here and should
 		//toggle stream to be unusable.	
 		CBoundAppendable b = readTag();	//filled the token_buffer
-		if (xml_elements_stack.isEmpty()) throw new EBrokenFormat("too many closing tags, \""+b+"\"");		
+		if (xml_elements_stack.isEmpty())
+		{
+			//In this place </root> element is allowed.
+			if (settings.ROOT_ELEMENT==null)
+			{
+				throw new EBrokenFormat("too many closing tags, \""+b+"\"");
+			}
+			else
+			{
+				if (b.equalsString(	settings.ROOT_ELEMENT ))
+				{
+					//Unread it completely, so that we will be stuck at it.
+					//and will be unable to move forwards.
+					input.unread(b);
+					input.unread("</");
+					return TIndicator.EOF;
+				}else 
+				throw new EBrokenFormat("too many closing tags, \""+b+"\"");
+			}
+		};		
 		//validate, allowing anonymous closing tag
 		final String closed =  xml_elements_stack.remove(xml_elements_stack.size()-1);		
 		if (!b.isEmpty())
@@ -568,10 +590,57 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	/** Is invoked at the begininng of each elementary fetch.
 	Validates if operation is allowed and clears indicators cache.
 	@throws IOException if failed */
-	protected void startElementaryPrimitive()throws IOException
+	private void startElementaryPrimitive()throws IOException
 	{
-		invalidateGetIndicator();
-		validateNotClosed();		
+		invalidateGetIndicator();				
+	};
+	/** Method should be invoked if cursor is at &lt; which
+	caused either {@link ENoMoreData} or partial read.
+	The found tag may indicate either signal or root closing tag.
+	If it is not a root closing tag, then the partial read or 
+	throwing {@link ENoMoreData} are correct.
+	<p>
+	If it is a root closing tag then throwing {@link EUnexpectedEof}
+	is a correct behavior.
+	<p>
+	This method reads tag and tests if it is root.
+	The read tag is always, regardless of result, unread back to
+	input and cursor is again at &lt; 
+	
+	@return true if root element closing tag is found.
+	@throws IOException if failed to check it.
+	*/
+	private boolean isClosingRootElement()throws IOException
+	{
+		if (settings.ROOT_ELEMENT==null)  return false;
+		//Not we have to test for root element
+		char c = input.readChar();
+		if (c!='<'){ input.unread(c); return false; }
+		c = input.readChar();
+		if (c!='/'){ input.unread(c); input.unread('<'); return false; };
+		//now it can be root tag.
+		CBoundAppendable b = readTag();
+		//always un-read it.
+		input.unread(b);
+		input.unread("</");
+		if (b.equalsString(settings.ROOT_ELEMENT))
+		{
+			return true;
+		}else
+			return false;
+	};
+	/** This method should be invoked in any place in which {@link ENoMoreData}
+	would be normally thrown. The condition for {@link ENoMoreData} is when
+	XML tag is reached during data processing. This tag may indicate either
+	signal or root closing tag. If it is not a root element closing that,
+	then {@link ENoMoreData} is a valid exception. If it is a root closing
+	element then the {@link EUnexpectedEof} is a valid condition to throw. 
+	@return what to throw.
+	@throws IOException if failed to validate it.
+	*/
+	private IOException throwENoMoreData()throws IOException
+	{		
+		return isClosingRootElement() ? new EUnexpectedEof() : new ENoMoreData();
 	};
 	/** Fetches numeric primitive to {@link #token_buffer}. After return from this method
 	cursor is at next non-white-space character after fetched numeric value.
@@ -582,7 +651,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		which should not be skipped before a separator or XML tag is reached.
 	@throws IOException if failed
 	*/
-	protected CBoundAppendable fetchNumericPrimitive(String allowedCharacters, int max_length)throws IOException
+	private CBoundAppendable fetchNumericPrimitive(String allowedCharacters, int max_length)throws IOException
 	{
 		//Note: space normalization is handled by input, but
 		//in un-described streams inner spaces may still be present
@@ -617,7 +686,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	{
 		startElementaryPrimitive();
 		CBoundAppendable b = fetchNumericPrimitive("tTfF01",1);
-		if (b.length()==0) throw new ENoMoreData();
+		if (b.length()==0) throw throwENoMoreData();
 		
 		switch(b.charAt(0))
 		{
@@ -635,7 +704,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	{
 		startElementaryPrimitive();
 		CBoundAppendable b = fetchNumericPrimitive("-0123456789",4);
-		if (b.length()==0) throw new ENoMoreData();
+		if (b.length()==0) throw throwENoMoreData();
 		String s = b.toString();
 		try{
 			return Byte.parseByte(s);
@@ -678,7 +747,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	{
 		startElementaryPrimitive();
 		CBoundAppendable b = fetchNumericPrimitive("-0123456789",6);
-		if (b.length()==0) throw new ENoMoreData();
+		if (b.length()==0) throw throwENoMoreData();
 		String s = b.toString();
 		try{
 			return Short.parseShort(s);
@@ -688,7 +757,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	{
 		startElementaryPrimitive();
 		CBoundAppendable b = fetchNumericPrimitive("-0123456789",13);
-		if (b.length()==0) throw new ENoMoreData();
+		if (b.length()==0) throw throwENoMoreData();
 		String s = b.toString();
 		try{
 			return Integer.parseInt(s);
@@ -698,7 +767,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	{
 		startElementaryPrimitive();
 		CBoundAppendable b = fetchNumericPrimitive("-0123456789",22);
-		if (b.length()==0) throw new ENoMoreData();
+		if (b.length()==0) throw throwENoMoreData();
 		String s = b.toString();
 		try{
 			return Long.parseLong(s);
@@ -708,7 +777,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	{
 		startElementaryPrimitive();
 		CBoundAppendable b = fetchNumericPrimitive("-0123456789.eE",41);
-		if (b.length()==0) throw new ENoMoreData();
+		if (b.length()==0) throw throwENoMoreData();
 		String s = b.toString();
 		try{
 			return Float.parseFloat(s);
@@ -718,7 +787,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	{
 		startElementaryPrimitive();
 		CBoundAppendable b = fetchNumericPrimitive("-0123456789.eE",41);
-		if (b.length()==0) throw new ENoMoreData();
+		if (b.length()==0) throw throwENoMoreData();
 		String s = b.toString();
 		try{
 			return Double.parseDouble(s);
@@ -730,10 +799,19 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 	/** Is invoked at the begininng of each block fetch.
 	Validates if operation is allowed and clears indicators cache.
 	@throws IOException if failed */
-	protected void startBlockPrimitive()throws IOException
+	private void startBlockPrimitive()throws IOException
 	{
-		invalidateGetIndicator();
-		validateNotClosed();		
+		invalidateGetIndicator();				
+	};
+	/** Must be invoked on partial read.
+	Will test if root closing element caused it and if it was,
+	will throw.	
+	@throws EUnexpectedEof if root closing caused eof.
+	@throws IOException if failed during check.
+	*/
+	private void tryThrowOnPartialRead()throws EUnexpectedEof,IOException
+	{
+		if (isClosingRootElement()) throw new EUnexpectedEof();
 	};
 	@Override public int readBooleanBlock(boolean [] buffer, int offset, int length)throws IOException
 	{
@@ -755,7 +833,9 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 				case 'f':
 				case 'F':			
 				case '0': v=false; break;
-				case '<': input.unread(c); break loop;
+				case '<': input.unread(c);
+					 	  tryThrowOnPartialRead();
+						  break loop;
 				case ' ': continue loop;
 				default: throw new EBrokenFormat("Invalid character \""+c+"\" in boolean block");
 			}
@@ -778,7 +858,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 			char c = input.readChar();
 			switch(c)
 			{
-				case '<': input.unread(c); break loop;
+				case '<': input.unread(c); tryThrowOnPartialRead(); break loop;
 				case ' ': continue loop;
 			};
 			int digit_1 = HEX2D(c);
@@ -836,6 +916,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 				if (c=='<')
 				{ 
 					input.unread(c); 
+					tryThrowOnPartialRead();
 					break loop; 
 				};
 			}else
@@ -868,6 +949,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 				if (c=='<')
 				{ 
 					input.unread(c); 
+					tryThrowOnPartialRead();
 					break loop; 
 				};
 			}else
@@ -896,7 +978,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		while(length>0)
 		{
 			CBoundAppendable b = fetchNumericPrimitive("-0123456789",6);
-			if (b.length()==0) break loop;	//<-- this is empty when < was reached.
+			if (b.length()==0){ tryThrowOnPartialRead(); break loop;}	//<-- this is empty when < was reached.
 			final String s = b.toString();
 			try{
 				buffer[offset++]= Short.parseShort(s);
@@ -915,7 +997,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		while(length>0)
 		{
 			CBoundAppendable b = fetchNumericPrimitive("-0123456789",12);
-			if (b.length()==0) break loop;	//<-- this is empty when < was reached.
+			if (b.length()==0){ tryThrowOnPartialRead(); break loop;}	//<-- this is empty when < was reached.
 			final String s = b.toString();
 			try{
 				buffer[offset++]= Integer.parseInt(s);
@@ -934,7 +1016,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		while(length>0)
 		{
 			CBoundAppendable b = fetchNumericPrimitive("-0123456789",21);
-			if (b.length()==0) break loop;	//<-- this is empty when < was reached.
+			if (b.length()==0){ tryThrowOnPartialRead(); break loop;}	//<-- this is empty when < was reached.
 			final String s = b.toString();
 			try{
 				buffer[offset++]= Long.parseLong(s);
@@ -953,7 +1035,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		while(length>0)
 		{
 			CBoundAppendable b = fetchNumericPrimitive("-0123456789.eE",40);
-			if (b.length()==0) break loop;	//<-- this is empty when < was reached.
+			if (b.length()==0){ tryThrowOnPartialRead(); break loop;}	//<-- this is empty when < was reached.
 			final String s = b.toString();
 			try{
 				buffer[offset++]= Float.parseFloat(s);
@@ -972,7 +1054,7 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		while(length>0)
 		{
 			CBoundAppendable b = fetchNumericPrimitive("-0123456789.eE",40);
-			if (b.length()==0) break loop;	//<-- this is empty when < was reached.
+			if (b.length()==0){ tryThrowOnPartialRead(); break loop;}	//<-- this is empty when < was reached.
 			final String s = b.toString();
 			try{
 				buffer[offset++]= Double.parseDouble(s);

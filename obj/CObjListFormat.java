@@ -9,6 +9,7 @@ import java.util.LinkedList;
 	This lists keeps following objects:
 	<ul>
 		<li>{@link TIndicator} for indicators;</li>
+		<li>{@link #OPEN} for opening marker;</li>
 		<li>{@link String} for signal names;</li>
 		<li>{@link Integer} for signal index numbers;</li>		
 		<li>boxed elementary primitives to represent elementary primitive writes;</li>
@@ -19,7 +20,8 @@ import java.util.LinkedList;
 public final class CObjListFormat extends LinkedList<Object>
 {
 				private static final long serialVersionUID=1L;	//for -Xlint only.
-				
+				/** Used as "open()" indicator */
+				public static final Object OPEN = new Object();
 	
 	public String toString()
 	{
@@ -29,7 +31,9 @@ public final class CObjListFormat extends LinkedList<Object>
 		{
 			if (comma) sb.append(',');
 			
-			if (i==null) sb.append("--null--");
+			if (i==null) sb.append("--null--");			
+			else
+			if (i==OPEN) sb.append("OPEN STREAM");
 			else
 			if (i instanceof String) sb.append("\""+i+"\"");
 			else

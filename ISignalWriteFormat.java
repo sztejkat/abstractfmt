@@ -16,13 +16,29 @@ public interface ISignalWriteFormat extends Closeable, Flushable,IPrimitiveWrite
 			Signals and events	
 	
 	* *************************************************************/
+	/* ------------------------------------------------------------
+				Limits
+	------------------------------------------------------------*/
 		/** Allows to set limit for signal name.
 		<p>
 		Default value is 1024.
 		@param characters name limit, non-negative. Zero is silly,
 		no signal names can be written 
+		@throws AssertionError if characters exceeds {@link #getMaxSupportedSignalNameLength} 
+		@throws IllegalStateException if closed.
 		*/
 		public void setMaxSignalNameLength(int characters);
+		/** Returns value set in {@link #setMaxSignalNameLength}
+		@return value set in {@link #setMaxSignalNameLength} */
+		public int getMaxSignalNameLength();
+		/** Returns maximum supported signal name length by this format.
+		This limit is non-adjustable and relates to physcial boundaries
+		of format.
+		@return length limit, non-zero positive */
+		public int getMaxSupportedSignalNameLength();
+	/* ------------------------------------------------------------
+				Signals
+	------------------------------------------------------------*/
 		/** <a name="BEGIN"></a>
 		Writes "begin" signal. Begin signals do indicate
 		the beginning of an <a href="package.html#event">event</a>
@@ -121,11 +137,26 @@ public interface ISignalWriteFormat extends Closeable, Flushable,IPrimitiveWrite
 		*/
 		@Override public void writeBooleanBlock(boolean [] buffer, int offset, int length)throws IOException;
 			
-		/*=============================================================
+		/* ***********************************************************
 		
-			Status
+			Status, Closable, Flushable
 			
-		=============================================================*/
+		************************************************************/
+		/**
+		This method prepares format and makes it usable.
+		<p>
+		This method depending on state should:
+		<ul>
+			<li>if format is already open, don't do anything;</li>
+			<li>if format is not open, write necessary opening sequence if any;</li>
+			<li>if format is closed, thorw.</li>
+		</ul>		 	
+		<p>
+		Until format is open all methods except <code>close</code>
+		should throw IOException. Throwing {@link ENotOpen} is recommended.
+		@throws IOException if failed.
+		*/ 
+		public void open()throws IOException;
 		/** All buffers should be passed down to low level i/o and that i/o should be flushed.
 		No data may be left in a format writer which are not passed down to low level i/o.
 		<p>
@@ -134,6 +165,19 @@ public interface ISignalWriteFormat extends Closeable, Flushable,IPrimitiveWrite
 		@throws IOException if low level i/o fails.
 		*/
 		public void flush()throws IOException;
-		/** Calls {@link #flush} */
-		public default void close()throws IOException{ flush(); };
+		/**
+		This method closes format and makes it unusable.
+		<p>
+		This method depending on state should:
+		<ul>
+			<li>if format is already closed, don't do anything;</li>
+			<li>if format is not open, close low level resources without doing anything;</li>
+			<li>if format is open call {@link #flush}, write closing sequence if necessary
+			and close low level resources.</li>
+		</ul>		 	
+		<p>
+		Once format is closed all methods except <code>close</code>
+		should throw IOException. Throwing {@link EClosed} is recommended.
+		*/
+		public void close()throws IOException;
 };

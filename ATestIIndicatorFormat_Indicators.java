@@ -14,8 +14,11 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		enter();
 		/*	Check if empty gives eof.*/
 		Pair p = create();
+		p.write.open();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
 		leave();
 	};
@@ -27,29 +30,27 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		enter();
 		/*	Check basic begin-end sequence with direct names.	*/
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("arabica");
 		p.write.writeBeginDirect("jamaica");
 		p.write.writeEnd();
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
 		Assert.assertTrue("arabica".equals(p.read.getSignalName()));
 		Assert.assertTrue("arabica".equals(p.read.getSignalName()));	//valid till different indicator.
-		try{
-			p.read.getSignalNumber();	//<-- never should be valid.
-			Assert.fail();
-		}catch(IllegalStateException ex){};
+		
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
 		Assert.assertTrue("jamaica".equals(p.read.getSignalName()));
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
-		try{
-			p.read.getSignalName();	//<-- should be invalidated by end.
-			Assert.fail();
-		}catch(IllegalStateException ex){};
+		
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF); //intentionally double
+		p.read.close();
 		leave();
 	};
 	
@@ -58,12 +59,16 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		enter();
 		/*	Check basic begin-end sequence with direct names.	*/
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("arabica");
 		p.write.writeEnd();
 		p.write.writeBeginDirect("jamaica");		
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
 		Assert.assertTrue("arabica".equals(p.read.getSignalName()));
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);		
@@ -71,6 +76,7 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		Assert.assertTrue("jamaica".equals(p.read.getSignalName()));		
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -79,17 +85,21 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		enter();
 		/*	Check basic begin-end sequence with direct names.	*/
 		Pair p = create();
+		p.write.open();
 		p.write.writeBeginDirect("arabica");
 		p.write.writeEndBeginDirect("jamaica");		
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_DIRECT);
 		Assert.assertTrue("arabica".equals(p.read.getSignalName()));
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END_BEGIN_DIRECT);
 		Assert.assertTrue("jamaica".equals(p.read.getSignalName()));		
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};       
 	
@@ -105,11 +115,15 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		enter();
 		/*	Check basic begin-end sequence with registered names. */
 		Pair p = create();
+		Assume.assumeTrue(p.write.getMaxRegistrations()>=2);
+		p.write.open();
 		p.write.writeBeginRegister("arabica",0);
 		p.write.writeEndBeginRegister("jamaica",1);		
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_REGISTER);
 		Assert.assertTrue("arabica".equals(p.read.getSignalName()));
 		Assert.assertTrue(p.read.getSignalNumber()==0);
@@ -119,6 +133,7 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		Assert.assertTrue("jamaica".equals(p.read.getSignalName()));				
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -127,6 +142,8 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		enter();
 		/*	Check basic begin-end sequence with registered names. */
 		Pair p = create();
+		Assume.assumeTrue(p.write.getMaxRegistrations()>=2);
+		p.write.open();
 		p.write.writeBeginRegister("arabica",0);
 		p.write.writeEndBeginRegister("jamaica",1);	
 			p.write.writeBeginUse(1);
@@ -134,7 +151,9 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 			p.write.writeEnd();
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.BEGIN_REGISTER);
 		Assert.assertTrue("arabica".equals(p.read.getSignalName()));
 		Assert.assertTrue(p.read.getSignalNumber()==0);
@@ -150,6 +169,7 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 				
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -166,13 +186,19 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		enter();
 		/*	Check if we can skip un-read data and get to signal	*/
 		Pair p = create();
+		p.write.open();
+		p.write.writeType(TIndicator.TYPE_INT);
 		p.write.writeInt(77);
+		p.write.writeFlush(TIndicator.FLUSH_INT);
+		p.write.writeType(TIndicator.TYPE_CHAR);
 		p.write.writeChar('c');
+		p.write.writeFlush(TIndicator.FLUSH_CHAR);
 		p.write.writeBeginDirect("arabica");
 		p.write.writeEnd();
 		p.write.flush();
+		p.write.close();
 		
-		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
@@ -182,7 +208,7 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		Assert.assertTrue("arabica".equals(p.read.getSignalName()));
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.END);		
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.EOF);
-			
+		p.read.close();
 		leave();
 	};	
 	@Test public void testDataSkip_Eof()throws IOException
@@ -190,11 +216,17 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		enter();
 		/*	Check if we can skip un-read and will fail if no closing signal.*/
 		Pair p = create();
+		p.write.open();
+		p.write.writeType(TIndicator.TYPE_INT);
 		p.write.writeInt(77);
+		p.write.writeFlush(TIndicator.FLUSH_INT);
+		p.write.writeType(TIndicator.TYPE_CHAR);
 		p.write.writeChar('c');
+		p.write.writeFlush(TIndicator.FLUSH_CHAR);
 		p.write.flush();
+		p.write.close();
 		
-		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
@@ -202,7 +234,7 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 			p.read.skip();
 			Assert.fail();
 			}catch(EUnexpectedEof ex){};
-			
+		p.read.close();
 		leave();
 	};
 	
@@ -211,6 +243,7 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 	
 	private void writeTypesAndFlushes(IIndicatorWriteFormat w)throws IOException
 	{
+		w.open();
 		w.writeType(TIndicator.TYPE_BOOLEAN);
 		w.writeBoolean(false);
 		w.writeFlush(TIndicator.FLUSH_BOOLEAN);
@@ -242,6 +275,8 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		w.writeType(TIndicator.TYPE_DOUBLE);
 		w.writeDouble(-2.4090459E3);
 		w.writeFlush(TIndicator.FLUSH_DOUBLE);
+		w.flush();
+		w.close();
 	};
 	@Test public void testTypesAndFlushes_Df()throws IOException
 	{
@@ -251,8 +286,8 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		Assume.assumeTrue("must be described",p.write.isDescribed());
 		Assume.assumeTrue("must be flushing",p.write.isFlushing());		
 		writeTypesAndFlushes(p.write);
-		p.write.flush();		
 		
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BOOLEAN);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		p.read.skip();
@@ -293,7 +328,7 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		p.read.skip();
 		Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0); //because any flush may be read.
-		
+		p.read.close();
 			
 		leave();
 	};	
@@ -307,8 +342,8 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		Assume.assumeTrue("must be described",p.write.isDescribed());
 		Assume.assumeTrue("must be not flushing",!p.write.isFlushing());		
 		writeTypesAndFlushes(p.write);
-		p.write.flush();		
-		
+			
+		p.read.open();
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_BOOLEAN);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		p.read.skip();
@@ -340,7 +375,7 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.TYPE_DOUBLE);
 		Assert.assertTrue(p.read.readIndicator()==TIndicator.DATA);
 		p.read.skip();
-					
+		p.read.close();
 		leave();
 	};	
 	
@@ -353,8 +388,8 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		Assume.assumeTrue("must be described",p.write.isDescribed());
 		Assume.assumeTrue("must be not flushing",!p.write.isFlushing());		
 		writeTypesAndFlushes(p.write);
-		p.write.flush();		
 		
+		p.read.open();
 		Assert.assertTrue(p.read.getIndicator()==TIndicator.TYPE_BOOLEAN);
 		Assert.assertTrue(p.read.getIndicator()==TIndicator.TYPE_BOOLEAN);
 		p.read.next();
@@ -396,7 +431,7 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		p.read.next();
 		Assert.assertTrue(p.read.getIndicator()==TIndicator.DATA);
 		p.read.next();
-					
+		p.read.close();	
 		leave();
 	};	
 };

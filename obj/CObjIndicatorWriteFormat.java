@@ -1,43 +1,53 @@
 package sztejkat.abstractfmt.obj;
-import java.util.Arrays;
 import sztejkat.abstractfmt.*;
+import java.util.Arrays;
 import java.io.IOException;
 
 /**
 	An indicator format implementation over {@link CObjListFormat} media.
 	<p>
-	This format is armed with a heavy defense layer normally not necessary.
-	This layer tests if it is called according to rules.
+	For best results wrap it in {@link CIndicatorWriteFormatProtector}.
 */
 public class CObjIndicatorWriteFormat implements IIndicatorWriteFormat
 {
+			/** Media in use */
 			private final CObjListFormat media;
+			/** Design limit */
 			private final int max_registrations;
+			/** Design limit */
+			private final int max_supported_signal_name_length;
+			/** Support status to report, also controls what type
+			writes do. */
 			private final boolean is_described;
+			/** Support status to report, also controls what flush
+			writes do. */
 			private final boolean is_flushing;
-			/** Used to validate registrations contract */
-			private int registration_count;
+			
 			
 		/** Creates
 		@param media non null media to write to
 		@param max_registrations number returned from {@link #getMaxRegistrations}
+		@param max_supported_signal_name_length number returned from {@link #getMaxSupportedSignalNameLength}		
 		@param is_described returned from {@link #isDescribed}. If false
 			type writes are non-op
 		@param is_flushing returned from {@link #isFlushing}. If false
 			type writes are non-op
 		@throws AssertionError is something is wrong.
 		*/
-		public CObjIndicatorWriteFormat(CObjListFormat media,
+		public CObjIndicatorWriteFormat(final CObjListFormat media,
 										final int max_registrations,
+										final int max_supported_signal_name_length,										
 										final boolean is_described,
 										final boolean is_flushing
 											)
 		{
 			assert(media!=null);
 			assert(max_registrations>=0);
+			assert(max_supported_signal_name_length>0);			
 			assert( !is_flushing || (is_flushing && is_described)):"invalid is_described/is_flushing combination";
 			this.media = media; 
 			this.max_registrations=max_registrations;
+			this.max_supported_signal_name_length = max_supported_signal_name_length;			
 			this.is_described=is_described;
 			this.is_flushing=is_flushing;
 		};
@@ -57,7 +67,10 @@ public class CObjIndicatorWriteFormat implements IIndicatorWriteFormat
 		@Override public final int getMaxRegistrations(){ return max_registrations; };
 		@Override public final boolean isDescribed(){return is_described; };
 		@Override public final boolean isFlushing(){return is_flushing; };
-		
+		@Override public final int getMaxSupportedSignalNameLength()
+		{
+			return max_supported_signal_name_length;
+		};
 		/* ------------------------------------------------------
 		
 				Signals
@@ -79,35 +92,27 @@ public class CObjIndicatorWriteFormat implements IIndicatorWriteFormat
 		{
 			assert(signal_name!=null);
 			assert(number>=0);
-			if (registration_count>=max_registrations)  throw new AssertionError("Can't call it so many times "+(registration_count+1));
-			if (number!=registration_count) throw new AssertionError("numer="+registration_count+" in not in valid sequence, registration_count="+registration_count+" expected");
 			media.add(TIndicator.BEGIN_REGISTER);
 			media.add(Integer.valueOf(number));
 			media.add(signal_name);
-			registration_count++;
 		};
 		@Override public void writeEndBeginRegister(String signal_name, int number)throws IOException
 		{
 			assert(number>=0);
 			assert(signal_name!=null);
-			if (registration_count>=max_registrations)  throw new AssertionError("Can't call it so many times "+(registration_count+1));
-			if (number!=registration_count) throw new AssertionError("numer="+registration_count+" in not in valid sequence, registration_count="+registration_count+" expected");			
 			media.add(TIndicator.END_BEGIN_REGISTER);
 			media.add(Integer.valueOf(number));
 			media.add(signal_name);
-			registration_count++;
 		};
 		@Override public void writeBeginUse(int number)throws IOException
 		{
 			assert(number>=0);
-			if (number>=registration_count) throw new AssertionError("number "+number+" is not registered yet, 0..."+(registration_count-1)+" are registered");
 			media.add(TIndicator.BEGIN_USE);
 			media.add(Integer.valueOf(number));
 		};
 		@Override public void writeEndBeginUse( int number)throws IOException
 		{
 			assert(number>=0);
-			if (number>=registration_count) throw new AssertionError("number "+number+" is not registered yet, 0..."+(registration_count-1)+" are registered");			
 			media.add(TIndicator.END_BEGIN_USE);
 			media.add(Integer.valueOf(number));
 		};
@@ -135,6 +140,10 @@ public class CObjIndicatorWriteFormat implements IIndicatorWriteFormat
 				Closeable
 		
 		------------------------------------------------------*/
+		@Override public void open()throws IOException
+		{
+			media.add(CObjListFormat.OPEN);
+		};
 		@Override public void close()throws IOException
 		{
 			flush();
