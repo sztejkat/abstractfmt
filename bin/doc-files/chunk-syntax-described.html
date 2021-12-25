@@ -1,0 +1,453 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>sztejkat.abstractfmt.bin - BIN described format definition</title>
+      
+  <meta http-equiv="content-type"
+ content="text/html; charset=UTF-8">
+</head>
+<body>
+		<h1>BIN format definition, described</h1>
+		This documents defines header and payload encoding
+		for chunk-based, described binary format.
+		
+		<h2>Headers</h2>
+		This format is using two separate encodings
+		for headers. Separate for data and separate
+		for non-data headers.
+		<p>
+		First byte of header decides on what header
+		we are talking about.
+		
+		<pre>
+			xxxT TTTT
+		</pre>
+		<table border="1">
+			<tr style="background-color:#FA7F7F;">
+				<td>T TTTT</td><td>header type</td>
+			</tr>
+			<tr>
+				<td>0x00</td><td><a href="#BEGIN_DIRECT">BEGIN_DIRECT</a></td>
+			</tr>
+			<tr>
+				<td>0x01</td><td><a href="#BEGIN_REGISTER">BEGIN_REGISTER</a></td>
+			</tr>
+			<tr>
+				<td>0x02</td><td><a href="#BEGIN_USE">BEGIN_USE</a></td>
+			</tr>
+			<tr>
+				<td>0x03</td><td><a href="#END">END</a></td>
+			</tr>
+			<tr>
+				<td>0x04</td><td><a href="#END_BEGIN_DIRECT">END_BEGIN_DIRECT</a></td>
+			</tr>
+			<tr>
+				<td>0x05</td><td><a href="#END_BEGIN_REGISTER">END_BEGIN_REGISTER</a></td>
+			</tr>
+			<tr>
+				<td>0x06</td><td><a href="#END_BEGIN_USE">END_BEGIN_USE</a></td>
+			</tr>
+			
+			<tr>
+				<td>0x07</td><td><a href="#TYPE_BOOLEAN">TYPE_BOOLEAN</a></td>
+			</tr>
+			<tr>
+				<td>0x08</td><td><a href="#TYPE_BYTE">TYPE_BYTE</a></td>
+			</tr>
+			<tr>
+				<td>0x09</td><td><a href="#TYPE_CHAR">TYPE_CHAR</a></td>
+			</tr>			
+			<tr>
+				<td>0x0A</td><td><a href="#TYPE_SHORT">TYPE_SHORT</a></td>
+			</tr>
+			<tr>
+				<td>0x0B</td><td><a href="#TYPE_INT">TYPE_INT</a></td>
+			</tr>
+			<tr>
+				<td>0x0C</td><td><a href="#TYPE_LONG">TYPE_LONG</a></td>
+			</tr>
+			<tr>
+				<td>0x0D</td><td><a href="#TYPE_FLOAT">TYPE_FLOAT</a></td>
+			</tr>
+			<tr>
+				<td>0x0E</td><td><a href="#TYPE_DOUBLE">TYPE_DOUBLE</a></td>
+			</tr>  
+			
+			
+			<tr>
+				<td>0x0F</td><td><a href="#TYPE_BOOLEAN_BLOCK">TYPE_BOOLEAN_BLOCK</a></td>
+			</tr>
+			<tr>
+				<td>0x10</td><td><a href="#TYPE_BYTE_BLOCK">TYPE_BYTE_BLOCK</a></td>
+			</tr>
+			<tr>
+				<td>0x11</td><td><a href="#TYPE_CHAR_BLOCK">TYPE_CHAR_BLOCK</a></td>
+			</tr>			
+			<tr>
+				<td>0x12</td><td><a href="#TYPE_SHORT_BLOCK">TYPE_SHORT_BLOCK</a></td>
+			</tr>
+			<tr>
+				<td>0x13</td><td><a href="#TYPE_INT_BLOCK">TYPE_INT_BLOCK</a></td>
+			</tr>
+			<tr>
+				<td>0x14</td><td><a href="#TYPE_LONG_BLOCK">TYPE_LONG_BLOCK</a></td>
+			</tr>
+			<tr>
+				<td>0x15</td><td><a href="#TYPE_FLOAT_BLOCK">TYPE_FLOAT_BLOCK</a></td>
+			</tr>
+			<tr>
+				<td>0x16</td><td><a href="#TYPE_DOUBLE_BLOCK">TYPE_DOUBLE_BLOCK</a></td>
+			</tr>
+			<tr>
+				<td>0x17</td><td><a href="#DATA_short">DATA (short)</a></td>
+			</tr>
+			<tr>
+				<td>0x18</td><td><a href="#DATA_medium">DATA (medium)</a></td>
+			</tr>
+			<tr>
+				<td>0x19</td><td><a href="#DATA_long">DATA (long)</long></td>
+			</tr>
+			<tr>
+				<td>0x1A...0x1F</td><td>reserved</td>
+			</tr>
+			
+		</table>
+		
+		<h3 id="DATA_short">DATA (short)</h3>
+		<pre>
+			sssT_TTTT
+			   (0x17)
+		</pre>
+		where <code>sss</code> is a payload size minus one.
+		<p>
+		<i>Note: DATA chunks with zero payload are not written into stream</i>
+		<p>
+		This chunk can then carry 1...8 bytes of payload.
+		
+		
+		<h3 id="DATA_medium">DATA (medium)</h3>
+		<pre>
+			sssT_TTTT
+			   (0x18)
+			aaaa aaaa
+		</pre>
+		where:<pre>aaa aaaa asss</pre> is the size of payload minus one.
+		<p>
+		<i>Note: DATA chunks with zero payload are not written into stream</i>
+		<p>
+		This chunk can then carry 1...2048 bytes of payload.
+		
+		
+		
+		<h3 id="DATA_long">DATA (long)</h3>
+		<pre>
+			000T_TTTT
+			   (0x19)
+			aaaa aaaa
+			bbbb bbbb
+		</pre>
+		where:<pre>bbbb bbbb aaaa aaaa</pre> is the size of payload minus one.
+		<p>
+		<i>Note: DATA chunks with zero payload are not written into stream</i>
+		<p>
+		This chunk can then carry 1...65536 bytes of payload.
+		<p>
+		<i>Note: I intentionally did zero <code>sss</code> bits, since the buffer
+		must be pre-allocated and 512k would be a bit too much in my opinion.</i>
+		<p>
+		
+		
+		<h3 id="BEGIN_DIRECT">BEGIN_DIRECT</h3>
+		<pre>
+			sssT_TTTT
+			   (0x00)			
+		</pre>
+		where <code>sss</code> is the size of payload minus 3
+		(as 3 bytes is what it takes to encode "end-of-name") 
+		<p>
+		This header is always used in following way:
+		<pre>
+			sssT_TTTT
+			<i>encoded signal name</i>
+			....
+			DATA (<i>if more than 10 bytes are necessary</i>)
+			<i>encoded signal name</i>
+			....
+			<i>user payload starts here</i>
+		</pre>
+		 
+		
+		<h4>Signal name econding</h4>
+		Signal names are encoded in a regular payload
+		using <a href="#CHAR_BLOCK_ENCODING">characters block encoding</a>
+		with <i>end-of-text</i> marker applied to last name character.
+		
+		<p>
+		<i>
+		Note: With this type of encoding there is no upper physical limit
+		for name length, but last character in name is always encoded using
+		three bytes.</i>
+		
+		
+		<h2 id="CHAR_BLOCK_ENCODING">Characters block encoding</h2>
+		Blocks of <code>char[]</code> are encoded in such a way that:
+		<pre>
+			character:	(msb)0000 0000    (lsb)0xxx xxxx  
+			  encoded:  0xxx xxxx
+			character:	(msb)00aa aaaa    (lsb)axxx xxxx  
+			  encoded:  1xxx xxxx <i>followed by</i>  0aaa aaaa
+			character:	(msb)bbaa aaaa    (lsb)axxx xxxx  
+			  encoded:  1xxx xxxx <i>followed by</i> 1aaa aaaa <i>followed by</i> 0000 00bb
+		</pre>
+		and there is a special "end-of-text" marker, which is used to encode last character
+		in signal names:
+		<pre>
+			 encoded:  1xxx xxxx <i>followed by</i> 1aaa aaaa <i>followed by</i> 1111 11bb
+		</pre>
+		or if name contains zero characters
+		<pre>
+			 encoded:  1000 0000 <i>followed by</i> 1000 0000 <i>followed by</i> 1000 00bb
+		</pre>
+		
+		<p><i>Note: This is not an UTF-8 encoding as I don't need code points higher than 0xFFFF
+		and this encoding is a tiny bit more efficient in such case.</i></p>
+		
+		
+		<h3 id="BEGIN_REGISTER">BEGIN_REGISTER</h3>
+		This header is using the same format, except T_TTTT code value,
+		as <A href="#BEGIN_DIRECT">BEGIN_DIRECT</a>
+		<p>
+		The index assigned to registered name is implied from the order
+		of appearance of REGISTER events and first appearance registers
+		signal at index 0. Valid indexes range is 0...255.
+		<p>
+		This header is always used in the same way as <a href="#BEGIN_DIRECT">BEGIN_DIRECT</a>
+		
+		
+		<h3 id="BEGIN_USE">BEGIN_USE</h3>
+		<pre>
+			sssT_TTTT
+			   (0x02)			
+			iiii iiii
+		</pre>
+		where
+		<ul>
+			<li><code>sss</code> is the size of payload (can be zero);</li>
+			<li><code>iiii iiii</code> is the index of signal name, as registered previously</li>
+		</ul>
+		<p>
+		This header has no special use requirements.
+		
+		
+		<h3 id="END">END</h3>
+		<pre>
+			sssT_TTTT
+			   (0x03)
+		</pre>
+		where <code>sss</code> is the size of payload (can be zero);
+		<p>
+		This header has no special use requirements.
+		
+		<h3 id="END_BEGIN_DIRECT">END_BEGIN_DIRECT</h3>
+		This header is using the same format, except T_TTTT code value,
+		as <A href="#BEGIN_DIRECT">BEGIN_DIRECT</a>
+		
+		<h3 id="END_BEGIN_REGISTER">END_BEGIN_REGISTER</h3>
+		This header is using the same format, except T_TTTT code value,
+		as <A href="#BEGIN_REGISTER">BEGIN_REGISTER</a>
+		
+		
+		
+		<h3 id="TYPE_BOOLEAN">TYPE_BOOLEAN</h3>
+		<pre>
+			00vT_TTTT
+			   (0x07)
+		</pre>
+		This header has always zero size payload and is using <code>v</code>
+		bit to encode boolean value stored in payload.
+		
+		
+		<h3 id="TYPE_BYTE">TYPE_BYTE</h3>
+		<pre>
+			000T_TTTT
+			   (0x08)
+		</pre>
+		This header has always payload size of 1 as it is always followed
+		by byte value.
+		<p>
+		This header is always used in a form of:
+		<pre>
+			000T_TTTT
+			bbbb bbbb
+		</pre>
+		where <code>bbbb bbbb</code> is a byte.
+		
+		
+		<h3 id="TYPE_CHAR">TYPE_CHAR</h3>
+		<pre>
+			000T_TTTT
+			   (0x09)
+		</pre>
+		This header has always payload size of 2 as it is always followed
+		by char value.
+		<p>
+		This header is always used in a form of:
+		<pre>
+			000T_TTTT
+			aaaa aaaa
+			bbbb bbbb
+		</pre>
+		where <code>bbbb bbbb aaaa aaaa</code> is a char.
+		
+		
+		<h3 id="TYPE_SHORT">TYPE_SHORT</h3>
+		<pre>
+			000T_TTTT
+			   (0x0A)
+		</pre>
+		This header has always payload size of 2 as it is always followed
+		by short value.
+		<p>
+		This header is always used in a form of:
+		<pre>
+			000T_TTTT
+			aaaa aaaa
+			bbbb bbbb
+		</pre>
+		where <code>bbbb bbbb aaaa aaaa</code> is a short.
+		
+		
+		
+		<h3 id="TYPE_INT">	TYPE_INT</h3>
+		<pre>
+			000T_TTTT
+			   (0x0B)
+		</pre>
+		This header has always payload size of 4 as it is always followed
+		by int value.
+		<p>
+		This header is always used in a form of:
+		<pre>
+			000T_TTTT
+			aaaa aaaa
+			bbbb bbbb
+			cccc cccc
+			dddd dddd
+		</pre>
+		where <code>dddd dddd   cccc cccc   bbbb bbbb    aaaa aaaa</code> is an integer.
+		
+		
+		<h3 id="TYPE_LONG">TYPE_LONG</h3>
+		<pre>
+			000T_TTTT
+			   (0x0C)
+		</pre>
+		This header has always payload size of 8 as it is always followed
+		by long value.
+		<p>
+		This header is always used in a form of:
+		<pre>
+			000T_TTTT
+			aaaa aaaa
+			bbbb bbbb
+			cccc cccc
+			dddd dddd
+			eeee eeee
+			ffff ffff
+			gggg gggg
+			hhhh hhhh
+		</pre>
+		where <code>h.. g.. f.. e.. d.. c.. b.. a.. </code> is an long.
+		
+		
+		<h3 id="TYPE_FLOAT">TYPE_FLOAT</h3>
+		<pre>
+			000T_TTTT
+			   (0x0D)
+		</pre>
+		This header has always payload size of 4 as it is always followed
+		by float value 
+		<p>
+		This header is always used in a form of:
+		<pre>
+			000T_TTTT
+			aaaa aaaa
+			bbbb bbbb
+			cccc cccc
+			dddd dddd
+		</pre>
+		where <code>dddd dddd   cccc cccc   bbbb bbbb    aaaa aaaa</code> is an integer
+		got from <code>Float.floatToRawIntBits</code>
+		
+		
+		
+		<h3 id="TYPE_DOUBLE">TYPE_DOUBLE</h3>
+		<pre>
+			000T_TTTT
+			   (0x0E)
+		</pre>
+		This header has always payload size of 8 as it is always followed
+		by double value.
+		<p>
+		This header is always used in a form of:
+		<pre>
+			000T_TTTT
+			aaaa aaaa
+			bbbb bbbb
+			cccc cccc
+			dddd dddd
+			eeee eeee
+			ffff ffff
+			gggg gggg
+			hhhh hhhh
+		</pre>
+		where <code>h.. g.. f.. e.. d.. c.. b.. a.. </code> is an long
+		got from <code>Double.doubleToRawLongBits</code>
+
+		
+		
+		<h3 id="TYPE_BOOLEAN_BLOCK">TYPE_BOOLEAN_BLOCK</h3>
+		<pre>
+			sssT_TTTT
+			   (0x0F)
+		</pre>
+		where <code>sss</code> is size of payload in bytes (zero allowed).
+		<p>
+		The boolean block is bit-packed using sequence of bit-blocks made
+		of up to 255 bits and represented as: 
+		<pre>
+			ssss ssss
+			7654 3210
+			....
+		</pre>
+		where <code>ssss ssss</code> tells how many bits do appear in 
+		sequence and numbers do represent bits, as written in order
+		of appearance from 0...7.
+		<p>
+		The number of bytes used for bit sequence is rounded up
+		to fit required number of bits.
+		<p>
+		The entire boolean block may consist of many such sequences
+		and there is no requirement on how long should they be.
+		
+		
+		<h3 id="TYPE_BYTE_BLOCK">TYPE_xxx_BLOCK</h3>
+		<a name="TYPE_CHAR_BLOCK"/>
+		<a name="TYPE_SHORT_BLOCK"/>
+		<a name="TYPE_INT_BLOCK"/>
+		<a name="TYPE_LONG_BLOCK"/>
+		<a name="TYPE_FLOAT_BLOCK"/>
+		<a name="TYPE_DOUBLE_BLOCK"/>
+		<pre>
+			sssT_TTTT
+			   (0x10...0x16)
+		</pre>
+		where <code>sss</code> is size of payload (zero is allowed)
+		multipled by size of block item (1 for byte, 2 for char and short,
+		4 for int and float, 8 for long and double).
+		<p>
+		This header is always followed by sequence of bytes, chars, ints
+		and so on encoded as specified in their individual TYPE_xxx headers. 
+				
+</body>
+</html>

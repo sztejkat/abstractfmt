@@ -3,6 +3,10 @@ import org.junit.Assert;
 import org.junit.Test;
 import java.io.IOException;
 
+/**
+	Test framework for {@link AAdaptiveFilterReader}. Declared as abstract
+	to allow testing all means of writing data to filter buffer.
+*/
 abstract class ATestAAdaptiveFilterReader extends sztejkat.utils.test.ATest
 {
 		/** Creates test case which will use fill() to fill output buffer

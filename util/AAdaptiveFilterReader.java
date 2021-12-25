@@ -1,4 +1,5 @@
 package sztejkat.abstractfmt.util;
+import sztejkat.abstractfmt.EClosed;
 import java.io.Reader;
 import java.io.IOException;
 
@@ -45,8 +46,8 @@ public abstract class AAdaptiveFilterReader extends Reader
 		Services required from subclasses
 	
 	-------------------------------------------------------------------*/
-	/** Invoked when buffer is empty. should perform
-	reading from input and offer data with {@link #write(char)} 
+	/** Invoked when buffer is empty as a request to fill it with filtered data.
+	Should perform reading from input and offer data with {@link #write(char)} 
 	{@link #write(char [], int, int)} or {@link #write(CharSequence, int l)}.
 	If this method does not write anything reading methods will return
 	either partial read or end-of-file. 
@@ -58,22 +59,37 @@ public abstract class AAdaptiveFilterReader extends Reader
 	
 		Services for subclasses
 	
-	-------------------------------------------------------------------*/	
+	-------------------------------------------------------------------*/
+	/** See {@link #filter}
+	@param c  character to offer
+	*/	
 	protected final void write(char c)
 	{
 		ensureCapacity(1);
 		buffer[end_ptr++]=c;
 	};
+	/** See {@link #filter}
+	@param buffer data to offer
+	@param off start of data
+	@param len number of chars
+	*/
 	protected final void write(char [] buffer, int off, int len)
 	{
 		ensureCapacity(len);
 		System.arraycopy(buffer,off,this.buffer,end_ptr,len);
 		end_ptr+=len;
 	};
+	/** See {@link #filter}
+	@param buffer data to offer
+	*/
 	protected final void write(char [] buffer)
 	{
 		write(buffer,0,buffer.length);
 	};
+	/** See {@link #filter}
+	@param s data to offer
+	@param len number of chars
+	*/
 	protected final void write(CharSequence s, int len)
 	{
 		ensureCapacity(len);
@@ -83,6 +99,9 @@ public abstract class AAdaptiveFilterReader extends Reader
 		};		
 		end_ptr+=len;
 	};
+	/** See {@link #filter}
+	@param s data to offer
+	*/
 	protected final void write(CharSequence s)
 	{
 		write(s,s.length());
@@ -92,10 +111,15 @@ public abstract class AAdaptiveFilterReader extends Reader
 		Buffer managment
 	
 	-------------------------------------------------------------------*/
+	/** Throws if closed
+	@throws IOException if closed
+	*/
 	private void validateNotClosed()throws IOException
 	{
-		if (buffer==null) throw new IOException("Closed");
+		if (buffer==null) throw new EClosed();
 	};
+	/** Tests if there are some data offered by {@link #filter}
+	@return false if there is no data and buffer needs to be re-filled */
 	private boolean isEmpty(){ return end_ptr==read_ptr; };
 	/** Makes sure, that there is enough place in a buffer
 	for data specified number of data

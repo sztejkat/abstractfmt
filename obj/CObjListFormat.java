@@ -13,8 +13,9 @@ import java.util.LinkedList;
 		<li>{@link String} for signal names;</li>
 		<li>{@link Integer} for signal index numbers;</li>		
 		<li>boxed elementary primitives to represent elementary primitive writes;</li>
-		<li>primitive arrays <code>boolean[]</code>, possibly fragmented to many
-		arrays including empty ones.;</li>
+		<li>primitive arrays <code>boolean[]</code> and etc., possibly fragmented to many
+		arrays, one per write operation including empty ones, used to represents primitive 
+		block writes;</li>
 	</ul>
 */
 public final class CObjListFormat extends LinkedList<Object>
@@ -23,6 +24,8 @@ public final class CObjListFormat extends LinkedList<Object>
 				/** Used as "open()" indicator */
 				public static final Object OPEN = new Object();
 	
+	/** Dumps the list to human readable form for inspection
+	during testing and debuging */
 	public String toString()
 	{
 		StringBuilder sb = new StringBuilder();

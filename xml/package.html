@@ -7,66 +7,10 @@
  content="text/html; charset=UTF-8">
 </head>
 <body>
-	A character based xml-like streams.
-	
-	<h1>Design notes</h1>
-	<h2>XML root element and indicator format</h2>
+	A character based xml-like streams.	
 	<p>
-	An indicator format should behave identically regardless
-	if there is a root element defined or not.
-	Logically speaking root element is a "warm up" opening
-	phase and "logic end-of-file".
+	A detailed format definition can be found in <a href="doc-files/xml-syntax.html">this document.</a>	
 	<p>
-	The bare XML format, without root element has no
-	"warm up" opening phase and logic end-of-file is 
-	a physical end of file.
-	If bare XML parser is applied to full XML file it
-	will tread root element as a regular signal
-	and thous it will:
-	<ul>
-		<li>return SIGNAL indicator with root name
-		when <code>getIndicator</code> is called;</li>
-		
-		<li>due to above primitive reads will not be called
-		because cursor will not be at DATA indicator,
-		and the signal format will throw <code>ENoMoreData</code>
-		at the attempt;</li>
-		
-		<li>block reads will return with partial read
-		instead of with <code>EUnexpectedEof</code>;</li>
-	</ul>
-	<p>
-	The easiest way to support root element will be:
-	<ul>
-		<li>to force bare read to treat "root" as a regular short
-		signal, while full writer will, of course, never write
-		regular signal named "root" as <code>&lt;root&gt;</code> but
-		always as <code>&lt;e n="root"&gt;</code>. There will be
-		not true name clash;
-		</li>
-		<li>to surround all calls with state machine:
-			<ul>
-				<li>warm-up, pre root;</li>
-				<li>ready;</li>
-				<li>logic eof, post root;</li>
-			</ul>
-			which in pre-root state will make single call
-			to <code>getIndicator</code> to to check if it will 
-			be reported as a "root" signal;</li>.
-		</li>
-		<li>since contract requires that <code>getIndicator</code>
-		is called before making any primitive read to ensure
-		that cursor is at DATA we must keep balance of
-		begin/end since root detection, and if root
-		end signal is reported we must return from
-		this method EOF indicator and toggle
-		state to "logic eof".
-		This should effectively	prevent signal streams from reching indicator stream
-		in an improper manner and logic end of stream should
-		be possible.
-		</li>
-	</ul>
-	
-	 
+	This package implements signal format by providing indicator format layer.
 </body>
 </html>

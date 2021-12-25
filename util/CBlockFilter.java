@@ -26,7 +26,7 @@ public class CBlockFilter extends AAdaptiveFilterReader
 	@param in input which is to be filtered. If it is a {@link CAdaptivePushBackReader}
 		it will be used directly. If it is not, it will be wrapped in new instance
 		and this instance will be used to do processing. Having push-back reader
-		is necessary, because begin/end detection requires some read-ahead processing.
+		is necessary because begin/end detection requires some read-ahead processing.
 		
 	@param begin begin sequence which starts block which must be removed from 
 		data served to output.
