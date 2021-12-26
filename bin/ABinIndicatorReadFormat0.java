@@ -102,6 +102,7 @@ public abstract class ABinIndicatorReadFormat0 implements IIndicatorReadFormat
 	{
 		assert(chunk_payload_size>=0);
 		assert(this.chunk_payload_size==0);	//<-- this is a pre-condition for data continuity.
+		this.chunk_payload_size=chunk_payload_size;
 	};
 	/** Checks if there is no data left in current chunk, and if it is not,
 	attempts to use {@link #tryNextDataChunk(CAdaptivePushBackInputStream)}
@@ -122,7 +123,7 @@ public abstract class ABinIndicatorReadFormat0 implements IIndicatorReadFormat
 			//This will update both chunk payload information
 			//and indicator cache.
 			int r = tryNextDataChunk(input);
-			if (r<0) return r;
+			if (r<0) return r;			
 			this.chunk_payload_size=r;
 		};
 		assert(this.chunk_payload_size!=0);
@@ -141,11 +142,11 @@ public abstract class ABinIndicatorReadFormat0 implements IIndicatorReadFormat
 	{		
 		//Check if has anything to read?
 		int r = tryNextDataChunk();
-		assert(r>=-2);
+		assert(r>=-2):"r="+r;
 		if (r<0) return r;
 		//we have data
 		int v = input.read();
-		assert((r>=-1)&&(r<=255));
+		assert((v>=-1)&&(v<=255)):"v="+v;
 		if (v==-1) return -2;	//physical eof. 
 		//data are fetched, we need to do accounting
 		chunk_payload_size--;
@@ -160,7 +161,7 @@ public abstract class ABinIndicatorReadFormat0 implements IIndicatorReadFormat
 	protected final int readPayloadByte()throws IOException,ENoMoreData,EUnexpectedEof
 	{
 		int r= readPayload();
-		assert((r>=-2)&&(r<=255));
+		assert((r>=-2)&&(r<=255)):"r="+r;
 		switch(r)
 		{	
 			case -1: throw new ENoMoreData();
@@ -184,14 +185,14 @@ public abstract class ABinIndicatorReadFormat0 implements IIndicatorReadFormat
 	
 	@return true if after checking subsequent header, if needed,
 		there is no more payload in chunk.
-		
-	@throws EUnexpectedEof if failed to verify if there is a payload.
 	 */
-	protected final boolean isPayloadEof()throws IOException,EUnexpectedEof
+	protected final boolean isPayloadEof()throws IOException
 	{
-		int r = tryNextDataChunk();
-		if (r==-2) throw new EUnexpectedEof();
-		return r==-1;
+		if (chunk_payload_size!=0) return false;
+		//Now we ARE at then of chunk.
+		//An end-of-file is a correct condition here,
+		//if file does contain only data chunks (raw file, natural)
+		return  tryNextDataChunk()<0;
 	};
 	/** Skips remaning data and moves cursor to the header of next non-DATA chunk	 
 	@throws EUnexpectedEof if encountered physical end-of-file during this process.

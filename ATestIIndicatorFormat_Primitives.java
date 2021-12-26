@@ -216,17 +216,17 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 		p.read.open();
 		if (p.read.isDescribed())
 		{
-			Assert.assertTrue(p.read.getIndicator()==TIndicator.TYPE_BOOLEAN);
+			expect(p.read.getIndicator(),TIndicator.TYPE_BOOLEAN);
 			p.read.next();
 		};
-		Assert.assertTrue(p.read.getIndicator()==TIndicator.DATA);
+		expect(p.read.getIndicator(),TIndicator.DATA);
 		p.read.readBoolean();
 		if (p.read.isFlushing())
 		{
 			Assert.assertTrue((p.read.getIndicator().FLAGS & TIndicator.FLUSH)!=0);
 			p.read.next();
 		};
-		Assert.assertTrue(p.read.getIndicator()==TIndicator.EOF);
+		expect(p.read.getIndicator(),TIndicator.EOF);
 		leave();
 	};
 	

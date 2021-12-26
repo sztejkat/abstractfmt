@@ -204,10 +204,6 @@ public class CAdaptivePushBackInputStream extends InputStream
 		return skipped;
 	};
 	
-	public boolean ready()throws IOException
-	{
-		return read_ptr!=end_ptr;
-	};
 	/** False, does not support it */
 	public boolean markSupported(){ return false; };
 	

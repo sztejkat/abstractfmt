@@ -152,13 +152,31 @@ public abstract class ABinIndicatorReadFormat1 extends ABinIndicatorReadFormat0
 	/** Calls {@link #tryNextIndicatorChunk} or returns cached value */
 	@Override public TIndicator getIndicator()throws IOException
 	{
-		if (indicator_cache==null)
+		for(;;)
 		{
-			indicator_cache = tryNextIndicatorChunk();
-			assert(indicator_cache!=TIndicator.EOF);
-			if (indicator_cache==null) return TIndicator.EOF;
-		};
-		return indicator_cache;
+			//Take indicator from cache, if has one
+			if (indicator_cache==null)
+			{
+				//no, try to pick up one
+				indicator_cache = tryNextIndicatorChunk();
+				assert(indicator_cache!=TIndicator.EOF);
+				if (indicator_cache==null) return TIndicator.EOF;
+			};
+			//Now consider, that data might reached end-of-data
+			//due to natural reads (without call to next) so
+			//poll this condition.
+			if (indicator_cache==TIndicator.DATA)
+			{
+				if (isPayloadEof())
+				{
+					//force re-freshing it
+					 indicator_cache = null;
+					 continue;
+				}
+			};
+			//this may be safely returned.
+			return indicator_cache;
+		}
 	};
 	@Override public void next()throws IOException
 	{
@@ -237,7 +255,7 @@ public abstract class ABinIndicatorReadFormat1 extends ABinIndicatorReadFormat0
 		long v = readPayloadByte();
 		v |= readPayloadByte()<<8;
 		v |= readPayloadByte()<<(8+8);
-		v |= readPayloadByte()<<(8+8+8);
+		v |= ((long)readPayloadByte())<<(8+8+8); //need to convert to long earlier, because int may become negative.
 		v |= ((long)readPayloadByte())<<(8+8+8+8);
 		v |= ((long)readPayloadByte())<<(8+8+8+8+8);
 		v |= ((long)readPayloadByte())<<(8+8+8+8+8+8);
