@@ -102,7 +102,7 @@ public abstract class ABinIndicatorReadFormat0 implements IIndicatorReadFormat
 	{
 		assert(chunk_payload_size>=0);
 		assert(this.chunk_payload_size==0);	//<-- this is a pre-condition for data continuity.
-		this.chunk_payload_size=chunk_payload_size;
+		this.chunk_payload_size=chunk_payload_size;		
 	};
 	/** Checks if there is no data left in current chunk, and if it is not,
 	attempts to use {@link #tryNextDataChunk(CAdaptivePushBackInputStream)}

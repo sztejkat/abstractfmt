@@ -75,7 +75,7 @@ public abstract class ABinIndicatorWriteFormat1 extends ABinIndicatorWriteFormat
 		c>>=7;
 		writePayload((byte)((c & 0x7F)|0x80));
 		c>>=7;
-		writePayload((byte)(c | (0x70+0x40+0x80)));
+		writePayload((byte)(c | (0x70+0x04+0x08)));
 	};
 	
 	/** Writes "no-char-carrying-end-of-text" marker as specified in
@@ -86,7 +86,7 @@ public abstract class ABinIndicatorWriteFormat1 extends ABinIndicatorWriteFormat
 		//3-byte form
 		writePayload((byte)(0x80));
 		writePayload((byte)(0x80));
-		writePayload((byte)(0x70+0x80));
+		writePayload((byte)(0x70+0x08));
 	}
 	
 	/* *****************************************************************************

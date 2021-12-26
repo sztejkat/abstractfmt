@@ -159,7 +159,7 @@ public class CBinIndicatorReadFormat extends ABinIndicatorReadFormat1
 	private void processX_BEGIN_USE(int header, CAdaptivePushBackInputStream in)throws IOException
 	{
 		//extract size
-		int s = ((header & 0xF0)>>4)+3;
+		int s = ((header & 0xF0)>>4);
 		//load index directly from header.
 		int i = in.read();
 		if (i==-1) throw new EUnexpectedEof();
@@ -180,7 +180,7 @@ public class CBinIndicatorReadFormat extends ABinIndicatorReadFormat1
 	private TIndicator processEND(int header, CAdaptivePushBackInputStream in)throws IOException
 	{
 		//extract size
-		int s = ((header & 0xF0)>>4)+3;
+		int s = ((header & 0xF0)>>4);
 		startNextIndicatorChunk(s);
 		return TIndicator.END;
 	};
