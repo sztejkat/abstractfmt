@@ -202,11 +202,11 @@
 		and there is a special "end-of-text" marker, which is used to encode last character
 		in signal names:
 		<pre>
-			 encoded:  1xxx xxxx <i>followed by</i> 1aaa aaaa <i>followed by</i> 1111 11bb
+			 encoded:  1xxx xxxx <i>followed by</i> 1aaa aaaa <i>followed by</i> 0111 11bb
 		</pre>
-		or if name contains zero characters
+		or if name contains zero characters ("no-char-carrying-end-of-text" marker)
 		<pre>
-			 encoded:  1000 0000 <i>followed by</i> 1000 0000 <i>followed by</i> 1000 00bb
+			 encoded:  1000 0000 <i>followed by</i> 1000 0000 <i>followed by</i> 0111 1000
 		</pre>
 		
 		<p><i>Note: This is not an UTF-8 encoding as I don't need code points higher than 0xFFFF
@@ -430,9 +430,20 @@
 		The entire boolean block may consist of many such sequences
 		and there is no requirement on how long should they be.
 		
+		<h3 id="TYPE_CHAR_BLOCK">TYPE_CHAR_BLOCK</h3>
+		<pre>
+			sssT_TTTT
+			   (0x11
+		</pre>
+		where <code>sss</code> is size of payload in bytes (zero allowed).
+		<p>
+		The content of a block is encoded according to 
+		<a href="#CHAR_BLOCK_ENCODING">characters block encoding</a>
+		but without any "end-of-text" markers.
+		
 		
 		<h3 id="TYPE_BYTE_BLOCK">TYPE_xxx_BLOCK</h3>
-		<a name="TYPE_CHAR_BLOCK"/>
+		
 		<a name="TYPE_SHORT_BLOCK"/>
 		<a name="TYPE_INT_BLOCK"/>
 		<a name="TYPE_LONG_BLOCK"/>
@@ -443,7 +454,7 @@
 			   (0x10...0x16)
 		</pre>
 		where <code>sss</code> is size of payload (zero is allowed)
-		multipled by size of block item (1 for byte, 2 for char and short,
+		multipled by size of block item (1 for byte, 2 for short,
 		4 for int and float, 8 for long and double).
 		<p>
 		This header is always followed by sequence of bytes, chars, ints

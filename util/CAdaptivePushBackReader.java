@@ -176,14 +176,15 @@ public class CAdaptivePushBackReader extends Reader
 		}
 	};
 	
-	public void close()
+	public void close()throws IOException
 	{
 		synchronized(lock)
 		{
 			buffer=null;
 			read_ptr=-1;
-			end_ptr=-1;
+			end_ptr=-1;			
 		}
+		in.close();
 	};
 	
 	public boolean ready()throws IOException
@@ -202,7 +203,7 @@ public class CAdaptivePushBackReader extends Reader
 	/** Un-reads
 	@param c character to un-read.
 		After return from this method the next {@link #read} will
-		return pushed character. Notice, the 
+		return un-read character. Notice, the 
 		<pre>
 			unread("ABC") results in reading "ABC"
 			<i>but</i>

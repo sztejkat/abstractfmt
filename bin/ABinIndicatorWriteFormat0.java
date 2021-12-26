@@ -9,7 +9,7 @@ import java.io.OutputStream;
 	{@link IIndicatorWriteFormat}
 	<p>
 	This class basically provides intermediate level 
-	chunk buffer management.
+	chunk buffer management for payload processing.
 */
 public abstract class ABinIndicatorWriteFormat0 implements IIndicatorWriteFormat
 {
