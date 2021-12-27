@@ -201,14 +201,14 @@ public abstract class ABinIndicatorReadFormat0 implements IIndicatorReadFormat
 	{
 		for(;;)
 		{
-			//we have data, ask input to skip them, because it is much faster than reading.
+			//we may have data, ask input to skip them, because it is much faster than reading.
 			while(chunk_payload_size>0)
 			{
 				long skipped = input.skip(chunk_payload_size);
 				if (skipped<=0) throw new EUnexpectedEof(); //<-- this is what happens when input can't skip.
 				chunk_payload_size-=skipped;
 			}
-			
+			//Now check if next chunk is also data which has to be skipped.
 			int r = tryNextDataChunk();
 			if (r==-1) return;
 			if (r==-2) throw new EUnexpectedEof();
