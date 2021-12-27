@@ -241,6 +241,10 @@ public abstract class ABinIndicatorWriteFormat1 extends ABinIndicatorWriteFormat
 	*/
 	@Override public void writeBooleanBlock(boolean [] buffer, int offset, int length)throws IOException
 	{
+		/*	Note: This is a sub-optimal version which writes each boolean block write
+			as a separate chain. Writing it as a single, packed chain would either
+			require back-write into payload, what is impossible, or separate chain buffer.
+		*/
 		while(length>0)
 		{
 			int bits_in_chain = Math.min(255,length);
