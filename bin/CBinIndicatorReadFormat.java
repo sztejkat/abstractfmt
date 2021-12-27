@@ -23,6 +23,9 @@ public class CBinIndicatorReadFormat extends ABinIndicatorReadFormat1
 					/** Buffer for use-register signals */
 					private int use_registered_buffer;
 					
+	/** Creates
+	@param input see {@link ABinIndicatorReadFormat1#ABinIndicatorReadFormat1}
+	*/				
 	protected CBinIndicatorReadFormat(
 							InputStream input
 							)
@@ -78,6 +81,7 @@ public class CBinIndicatorReadFormat extends ABinIndicatorReadFormat1
 	protected TIndicator tryNextIndicatorChunk(CAdaptivePushBackInputStream in)throws IOException
 	{
 		int header = in.read();
+		System.out.println("tryNextIndicatorChunk h ="+Integer.toHexString(0xff & header));
 		if (header==-1) return null;	//physical eof.
 		//now decode headers
 		switch(header & 0x0F)

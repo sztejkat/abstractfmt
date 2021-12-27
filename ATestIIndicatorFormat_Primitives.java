@@ -28,11 +28,11 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 		w.writeFlush(TIndicator.FLUSH_SHORT);
 		
 		w.writeType(TIndicator.TYPE_INT);
-		w.writeInt(34445544);
+		w.writeInt(0xFA4DEF45);
 		w.writeFlush(TIndicator.FLUSH_INT);
 		
 		w.writeType(TIndicator.TYPE_LONG);
-		w.writeLong(135245525252454L);
+		w.writeLong(0x803A4BCC_334455AAL);
 		w.writeFlush(TIndicator.FLUSH_LONG);
 		
 		w.writeType(TIndicator.TYPE_FLOAT);
@@ -79,12 +79,12 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 		
 		expect(p.read.readIndicator(),TIndicator.TYPE_INT);
 		expect(p.read.readIndicator(),TIndicator.DATA);
-		Assert.assertTrue(p.read.readInt()==34445544);
+		Assert.assertTrue(p.read.readInt()==0xFA4DEF45);
 		Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0); //because any flush may be read.
 		
 		expect(p.read.readIndicator(),TIndicator.TYPE_LONG);
 		expect(p.read.readIndicator(),TIndicator.DATA);
-		Assert.assertTrue(p.read.readLong()==135245525252454L);
+		Assert.assertTrue(p.read.readLong()==0x803A4BCC_334455AAL);
 		Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0); //because any flush may be read.
 		
 		expect(p.read.readIndicator(),TIndicator.TYPE_FLOAT);
@@ -175,10 +175,10 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 		Assert.assertTrue(p.read.readShort()==(short)8888);
 		
 		expect(p.read.readIndicator(),TIndicator.DATA);
-		Assert.assertTrue(p.read.readInt()==34445544);
+		Assert.assertTrue(p.read.readInt()==0xFA4DEF45);
 		
 		expect(p.read.readIndicator(),TIndicator.DATA);
-		Assert.assertTrue(p.read.readLong()==135245525252454L);
+		Assert.assertTrue(p.read.readLong()==0x803A4BCC_334455AAL);
 		
 		expect(p.read.readIndicator(),TIndicator.DATA);
 		Assert.assertTrue(p.read.readFloat()==1.33f);

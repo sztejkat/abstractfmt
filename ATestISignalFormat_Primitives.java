@@ -156,11 +156,13 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 					{
 							p.write.writeLong(i + 37*i + 997*i);
 					};
-					p.write.close();	
+					p.write.close();
 					p.read.open();				
 					for(long i=-32767;i<32768;i+=97)
 					{
-							Assert.assertTrue( p.read.readLong()==i + 37*i+ 997*i);
+							long expected = i + 37*i+ 997*i;
+							long found = p.read.readLong();
+							Assert.assertTrue("i="+i+" expected="+Long.toHexString(expected)+" found="+Long.toHexString(found),expected == found );
 					};
 			}finally{ p.close(); };
 			
@@ -278,7 +280,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 		private void testBooleanBlock(int woffset, int roffset, int wlength, int rlength)throws IOException
 		{
 			enter();
-			
+			System.out.println("woffset="+woffset+" roffset="+roffset+" wlength="+wlength+" rlength="+rlength);
 			/*
 				In this test we just write some blocks of data using different offset
 				in each pair and different cross-block scatter and we perform a complete
@@ -300,7 +302,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 					p.write.writeBooleanBlock(blk,woffset+wL,wH);
 					p.write.end();
 					p.write.close();
-					
+					p.dump();
 					p.read.open();
 					Assert.assertTrue("block".equals(p.read.next()));
 					boolean [] res = new boolean[rlength+roffset];
@@ -320,6 +322,7 @@ public abstract class ATestISignalFormat_Primitives extends ATestISignalFormatBa
 					}else
 					{
 						Assert.assertTrue(
+									"whatNext="+p.read.whatNext(),
 									p.read.isDescribed() ?
 										(p.read.whatNext()==TContentType.PRMTV_BOOLEAN_BLOCK)
 										:

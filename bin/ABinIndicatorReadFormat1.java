@@ -167,7 +167,10 @@ public abstract class ABinIndicatorReadFormat1 extends ABinIndicatorReadFormat0
 			//poll this condition.
 			if (indicator_cache==TIndicator.DATA)
 			{
-				if (isPayloadEof())
+				//Note: true payload eof requires testing chain cache
+				//because last byte might have been picked but not
+				//sent to output yet.
+				if (isPayloadEof()  && (bits_in_bit_chain==0))
 				{
 					//force re-freshing it
 					 indicator_cache = null;
@@ -178,15 +181,19 @@ public abstract class ABinIndicatorReadFormat1 extends ABinIndicatorReadFormat0
 			return indicator_cache;
 		}
 	};
+	@Override protected void skipRemaningData()throws IOException, EUnexpectedEof
+	{
+		invalidateCachedDataState();
+		super.skipRemaningData();
+	};
 	@Override public void next()throws IOException
 	{
 		//In our system cursor is always after the header
 		//of an indicator, so our behaviour depends of
-		//what we return with getIndicator
-		invalidateCachedDataState();
+		//what we return with getIndicator		
 		switch(getIndicator())
 		{
-			case DATA:
+			case DATA:					
 					skipRemaningData();
 					indicator_cache=null;
 					break;
@@ -202,7 +209,7 @@ public abstract class ABinIndicatorReadFormat1 extends ABinIndicatorReadFormat0
 						//isPayloadEof() returning true means, that it reached nonDATA indicator. 
 						indicator_cache=null;
 					}
-		} 
+		}
 	};
 	
 	/* ---------------------------------------------------------------
@@ -255,7 +262,7 @@ public abstract class ABinIndicatorReadFormat1 extends ABinIndicatorReadFormat0
 		long v = readPayloadByte();
 		v |= readPayloadByte()<<8;
 		v |= readPayloadByte()<<(8+8);
-		v |= ((long)readPayloadByte())<<(8+8+8); //need to convert to long earlier, because int may become negative.
+		v |= ((long)readPayloadByte())<<(8+8+8); //need to convert to long earlier, because int may become negative when cast to long.
 		v |= ((long)readPayloadByte())<<(8+8+8+8);
 		v |= ((long)readPayloadByte())<<(8+8+8+8+8);
 		v |= ((long)readPayloadByte())<<(8+8+8+8+8+8);
@@ -304,15 +311,16 @@ public abstract class ABinIndicatorReadFormat1 extends ABinIndicatorReadFormat0
 		int bits_in_bit_chain = this.bits_in_bit_chain;
 		int bit_in_byte = this.bit_in_byte;
 		byte byte_cache =  this.byte_cache;
+		
 		int readen  =0;
 		try{
 			while(length>0)
 			{
-				if (isPayloadEof()) break;	//Note: A proper partial read happens
-											//only at chain end. If we hit end-of-data-chunks
-											//at any other place stream is badly broken.	
 				if (bits_in_bit_chain==0)
 				{
+					if (isPayloadEof()) break;	//Note: A proper partial read happens
+												//only at chain end. If we hit end-of-data-chunks
+												//at any other place stream is badly broken.
 					//we need to check next packed bit chain
 					bits_in_bit_chain = readPayloadByte();
 					if (bits_in_bit_chain==0) continue;		//yes, this is allowed.
@@ -326,19 +334,14 @@ public abstract class ABinIndicatorReadFormat1 extends ABinIndicatorReadFormat0
 				readen++;
 				//now manage bit indexing.
 				bits_in_bit_chain--;
-				if (bits_in_bit_chain==0)
-				{
-						//this chain is finished.
-						bit_in_byte=0;
-						byte_cache =0;
-				}else
+				if (bits_in_bit_chain!=0)
 				{
 					bit_in_byte++;
 					if (bit_in_byte==8)
 					{
 						//byte cache is fully used up.
 						bit_in_byte = 0;
-						byte_cache = (byte)readPayloadByte();	
+						byte_cache = (byte)readPayloadByte();							
 					}
 				}
 			}

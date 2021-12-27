@@ -112,6 +112,14 @@ public abstract class ABinIndicatorWriteFormat0 implements IIndicatorWriteFormat
 	and apropriate capacity information. */													 
 	protected abstract void startDataChunk()throws IOException;
 	
+	/** Invoked in {@link #flush} and {@link #writeFlush}.
+	<p>
+	This method will be usually empty, except if class buffers some
+	data outside a payload. If it does, it must write them inside
+	this method.  
+	*/
+	protected abstract void flushPayload()throws IOException;
+	
 	/* ********************************************************************
 	
 	
@@ -203,6 +211,7 @@ public abstract class ABinIndicatorWriteFormat0 implements IIndicatorWriteFormat
 			System.arraycopy(data,offset,chunk,chunk_at,transfer);
 			length-=transfer;
 			offset+=transfer;
+			chunk_at+=transfer;
 		}; 
 	};
 	
@@ -264,8 +273,12 @@ public abstract class ABinIndicatorWriteFormat0 implements IIndicatorWriteFormat
 	
 	
 	* *********************************************************************/
+	/** Calls {@link #flushPayload() } */
+	@Override public void writeFlush(TIndicator flush)throws IOException{ flushPayload(); };
+	
 	@Override public void flush()throws IOException
 	{
+		flushPayload();
 		flushChunk();
 		output.flush();
 	}; 

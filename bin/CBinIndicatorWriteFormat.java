@@ -9,6 +9,10 @@ import java.io.OutputStream;
 */
 public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 {			
+
+	/** Creates
+	@param output see {@link ABinIndicatorWriteFormat1#ABinIndicatorWriteFormat1}
+	*/
 	protected CBinIndicatorWriteFormat(
 							OutputStream output
 							)
@@ -77,7 +81,7 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 		{
 			assert(s<=65535);
 			//long data.
-			header_buffer[0] = TBinUndescribed.DATA_MEDIUM;
+			header_buffer[0] = TBinUndescribed.DATA_LONG;
 			header_buffer[1] = (byte)(s);
 			header_buffer[2] = (byte)(s>>>8);
 			return 3;

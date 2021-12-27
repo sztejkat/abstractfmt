@@ -13,6 +13,13 @@ import java.io.OutputStream;
 */
 public abstract class ABinIndicatorWriteFormat1 extends ABinIndicatorWriteFormat0
 {
+					/** Number of bits which are pending for writing 
+					in bit_chain_buffer. Zero is a valid number, -1
+					means, that chain buffer is empty */
+					private int bits_in_chain_buffer;
+					/** Boolean block chain buffer, without initial
+					header. */
+					private final byte [] bit_chain_buffer;
 	/** Creates
 	@param output see {@link ABinIndicatorWriteFormat0#ABinIndicatorWriteFormat}
 	@param max_header_size --//--
@@ -25,8 +32,21 @@ public abstract class ABinIndicatorWriteFormat1 extends ABinIndicatorWriteFormat
 							)
 	{
 		super(output, max_header_size, max_chunk_size);
+		this.bit_chain_buffer=new byte[32];	//chain buffer of 255 bits capacity.
+		this.bits_in_chain_buffer=-1;
 	};
+	/* ***********************************************************************
 	
+	
+			Services required by superclass.
+	
+	
+	* ***********************************************************************/
+	/** Calls {@link #flushChainBuffer}*/
+	@Override protected void flushPayload()throws IOException
+	{
+		flushChainBuffer();
+	};
 	/* ***********************************************************************
 	
 	
@@ -117,7 +137,6 @@ public abstract class ABinIndicatorWriteFormat1 extends ABinIndicatorWriteFormat
 			writeEndMarkCharacter(signal_name.charAt(i));
 		};
 	};
-	
 	/* *****************************************************************************
 	
 				IIndicatorWriteFormat
@@ -130,8 +149,7 @@ public abstract class ABinIndicatorWriteFormat1 extends ABinIndicatorWriteFormat
 	@Override public int getMaxSupportedSignalNameLength(){ return Integer.MAX_VALUE; };
 	/** Always false */
 	@Override public final boolean isFlushing(){ return false; };
-	/** Always do nothing */
-	@Override public final void writeFlush(TIndicator flush)throws IOException{};
+	
 	/** Writes  payload as described in 
 	<a href="doc-files/chunk-syntax-described.html#TYPE_BYTE">TYPE_BYTE</a> header.
 	*/
@@ -234,6 +252,23 @@ public abstract class ABinIndicatorWriteFormat1 extends ABinIndicatorWriteFormat
 			Blocks
 	
 	---------------------------------------------------------------*/
+	/** Flushes chain buffered by {@link #writeBooleanBlock} 
+	*/
+	private void flushChainBuffer()throws IOException
+	{	
+		if (bits_in_chain_buffer!=-1)
+		{
+			assert(bits_in_chain_buffer<=255);
+			assert(bits_in_chain_buffer>=0);
+			try{
+				writePayload((byte)bits_in_chain_buffer);
+				writePayload(bit_chain_buffer,0,(bits_in_chain_buffer-1)/8+1);
+			}finally
+			{
+				bits_in_chain_buffer =-1;
+			};
+		};
+	};
 	/** Writes byte payload as described in 
 	<a href="doc-files/chunk-syntax-described.html#TYPE_BOOLEAN_BLOCK">TYPE_BOOLEAN_BLOCK</a> header.
 	<p>
@@ -241,32 +276,43 @@ public abstract class ABinIndicatorWriteFormat1 extends ABinIndicatorWriteFormat
 	*/
 	@Override public void writeBooleanBlock(boolean [] buffer, int offset, int length)throws IOException
 	{
-		/*	Note: This is a sub-optimal version which writes each boolean block write
-			as a separate chain. Writing it as a single, packed chain would either
-			require back-write into payload, what is impossible, or separate chain buffer.
+		/*	
+			Note: This version is using chain buffer and relies on
+			writeFlush() beeing called after a block or flushPayload be called
+			in flush(). Thanks to that there is very little block fragmentation.
+			Note: Due to that flush() will produce fragmented chain, but this is correct.
 		*/
+		//pick from class fields for efficiency.
+		int bits_in_chain_buffer = this.bits_in_chain_buffer;
 		while(length>0)
 		{
-			int bits_in_chain = Math.min(255,length);
-			//write number of bits in stream.
-			writePayload((byte)bits_in_chain);
-			//now process
-			int bits_written = 0;
-			while(bits_written<bits_in_chain)
+			if (bits_in_chain_buffer==-1)
 			{
-				int byte_buffer = 0;
-				int bit_mask = 0x01;
-				while((bit_mask!=0x100) && ( bits_written<bits_in_chain))
-				{	
-					boolean bit = buffer[offset++];
-					if (bit) byte_buffer|=bit_mask;
-					bit_mask<<=1;
-					bits_written++;				
-				};
-				writePayload((byte)byte_buffer);
+				//handle buffer clean.
+				bits_in_chain_buffer = 0;
 			};
-			length-=bits_in_chain;
+			int bptr = bits_in_chain_buffer>>>3;
+			int biptr = bits_in_chain_buffer&0x7;
+			if (biptr==0)
+			{
+				//handle byte wipe out to not emit garbage from previous buffered tasks.
+				bit_chain_buffer[bptr]=0;			
+			};
+			//now out boolean
+			if (buffer[offset++])
+				bit_chain_buffer[bptr]|=(1<<biptr);
+			length--;
+			bits_in_chain_buffer++;
+			if (bits_in_chain_buffer==255)
+			{
+				//put to class fields.
+				this.bits_in_chain_buffer=bits_in_chain_buffer;
+				flushChainBuffer();
+				bits_in_chain_buffer = this.bits_in_chain_buffer;
+			};
 		}
+		//store back in class fields.
+		this.bits_in_chain_buffer=bits_in_chain_buffer;
 	};		
 	/** Writes byte payload as described in 
 	<a href="doc-files/chunk-syntax-described.html#TYPE_BYTE_BLOCK">TYPE_BYTE_BLOCK</a> header.

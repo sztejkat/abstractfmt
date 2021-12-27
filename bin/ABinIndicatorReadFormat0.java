@@ -197,15 +197,10 @@ public abstract class ABinIndicatorReadFormat0 implements IIndicatorReadFormat
 	/** Skips remaning data and moves cursor to the header of next non-DATA chunk	 
 	@throws EUnexpectedEof if encountered physical end-of-file during this process.
 	*/
-	protected final void skipRemaningData()throws IOException, EUnexpectedEof
+	protected void skipRemaningData()throws IOException, EUnexpectedEof
 	{
 		for(;;)
 		{
-			int r = tryNextDataChunk();
-			if (r==-1) return;
-			if (r==-2) throw new EUnexpectedEof();
-			
-			assert(this.chunk_payload_size!=0);
 			//we have data, ask input to skip them, because it is much faster than reading.
 			while(chunk_payload_size>0)
 			{
@@ -213,6 +208,11 @@ public abstract class ABinIndicatorReadFormat0 implements IIndicatorReadFormat
 				if (skipped<=0) throw new EUnexpectedEof(); //<-- this is what happens when input can't skip.
 				chunk_payload_size-=skipped;
 			}
+			
+			int r = tryNextDataChunk();
+			if (r==-1) return;
+			if (r==-2) throw new EUnexpectedEof();
+			
 		}
 	};
 	

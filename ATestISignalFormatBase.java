@@ -14,7 +14,7 @@ public abstract class ATestISignalFormatBase extends sztejkat.utils.test.ATest
 		Any limiting should be disabled to maximum physical 
 		format boundaries.
 		*/
-		public static final class Pair
+		public static class Pair
 		{
 				/** Write end */
 				public final ISignalWriteFormat write;
@@ -36,7 +36,10 @@ public abstract class ATestISignalFormatBase extends sztejkat.utils.test.ATest
 				{
 					write.close();	//ignoring the fact, that write may throw.
 					read.close();
-				};				
+				};			
+				/** Subclasses should override it, if they like
+				to dump to System out */
+				public void dump(){};	
 		};
 		/** 
 			Creates a pair which is to be used for testing purposes.

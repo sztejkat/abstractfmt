@@ -158,7 +158,56 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 	
 	
 	
-	
+	@Test public void testBlockBoolean_Values()throws IOException
+	{
+		enter();
+		/* Test if layer properly handles block writes and read backs
+		when it comes to value
+		
+		Note: We especially test char block value passing because
+		char blocks are usually specially tightly packed.
+		 */
+		java.util.Random r = new java.util.Random(); 
+		boolean [] DAT = new boolean[297];
+		for(int i=0;i<DAT.length;i++){ DAT[i]= r.nextBoolean(); };
+		Pair p = create();
+		p.write.open();
+		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_BOOLEAN_BLOCK);
+		p.write.writeBooleanBlock(DAT,0,1);
+		p.write.writeBooleanBlock(DAT,1,DAT.length-1);
+		p.write.writeFlush(TIndicator.FLUSH_BOOLEAN_BLOCK);
+		p.write.writeEnd();
+		p.write.flush();
+		p.write.close();
+		
+		p.read.open();
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			expect(p.read.readIndicator(),TIndicator.TYPE_BOOLEAN_BLOCK);
+		};
+		expect(p.read.readIndicator(),TIndicator.DATA);
+		//Pick it in one operation
+		boolean [] R = new boolean[DAT.length];
+		Assert.assertTrue(p.read.readBooleanBlock(R)==R.length);
+		
+		for(int i=0;i<DAT.length;i++)
+		{
+			 if (DAT[i]!=R[i]) Assert.fail("Differs at "+i);
+		}; 
+		
+		//Should be getting end indicator and calls should be not allowed, but 
+		//calls are allowed to not throw directly because it is up to us to check it.
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
+		p.read.close();
+		leave();
+	};
 	
 	
 	
@@ -372,6 +421,69 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 	};
 	
 	
+	@Test public void testBlockByte_Values()throws IOException
+	{
+		enter();
+		/* Test if layer properly handles block writes and read backs
+		when it comes to value 
+		
+		Note: We especially test char block value passing because
+		char blocks are usually specially encoded.
+		*/
+		java.util.Random r = new java.util.Random(); 
+		byte [] DAT = new byte[297];
+		for(int i=0;i<DAT.length;i++){ DAT[i]= (byte)r.nextInt(); };
+		Pair p = create();
+		p.write.open();
+		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_BYTE_BLOCK);
+		p.write.writeByteBlock(DAT,0,1);
+		p.write.writeByteBlock(DAT,1,DAT.length-1);
+		p.write.writeFlush(TIndicator.FLUSH_BYTE_BLOCK);
+		p.write.writeEnd();
+		p.write.flush();
+		p.write.close();
+		
+		p.read.open();
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			expect(p.read.readIndicator(),TIndicator.TYPE_BYTE_BLOCK);
+		};
+		expect(p.read.readIndicator(),TIndicator.DATA);
+		//Pick it in one operation
+		byte [] R = new byte[DAT.length];
+		Assert.assertTrue(p.read.readByteBlock(R)==R.length);
+		
+		for(int i=0;i<DAT.length;i++)
+		{
+			 if (DAT[i]!=R[i]) Assert.fail("Differs at "+i);
+		}; 
+		
+		//Should be getting end indicator and calls should be not allowed, but 
+		//calls are allowed to not throw directly because it is up to us to check it.
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
+		p.read.close();
+		leave();
+	};
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	
@@ -577,6 +689,62 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		leave();
 	};
 	
+	@Test public void testBlockChar_Values()throws IOException
+	{
+		enter();
+		/* Test if layer properly handles block writes and read backs
+		when it comes to value.
+		
+		Note: We especially test char block value passing because
+		char blocks are usually specially encoded.
+		*/
+		java.util.Random r = new java.util.Random(); 
+		char [] DAT = new char[297];
+		for(int i=0;i<DAT.length;i++){ DAT[i]= (char)r.nextInt(); };
+		Pair p = create();
+		p.write.open();
+		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_CHAR_BLOCK);
+		p.write.writeCharBlock(DAT,0,1);
+		p.write.writeCharBlock(DAT,1,DAT.length-1);
+		p.write.writeFlush(TIndicator.FLUSH_CHAR_BLOCK);
+		p.write.writeEnd();
+		p.write.flush();
+		p.write.close();
+		
+		p.read.open();
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			expect(p.read.readIndicator(),TIndicator.TYPE_CHAR_BLOCK);
+		};
+		expect(p.read.readIndicator(),TIndicator.DATA);
+		//Pick it in one operation
+		char [] R = new char[DAT.length];
+		Assert.assertTrue(p.read.readCharBlock(R)==R.length);
+		
+		for(int i=0;i<DAT.length;i++)
+		{
+			 if (DAT[i]!=R[i]) Assert.fail("Differs at "+i);
+		}; 
+		
+		//Should be getting end indicator and calls should be not allowed, but 
+		//calls are allowed to not throw directly because it is up to us to check it.
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
+		p.read.close();
+		leave();
+	};
+	
+	
+	
+	
+	
+	
 	
 	
 	
@@ -750,6 +918,68 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		leave();
 	};
 	
+	@Test public void testBlockShort_Values()throws IOException
+	{
+		enter();
+		/* Test if layer properly handles block writes and read backs
+		when it comes to value
+		 */
+		java.util.Random r = new java.util.Random(); 
+		short [] DAT = new short[297];
+		for(int i=0;i<DAT.length;i++){ DAT[i]= (short)r.nextInt(); };
+		Pair p = create();
+		p.write.open();
+		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_SHORT_BLOCK);
+		p.write.writeShortBlock(DAT,0,1);
+		p.write.writeShortBlock(DAT,1,DAT.length-1);
+		p.write.writeFlush(TIndicator.FLUSH_SHORT_BLOCK);
+		p.write.writeEnd();
+		p.write.flush();
+		p.write.close();
+		
+		p.read.open();
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			expect(p.read.readIndicator(),TIndicator.TYPE_SHORT_BLOCK);
+		};
+		expect(p.read.readIndicator(),TIndicator.DATA);
+		//Pick it in one operation
+		short [] R = new short[DAT.length];
+		Assert.assertTrue(p.read.readShortBlock(R)==R.length);
+		
+		for(int i=0;i<DAT.length;i++)
+		{
+			 if (DAT[i]!=R[i]) Assert.fail("Differs at "+i);
+		}; 
+		
+		//Should be getting end indicator and calls should be not allowed, but 
+		//calls are allowed to not throw directly because it is up to us to check it.
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
+		p.read.close();
+		leave();
+	};
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	
@@ -914,6 +1144,56 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		expect(p.read.readIndicator(),TIndicator.EOF);
 		leave();
 	};
+	
+	@Test public void testBlockInt_Values()throws IOException
+	{
+		enter();
+		/* Test if layer properly handles block writes and read backs
+		when it comes to value
+		 */
+		java.util.Random r = new java.util.Random(); 
+		int [] DAT = new int[297];
+		for(int i=0;i<DAT.length;i++){ DAT[i]= r.nextInt(); };
+		Pair p = create();
+		p.write.open();
+		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_INT_BLOCK);
+		p.write.writeIntBlock(DAT,0,1);
+		p.write.writeIntBlock(DAT,1,DAT.length-1);
+		p.write.writeFlush(TIndicator.FLUSH_INT_BLOCK);
+		p.write.writeEnd();
+		p.write.flush();
+		p.write.close();
+		
+		p.read.open();
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			expect(p.read.readIndicator(),TIndicator.TYPE_INT_BLOCK);
+		};
+		expect(p.read.readIndicator(),TIndicator.DATA);
+		//Pick it in one operation
+		int [] R = new int[DAT.length];
+		Assert.assertTrue(p.read.readIntBlock(R)==R.length);
+		
+		for(int i=0;i<DAT.length;i++)
+		{
+			 if (DAT[i]!=R[i]) Assert.fail("Differs at "+i);
+		}; 
+		
+		//Should be getting end indicator and calls should be not allowed, but 
+		//calls are allowed to not throw directly because it is up to us to check it.
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
+		p.read.close();
+		leave();
+	};
+	
+	
 	
 	
 	
@@ -1086,7 +1366,53 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 	};
 	
 	
-	
+	@Test public void testBlockLong_Values()throws IOException
+	{
+		enter();
+		/* Test if layer properly handles block writes and read backs
+		when it comes to value
+		 */
+		java.util.Random r = new java.util.Random(); 
+		long [] DAT = new long[297];
+		for(int i=0;i<DAT.length;i++){ DAT[i]= r.nextLong(); };
+		Pair p = create();
+		p.write.open();
+		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_LONG_BLOCK);
+		p.write.writeLongBlock(DAT,0,1);
+		p.write.writeLongBlock(DAT,1,DAT.length-1);
+		p.write.writeFlush(TIndicator.FLUSH_LONG_BLOCK);
+		p.write.writeEnd();
+		p.write.flush();
+		p.write.close();
+		
+		p.read.open();
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			expect(p.read.readIndicator(),TIndicator.TYPE_LONG_BLOCK);
+		};
+		expect(p.read.readIndicator(),TIndicator.DATA);
+		//Pick it in one operation
+		long [] R = new long[DAT.length];
+		Assert.assertTrue(p.read.readLongBlock(R)==R.length);
+		
+		for(int i=0;i<DAT.length;i++)
+		{
+			 if (DAT[i]!=R[i]) Assert.fail("Differs at "+i);
+		}; 
+		
+		//Should be getting end indicator and calls should be not allowed, but 
+		//calls are allowed to not throw directly because it is up to us to check it.
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
+		p.read.close();
+		leave();
+	};
 	
 	
 	
@@ -1250,6 +1576,54 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		};
 		expect(p.read.readIndicator(),TIndicator.END);
 		expect(p.read.readIndicator(),TIndicator.EOF);
+		leave();
+	};
+	
+	@Test public void testBlockFloat_Values()throws IOException
+	{
+		enter();
+		/* Test if layer properly handles block writes and read backs
+		when it comes to value
+		 */
+		java.util.Random r = new java.util.Random(); 
+		float [] DAT = new float[297];
+		for(int i=0;i<DAT.length;i++){ DAT[i]= r.nextFloat(); };
+		Pair p = create();
+		p.write.open();
+		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_FLOAT_BLOCK);
+		p.write.writeFloatBlock(DAT,0,1);
+		p.write.writeFloatBlock(DAT,1,DAT.length-1);
+		p.write.writeFlush(TIndicator.FLUSH_FLOAT_BLOCK);
+		p.write.writeEnd();
+		p.write.flush();
+		p.write.close();
+		
+		p.read.open();
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			expect(p.read.readIndicator(),TIndicator.TYPE_FLOAT_BLOCK);
+		};
+		expect(p.read.readIndicator(),TIndicator.DATA);
+		//Pick it in one operation
+		float [] R = new float[DAT.length];
+		Assert.assertTrue(p.read.readFloatBlock(R)==R.length);
+		
+		for(int i=0;i<DAT.length;i++)
+		{
+			 if (DAT[i]!=R[i]) Assert.fail("Differs at "+i);
+		}; 
+		
+		//Should be getting end indicator and calls should be not allowed, but 
+		//calls are allowed to not throw directly because it is up to us to check it.
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
+		p.read.close();
 		leave();
 	};
 	
@@ -1420,6 +1794,54 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		leave();
 	};
 	
+	
+	@Test public void testBlockDouble_Values()throws IOException
+	{
+		enter();
+		/* Test if layer properly handles block writes and read backs
+		when it comes to value
+		 */
+		java.util.Random r = new java.util.Random(); 
+		double [] DAT = new double[297];
+		for(int i=0;i<DAT.length;i++){ DAT[i]= r.nextDouble(); };
+		Pair p = create();
+		p.write.open();
+		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_DOUBLE_BLOCK);
+		p.write.writeDoubleBlock(DAT,0,1);
+		p.write.writeDoubleBlock(DAT,1,DAT.length-1);
+		p.write.writeFlush(TIndicator.FLUSH_DOUBLE_BLOCK);
+		p.write.writeEnd();
+		p.write.flush();
+		p.write.close();
+		
+		p.read.open();
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			expect(p.read.readIndicator(),TIndicator.TYPE_DOUBLE_BLOCK);
+		};
+		expect(p.read.readIndicator(),TIndicator.DATA);
+		//Pick it in one operation
+		double [] R = new double[DAT.length];
+		Assert.assertTrue(p.read.readDoubleBlock(R)==R.length);
+		
+		for(int i=0;i<DAT.length;i++)
+		{
+			 if (DAT[i]!=R[i]) Assert.fail("Differs at "+i);
+		}; 
+		
+		//Should be getting end indicator and calls should be not allowed, but 
+		//calls are allowed to not throw directly because it is up to us to check it.
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
+		p.read.close();
+		leave();
+	};
 	
 	
 	
