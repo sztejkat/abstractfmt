@@ -203,6 +203,8 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		{
 			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
 		};
+		expect(p.read.getIndicator(),TIndicator.END);	//Intentionally, becuase multiple test failed is some cases.
+		expect(p.read.getIndicator(),TIndicator.END);
 		expect(p.read.readIndicator(),TIndicator.END);
 		expect(p.read.readIndicator(),TIndicator.EOF);
 		p.read.close();
@@ -472,6 +474,56 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		leave();
 	};
 	
+	@Test public void testBlockByte_ValuesLarger()throws IOException
+	{
+		enter();
+		/* Test if layer properly handles block writes and read backs
+		when it comes to value, when block is of a significant size
+		
+		Note: We especially test char block value passing because
+		char blocks are usually specially encoded. 
+		*/
+		java.util.Random r = new java.util.Random(); 
+		byte [] DAT = new byte[16384];
+		for(int i=0;i<DAT.length;i++){ DAT[i]= (byte)r.nextInt(); };
+		Pair p = create();
+		p.write.open();
+		p.write.writeBeginDirect("A");
+		p.write.writeType(TIndicator.TYPE_BYTE_BLOCK);
+		p.write.writeByteBlock(DAT,0,1);
+		p.write.writeByteBlock(DAT,1,DAT.length-1);
+		p.write.writeFlush(TIndicator.FLUSH_BYTE_BLOCK);
+		p.write.writeEnd();
+		p.write.flush();
+		p.write.close();
+		
+		p.read.open();
+		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
+		if (p.read.isDescribed())
+		{
+			expect(p.read.readIndicator(),TIndicator.TYPE_BYTE_BLOCK);
+		};
+		expect(p.read.readIndicator(),TIndicator.DATA);
+		//Pick it in one operation
+		byte [] R = new byte[DAT.length];
+		Assert.assertTrue(p.read.readByteBlock(R)==R.length);
+		
+		for(int i=0;i<DAT.length;i++)
+		{
+			 if (DAT[i]!=R[i]) Assert.fail("Differs at "+i);
+		}; 
+		
+		//Should be getting end indicator and calls should be not allowed, but 
+		//calls are allowed to not throw directly because it is up to us to check it.
+		if (p.read.isFlushing())
+		{
+			Assert.assertTrue((p.read.readIndicator().FLAGS & TIndicator.FLUSH)!=0);
+		};
+		expect(p.read.readIndicator(),TIndicator.END);
+		expect(p.read.readIndicator(),TIndicator.EOF);
+		p.read.close();
+		leave();
+	};
 	
 	
 	
