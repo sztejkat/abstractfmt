@@ -12,15 +12,13 @@
 		for chunk-based, described binary format.
 		
 		<h2>Headers</h2>
-		This format is using two separate encodings
-		for headers. Separate for data and separate
-		for non-data headers.
-		<p>
+		
 		First byte of header decides on what header
 		we are talking about.
 		
 		<pre>
-			xxxT TTTT
+		 bit 7    bit 0
+		    xxxT TTTT
 		</pre>
 		<table border="1">
 			<tr style="background-color:#FA7F7F;">
@@ -152,8 +150,10 @@
 		<p>
 		This chunk can then carry 1...65536 bytes of payload.
 		<p>
-		<i>Note: I intentionally did zero <code>sss</code> bits, since the buffer
-		must be pre-allocated and 512k would be a bit too much in my opinion.</i>
+		<i>Note: I intentionally did zero <code>sss</code> bits becaus we need to have
+		a buffer large enough to keep the entire chunk 512k would be a bit too much
+		in my opinion. 64k is a good balance, adding only three additional bytes of
+		cost per each 64k bytes of data.</i>
 		<p>
 		
 		
@@ -175,40 +175,38 @@
 			....
 			<i>user payload starts here</i>
 		</pre>
-		 
+		<i>Note: Encoded signal name is <u>not a part of a header</u> but a part of
+		payload. Thanks to that it may be longer than size which could be directly
+		encoded in header and may consisit of many data chunks. Thous theoretically
+		a signal name can be infinitely long.</i> 
 		
 		<h4>Signal name econding</h4>
 		Signal names are encoded in a regular payload
 		using <a href="#CHAR_BLOCK_ENCODING">characters block encoding</a>
-		with <i>end-of-text</i> marker applied to last name character.
-		
+		with <a href="#END_OF_TEXT_MARKER">"end-of-text"</a> marker.		
 		<p>
 		<i>
 		Note: With this type of encoding there is no upper physical limit
-		for name length, but last character in name is always encoded using
-		three bytes.</i>
+		for name length.</i>
+		<p>
 		
 		
 		<h2 id="CHAR_BLOCK_ENCODING">Characters block encoding</h2>
 		Blocks of <code>char[]</code> are encoded in such a way that:
 		<pre>
-			character:	(msb)0000 0000    (lsb)0xxx xxxx  
-			  encoded:  0xxx xxxx
-			character:	(msb)00aa aaaa    (lsb)axxx xxxx  
+			x = character + 1 <i>as 17-bit value, 1...65536</i>
+			        x:	(16-th bit)0 (msb)0000 0000    (lsb)0xxx xxxx  
+			  encoded:  0xxx xxxx	<i>Note: xxx xxxx is non-zero.</i>
+			        x:	(16-th bit)0(msb)00aa aaaa    (lsb)axxx xxxx  
 			  encoded:  1xxx xxxx <i>followed by</i>  0aaa aaaa
-			character:	(msb)bbaa aaaa    (lsb)axxx xxxx  
-			  encoded:  1xxx xxxx <i>followed by</i> 1aaa aaaa <i>followed by</i> 0000 00bb
+			        x:	(16-th bit)b  (msb)bbaa aaaa    (lsb)axxx xxxx  
+			  encoded:  1xxx xxxx <i>followed by</i> 1aaa aaaa <i>followed by</i> 0000 0bbb
 		</pre>
 		and there is a special "end-of-text" marker, which is used to encode last character
-		in signal names:
-		<pre>
-			 encoded:  1xxx xxxx <i>followed by</i> 1aaa aaaa <i>followed by</i> 0111 11bb
-		</pre>
-		or if name contains zero characters ("no-char-carrying-end-of-text" marker)
-		<pre>
-			 encoded:  1000 0000 <i>followed by</i> 1000 0000 <i>followed by</i> 0111 1000
-		</pre>
-		
+		in signal names (using always 3-bytes encoding regardless of character value):
+		<pre id="END_OF_TEXT_MARKER">
+			 encoded:  0000 0000
+		</pre>		
 		<p><i>Note: This is not an UTF-8 encoding as I don't need code points higher than 0xFFFF
 		and this encoding is a tiny bit more efficient in such case.</i></p>
 		

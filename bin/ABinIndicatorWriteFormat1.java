@@ -59,14 +59,15 @@ public abstract class ABinIndicatorWriteFormat1 extends ABinIndicatorWriteFormat
 	specification</a>
 	@param c character to encode
 	*/
-	protected void writeEncodedCharacter(char c)throws IOException
+	protected void writeEncodedCharacter(char _c)throws IOException
 	{
-		if ((c & 0xFF80)==0)
+		int c = _c+1;
+		if ((c & 0x1FF80)==0)
 		{
 			//1-byte form
 			writePayload((byte)c);
 		}else
-		if ((c & (0x4000+0x8000))==0)
+		if ((c & (0x4000+0x8000+0x10000))==0)
 		{
 			//2-byte form
 			writePayload((byte)((c & 0x7F)|0x80));
@@ -86,28 +87,13 @@ public abstract class ABinIndicatorWriteFormat1 extends ABinIndicatorWriteFormat
 	/** Encodes character as described in 
 	<a href="doc-files/chunk-syntax-described.html#CHAR_BLOCK_ENCODING">format
 	specification</a> as an "end-of-text" mark.
-	@param c character to encode
-	*/
-	protected void writeEndMarkCharacter(char c)throws IOException
-	{
-		//3-byte form
-		writePayload((byte)((c & 0x7F)|0x80));
-		c>>=7;
-		writePayload((byte)((c & 0x7F)|0x80));
-		c>>=7;
-		writePayload((byte)(c | (0x70+0x04+0x08)));
-	};
-	
-	/** Writes "no-char-carrying-end-of-text" marker as specified in
-	<a href="doc-files/chunk-syntax-described.html#CHAR_BLOCK_ENCODING">format specification</a>
 	*/
 	protected void writeEndMarkCharacter()throws IOException
 	{
-		//3-byte form
-		writePayload((byte)(0x80));
-		writePayload((byte)(0x80));
-		writePayload((byte)(0x70+0x08));
-	}
+		//1-byte form, zero is terminator.
+		writePayload((byte)0);
+	};
+	
 	
 	/* *****************************************************************************
 	
@@ -123,19 +109,11 @@ public abstract class ABinIndicatorWriteFormat1 extends ABinIndicatorWriteFormat
 	protected void writeBeginDirectPayload(String signal_name)throws IOException
 	{
 		final int n = signal_name.length();
-		if (n==0)
+		for(int i=0;i<n;i++)
 		{
-			writeEndMarkCharacter();
-		}else
-		{ 
-			int i=0;
-			final int m = n-1;
-			for(;i<m;i++)
-			{
-				writeEncodedCharacter(signal_name.charAt(i));
-			};
-			writeEndMarkCharacter(signal_name.charAt(i));
+			writeEncodedCharacter(signal_name.charAt(i));
 		};
+		writeEndMarkCharacter();
 	};
 	/* *****************************************************************************
 	

@@ -52,14 +52,14 @@ public abstract class ABinIndicatorReadFormat1 extends ABinIndicatorReadFormat0
 	<a href="doc-files/chunk-syntax-described.html#CHAR_BLOCK_ENCODING">format
 	specification</a>
 	@return 0...0xFFFF if read character is not an end-of-text marker.
-			-1 if it is end-of-text marker not carrying any character,
-			-c-2 if it is an end-of-text marker with character
+			-1 if it is end-of-text marker
 	*/
 	protected int readEncodedCharacter()throws IOException
 	{
-		char c = 0;
+		int c = 0;
 		int b = readPayloadByte();
-		c = (char)(b & 0x7F);
+		if (b==0) return -1;		//end-of-txt marker
+		c = (b & 0x7F);
 		if ((b & 0x80)!=0)
 		{
 			b = readPayloadByte();
@@ -67,22 +67,11 @@ public abstract class ABinIndicatorReadFormat1 extends ABinIndicatorReadFormat0
 			if ((b & 0x80)!=0)
 			{
 				b = readPayloadByte();
-				c |= ((b & 0x3)<<(7+7));
-				
-				switch( b & 0b1111_1100)
-				{
-					case 0:	//plain character
-							return c;
-					case 0b0111_1100:
-							//end character
-							return -((int)c) -2 ;
-					default:
-						if ((b==0b0111_1000)&&(c==0)) return -1;
-						throw new EBrokenFormat("Could not decode character, last byte is "+Integer.toHexString(b)); 
-				}
+				if(( b & 0b1111_1000)!=0)throw new EBrokenFormat("Could not decode character, last byte is "+Integer.toHexString(b));
+				c |= ((b & 0x7)<<(7+7));
 			}
 		}
-		return c;
+		return (char)(c-1);
 	};
 	/** Decodes character as described in 
 	<a href="doc-files/chunk-syntax-described.html#CHAR_BLOCK_ENCODING">format
@@ -108,16 +97,8 @@ public abstract class ABinIndicatorReadFormat1 extends ABinIndicatorReadFormat0
 	{
 		for(;;)
 		{
-			int c = readEncodedCharacter();
-			if (c<0)
-			{
-				if (c==-1) return;
-				//x = -c-2
-				//-x-2 = c
-				if (max_characters==0) throw new EFormatBoundaryExceeded("Signal name too long");
-				buffer.append((char)(-c-2));
-				return;
-			}; 
+			int c = readEncodedCharacter();		
+			if (c==-1) break;	 
 			if (max_characters--==0) throw new EFormatBoundaryExceeded("Signal name too long");
 			buffer.append((char)c);
 		}

@@ -36,20 +36,6 @@ public class CBinSignalReadFormat extends CSignalReadFormat
 	{
 		super(max_events_recursion_depth,
 				new CIndicatorReadFormatProtector( new CBinIndicatorReadFormat(input))
-				{
-				@Override public sztejkat.abstractfmt.TIndicator getIndicator()throws IOException
-				{
-					sztejkat.abstractfmt.TIndicator x = super.getIndicator();
-					System.out.println("getIndicator() "+x);
-					return x;
-				};
-				@Override public long readLong()throws IOException
-				{
-					long r = super.readLong();
-					System.out.println("readLong()="+Long.toHexString(r));
-					return r;
-				};
-				}
 				);
 	};
 };

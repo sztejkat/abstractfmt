@@ -54,11 +54,18 @@
 	<h3>DATA chunks</h3>
 	DATA indicator is normally a read-only indicator, but in a binary stream
 	it is used to tell that that chunk is <i>continuation</i> of previous chunk
-	and there is actually no real indicator in it.
+	and there is actually no real indicator in it. This is necessary becase information
+	about size of chunk must be stored in header, and, since <code>OutputStream</code>
+	has no <i>seek backwards</i> capabilities we can't write content and <u>then</u> move
+	back and updated header. Instead we need to <i>buffer content</i> and send it <u>after</u>
+	we have send a header. The finite size of buffer together with an infinite size of event in event streams
+	do require that we have to cut stream of data into <i>chunks</i> even if there is no actual 
+	signal or indicator. 
 	
 	<h1>Detailed format specification</h1>
 	Detailed format specification is subject of class specifics and is specified
-	in the separate document.
+	in the <a href="doc-files/chunk-syntax-described.html">separate document for
+	fully described</a> and <a href="doc-files/chunk-syntax-undescribed.html">undescribed chunk format.</a>
 	
 </body>
 </html>
