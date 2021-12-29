@@ -9,7 +9,7 @@ import java.io.InputStream;
 
 /**
 	A base for chunk-based write formats implementing
-	{@link IIndicatorWriteFormat}
+	{@link IIndicatorReadFormat}
 	<p>
 	This class basically provides intermediate level 
 	chunk management for payload processing.
@@ -22,6 +22,9 @@ public abstract class ABinIndicatorReadFormat0 implements IIndicatorReadFormat
 					chunk payload to process */
 					private int chunk_payload_size;	
 					
+	/** Creates
+	@param in stream to read raw bytes from, non-null
+	*/
 	protected ABinIndicatorReadFormat0(InputStream in)
 	{
 		assert(in!=null);
@@ -54,6 +57,7 @@ public abstract class ABinIndicatorReadFormat0 implements IIndicatorReadFormat
 		of next chunk header.
 	@return size of decoded DATA chunk (zero is allowed), or -1 if it is not
 		a data chunk or -2 if at physical end of file was reached at the begining of the header.
+	@throws IOException if failed.
 	*/
 	protected abstract int tryNextDataChunk(CAdaptivePushBackInputStream in)throws IOException;
 	
@@ -77,6 +81,7 @@ public abstract class ABinIndicatorReadFormat0 implements IIndicatorReadFormat
 	@param in input, wrapped in un-read buffer, with cursor at the first byte
 		of next chunk header.
 	@return indicator or null if at eof.
+	@throws IOException if failed.
 	*/
 	protected abstract TIndicator tryNextIndicatorChunk(CAdaptivePushBackInputStream in)throws IOException;
 								
@@ -97,6 +102,7 @@ public abstract class ABinIndicatorReadFormat0 implements IIndicatorReadFormat
 	/** Should be invoked when non-DATA chunk header was decoded and cursor moved 
 	at the begining of payload. Arms {@link #readPayload} to be ready for processing
 	@param chunk_payload_size size of chunk payload, may be zero.
+	@throws IOException if failed.
 	*/
 	protected final void startNextIndicatorChunk(int chunk_payload_size)throws IOException
 	{
@@ -137,6 +143,7 @@ public abstract class ABinIndicatorReadFormat0 implements IIndicatorReadFormat
 	
 	@return byte 0...0xff or -1 if cursor is at the chunk header which
 			is not a DATA chunk or -2 if physical end of stream was reached.
+	@throws IOException if failed.
 	*/
 	protected final int readPayload()throws IOException
 	{		
@@ -172,6 +179,7 @@ public abstract class ABinIndicatorReadFormat0 implements IIndicatorReadFormat
 	/** Puts back payload byte to chunk buffer.
 	This method works correctly even across DATA chunks boundaries. 
 	@param b byte to put back 
+	@throws IOException if failed.
 	*/
 	protected final void unreadPayloadByte(byte b)throws IOException
 	{
@@ -185,6 +193,7 @@ public abstract class ABinIndicatorReadFormat0 implements IIndicatorReadFormat
 	
 	@return true if after checking subsequent header, if needed,
 		there is no more payload in chunk.
+	@throws IOException if failed.
 	 */
 	protected final boolean isPayloadEof()throws IOException
 	{
@@ -222,6 +231,7 @@ public abstract class ABinIndicatorReadFormat0 implements IIndicatorReadFormat
 	
 	
 	********************************************************* */
+	/** Closes input */
 	@Override public void close()throws IOException
 	{
 		input.close();

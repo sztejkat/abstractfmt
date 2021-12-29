@@ -11,7 +11,7 @@
 		This documents defines header and payload encoding
 		for chunk-based, described binary format.
 		
-		<h2>Headers</h2>
+		<h2 id="HEADER">Headers</h2>
 		
 		First byte of header decides on what header
 		we are talking about.
@@ -208,7 +208,9 @@
 			 encoded:  0000 0000
 		</pre>		
 		<p><i>Note: This is not an UTF-8 encoding as I don't need code points higher than 0xFFFF
-		and this encoding is a tiny bit more efficient in such case.</i></p>
+		and this encoding is a tiny bit more efficient in such case. Plus it allows to encode
+		"end-of-text" in an efficient way for infinite strings and adds only one byte for
+		short strings.</i></p>
 		
 		
 		<h3 id="BEGIN_REGISTER">BEGIN_REGISTER</h3>
@@ -217,7 +219,8 @@
 		<p>
 		The index assigned to registered name is implied from the order
 		of appearance of REGISTER events and first appearance registers
-		signal at index 0. Valid indexes range is 0...255.
+		signal at index 0. Valid indexes range is 0...255 thous this header
+		may appear only 256 times in a stream.
 		<p>
 		This header is always used in the same way as <a href="#BEGIN_DIRECT">BEGIN_DIRECT</a>
 		
@@ -411,7 +414,7 @@
 		</pre>
 		where <code>sss</code> is size of payload in bytes (zero allowed).
 		<p>
-		The boolean block is bit-packed using sequence of bit-blocks made
+		The boolean block is bit-packed using sequence of bit-chains made
 		of up to 255 bits and represented as: 
 		<pre>
 			ssss ssss
@@ -422,22 +425,32 @@
 		sequence and numbers do represent bits, as written in order
 		of appearance from 0...7.
 		<p>
-		The number of bytes used for bit sequence is rounded up
-		to fit required number of bits.
+		Example: write(new boolean[]{0,0,0,1,1,1}) will be encoded as:
+		<pre>
+			0x06
+			00111000
+		</pre>
+		The number of bytes used for bit-chain is rounded up
+		to be able to carry required number of bits.
 		<p>
-		The entire boolean block may consist of many such sequences
-		and there is no requirement on how long should they be.
+		The entire boolean block may consist of many such bit-chains
+		and there is no requirement on how long should they be. Zero sized
+		chains are allowed.
+		<p>
+		<i>Note: Current implementation <u>does</u> "glue" separate boolean
+		writes into as small number of chains as possible, unless they are 
+		broken with <code>flush()</code> command.</i>
 		
 		<h3 id="TYPE_CHAR_BLOCK">TYPE_CHAR_BLOCK</h3>
 		<pre>
 			sssT_TTTT
-			   (0x11
+			   (0x11)
 		</pre>
 		where <code>sss</code> is size of payload in bytes (zero allowed).
 		<p>
 		The content of a block is encoded according to 
 		<a href="#CHAR_BLOCK_ENCODING">characters block encoding</a>
-		but without any "end-of-text" markers.
+		but <u>without</u> any "end-of-text" markers.
 		
 		
 		<h3 id="TYPE_BYTE_BLOCK">TYPE_xxx_BLOCK</h3>

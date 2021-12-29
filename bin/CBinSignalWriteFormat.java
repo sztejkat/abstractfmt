@@ -29,6 +29,7 @@ public class CBinSignalWriteFormat extends CSignalWriteFormat
 		API abuse by {@link CSignalWriteFormat}.
 		@param max_events_recursion_depth see {@link ASignalWriteFormat#ASignalWriteFormat}
 		@param output see {@link ABinIndicatorWriteFormat1#ABinIndicatorWriteFormat1}	
+		@param test_mode ignored
 	*/
 	CBinSignalWriteFormat(
 							int max_events_recursion_depth,

@@ -10,7 +10,7 @@ import java.io.InputStream;
 
 /**
 	A base for chunk-based write formats implementing
-	{@link IIndicatorWriteFormat}
+	{@link IIndicatorReadFormat}
 	<p>
 	Adds functionality necessary for both described and un-described formats.
 */
@@ -30,13 +30,22 @@ public abstract class ABinIndicatorReadFormat1 extends ABinIndicatorReadFormat0
 				/** Set maximum name length */
 				private int max_name_length;
 				
+	/** Creates
+	@param in stream to read raw bytes from, non-null
+	*/			
 	protected ABinIndicatorReadFormat1(InputStream in)
 	{
 		super(in);
 		this.max_name_length = 1024;
 	};
 	/** Invoked on {@link #next} to invalidate all cached data.
-	This class uses it to manage boolean block reads  */
+	This class uses it to manage boolean block reads
+	since boolean reads do cache bit-chain information and most
+	recently read bit-chain byte.
+	@see #bits_in_bit_chain
+	@see #bit_in_byte
+	@see #byte_cache
+	*/
 	protected void invalidateCachedDataState()
 	{
 		bits_in_bit_chain =0;
@@ -53,6 +62,8 @@ public abstract class ABinIndicatorReadFormat1 extends ABinIndicatorReadFormat0
 	specification</a>
 	@return 0...0xFFFF if read character is not an end-of-text marker.
 			-1 if it is end-of-text marker
+	@throws IOException if failed
+	@throws EBrokenFormat if found character which is incorrectly encoded.
 	*/
 	protected int readEncodedCharacter()throws IOException
 	{
@@ -77,6 +88,8 @@ public abstract class ABinIndicatorReadFormat1 extends ABinIndicatorReadFormat0
 	<a href="doc-files/chunk-syntax-described.html#CHAR_BLOCK_ENCODING">format
 	specification</a>, throwing at end of text marks
 	@return 0...0xFFFF 
+	@throws IOException if failed
+	@throws EBrokenFormat if found character which is incorrectly encoded or if found "End-of-text" marker.
 	*/
 	protected char readEncodedBlockCharacter()throws IOException
 	{

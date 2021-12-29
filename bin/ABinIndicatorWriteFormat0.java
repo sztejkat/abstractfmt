@@ -25,7 +25,7 @@ public abstract class ABinIndicatorWriteFormat0 implements IIndicatorWriteFormat
 				of {@link #chunk} can be used to store
 				data in currently chosen {@link #header_indicator}
 				model */
-				private int chunk_capactity;
+				private int chunk_capacity;
 				/** Where to put next data into {@link #chunk}.
 				If this value equals to {@link #chunk_capacity}
 				chunk buffer is full and needs to be send
@@ -80,9 +80,9 @@ public abstract class ABinIndicatorWriteFormat0 implements IIndicatorWriteFormat
 		<li>retrive size of payload with {@link #getPayloadSize};</li>
 		<li>retrive capacity of current payload buffer with {@link #getPayloadCapactity};</li>
 		<li>manipulate payload content, if necessary with
-		{@link #getPayload(int)},{@link #setPayload(int)},{@link setPayloadSize(int)};</li>
+		{@link #getPayload(int)},{@link #setPayload(int,byte)},{@link #setPayloadSize(int)};</li>
 	</ul>
-	This method must not use {@link #writePayload(byte)} nor {@link #writePayload(byte[],int,int}.
+	This method must not use {@link #writePayload(byte)} nor {@link #writePayload(byte[],int,int)}.
 	@param header_indicator indicator which is stored or is to be updated
 			into a header buffer. Will be the same which was passed to
 			{@link #startChunk}
@@ -109,14 +109,18 @@ public abstract class ABinIndicatorWriteFormat0 implements IIndicatorWriteFormat
 													 
 	/** Invoked when format must initialize DATA chunk. This method
 	is expected to call {@link #startChunk} with {@link TIndicator#DATA}
-	and apropriate capacity information. */													 
+	and apropriate capacity information. 
+	@throws IOException if failed, even tough this method usually does not 
+		need to write any data to down-stream.
+	*/													 
 	protected abstract void startDataChunk()throws IOException;
 	
 	/** Invoked in {@link #flush} and {@link #writeFlush}.
 	<p>
 	This method will be usually empty, except if class buffers some
 	data outside a payload. If it does, it must write them inside
-	this method.  
+	this method.
+	@throws IOException if failed.  
 	*/
 	protected abstract void flushPayload()throws IOException;
 	
@@ -130,9 +134,17 @@ public abstract class ABinIndicatorWriteFormat0 implements IIndicatorWriteFormat
 	/** Prepares for next chunk.
 	This method flushes current chunk, if any, and sets-up
 	all buffers.
+	@param header_indicator indicator which denotes this header.
+		Will be passed to {@link #prepareChunkHeaderForFlushing}
+	@param chunk_payload_capacity chunk payload buffer capactity.
+		Must be in boundaries specified in constructor.
+		
+	@throws IOException if failed to flush current chunk
+	
 	@see #startDataChunk
 	@see #writePayload(byte)
 	@see #writePayload(byte[],int,int)
+	@see #flushChunk	
 	*/
 	protected void startChunk(TIndicator header_indicator,
 						      int chunk_payload_capacity
@@ -142,7 +154,7 @@ public abstract class ABinIndicatorWriteFormat0 implements IIndicatorWriteFormat
 		assert(header_indicator!=null);
 		assert(chunk_payload_capacity>0);
 		this.header_indicator=header_indicator;
-		this.chunk_capactity=chunk_payload_capacity;
+		this.chunk_capacity=chunk_payload_capacity;
 		this.chunk_at=0;
 	};
 	/** Updates payload size information in header and 
@@ -155,7 +167,7 @@ public abstract class ABinIndicatorWriteFormat0 implements IIndicatorWriteFormat
 		if (this.header_indicator==null)
 		{
 			assert(chunk_at==0);
-			assert(chunk_capactity==0);
+			assert(chunk_capacity==0);
 			return;
 		};
 		final int header_size = prepareChunkHeaderForFlushing( header_indicator, header);
@@ -169,13 +181,18 @@ public abstract class ABinIndicatorWriteFormat0 implements IIndicatorWriteFormat
 		};
 		
 		this.header_indicator=null;
-		this.chunk_capactity=0;
+		this.chunk_capacity=0;
 		this.chunk_at=0;
 	};
-	/** Flushes if there is no free spaces and creates data chunk */
+	/** Flushes if there is no free spaces and creates data chunk
+	@throws IOException if failed to flush current chunk or failed
+		to start new data chunk.
+	@see #flushChunk
+	@see #startDataChunk
+	*/
 	private void ensureHasPayloadSpace()throws IOException
 	{
-		if (chunk_at==chunk_capactity)	//this will be also true if header_indicator is null.
+		if (chunk_at==chunk_capacity)	//this will be also true if header_indicator is null.
 		{
 				flushChunk();
 				startDataChunk();
@@ -183,17 +200,19 @@ public abstract class ABinIndicatorWriteFormat0 implements IIndicatorWriteFormat
 	};
 	/** Writes payload byte, flushing and creating data chunks if necessary.
 	@param v byte to write 
+	@throws IOException if failed to do {@link #ensureHasPayloadSpace}
 	*/
 	protected void writePayload(byte v)throws IOException
 	{
 		ensureHasPayloadSpace();
-		assert(chunk_at<chunk_capactity);		
+		assert(chunk_at<chunk_capacity);		
 		chunk[chunk_at++]=v;
 	};
 	/** Writes payload data, flushing and creating data chunks if necessary.
 	@param data buffer of data to write
 	@param offset offset in above to start taking data from
 	@param length how many bytes.
+	@throws IOException if failed to do {@link #ensureHasPayloadSpace}
 	*/
 	protected void writePayload(byte [] data, int offset, int length)throws IOException
 	{   
@@ -205,7 +224,7 @@ public abstract class ABinIndicatorWriteFormat0 implements IIndicatorWriteFormat
 		while(length>0)
 		{         
 			ensureHasPayloadSpace();
-			int free_space = chunk_capactity-chunk_at;
+			int free_space = chunk_capacity-chunk_at;
 			assert(free_space>0);
 			int transfer = Math.min(free_space,length);
 			System.arraycopy(data,offset,chunk,chunk_at,transfer);
@@ -232,7 +251,7 @@ public abstract class ABinIndicatorWriteFormat0 implements IIndicatorWriteFormat
 	@return size of payload.*/
 	protected final int getPayloadCapactity()
 	{
-		return chunk_capactity;
+		return chunk_capacity;
 	};
 	/** Retrives byte of payload
 	@param at 0... {@link #getPayloadSize} -1
@@ -263,7 +282,7 @@ public abstract class ABinIndicatorWriteFormat0 implements IIndicatorWriteFormat
 	protected final void setPayloadSize(int size)
 	{
 		assert(size>=0);
-		assert(size<=chunk_capactity);
+		assert(size<=chunk_capacity);
 		chunk_at = size;
 	};
 	/* ********************************************************************
@@ -273,9 +292,16 @@ public abstract class ABinIndicatorWriteFormat0 implements IIndicatorWriteFormat
 	
 	
 	* *********************************************************************/
-	/** Calls {@link #flushPayload() } */
-	@Override public void writeFlush(TIndicator flush)throws IOException{ flushPayload(); };
+	/** Calls {@link #flushPayload() }
+	<p>
+	<i>Note: Event if this class is un-described the contract requires that this 
+	method <u>is called</u>. So we are using it to flush buffered content. In practice
+	it will apply to buffered bit-chain.</i>
 	
+	 */
+	@Override public void writeFlush(TIndicator flush)throws IOException{ flushPayload(); };
+	/** Flushes any pending payload with {@link #flushPayload}, then flushes chunk with 
+	{@link #flushChunk} and finally flushes down-stream output */
 	@Override public void flush()throws IOException
 	{
 		flushPayload();

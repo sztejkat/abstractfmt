@@ -58,6 +58,7 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 	/** Header specific handler for {@link #prepareChunkHeaderForFlushing}
 	@param header_buffer as specified there
 	@return --//--
+	@throws IOException if failed.
 	*/
 	private int prepare_DATA_HeaderForFlushing( byte [] header_buffer )throws IOException
 	{
@@ -130,6 +131,7 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 	/** Header specific handler for {@link #prepareChunkHeaderForFlushing}
 	@param header_buffer as specified there
 	@return --//--
+	@throws IOException if failed.
 	*/
 	private int prepare_BEGIN_DIRECT_HeaderForFlushing( byte [] header_buffer )throws IOException
 	{
@@ -155,6 +157,7 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 	/** Header specific handler for {@link #prepareChunkHeaderForFlushing}
 	@param header_buffer as specified there
 	@return --//--
+	@throws IOException if failed.
 	*/
 	private int prepare_END_BEGIN_DIRECT_HeaderForFlushing( byte [] header_buffer )throws IOException
 	{
@@ -181,6 +184,7 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 	/** Header specific handler for {@link #prepareChunkHeaderForFlushing}
 	@param header_buffer as specified there
 	@return --//--
+	@throws IOException if failed.
 	*/
 	private int prepare_BEGIN_REGISTER_HeaderForFlushing( byte [] header_buffer )throws IOException
 	{
@@ -207,6 +211,7 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 	/** Header specific handler for {@link #prepareChunkHeaderForFlushing}
 	@param header_buffer as specified there
 	@return --//--
+	@throws IOException if failed.
 	*/
 	private int prepare_END_BEGIN_REGISTER_HeaderForFlushing( byte [] header_buffer )throws IOException
 	{
@@ -234,6 +239,7 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 	/** Header specific handler for {@link #prepareChunkHeaderForFlushing}
 	@param header_buffer as specified there
 	@return --//--
+	@throws IOException if failed.
 	*/
 	private int prepare_BEGIN_USE_HeaderForFlushing( byte [] header_buffer )throws IOException
 	{
@@ -261,6 +267,7 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 	/** Header specific handler for {@link #prepareChunkHeaderForFlushing}
 	@param header_buffer as specified there
 	@return --//--
+	@throws IOException if failed.
 	*/
 	private int prepare_END_BEGIN_USE_HeaderForFlushing( byte [] header_buffer )throws IOException
 	{
@@ -284,6 +291,7 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 	/** Header specific handler for {@link #prepareChunkHeaderForFlushing}
 	@param header_buffer as specified there
 	@return --//--
+	@throws IOException if failed.
 	*/
 	private int prepare_END_HeaderForFlushing( byte [] header_buffer )throws IOException
 	{

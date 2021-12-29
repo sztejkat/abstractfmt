@@ -12,16 +12,21 @@
 		for chunk-based, undescribed binary format.
 		
 		<h2>Headers</h2>
-		This format is using two separate encodings
-		for headers. Separate for data and separate
-		for non-data headers.
-		<p>
 		First byte of header decides on what header
 		we are talking about.
 		
 		<pre>
-			xxxx TTTT
+		 bit 7    bit 0
+		    xxxx TTTT
 		</pre>
+		<p>
+		<i>Note: Primary difference between this format header 
+		and a <A href="chunk-syntax-described.html#HEADER">described format</a>
+		header is the number of bits reserved for header type. Four in this format, five in described format.
+		Effectively small type chunks in un-described format may be twice as big as in described format.
+		</i>
+		 
+		
 		<table border="1">
 			<tr style="background-color:#FA7F7F;">
 				<td>T TTTT</td><td>header type</td>

@@ -21,7 +21,7 @@ public abstract class ABinIndicatorWriteFormat1 extends ABinIndicatorWriteFormat
 					header. */
 					private final byte [] bit_chain_buffer;
 	/** Creates
-	@param output see {@link ABinIndicatorWriteFormat0#ABinIndicatorWriteFormat}
+	@param output see {@link ABinIndicatorWriteFormat0#ABinIndicatorWriteFormat0}
 	@param max_header_size --//--
 	@param max_chunk_size --//--	
 	*/
@@ -57,7 +57,8 @@ public abstract class ABinIndicatorWriteFormat1 extends ABinIndicatorWriteFormat
 	/** Encodes character as described in 
 	<a href="doc-files/chunk-syntax-described.html#CHAR_BLOCK_ENCODING">format
 	specification</a>
-	@param c character to encode
+	@param _c character to encode
+	@throws IOException if failed to write it
 	*/
 	protected void writeEncodedCharacter(char _c)throws IOException
 	{
@@ -87,6 +88,7 @@ public abstract class ABinIndicatorWriteFormat1 extends ABinIndicatorWriteFormat
 	/** Encodes character as described in 
 	<a href="doc-files/chunk-syntax-described.html#CHAR_BLOCK_ENCODING">format
 	specification</a> as an "end-of-text" mark.
+	@throws IOException if failed to write it
 	*/
 	protected void writeEndMarkCharacter()throws IOException
 	{
@@ -231,6 +233,8 @@ public abstract class ABinIndicatorWriteFormat1 extends ABinIndicatorWriteFormat
 	
 	---------------------------------------------------------------*/
 	/** Flushes chain buffered by {@link #writeBooleanBlock} 
+	@throws IOException if failed to write it
+	@see #flushPayload
 	*/
 	private void flushChainBuffer()throws IOException
 	{	
