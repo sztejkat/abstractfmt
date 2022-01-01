@@ -137,7 +137,7 @@ public abstract class ABinIndicatorWriteFormat0 implements IIndicatorWriteFormat
 	@param header_indicator indicator which denotes this header.
 		Will be passed to {@link #prepareChunkHeaderForFlushing}
 	@param chunk_payload_capacity chunk payload buffer capactity.
-		Must be in boundaries specified in constructor.
+		Must be in boundaries specified in constructor, may be zero.
 		
 	@throws IOException if failed to flush current chunk
 	
@@ -152,7 +152,7 @@ public abstract class ABinIndicatorWriteFormat0 implements IIndicatorWriteFormat
 	{		
 		flushChunk();
 		assert(header_indicator!=null);
-		assert(chunk_payload_capacity>0);
+		assert(chunk_payload_capacity>=0);
 		this.header_indicator=header_indicator;
 		this.chunk_capacity=chunk_payload_capacity;
 		this.chunk_at=0;

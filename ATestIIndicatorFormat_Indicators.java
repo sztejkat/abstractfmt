@@ -186,6 +186,10 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		enter();
 		/*	Check if we can skip un-read data and get to signal	*/
 		Pair p = create();
+		
+		Assume.assumeTrue(p.read.isDescribed()==false);
+		Assume.assumeTrue(p.read.isFlushing()==false);		
+		
 		p.write.open();
 		p.write.writeType(TIndicator.TYPE_INT);
 		p.write.writeInt(77);
@@ -202,7 +206,6 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		expect(p.read.readIndicator(),TIndicator.DATA);
 		expect(p.read.readIndicator(),TIndicator.DATA);
 		expect(p.read.readIndicator(),TIndicator.DATA);
-		
 		p.read.skip();
 		expect(p.read.readIndicator(),TIndicator.BEGIN_DIRECT);
 		Assert.assertTrue("arabica".equals(p.read.getSignalName()));
@@ -214,8 +217,12 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 	@Test public void testDataSkip_Eof()throws IOException
 	{
 		enter();
-		/*	Check if we can skip un-read and will fail if no closing signal.*/
+		/*	Check if we can skip and will fail if no closing signal.*/
 		Pair p = create();
+		
+		Assume.assumeTrue(p.read.isDescribed()==false);
+		Assume.assumeTrue(p.read.isFlushing()==false);
+		
 		p.write.open();
 		p.write.writeType(TIndicator.TYPE_INT);
 		p.write.writeInt(77);
@@ -230,10 +237,12 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		expect(p.read.readIndicator(),TIndicator.DATA);
 		expect(p.read.readIndicator(),TIndicator.DATA);
 		expect(p.read.readIndicator(),TIndicator.DATA);
+		//Now if stream was NOT flushing we have some data to skip, because
+		//we did not read indicator. If stream WAS fli
 		try{
-			p.read.skip();
-			Assert.fail();
-			}catch(EUnexpectedEof ex){};
+				p.read.skip();
+				Assert.fail();
+				}catch(EUnexpectedEof ex){};
 		p.read.close();
 		leave();
 	};
@@ -374,7 +383,12 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		
 		expect(p.read.readIndicator(),TIndicator.TYPE_DOUBLE);
 		expect(p.read.readIndicator(),TIndicator.DATA);
-		p.read.skip();
+		//Now if stream is described but not flushing there is no 
+		//indicator after data, so skipping data SHOULD fail.
+		try{
+				p.read.skip();
+				Assert.fail();
+			}catch(EUnexpectedEof ex){};
 		p.read.close();
 		leave();
 	};	
@@ -430,8 +444,13 @@ public abstract class ATestIIndicatorFormat_Indicators extends ATestIIndicatorFo
 		Assert.assertTrue(p.read.getIndicator()==TIndicator.TYPE_DOUBLE);
 		p.read.next();
 		Assert.assertTrue(p.read.getIndicator()==TIndicator.DATA);
-		p.read.next();
-		p.read.close();	
+		//Now if stream is described but not flushing there is no 
+		//indicator after data, so going to next() indicator SHOULD fail.
+		try{
+				p.read.next();
+				Assert.fail();
+			}catch(EUnexpectedEof ex){};
+		p.read.close();
 		leave();
 	};	
 };

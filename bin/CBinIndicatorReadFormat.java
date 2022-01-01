@@ -81,7 +81,6 @@ public class CBinIndicatorReadFormat extends ABinIndicatorReadFormat1
 	protected TIndicator tryNextIndicatorChunk(CAdaptivePushBackInputStream in)throws IOException
 	{
 		int header = in.read();
-		System.out.println("tryNextIndicatorChunk h ="+Integer.toHexString(0xff & header));
 		if (header==-1) return null;	//physical eof.
 		//now decode headers
 		switch(header & 0x0F)
@@ -117,7 +116,7 @@ public class CBinIndicatorReadFormat extends ABinIndicatorReadFormat1
 	private void processX_BEGIN_DIRECT(int header, CAdaptivePushBackInputStream in)throws IOException
 	{
 		//extract size
-		int s = ((header & 0xF0)>>4)+3;
+		int s = ((header & 0xF0)>>4)+1;
 		//initialize readPayload
 		startNextIndicatorChunk(s);
 		//load name, limited
@@ -139,7 +138,7 @@ public class CBinIndicatorReadFormat extends ABinIndicatorReadFormat1
 	private void processX_BEGIN_REGISTER(int header, CAdaptivePushBackInputStream in)throws IOException
 	{
 		//extract size
-		int s = ((header & 0xF0)>>4)+3;
+		int s = ((header & 0xF0)>>4)+1;
 		//initialize readPayload
 		startNextIndicatorChunk(s);
 		//load name, limited

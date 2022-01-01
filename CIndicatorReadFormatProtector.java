@@ -31,7 +31,11 @@ public class CIndicatorReadFormatProtector implements IIndicatorReadFormat
 				private boolean is_closed;
 				private int set_characters;
 				
+				/** Used to track what indicator is current */
 				private TIndicator last_indicator;
+				/** Used to track getIndicator() stability */
+				private TIndicator last_get_indicator;
+				/** Used to track what type indicator is current */
 				private TIndicator last_type_indicator;
 				
 	/** Creates protector
@@ -130,9 +134,13 @@ public class CIndicatorReadFormatProtector implements IIndicatorReadFormat
 		validateReady();
 		TIndicator i = bare.getIndicator();
 		if (i==null) throw new AssertionError(bare.getClass()+".getIndicator() returned null");
-		if ((last_indicator!=null)&&(i!=last_indicator))
-				throw new AssertionError("Detected unexpected indicator change");
+		//Now last_indicator may be used to track both readIndicator()
+		//and getIndicator(). We need dedicated field to track if value is stable.
+		if ((last_get_indicator!=null)&&(i!=last_get_indicator))
+				throw new AssertionError("Detected unexpected indicator change, last returned was "+last_get_indicator+
+									" but "+bare.getClass()+".getIndicator() returned "+i);
 		last_indicator =  i;
+		last_get_indicator = i;
 		if ((i.FLAGS & TIndicator.TYPE)!=0) last_type_indicator = i;
 				else 
 		if (i!=TIndicator.DATA)	last_type_indicator = null;
@@ -141,9 +149,18 @@ public class CIndicatorReadFormatProtector implements IIndicatorReadFormat
 	@Override public void next()throws IOException
 	{
 		validateReady();
+		last_get_indicator=null;
 		last_indicator =null;
 		last_type_indicator = null;
 		bare.next();
+	};
+	@Override public void skip()throws IOException
+	{
+		validateReady();
+		last_get_indicator=null;
+		last_indicator =null;
+		last_type_indicator = null;
+		bare.skip();
 	};
 	@Override public TIndicator readIndicator()throws IOException
 	{
@@ -151,6 +168,7 @@ public class CIndicatorReadFormatProtector implements IIndicatorReadFormat
 		final TIndicator i = bare.readIndicator();
 		if (i==null) throw new AssertionError(bare.getClass()+".readIndicator() returned null");		
 		last_indicator =i;
+		last_get_indicator=null;
 		last_type_indicator = null;
 		return i;
 	};
@@ -191,6 +209,7 @@ public class CIndicatorReadFormatProtector implements IIndicatorReadFormat
 				throw new AssertionError("Can't use readBoolean() with indicator different than DATA, but it is now "+last_indicator);
 				
 		last_indicator=null;
+		last_get_indicator=null;
 		return bare.readBoolean();	
 	};
 	@Override public byte readByte()throws IOException
@@ -203,6 +222,7 @@ public class CIndicatorReadFormatProtector implements IIndicatorReadFormat
 				throw new AssertionError("Can't use readByte() with indicator different than DATA, but it is now "+last_indicator);
 				
 		last_indicator=null;
+		last_get_indicator=null;
 		return bare.readByte();	
 	};
 	@Override public char readChar()throws IOException
@@ -215,6 +235,7 @@ public class CIndicatorReadFormatProtector implements IIndicatorReadFormat
 				throw new AssertionError("Can't use readChar() with indicator different than DATA, but it is now "+last_indicator);
 				
 		last_indicator=null;
+		last_get_indicator=null;
 		return bare.readChar();	
 	};
 	@Override public short readShort()throws IOException
@@ -227,6 +248,7 @@ public class CIndicatorReadFormatProtector implements IIndicatorReadFormat
 				throw new AssertionError("Can't use readShort() with indicator different than DATA, but it is now "+last_indicator);
 				
 		last_indicator=null;
+		last_get_indicator=null;
 		return bare.readShort();	
 	};
 	@Override public int readInt()throws IOException
@@ -239,6 +261,7 @@ public class CIndicatorReadFormatProtector implements IIndicatorReadFormat
 				throw new AssertionError("Can't use readInt() with indicator different than DATA, but it is now "+last_indicator);
 				
 		last_indicator=null;
+		last_get_indicator=null;
 		return bare.readInt();	
 	};
 	@Override public long readLong()throws IOException
@@ -251,6 +274,7 @@ public class CIndicatorReadFormatProtector implements IIndicatorReadFormat
 				throw new AssertionError("Can't use readLong() with indicator different than DATA, but it is now "+last_indicator);
 				
 		last_indicator=null;
+		last_get_indicator=null;
 		return bare.readLong();	
 	};
 	@Override public float readFloat()throws IOException
@@ -263,6 +287,7 @@ public class CIndicatorReadFormatProtector implements IIndicatorReadFormat
 				throw new AssertionError("Can't use readFloat() with indicator different than DATA, but it is now "+last_indicator);
 				
 		last_indicator=null;
+		last_get_indicator=null;
 		return bare.readFloat();	
 	};
 	@Override public double readDouble()throws IOException
@@ -275,6 +300,7 @@ public class CIndicatorReadFormatProtector implements IIndicatorReadFormat
 				throw new AssertionError("Can't use readDouble() with indicator different than DATA, but it is now "+last_indicator);
 				
 		last_indicator=null;
+		last_get_indicator=null;
 		return bare.readDouble();	
 	};
 	@Override public int readBooleanBlock(boolean [] buffer, int offset, int length)throws IOException
@@ -295,6 +321,7 @@ public class CIndicatorReadFormatProtector implements IIndicatorReadFormat
 		if (length+offset>buffer.length) 
 			throw new AssertionError("length+offset="+(length+offset)+" outside buffer boundary "+buffer.length);
 		last_indicator=null;
+		last_get_indicator=null;
 		final int r = bare.readBooleanBlock(buffer,offset,length);
 		if (r<0) throw new AssertionError(bare.getClass()+".readBooleanBlock() returned "+r);
 		if (r>length) throw new AssertionError(bare.getClass()+".readBooleanBlock() returned "+r+" which reports longer read than requested");
@@ -319,6 +346,7 @@ public class CIndicatorReadFormatProtector implements IIndicatorReadFormat
 		if (length+offset>buffer.length) 
 			throw new AssertionError("length+offset="+(length+offset)+" outside buffer boundary "+buffer.length);
 		last_indicator=null;
+		last_get_indicator=null;
 		final int r = bare.readByteBlock(buffer,offset,length);
 		if (r<0) throw new AssertionError(bare.getClass()+".readByteBlock() returned "+r);
 		if (r>length) throw new AssertionError(bare.getClass()+".readByteBlock() returned "+r+" which reports longer read than requested");
@@ -335,6 +363,7 @@ public class CIndicatorReadFormatProtector implements IIndicatorReadFormat
 		if (last_indicator!=TIndicator.DATA)
 				throw new AssertionError("Can't use readByteBlock() with indicator different than DATA, but it is now "+last_indicator);				
 		last_indicator=null;
+		last_get_indicator=null;
 		final int r = bare.readByteBlock();
 		if ((r<-1)||(r>255)) throw new AssertionError(bare.getClass()+".readByteBlock() returned "+r);
 		return r;
@@ -360,6 +389,7 @@ public class CIndicatorReadFormatProtector implements IIndicatorReadFormat
 		if (length+offset>buffer.length) 
 			throw new AssertionError("length+offset="+(length+offset)+" outside buffer boundary "+buffer.length);
 		last_indicator=null;
+		last_get_indicator=null;
 		final int r = bare.readCharBlock(buffer,offset,length);
 		if (r<0) throw new AssertionError(bare.getClass()+".readCharBlock() returned "+r);
 		if (r>length) throw new AssertionError(bare.getClass()+".readCharBlock() returned "+r+" which reports longer read than requested");
@@ -379,6 +409,7 @@ public class CIndicatorReadFormatProtector implements IIndicatorReadFormat
 		if (length<0) 
 			throw new AssertionError("length is negative");
 		last_indicator=null;
+		last_get_indicator=null;
 		final int r = bare.readCharBlock(characters,length);
 		if (r<0) throw new AssertionError(bare.getClass()+".readCharBlock() returned "+r);
 		if (r>length) throw new AssertionError(bare.getClass()+".readCharBlock() returned "+r+" which reports longer read than requested");
@@ -403,6 +434,7 @@ public class CIndicatorReadFormatProtector implements IIndicatorReadFormat
 		if (length+offset>buffer.length) 
 			throw new AssertionError("length+offset="+(length+offset)+" outside buffer boundary "+buffer.length);
 		last_indicator=null;
+		last_get_indicator=null;
 		final int r = bare.readShortBlock(buffer,offset,length);
 		if (r<0) throw new AssertionError(bare.getClass()+".readShortBlock() returned "+r);
 		if (r>length) throw new AssertionError(bare.getClass()+".readShortBlock() returned "+r+" which reports longer read than requested");
@@ -427,6 +459,7 @@ public class CIndicatorReadFormatProtector implements IIndicatorReadFormat
 		if (length+offset>buffer.length) 
 			throw new AssertionError("length+offset="+(length+offset)+" outside buffer boundary "+buffer.length);
 		last_indicator=null;
+		last_get_indicator=null;
 		final int r = bare.readIntBlock(buffer,offset,length);
 		if (r<0) throw new AssertionError(bare.getClass()+".readIntBlock() returned "+r);
 		if (r>length) throw new AssertionError(bare.getClass()+".readIntBlock() returned "+r+" which reports longer read than requested");
@@ -451,6 +484,7 @@ public class CIndicatorReadFormatProtector implements IIndicatorReadFormat
 		if (length+offset>buffer.length) 
 			throw new AssertionError("length+offset="+(length+offset)+" outside buffer boundary "+buffer.length);
 		last_indicator=null;
+		last_get_indicator=null;
 		final int r = bare.readLongBlock(buffer,offset,length);
 		if (r<0) throw new AssertionError(bare.getClass()+".readLongBlock() returned "+r);
 		if (r>length) throw new AssertionError(bare.getClass()+".readLongBlock() returned "+r+" which reports longer read than requested");
@@ -499,6 +533,7 @@ public class CIndicatorReadFormatProtector implements IIndicatorReadFormat
 		if (length+offset>buffer.length) 
 			throw new AssertionError("length+offset="+(length+offset)+" outside buffer boundary "+buffer.length);
 		last_indicator=null;
+		last_get_indicator=null;
 		final int r = bare.readDoubleBlock(buffer,offset,length);
 		if (r<0) throw new AssertionError(bare.getClass()+".readDoubleBlock() returned "+r);
 		if (r>length) throw new AssertionError(bare.getClass()+".readDoubleBlock() returned "+r+" which reports longer read than requested");

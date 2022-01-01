@@ -133,11 +133,11 @@ public abstract class ATestIIndicatorFormat_Primitives extends ATestIIndicatorFo
 		
 		expect(p.read.readIndicator(),TIndicator.TYPE_INT);
 		expect(p.read.readIndicator(),TIndicator.DATA);
-		Assert.assertTrue(p.read.readInt()==34445544);
+		Assert.assertTrue(p.read.readInt()==0xFA4DEF45);
 		
 		expect(p.read.readIndicator(),TIndicator.TYPE_LONG);
 		expect(p.read.readIndicator(),TIndicator.DATA);
-		Assert.assertTrue(p.read.readLong()==135245525252454L);
+		Assert.assertTrue(p.read.readLong()==0x803A4BCC_334455AAL);
 		
 		expect(p.read.readIndicator(),TIndicator.TYPE_FLOAT);
 		expect(p.read.readIndicator(),TIndicator.DATA);

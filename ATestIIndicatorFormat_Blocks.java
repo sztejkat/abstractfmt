@@ -195,8 +195,7 @@ public abstract class ATestIIndicatorFormat_Blocks extends ATestIIndicatorFormat
 		for(int i=0;i<DAT.length;i++)
 		{
 			 if (DAT[i]!=R[i]) Assert.fail("Differs at "+i);
-		}; 
-		
+		};
 		//Should be getting end indicator and calls should be not allowed, but 
 		//calls are allowed to not throw directly because it is up to us to check it.
 		if (p.read.isFlushing())

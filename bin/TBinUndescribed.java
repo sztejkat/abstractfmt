@@ -1,7 +1,7 @@
 package sztejkat.abstractfmt.bin;
 
 /**
-	Set of usefull constants
+	Set of usefull constants for undescribed format.
 */
 interface TBinUndescribed
 {

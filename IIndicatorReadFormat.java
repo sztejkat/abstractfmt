@@ -102,7 +102,9 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	@see #next()
 	*/
 	public TIndicator getIndicator()throws IOException;
-	/** Calls {@link #getIndicator} and calls {@link #next} if not on data
+	/** Calls {@link #getIndicator} and calls {@link #next} if not on data.
+	Effectively takes indicator from a stream and moves cursor to
+	data following it.
 	@return as {@link #getIndicator}
 	@throws IOException if failed. */
 	public default TIndicator readIndicator()throws IOException
@@ -113,7 +115,9 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	 	return i;
 	}
 	/** Calls {@link #getIndicator} and calls {@link #next} if 
-	at {@link TIndicator#DATA}
+	at {@link TIndicator#DATA}.
+	Effectively skips remaning data in stream and moves cursor
+	to next indicator.
 	@throws IOException if failed. 
 	*/	
 	public default void skip()throws IOException
@@ -133,7 +137,7 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	If cursor is at an indicator this indicator is skipped and cursor
 	is set to an element after it which may be either data or indicator.	 	
 	@throws EUnexpectedEof if hit physical end of stream
-		before reaching next element.
+		before reaching next indicator.
 	*/
 	public void next()throws IOException;
 		

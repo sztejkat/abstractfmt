@@ -42,15 +42,31 @@ public abstract class ABinIndicatorReadFormat1 extends ABinIndicatorReadFormat0
 	This class uses it to manage boolean block reads
 	since boolean reads do cache bit-chain information and most
 	recently read bit-chain byte.
+	<p>
+	Calling this method must result in {@link #hasCachedData} return false.
 	@see #bits_in_bit_chain
 	@see #bit_in_byte
 	@see #byte_cache
 	*/
-	protected void invalidateCachedDataState()
+	protected void invalidateCachedData()
 	{
 		bits_in_bit_chain =0;
 		bit_in_byte=0;
 		byte_cache=0;
+	};
+	/** Used, together with {@link #invalidateCachedDataState}
+	to manage anything what is cached beside of chunk content.
+	Invoked in {@link #getIndicator} to check, if even tough we
+	are at the end of chunk ({@link #isPayloadEof}) we still
+	have some data to serve.
+	<p>
+	This class is using {@link #bits_in_bit_chain} for bit-chain
+	cache.
+	@return true if there are cached data.
+	*/
+	protected boolean hasCachedData()
+	{
+		return bits_in_bit_chain!=0;
 	};
 	/* **********************************************************************
 	
@@ -143,6 +159,7 @@ public abstract class ABinIndicatorReadFormat1 extends ABinIndicatorReadFormat0
 			Indicators
 	
 	---------------------------------------------------------------*/
+	
 	/** Calls {@link #tryNextIndicatorChunk} or returns cached value */
 	@Override public TIndicator getIndicator()throws IOException
 	{
@@ -152,7 +169,7 @@ public abstract class ABinIndicatorReadFormat1 extends ABinIndicatorReadFormat0
 			if (indicator_cache==null)
 			{
 				//no, try to pick up one
-				indicator_cache = tryNextIndicatorChunk();
+				indicator_cache = tryNextIndicatorChunk();				
 				assert(indicator_cache!=TIndicator.EOF);
 				if (indicator_cache==null) return TIndicator.EOF;
 			};
@@ -164,24 +181,26 @@ public abstract class ABinIndicatorReadFormat1 extends ABinIndicatorReadFormat0
 				//Note: true payload eof requires testing chain cache
 				//because last byte might have been picked but not
 				//sent to output yet.
-				if (isPayloadEof()  && (bits_in_bit_chain==0))
-				{
+				if (isPayloadEof()  && (!hasCachedData()))
+				{					
 					//force re-freshing it
 					 indicator_cache = null;
 					 continue;
 				}
 			};
+			
 			//this may be safely returned.
 			return indicator_cache;
 		}
 	};
 	@Override protected void skipRemaningData()throws IOException, EUnexpectedEof
 	{
-		invalidateCachedDataState();
+		invalidateCachedData();
+		assert(!hasCachedData());
 		super.skipRemaningData();
 	};
 	@Override public void next()throws IOException
-	{
+	{		
 		//In our system cursor is always after the header
 		//of an indicator, so our behaviour depends of
 		//what we return with getIndicator		
@@ -195,12 +214,11 @@ public abstract class ABinIndicatorReadFormat1 extends ABinIndicatorReadFormat0
 			default:
 					//and in this case we should toggle it
 					//to DATA if there are some data.
-					if (!isPayloadEof())	
-					{
+					if (!isPayloadEof() || hasCachedData())	
+					{						
 						indicator_cache=TIndicator.DATA;
 					}else
-					{
-						//isPayloadEof() returning true means, that it reached nonDATA indicator. 
+					{						
 						indicator_cache=null;
 					}
 		}

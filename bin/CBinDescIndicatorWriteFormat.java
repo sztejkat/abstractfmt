@@ -5,15 +5,17 @@ import java.io.*;
 import java.io.OutputStream;
 
 /**
-	A chunk-based {@link IIndicatorWriteFormat}, undescribed.
+	A chunk-based {@link IIndicatorWriteFormat}, described.
 */
-public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
+public class CBinDescIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 {			
-
+				/** Cache for {@link #writeBoolean(boolean)}
+				since this value is encoded in chunk header */
+				private boolean boolean_cache;
 	/** Creates
 	@param output see {@link ABinIndicatorWriteFormat1#ABinIndicatorWriteFormat1}
 	*/
-	protected CBinIndicatorWriteFormat(
+	protected CBinDescIndicatorWriteFormat(
 							OutputStream output
 							)
 	{
@@ -51,7 +53,39 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 			case END_BEGIN_REGISTER:
 					return prepare_END_BEGIN_REGISTER_HeaderForFlushing(header_buffer);			
 			case END_BEGIN_USE:
-					return prepare_END_BEGIN_USE_HeaderForFlushing(header_buffer);			
+					return prepare_END_BEGIN_USE_HeaderForFlushing(header_buffer);
+			case TYPE_BOOLEAN: 			
+					return prepare_TYPE_BOOLEAN_HeaderForFlushing(header_buffer);
+			case TYPE_BYTE: 			
+					return prepare_TYPE_x_HeaderForFlushing(header_buffer, header_indicator, TBinDescribed.TYPE_BYTE);
+			case TYPE_CHAR: 			
+					return prepare_TYPE_x_HeaderForFlushing(header_buffer, header_indicator, TBinDescribed.TYPE_CHAR);
+			case TYPE_SHORT: 			
+					return prepare_TYPE_x_HeaderForFlushing(header_buffer, header_indicator, TBinDescribed.TYPE_SHORT);
+			case TYPE_INT: 			
+					return prepare_TYPE_x_HeaderForFlushing(header_buffer, header_indicator, TBinDescribed.TYPE_INT);
+			case TYPE_LONG: 			
+					return prepare_TYPE_x_HeaderForFlushing(header_buffer, header_indicator, TBinDescribed.TYPE_LONG);	
+			case TYPE_FLOAT: 			
+					return prepare_TYPE_x_HeaderForFlushing(header_buffer, header_indicator, TBinDescribed.TYPE_FLOAT);	
+			case TYPE_DOUBLE: 			
+					return prepare_TYPE_x_HeaderForFlushing(header_buffer, header_indicator, TBinDescribed.TYPE_DOUBLE);	
+			case TYPE_BOOLEAN_BLOCK: 			
+					return prepare_TYPE_x_BLOCK_HeaderForFlushing(header_buffer, header_indicator, TBinDescribed.TYPE_BOOLEAN_BLOCK);		
+			case TYPE_BYTE_BLOCK: 			
+					return prepare_TYPE_x_BLOCK_HeaderForFlushing(header_buffer, header_indicator, TBinDescribed.TYPE_BYTE_BLOCK);
+			case TYPE_CHAR_BLOCK: 			
+					return prepare_TYPE_x_BLOCK_HeaderForFlushing(header_buffer, header_indicator, TBinDescribed.TYPE_CHAR_BLOCK);
+			case TYPE_SHORT_BLOCK: 			
+					return prepare_TYPE_x_BLOCK_HeaderForFlushing(header_buffer, header_indicator, TBinDescribed.TYPE_SHORT_BLOCK);
+			case TYPE_INT_BLOCK: 			
+					return prepare_TYPE_x_BLOCK_HeaderForFlushing(header_buffer, header_indicator, TBinDescribed.TYPE_INT_BLOCK);
+			case TYPE_LONG_BLOCK: 			
+					return prepare_TYPE_x_BLOCK_HeaderForFlushing(header_buffer, header_indicator, TBinDescribed.TYPE_LONG_BLOCK);	
+			case TYPE_FLOAT_BLOCK: 			
+					return prepare_TYPE_x_BLOCK_HeaderForFlushing(header_buffer, header_indicator, TBinDescribed.TYPE_FLOAT_BLOCK);	
+			case TYPE_DOUBLE_BLOCK: 			
+					return prepare_TYPE_x_BLOCK_HeaderForFlushing(header_buffer, header_indicator, TBinDescribed.TYPE_DOUBLE_BLOCK);		
 			default: throw new AssertionError();
 		}
 	};
@@ -66,23 +100,23 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 		int s = getPayloadSize();
 		if (s==0) return 0;	//zero sized data chunks are not written at all.
 		s--;
-		if (s<=15)
+		if (s<=7)
 		{
 			//short data
-			header_buffer[0] = (byte)( TBinUndescribed.DATA_SHORT | (s<<4));
+			header_buffer[0] = (byte)( TBinDescribed.DATA_SHORT | (s<<5));
 			return 1;
 		}else
-		if(s<=4095)
+		if(s<=2047)
 		{
 			//medium data
-			header_buffer[0] = (byte)( TBinUndescribed.DATA_MEDIUM | (s<<4));
-			header_buffer[1] = (byte)(s>>>4);
+			header_buffer[0] = (byte)( TBinDescribed.DATA_MEDIUM | (s<<5));
+			header_buffer[1] = (byte)(s>>>3);
 			return 2;
 		}else
 		{
 			assert(s<=65535);
 			//long data.
-			header_buffer[0] = TBinUndescribed.DATA_LONG;
+			header_buffer[0] = TBinDescribed.DATA_LONG;
 			header_buffer[1] = (byte)(s);
 			header_buffer[2] = (byte)(s>>>8);
 			return 3;
@@ -110,7 +144,7 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 	
 	-------------------------------------------------- */
 	/** Always false */
-	@Override public final boolean isDescribed(){ return false;};
+	@Override public final boolean isDescribed(){ return true;};
 	/* --------------------------------------------------
 	
 			Signals related indicators..
@@ -123,7 +157,7 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 		//We just start the chunk
 		startChunk(
 					TIndicator.BEGIN_DIRECT,//TIndicator header_indicator,
-					15+1					//int chunk_payload_capacity
+					7+1					//int chunk_payload_capacity
 						      );
 		//and follow it with name which may, by itself, generate other chunks.
 		writeBeginDirectPayload(signal_name);
@@ -137,10 +171,10 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 	{
 		//retrive size
 		int s = getPayloadSize();
-		assert((s>=1)&&(s<=15+1));	//header type limits.
+		assert((s>=1)&&(s<=7+1)):"s="+s;	//header type limits.
 		s = s-1;
 		//encode type
-		header_buffer[0]=(byte)(TBinUndescribed.BEGIN_DIRECT | (s<<4));
+		header_buffer[0]=(byte)(TBinDescribed.BEGIN_DIRECT | (s<<5));
 		return 1;
 	};
 	
@@ -149,7 +183,7 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 		//We just start the chunk
 		startChunk(
 					TIndicator.END_BEGIN_DIRECT,//TIndicator header_indicator,
-					15+1					//int chunk_payload_capacity
+					7+1					//int chunk_payload_capacity
 						      );
 		//and follow it with name which may, by itself, generate other chunks.
 		writeBeginDirectPayload(signal_name);
@@ -163,10 +197,10 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 	{
 		//retrive size
 		int s = getPayloadSize();
-		assert((s>=1)&&(s<=15+1));	//header type limits.
+		assert((s>=1)&&(s<=7+1)):"s="+s;	//header type limits.
 		s = s-1;
 		//encode type
-		header_buffer[0]=(byte)(TBinUndescribed.END_BEGIN_DIRECT | (s<<4));
+		header_buffer[0]=(byte)(TBinDescribed.END_BEGIN_DIRECT | (s<<5));
 		return 1;
 	};
 	
@@ -176,7 +210,7 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 		//We just start the chunk
 		startChunk(
 					TIndicator.BEGIN_REGISTER,//TIndicator header_indicator,
-					15+1					//int chunk_payload_capacity
+					7+1					//int chunk_payload_capacity
 						      );
 		//and follow it with name which may, by itself, generate other chunks.
 		writeBeginDirectPayload(signal_name);
@@ -190,10 +224,10 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 	{
 		//retrive size
 		int s = getPayloadSize();
-		assert((s>=1)&&(s<=15+1));	//header type limits.
+		assert((s>=1)&&(s<=7+1));	//header type limits.
 		s = s-1;
 		//encode type
-		header_buffer[0]=(byte)(TBinUndescribed.BEGIN_REGISTER | (s<<4));
+		header_buffer[0]=(byte)(TBinDescribed.BEGIN_REGISTER | (s<<5));
 		return 1;
 	};   
 	
@@ -203,7 +237,7 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 		//We just start the chunk
 		startChunk(
 					TIndicator.END_BEGIN_REGISTER,//TIndicator header_indicator,
-					15+1					//int chunk_payload_capacity
+					7+1					//int chunk_payload_capacity
 						      );
 		//and follow it with name which may, by itself, generate other chunks.
 		writeBeginDirectPayload(signal_name);
@@ -217,10 +251,10 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 	{
 		//retrive size
 		int s = getPayloadSize();
-		assert((s>=1)&&(s<=15+1));	//header type limits.
+		assert((s>=1)&&(s<=7+1));	//header type limits.
 		s = s-1;
 		//encode type
-		header_buffer[0]=(byte)(TBinUndescribed.END_BEGIN_REGISTER | (s<<4));
+		header_buffer[0]=(byte)(TBinDescribed.END_BEGIN_REGISTER | (s<<5));
 		return 1;
 	};
 				/** Stored for {@link #writeBeginUse}/{@link #writeEndBeginUse} */
@@ -230,7 +264,7 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 		//We just start the chunk
 		startChunk(
 					TIndicator.BEGIN_USE,//TIndicator header_indicator,
-					15					//int chunk_payload_capacity
+					7					//int chunk_payload_capacity
 					);
 		assert(number>=0);
 		assert(number<=255);
@@ -245,9 +279,9 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 	{
 		//retrive size
 		int s = getPayloadSize();
-		assert((s>=0)||(s<=15));	//header type limits.
+		assert((s>=0)||(s<=7));	//header type limits.
 		//encode type
-		header_buffer[0]=(byte)(TBinUndescribed.BEGIN_USE | (s<<4));
+		header_buffer[0]=(byte)(TBinDescribed.BEGIN_USE | (s<<5));
 		header_buffer[1]=use_number;
 		return 2;
 	};
@@ -258,7 +292,7 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 		//We just start the chunk
 		startChunk(
 					TIndicator.END_BEGIN_USE,//TIndicator header_indicator,
-					15					//int chunk_payload_capacity
+					7					//int chunk_payload_capacity
 					);
 		assert(number>=0);
 		assert(number<=255);
@@ -273,9 +307,9 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 	{
 		//retrive size
 		int s = getPayloadSize();
-		assert((s>=0)||(s<=15));	//header type limits.
+		assert((s>=0)||(s<=7));	//header type limits.
 		//encode type
-		header_buffer[0]=(byte)(TBinUndescribed.END_BEGIN_USE | (s<<4));
+		header_buffer[0]=(byte)(TBinDescribed.END_BEGIN_USE | (s<<5));
 		header_buffer[1]=use_number;
 		return 2;
 	};
@@ -285,7 +319,7 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 		//We just start the chunk
 		startChunk(
 					TIndicator.END,//TIndicator header_indicator,
-					15					//int chunk_payload_capacity
+					7					//int chunk_payload_capacity
 					);
 	};
 	/** Header specific handler for {@link #prepareChunkHeaderForFlushing}
@@ -297,9 +331,9 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 	{
 		//retrive size
 		int s = getPayloadSize();
-		assert((s>=0)||(s<=15));	//header type limits.
+		assert((s>=0)||(s<=7));	//header type limits.
 		//encode type
-		header_buffer[0]=(byte)(TBinUndescribed.END | (s<<4));
+		header_buffer[0]=(byte)(TBinDescribed.END | (s<<5));
 		return 1;
 	};
 	
@@ -311,6 +345,43 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 	@Override final public void writeType(TIndicator type)throws IOException
 	{
 		//Do nothing operation in un-described format.
+		startChunk( type,
+			TBinDescribed.chunkPayloadForType(type)
+			);
+	};
+	private int prepare_TYPE_BOOLEAN_HeaderForFlushing( byte [] header_buffer )throws IOException
+	{
+		//retrive size
+		int s = getPayloadSize();
+		assert(s==0);	//header type limits.
+		//encode type
+		byte v = TBinDescribed.TYPE_BOOLEAN;
+		if (boolean_cache)
+			v |= (byte)(1<<5);
+		header_buffer[0]=v;
+		return 1;
+	};
+	private int prepare_TYPE_x_HeaderForFlushing( byte [] header_buffer, TIndicator header_indicator, byte header_type )throws IOException
+	{
+		//retrive size
+		int s = getPayloadSize();
+		assert(s==TBinDescribed.chunkPayloadForType(header_indicator)):"s="+s+" for "+header_indicator;	//header specific type limits.
+		assert((s>=0)||(s<=7));	//header generic type limits.
+		//encode type
+		header_buffer[0]=(byte)(header_type | (s<<5));
+		return 1;
+	};
+	private int prepare_TYPE_x_BLOCK_HeaderForFlushing( byte [] header_buffer, TIndicator header_indicator, byte header_type )throws IOException
+	{
+		//retrive size
+		int s = getPayloadSize();	//this size is expressed in bytes.
+		assert((s>=0)||(s<=TBinDescribed.chunkPayloadForType(header_indicator))); //type specific limits.	
+		int items = s / TBinDescribed.chunkPayloadUnitForBlockType(header_indicator);
+		assert(items *TBinDescribed.chunkPayloadUnitForBlockType(header_indicator)==s);
+		assert(items<=7);
+		//encode type
+		header_buffer[0]=(byte)(header_type | (items<<5));
+		return 1;
 	};
 	/* --------------------------------------------------
 	
@@ -319,7 +390,8 @@ public class CBinIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 	-------------------------------------------------- */
 	@Override public void writeBoolean(boolean v)throws IOException
 	{
-		writePayload(v ? (byte)0x01 : (byte)0x00);
+		//encoded in header, so we cache it.
+		boolean_cache = v;
 	};
 	/* --------------------------------------------------
 	
