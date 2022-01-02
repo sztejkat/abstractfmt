@@ -742,10 +742,11 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 			//escaped
 			c = (char)(-ci -1);
 		};
-		//Next character may be primitive separator but does not have to be.		
-		char next = input.readChar();
-		if (next!=settings.PRIMITIVE_SEPARATOR)
-			input.unread(next);
+		//Next character may be primitive separator but does not have to be,
+		//since it may be optimized. It can even be an eof.	
+		int next = input.read();
+		if ((next!=-1)&&(next!=settings.PRIMITIVE_SEPARATOR))
+				input.unread((char)next);
 		return c;
 	};
 	@Override public short readShort()throws IOException

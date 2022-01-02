@@ -17,7 +17,7 @@ public final class Pair
 		/** Read end.	*/
 		public final IIndicatorReadFormat read;
 		
-		public CFormatsPair(
+		public Pair(
 				IIndicatorWriteFormat write,
 				IIndicatorReadFormat read
 				)

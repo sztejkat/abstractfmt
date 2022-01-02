@@ -11,12 +11,15 @@ import java.io.IOException;
 	<ul>
 		<li>all calls which may result in unpredictable results;</li>
 		<li>validates if indicator format which it protects does not
-		violate contract itself;</li>
+		violate contract itself, if it is possible to test without
+		causing side effects;</li>
 	</ul>
 	<p>
 	This class is throwing {@link AssertionError} if encounters
 	a problem, but is NOT using <code>assert()</code> so the control
 	is always enabled.
+	<p>
+	Not for production use.
 */
 public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 {
@@ -31,14 +34,27 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 				
 				private TIndicator last_type;
 				private boolean primitive_written;
+				private final boolean validate_if_flushed_before_close;
+				private boolean is_flushed;
 				
 	/** Creates protector
 	@param to_protect an indicator format to protect.
 	*/
 	public CIndicatorWriteFormatProtector(IIndicatorWriteFormat to_protect)
 	{
+		this(to_protect, false);
+	};
+	/** Creates protector
+	@param to_protect an indicator format to protect.
+	@param validate_if_flushed_before_close if true {@link #close} without
+		{@link #flush} will throw. 
+	*/
+	public CIndicatorWriteFormatProtector(IIndicatorWriteFormat to_protect,
+										boolean validate_if_flushed_before_close)
+	{
 		assert(to_protect!=null);
 		this.bare=to_protect;
+		this.validate_if_flushed_before_close=validate_if_flushed_before_close;
 	};
 	
 	private void validateOpenWasCalled()throws AssertionError
@@ -111,6 +127,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		bare.writeBeginDirect(signal_name);
 		last_type = null;
 		primitive_written=false;
+		is_flushed = false;
 	};
 	@Override public void writeEndBeginDirect(String signal_name)throws IOException
 	{
@@ -123,6 +140,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		bare.writeEndBeginDirect(signal_name);
 		last_type = null;
 		primitive_written=false;
+		is_flushed = false;
 	};
 	@Override public void writeBeginRegister(String signal_name, int number)throws IOException
 	{
@@ -141,6 +159,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		bare.writeBeginRegister(signal_name, number);
 		last_type = null;
 		primitive_written=false;
+		is_flushed = false;
 	};
 	@Override public void writeEndBeginRegister(String signal_name, int number)throws IOException		
 	{
@@ -161,6 +180,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		bare.writeEndBeginRegister(signal_name, number);
 		last_type = null;
 		primitive_written=false;
+		is_flushed = false;
 	};	
 	@Override public void writeBeginUse(int number)throws IOException
 	{
@@ -175,6 +195,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		bare.writeBeginUse(number);
 		last_type = null;
 		primitive_written=false;
+		is_flushed = false;
 	};
 	@Override public void writeEndBeginUse(int number)throws IOException
 	{
@@ -190,6 +211,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		bare.writeEndBeginUse(number);
 		last_type = null;
 		primitive_written=false;
+		is_flushed = false;
 	};
 	@Override public void writeEnd()throws IOException
 	{
@@ -200,6 +222,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		bare.writeEnd();
 		last_type = null;
 		primitive_written=false;
+		is_flushed = false;
 	};
 	/* ---------------------------------------------------
 		
@@ -215,6 +238,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		last_type =type;
 		bare.writeType(type);
 		primitive_written = false;
+		is_flushed = false;
 	};
 	@Override public void writeFlush(TIndicator flush)throws IOException
 	{
@@ -230,6 +254,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		last_type =null;
 		bare.writeFlush(flush);
 		primitive_written = false;
+		is_flushed = false;
 	};
 	/* ---------------------------------------------------
 		
@@ -246,6 +271,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		if (primitive_written)
 			throw new AssertionError("Writing primitive twice");
 		primitive_written = true;
+		is_flushed = false;
 		bare.writeBoolean(v);
 	};
 	
@@ -259,6 +285,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		if (primitive_written)
 			throw new AssertionError("Writing primitive twice");
 		primitive_written = true;
+		is_flushed = false;
 		bare.writeByte(v);
 	};
 	
@@ -272,6 +299,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		if (primitive_written)
 			throw new AssertionError("Writing primitive twice");
 		primitive_written = true;
+		is_flushed = false;
 		bare.writeChar(v);
 	};
 	
@@ -285,6 +313,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		if (primitive_written)
 			throw new AssertionError("Writing primitive twice");
 		primitive_written = true;
+		is_flushed = false;
 		bare.writeShort(v);
 	};
 	@Override public void writeInt(int v)throws IOException
@@ -297,6 +326,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		if (primitive_written)
 			throw new AssertionError("Writing primitive twice");
 		primitive_written = true;
+		is_flushed = false;
 		bare.writeInt(v);
 	};	
 	@Override public void writeLong(long v)throws IOException
@@ -309,6 +339,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		if (primitive_written)
 			throw new AssertionError("Writing primitive twice");
 		primitive_written = true;
+		is_flushed = false;
 		bare.writeLong(v);
 	};	
 	@Override public void writeFloat(float v)throws IOException
@@ -321,6 +352,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		if (primitive_written)
 			throw new AssertionError("Writing primitive twice");
 		primitive_written = true;
+		is_flushed = false;
 		bare.writeFloat(v);
 	};	
 	@Override public void writeDouble(double v)throws IOException
@@ -333,6 +365,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		if (primitive_written)
 			throw new AssertionError("Writing primitive twice");
 		primitive_written = true;
+		is_flushed = false;
 		bare.writeDouble(v);
 	};	
 	
@@ -353,7 +386,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		if (length+offset>buffer.length) 
 			throw new AssertionError("length+offset="+(length+offset)+" outside buffer boundary "+buffer.length);
 		primitive_written = true;
-		
+		is_flushed = false;
 		bare.writeBooleanBlock(buffer,offset,length);
 	};	
 	
@@ -373,7 +406,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		if (length+offset>buffer.length) 
 			throw new AssertionError("length+offset="+(length+offset)+" outside buffer boundary "+buffer.length);
 		primitive_written = true;
-		
+		is_flushed = false;
 		bare.writeByteBlock(buffer,offset,length);
 	};	
 	
@@ -385,7 +418,8 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 			throw new AssertionError("Writing primitive without type");
 		if (last_type!=TIndicator.TYPE_BYTE_BLOCK)
 			throw new AssertionError("Writing primitive without incorrect type, "+last_type+" expected");
-		primitive_written = true;		
+		primitive_written = true;	
+		is_flushed = false;	
 		bare.writeByteBlock(data);
 	};	
 	
@@ -405,7 +439,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		if (length+offset>buffer.length) 
 			throw new AssertionError("length+offset="+(length+offset)+" outside buffer boundary "+buffer.length);
 		primitive_written = true;
-		
+		is_flushed = false;
 		bare.writeCharBlock(buffer,offset,length);
 	};	
 	
@@ -425,6 +459,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		if (length+offset>characters.length()) 
 			throw new AssertionError("length+offset="+(length+offset)+" outside buffer boundary "+characters.length());
 		primitive_written = true;		
+		is_flushed = false;
 		bare.writeCharBlock(characters,offset,length);
 	};	
 	
@@ -444,7 +479,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		if (length+offset>buffer.length) 
 			throw new AssertionError("length+offset="+(length+offset)+" outside buffer boundary "+buffer.length);
 		primitive_written = true;
-		
+		is_flushed = false;
 		bare.writeShortBlock(buffer,offset,length);
 	};	
 	
@@ -465,7 +500,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		if (length+offset>buffer.length) 
 			throw new AssertionError("length+offset="+(length+offset)+" outside buffer boundary "+buffer.length);
 		primitive_written = true;
-		
+		is_flushed = false;
 		bare.writeIntBlock(buffer,offset,length);
 	};	
 	
@@ -486,7 +521,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		if (length+offset>buffer.length) 
 			throw new AssertionError("length+offset="+(length+offset)+" outside buffer boundary "+buffer.length);
 		primitive_written = true;
-		
+		is_flushed = false;
 		bare.writeLongBlock(buffer,offset,length);
 	};	
 	
@@ -506,7 +541,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		if (length+offset>buffer.length) 
 			throw new AssertionError("length+offset="+(length+offset)+" outside buffer boundary "+buffer.length);
 		primitive_written = true;
-		
+		is_flushed = false;
 		bare.writeFloatBlock(buffer,offset,length);
 	};	
 	
@@ -526,7 +561,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		if (length+offset>buffer.length) 
 			throw new AssertionError("length+offset="+(length+offset)+" outside buffer boundary "+buffer.length);
 		primitive_written = true;
-		
+		is_flushed = false;
 		bare.writeDoubleBlock(buffer,offset,length);
 	};	
 	
@@ -540,18 +575,25 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 	{
 		validateReady();
 		bare.flush();
+		is_flushed = true;
 	};	
 	@Override public void open()throws IOException
 	{
 		validateNotClosed();
 		if (is_open) throw new AssertionError("Calling open() twice may have unpredictable results");
 		is_open = true;
+		is_flushed = false;
 		bare.open();
 	};
 	@Override public void close()throws IOException
 	{
-		if (is_closed) throw new AssertionError("Calling call() twice may have unpredictable results");
+		if (is_closed) throw new AssertionError("Calling close() twice may have unpredictable results");
 		is_closed = true;
+		if (validate_if_flushed_before_close)
+		{
+			if (!is_flushed)
+				throw new AssertionError("Calling close() with some un-flushed data may result in unpredictable read errors."); 
+		}
 		bare.close();
 	};
 	

@@ -1,4 +1,5 @@
-package sztejkat.abstractfmt.testsuite;
+package sztejkat.abstractfmt.testsuite.indicator;
+import sztejkat.abstractfmt.testsuite.ATestCase;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.AfterClass;
@@ -7,7 +8,29 @@ import org.junit.runners.Suite.SuiteClasses;
 	A test suite running all tests.
 */
 @RunWith(Suite.class)	//Tell that it is a composite test
-@SuiteClasses({TestOpenClose.class})	//list, using {x.class,y.class,....} test components.
+@SuiteClasses({TestOpenClose.class,
+			   TestBooleanPrimitiveOps.class,
+			   TestBytePrimitiveOps.class,
+			   TestShortPrimitiveOps.class,
+			   TestCharPrimitiveOps.class,
+			   TestIntPrimitiveOps.class,
+			   TestLongPrimitiveOps.class,
+			   TestFloatPrimitiveOps.class,
+			   TestDoublePrimitiveOps.class,
+			   
+			   TestBooleanBlockOps.class,
+			   TestByteBlockOps.class,
+			   TestSingleByteBlockOps.class,
+			   TestShortBlockOps.class,
+			   TestCharBlockOps.class,
+			   TestAltCharBlockOps.class,
+			   TestIntBlockOps.class,
+			   TestLongBlockOps.class,
+			   TestFloatBlockOps.class,
+			   TestDoubleBlockOps.class,
+			   
+			   TestBasicSignalOperations.class
+				})	//list, using {x.class,y.class,....} test components.
 public class TestSuite extends ATestCase<Pair>
 {	
 	//With this method we do release any factory assigned to

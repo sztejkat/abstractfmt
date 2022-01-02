@@ -509,6 +509,7 @@ public class CIndicatorReadFormatProtector implements IIndicatorReadFormat
 		if (length+offset>buffer.length) 
 			throw new AssertionError("length+offset="+(length+offset)+" outside buffer boundary "+buffer.length);
 		last_indicator=null;
+		last_get_indicator=null;
 		final int r = bare.readFloatBlock(buffer,offset,length);
 		if (r<0) throw new AssertionError(bare.getClass()+".readFloatBlock() returned "+r);
 		if (r>length) throw new AssertionError(bare.getClass()+".readFloatBlock() returned "+r+" which reports longer read than requested");

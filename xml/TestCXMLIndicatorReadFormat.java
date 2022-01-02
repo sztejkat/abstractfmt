@@ -2141,8 +2141,6 @@ public class TestCXMLIndicatorReadFormat extends sztejkat.utils.test.ATest
 		enter();
 		/*
 			Test reading float block in two operations.
-		
-		
 		*/
 		IIndicatorReadFormat f = 
 		 new CIndicatorReadFormatProtector(
