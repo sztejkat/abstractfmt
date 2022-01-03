@@ -29,7 +29,8 @@ import org.junit.runners.Suite.SuiteClasses;
 			   TestFloatBlockOps.class,
 			   TestDoubleBlockOps.class,
 			   
-			   TestBasicSignalOperations.class
+			   TestBasicSignalOperations.class,
+			   TestNestedSignalOperations.class
 				})	//list, using {x.class,y.class,....} test components.
 public class TestSuite extends ATestCase<Pair>
 {	

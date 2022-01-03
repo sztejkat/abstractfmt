@@ -1,5 +1,8 @@
 package sztejkat.abstractfmt.testsuite;
 import java.io.IOException;
+import org.junit.rules.TestWatcher;
+import org.junit.Rule;
+import org.junit.runner.Description;
 /**
 	A base of test cases.
 	<p>
@@ -22,8 +25,19 @@ public abstract class ATestCase<TDUT extends Object>
 {
 			/** A field which must be initialized with a 
 			specific test factory */
-			public static IDeviceUnderTestFactory<?> FACTORY;  
-		
+			public static IDeviceUnderTestFactory<?> FACTORY;
+			/** Dynamic test name holder */
+			public static final class TestCapture extends TestWatcher
+			{
+					String class_name;
+					String method_name;
+				protected void starting(Description d)
+				{
+					class_name = d.getClassName();
+					method_name = d.getMethodName();
+				};
+			};   
+	  		@Rule public TestCapture name= new TestCapture();
 			
 	/** Uses {@link #FACTORY} to produce device under test
 	@return new device under test 
@@ -33,6 +47,6 @@ public abstract class ATestCase<TDUT extends Object>
 	protected TDUT create()throws IOException
 	{
 		assert(FACTORY!=null):"Static factory is not initialized";
-		return ((IDeviceUnderTestFactory<TDUT>)(FACTORY)).create(); 
+		return ((IDeviceUnderTestFactory<TDUT>)(FACTORY)).create(name.class_name, name.method_name); 
 	};
 };

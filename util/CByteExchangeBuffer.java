@@ -25,7 +25,7 @@ public class CByteExchangeBuffer
 		};
 			/** How much of size will be added to {@link #buffer}
 			when it is necessary */
-			private static final int GROWTH_INCREMENT = 1024;
+			private static final int GROWTH_INCREMENT = 65536;
 			/** How much of data needs to be read from {@link #buffer}
 			to move data to beginning of it. */
 			private static final int MOVE_TRIGGER = GROWTH_INCREMENT/2;
@@ -208,7 +208,7 @@ public class CByteExchangeBuffer
 				for(int i=0;i<chunk_size; i++)
 				{
 					org.junit.Assert.assertTrue(b.available());
-					org.junit.Assert.assertTrue(b.read()==of(i));
+					org.junit.Assert.assertTrue(((byte)b.read())==of(i));
 				};
 			};
 			@org.junit.Test public void testReadAndWrite1()

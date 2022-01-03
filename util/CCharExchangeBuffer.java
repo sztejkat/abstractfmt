@@ -54,7 +54,7 @@ public class CCharExchangeBuffer
 		};
 			/** How much of size will be added to {@link #buffer}
 			when it is necessary */
-			private static final int GROWTH_INCREMENT = 1024;
+			private static final int GROWTH_INCREMENT = 65536;
 			/** How much of data needs to be read from {@link #buffer}
 			to move data to beginning of it. */
 			private static final int MOVE_TRIGGER = GROWTH_INCREMENT/2;

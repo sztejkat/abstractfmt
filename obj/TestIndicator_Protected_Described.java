@@ -17,7 +17,7 @@ public class TestIndicator_Protected_Described extends TestSuite
 		assert(TestSuite.FACTORY==null):"Conflicting tests initialization";
 		TestSuite.FACTORY = new IDeviceUnderTestFactory<Pair>()
 		{
-			public Pair create()throws IOException	
+			public Pair create(String test_class_name, String test_name)throws IOException	
 			{
 				final CObjListFormat media = new CObjListFormat();
 				return new Pair(

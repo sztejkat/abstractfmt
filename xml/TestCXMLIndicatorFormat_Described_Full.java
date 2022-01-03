@@ -4,7 +4,7 @@ import sztejkat.abstractfmt.CIndicatorReadFormatProtector;
 import sztejkat.abstractfmt.testsuite.IDeviceUnderTestFactory;
 import sztejkat.abstractfmt.testsuite.indicator.TestSuite;
 import sztejkat.abstractfmt.testsuite.indicator.Pair;
-import sztejkat.abstractfmt.util.CCharExchangeBuffer;
+import sztejkat.abstractfmt.util.CCharFileExchangeBuffer;
 import java.nio.charset.Charset;
 import java.io.IOException;
 import org.junit.BeforeClass;
@@ -16,9 +16,13 @@ public class TestCXMLIndicatorFormat_Described_Full extends TestSuite
 		assert(TestSuite.FACTORY==null):"Conflicting tests initialization";
 		TestSuite.FACTORY = new IDeviceUnderTestFactory<Pair>()
 		{
-			public Pair create()throws IOException	
+			public Pair create(String test_class_name, String test_name)throws IOException	
 			{
-				CCharExchangeBuffer media = new CCharExchangeBuffer();
+				CCharFileExchangeBuffer media = new CCharFileExchangeBuffer(
+										new java.io.File("test-data/df"),// folder,
+										test_class_name+"."+test_name+".#.xml" //String file_name_pattern
+														);
+				System.out.println("will use file \""+media.getFile()+"\"");
 				return new Pair(
 					new CIndicatorWriteFormatProtector(
 						new CXMLIndicatorWriteFormat(
