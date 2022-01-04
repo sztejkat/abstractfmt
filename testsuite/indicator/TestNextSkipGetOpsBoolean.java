@@ -392,7 +392,7 @@ public class TestNextSkipGetOpsBoolean extends ATestBooleanOps
 		p.write.open();
 		p.write.writeBeginDirect("A");		
 			
-				final boolean [] data = createSequence(757);
+				final boolean [] data = createSequence(157);
 				//We write some number of primitives.
 				p.write.writeType(TIndicator.TYPE_BOOLEAN_BLOCK);
 					p.write.writeBooleanBlock(data);
@@ -532,7 +532,7 @@ public class TestNextSkipGetOpsBoolean extends ATestBooleanOps
 		p.write.open();
 		p.write.writeBeginDirect("A");		
 			
-				final boolean [] data = createSequence(757);
+				final boolean [] data = createSequence(1757);
 				//We write some number of primitives.
 				p.write.writeType(TIndicator.TYPE_BOOLEAN_BLOCK);
 					p.write.writeBooleanBlock(data);
@@ -629,7 +629,7 @@ public class TestNextSkipGetOpsBoolean extends ATestBooleanOps
 		p.write.open();
 		p.write.writeBeginDirect("A");		
 			
-				final boolean [] data = createSequence(757);
+				final boolean [] data = createSequence(7);
 				//We write some number of primitives.
 				p.write.writeType(TIndicator.TYPE_BOOLEAN_BLOCK);
 					p.write.writeBooleanBlock(data);
@@ -678,7 +678,7 @@ public class TestNextSkipGetOpsBoolean extends ATestBooleanOps
 		p.write.open();
 		p.write.writeBeginDirect("A");		
 			
-				final boolean [] data = createSequence(757);
+				final boolean [] data = createSequence(256);
 				//We write some number of primitives.
 				p.write.writeType(TIndicator.TYPE_BOOLEAN_BLOCK);
 					p.write.writeBooleanBlock(data);
