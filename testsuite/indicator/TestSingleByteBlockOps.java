@@ -61,10 +61,7 @@ public class TestSingleByteBlockOps extends ATestByteOps
 			if (x[i]!=(byte)r)
 					Assert.fail("x["+i+"]="+x[i]+" != "+(byte)r);
 		};
-		if (read.isFlushing())
-		{
-			assertReadIndicator(read,TIndicator.FLUSH,TIndicator.FLUSH);
-		};
+		assertReadFlushIndicator(read,TIndicator.FLUSH_BYTE_BLOCK);
 		leave();
 	};
 	
