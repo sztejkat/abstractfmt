@@ -30,7 +30,8 @@ import org.junit.runners.Suite.SuiteClasses;
 			   TestDoubleBlockOps.class,
 			   
 			   TestBasicSignalOperations.class,
-			   TestNestedSignalOperations.class
+			   TestNestedSignalOperations.class,
+			   TestNextSkipGetOps.class
 				})	//list, using {x.class,y.class,....} test components.
 public class TestSuite extends ATestCase<Pair>
 {	

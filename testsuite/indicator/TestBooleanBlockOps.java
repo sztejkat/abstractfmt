@@ -84,10 +84,7 @@ public class TestBooleanBlockOps extends ATestBooleanOps
 			};
 			i+=transfer;				
 		};
-		if (read.isFlushing())
-		{
-			assertReadIndicator(read,TIndicator.FLUSH,TIndicator.FLUSH);
-		};
+		assertReadFlushIndicator(read,TIndicator.FLUSH_BOOLEAN_BLOCK);
 		leave();
 	};
 	
@@ -224,10 +221,7 @@ public class TestBooleanBlockOps extends ATestBooleanOps
 					Assert.fail("Got partial read "+r+" but something is left for transfer");
 			};				
 		};
-		if (read.isFlushing())
-		{
-			assertReadIndicator(read,TIndicator.FLUSH,TIndicator.FLUSH);
-		};
+		assertReadFlushIndicator(read,TIndicator.FLUSH_BOOLEAN_BLOCK);		
 		leave();
 	};
 	private void blockBooleanInaccurate(int length, int max_opsize)throws IOException

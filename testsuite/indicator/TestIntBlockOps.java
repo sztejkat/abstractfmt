@@ -84,10 +84,8 @@ public class TestIntBlockOps extends ATestIntOps
 			};
 			i+=transfer;				
 		};
-		if (read.isFlushing())
-		{
-			assertReadIndicator(read,TIndicator.FLUSH,TIndicator.FLUSH);
-		};
+		assertReadFlushIndicator(read,TIndicator.FLUSH_INT_BLOCK);
+		
 		leave();
 	};
 	
@@ -224,10 +222,7 @@ public class TestIntBlockOps extends ATestIntOps
 					Assert.fail("Got partial read "+r+" but something is left for transfer");
 			};				
 		};
-		if (read.isFlushing())
-		{
-			assertReadIndicator(read,TIndicator.FLUSH,TIndicator.FLUSH);
-		};
+		assertReadFlushIndicator(read,TIndicator.FLUSH_INT_BLOCK);
 		leave();
 	};
 	private void blockIntInaccurate(int length, int max_opsize)throws IOException

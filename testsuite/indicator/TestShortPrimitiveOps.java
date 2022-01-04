@@ -47,10 +47,7 @@ public class TestShortPrimitiveOps extends ATestShortOps
 			short v = read.readShort();
 			if (v!=x[i])
 				Assert.fail("At x["+i+"] read "+v+" while expected "+x[i]);
-			if (read.isFlushing())
-			{
-				assertReadIndicator(read,TIndicator.FLUSH,TIndicator.FLUSH);
-			};
+			assertReadFlushIndicator(read,TIndicator.FLUSH_SHORT);
 		};
 		leave();
 	};

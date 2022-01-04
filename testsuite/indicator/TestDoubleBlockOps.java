@@ -84,10 +84,8 @@ public class TestDoubleBlockOps extends ATestDoubleOps
 			};
 			i+=transfer;				
 		};
-		if (read.isFlushing())
-		{
-			assertReadIndicator(read,TIndicator.FLUSH,TIndicator.FLUSH);
-		};
+		assertReadFlushIndicator(read,TIndicator.FLUSH_DOUBLE_BLOCK);
+		
 		leave();
 	};
 	
@@ -224,10 +222,8 @@ public class TestDoubleBlockOps extends ATestDoubleOps
 					Assert.fail("Got partial read "+r+" but something is left for transfer");
 			};				
 		};
-		if (read.isFlushing())
-		{
-			assertReadIndicator(read,TIndicator.FLUSH,TIndicator.FLUSH);
-		};
+		assertReadFlushIndicator(read,TIndicator.FLUSH_DOUBLE_BLOCK);
+		
 		leave();
 	};
 	private void blockDoubleInaccurate(int length, int max_opsize)throws IOException

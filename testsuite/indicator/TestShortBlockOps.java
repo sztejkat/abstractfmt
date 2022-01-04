@@ -84,10 +84,7 @@ public class TestShortBlockOps extends ATestShortOps
 			};
 			i+=transfer;				
 		};
-		if (read.isFlushing())
-		{
-			assertReadIndicator(read,TIndicator.FLUSH,TIndicator.FLUSH);
-		};
+		assertReadFlushIndicator(read,TIndicator.FLUSH_SHORT_BLOCK);
 		leave();
 	};
 	
@@ -224,10 +221,7 @@ public class TestShortBlockOps extends ATestShortOps
 					Assert.fail("Got partial read "+r+" but something is left for transfer");
 			};				
 		};
-		if (read.isFlushing())
-		{
-			assertReadIndicator(read,TIndicator.FLUSH,TIndicator.FLUSH);
-		};
+		assertReadFlushIndicator(read,TIndicator.FLUSH_SHORT_BLOCK);
 		leave();
 	};
 	private void blockShortInaccurate(int length, int max_opsize)throws IOException

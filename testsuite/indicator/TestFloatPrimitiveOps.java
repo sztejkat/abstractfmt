@@ -47,10 +47,7 @@ public class TestFloatPrimitiveOps extends ATestFloatOps
 			float v = read.readFloat();
 			if (v!=x[i])
 				Assert.fail("At x["+i+"] read "+v+" while expected "+x[i]);
-			if (read.isFlushing())
-			{
-				assertReadIndicator(read,TIndicator.FLUSH,TIndicator.FLUSH);
-			};
+			assertReadFlushIndicator(read,TIndicator.FLUSH_FLOAT);
 		};
 		leave();
 	};

@@ -84,10 +84,8 @@ public class TestFloatBlockOps extends ATestFloatOps
 			};
 			i+=transfer;				
 		};
-		if (read.isFlushing())
-		{
-			assertReadIndicator(read,TIndicator.FLUSH,TIndicator.FLUSH);
-		};
+		assertReadFlushIndicator(read,TIndicator.FLUSH_FLOAT_BLOCK);
+		
 		leave();
 	};
 	
@@ -224,10 +222,8 @@ public class TestFloatBlockOps extends ATestFloatOps
 					Assert.fail("Got partial read "+r+" but something is left for transfer");
 			};				
 		};
-		if (read.isFlushing())
-		{
-			assertReadIndicator(read,TIndicator.FLUSH,TIndicator.FLUSH);
-		};
+		assertReadFlushIndicator(read,TIndicator.FLUSH_FLOAT_BLOCK);
+		
 		leave();
 	};
 	private void blockFloatInaccurate(int length, int max_opsize)throws IOException

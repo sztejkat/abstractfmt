@@ -47,10 +47,7 @@ public class TestBooleanPrimitiveOps extends ATestBooleanOps
 			boolean v = read.readBoolean();
 			if (v!=x[i])
 				Assert.fail("At x["+i+"] read "+v+" while expected "+x[i]);
-			if (read.isFlushing())
-			{
-				assertReadIndicator(read,TIndicator.FLUSH,TIndicator.FLUSH);
-			};
+			assertReadFlushIndicator(read,TIndicator.FLUSH_BOOLEAN);
 		};
 		leave();
 	};
