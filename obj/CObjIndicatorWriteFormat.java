@@ -22,8 +22,42 @@ public class CObjIndicatorWriteFormat implements IIndicatorWriteFormat
 			/** Support status to report, also controls what flush
 			writes do. */
 			private final boolean is_flushing;
+			/** Disables end-begin optimization */
+			private final boolean disable_end_begin_opt;
 			
-			
+		/** Creates
+		@param media non null media to write to
+		@param max_registrations number returned from {@link #getMaxRegistrations}
+		@param max_supported_signal_name_length number returned from {@link #getMaxSupportedSignalNameLength}		
+		@param is_described returned from {@link #isDescribed}. If false
+			type writes are non-op
+		@param is_flushing returned from {@link #isFlushing}. If false
+			type writes are non-op
+		@param disable_end_begin_opt if true end-begin optimization is disabled
+			and no END_BEGIN_xxx indicators are written.
+		@throws AssertionError is something is wrong.
+		*/
+		public CObjIndicatorWriteFormat(final CObjListFormat media,
+										final int max_registrations,
+										final int max_supported_signal_name_length,										
+										final boolean is_described,
+										final boolean is_flushing,
+										final boolean disable_end_begin_opt
+											)
+		{
+			assert(media!=null);
+			assert(max_registrations>=0);
+			assert(max_supported_signal_name_length>0);			
+			assert( !is_flushing || (is_flushing && is_described)):"invalid is_described/is_flushing combination";
+			this.media = media; 
+			this.max_registrations=max_registrations;
+			this.max_supported_signal_name_length = max_supported_signal_name_length;			
+			this.is_described=is_described;
+			this.is_flushing=is_flushing;
+			this.disable_end_begin_opt = disable_end_begin_opt;
+		};
+		
+		
 		/** Creates
 		@param media non null media to write to
 		@param max_registrations number returned from {@link #getMaxRegistrations}
@@ -41,16 +75,14 @@ public class CObjIndicatorWriteFormat implements IIndicatorWriteFormat
 										final boolean is_flushing
 											)
 		{
-			assert(media!=null);
-			assert(max_registrations>=0);
-			assert(max_supported_signal_name_length>0);			
-			assert( !is_flushing || (is_flushing && is_described)):"invalid is_described/is_flushing combination";
-			this.media = media; 
-			this.max_registrations=max_registrations;
-			this.max_supported_signal_name_length = max_supported_signal_name_length;			
-			this.is_described=is_described;
-			this.is_flushing=is_flushing;
+			this(  media,
+				  max_registrations,
+				  max_supported_signal_name_length,										
+				  is_described,
+				  is_flushing,
+				  false);
 		};
+		
 		
 		/* ***************************************************************
 		
@@ -84,9 +116,16 @@ public class CObjIndicatorWriteFormat implements IIndicatorWriteFormat
 		};
 		@Override public void writeEndBeginDirect(String signal_name)throws IOException		
 		{
-			assert(signal_name!=null);
-			media.add(TIndicator.END_BEGIN_DIRECT);
-			media.add(signal_name);
+			if (disable_end_begin_opt)
+			{
+				writeEnd();
+				writeBeginDirect(signal_name);
+			}else
+			{
+				assert(signal_name!=null);
+				media.add(TIndicator.END_BEGIN_DIRECT);
+				media.add(signal_name);
+			};
 		};
 		@Override public void writeBeginRegister(String signal_name, int number)throws IOException
 		{
@@ -98,11 +137,18 @@ public class CObjIndicatorWriteFormat implements IIndicatorWriteFormat
 		};
 		@Override public void writeEndBeginRegister(String signal_name, int number)throws IOException
 		{
-			assert(number>=0);
-			assert(signal_name!=null);
-			media.add(TIndicator.END_BEGIN_REGISTER);
-			media.add(Integer.valueOf(number));
-			media.add(signal_name);
+			if (disable_end_begin_opt)
+			{
+				writeEnd();
+				writeBeginRegister(signal_name, number);
+			}else
+			{
+				assert(number>=0);
+				assert(signal_name!=null);
+				media.add(TIndicator.END_BEGIN_REGISTER);
+				media.add(Integer.valueOf(number));
+				media.add(signal_name);
+			};
 		};
 		@Override public void writeBeginUse(int number)throws IOException
 		{
@@ -112,9 +158,16 @@ public class CObjIndicatorWriteFormat implements IIndicatorWriteFormat
 		};
 		@Override public void writeEndBeginUse( int number)throws IOException
 		{
-			assert(number>=0);
-			media.add(TIndicator.END_BEGIN_USE);
-			media.add(Integer.valueOf(number));
+			if (disable_end_begin_opt)
+			{
+				writeEnd();
+				writeBeginUse(number);
+			}else
+			{
+				assert(number>=0);
+				media.add(TIndicator.END_BEGIN_USE);
+				media.add(Integer.valueOf(number));
+			}
 		};
 		@Override public void writeEnd()throws IOException
 		{

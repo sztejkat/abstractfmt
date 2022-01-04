@@ -265,4 +265,21 @@ public enum TIndicator
 				default: throw new AssertionError(type+" is not TYPE");
 			}
 		};
+		
+		
+		/** Returns matching BEGIN_xxx indicator for END_BEGIN_xxx indicator
+		@param type IS_END+IS_BEGIN indicator
+		@return begin indicator
+		@throws AssertionError if param is not END_BEGINxxx.
+		*/
+		public static TIndicator getBegin(TIndicator type)
+		{
+			switch(type)
+			{
+				case END_BEGIN_DIRECT: return BEGIN_DIRECT;
+				case END_BEGIN_REGISTER: return BEGIN_REGISTER;
+				case END_BEGIN_USE: return BEGIN_USE;				
+				default: throw new AssertionError(type+" is not END_BEGIN_xxx");
+			}
+		};
 }

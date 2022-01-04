@@ -11,6 +11,7 @@ import java.io.IOException;
 abstract class AIndicatorTest extends ATestCase<Pair>
 {
 	/** Reads indicator and validates if is expected. 
+	
 	@param f from where to read
 	@param expected what is expected
 	@throws IOException if failed to read
@@ -22,6 +23,40 @@ abstract class AIndicatorTest extends ATestCase<Pair>
 		if (i!=expected)
 			Assert.fail("readIndicator()="+i+" while expected "+expected);
 	};
+	
+	/** Reads indicator and validates if is expected. 
+	This method transparently handles lack of end-begin optimization
+	for streams which do not implement it.
+	@param f from where to read
+	@param expected what is expected
+	@throws IOException if failed to read
+	@throws AssertionError if read is different than expected.
+	*/
+	protected void assertReadOptIndicator(IIndicatorReadFormat f, TIndicator expected)throws IOException
+	{
+		if (
+			((expected.FLAGS & TIndicator.IS_BEGIN)!=0)
+			&&
+			((expected.FLAGS & TIndicator.IS_END)!=0)
+		   )
+		   {
+		   	//possible optimization case.
+		   	TIndicator i = f.readIndicator();
+			if (i!=expected)
+			{
+				if (i==TIndicator.END)
+				{
+					//possible lack of end-begin optimization
+					i = f.readIndicator();
+					expected = TIndicator.getBegin(expected);
+				};
+				if (i!=expected)
+					Assert.fail("lack of end-begin optimization, second readIndicator()="+i+" while expected "+expected);
+			};
+		   }else
+		   	assertReadIndicator(f,expected);
+	};
+	
 	/** Reads indicator and validates if it has specified 
 	flags in specified state.
 	@param f from where to read

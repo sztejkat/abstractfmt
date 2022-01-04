@@ -73,6 +73,12 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 	public void writeBeginDirect(String signal_name)throws IOException;
 	/**
 		Writes to a stream {@link TIndicator#END_BEGIN_DIRECT}.
+		<p>
+		<i>Note:Implementations are allowed to implement this method
+		as:</i> 
+		<pre>
+			writeEnd();writeBeginDirect(signal_name);			
+		</pre>
 		@param signal_name name of a signal. Passing null or
 			name longer than {@link #getMaxSupportedSignalNameLength}
 			may have unpredictable results.
@@ -80,7 +86,9 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 	*/
 	public void writeEndBeginDirect(String signal_name)throws IOException;		
 	/**
-		Writes to a stream {@link TIndicator#BEGIN_REGISTER}
+		Writes to a stream {@link TIndicator#BEGIN_REGISTER}.
+		Using this method when {@link #getMaxRegistrations}
+		returns zero may result in upredictable behaviour.
 		@param signal_name name of a signal. Passing null or
 			name longer than {@link #getMaxSupportedSignalNameLength}
 			may have unpredictable results.
@@ -99,22 +107,36 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 	public void writeBeginRegister(String signal_name, int number)throws IOException;
 	/**
 		Writes to a stream {@link TIndicator#END_BEGIN_REGISTER}
+		<p>
+		<i>Note:Implementations are allowed to implement this method
+		as:</i> 
+		<pre>
+			writeEnd();writeEndBeginRegister(signal_name);			
+		</pre>
 		@param signal_name as {@link #writeBeginRegister}
 		@param number {@link #writeBeginRegister}
 		@throws IOException if failed at low level.
 	*/
 	public void writeEndBeginRegister(String signal_name, int number)throws IOException;		
 	/**
-		Writes to a stream {@link TIndicator#BEGIN_USE}
+		Writes to a stream {@link TIndicator#BEGIN_USE}.
+		Using this method when {@link #getMaxRegistrations}
+		returns zero may result in upredictable behaviour.
 		@param number a numeric value under which signal name used here 
 		was previously is registered. Callers must call this method passing
 		number which was previously registered with	{@link #writeBeginRegister} or
-		{@link #writeEndBeginRegister}
+		{@link #writeEndBeginRegister}.
 		@throws IOException if failed at low level.
 	*/
 	public void writeBeginUse(int number)throws IOException;
 	/**
 		Writes to a stream {@link TIndicator#END_BEGIN_USE}
+		<p>
+		<i>Note:Implementations are allowed to implement this method
+		as:</i> 
+		<pre>
+			writeEnd();writeEndBeginRegister(signal_name);			
+		</pre>
 		@param number as {@link #writeBeginUse}
 		@throws IOException if failed at low level.
 	*/
