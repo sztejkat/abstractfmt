@@ -116,8 +116,8 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		token_buffer = new CBoundAppendable(Math.max(characters,settings.getMaximumTokenLength()));
 	};
 	@Override public int getMaxSignalNameLength(){ return max_signal_name_length;}
-	/** Set to 1024*1024 characters */
-	@Override public int getMaxSupportedSignalNameLength(){ return 1024*1024; }
+	/** Set to Integer.MAX_VALUE characters */
+	@Override public int getMaxSupportedSignalNameLength(){ return Integer.MAX_VALUE; }
 	/* -------------------------------------------------		
 				Indicators	
 	-------------------------------------------------*/

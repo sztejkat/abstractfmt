@@ -99,7 +99,7 @@ public class CByteExchangeBuffer
 		/** Returns reader of that buffer 
 		@return life time constant.
 		*/
-		public java.io.InputStream getReader()
+		public java.io.InputStream getInput()
 		{
 			if (reader==null)
 				reader = new _Input();
@@ -108,7 +108,7 @@ public class CByteExchangeBuffer
 		/** Returns writer of that buffer 
 		@return life time constant.
 		*/
-		public java.io.OutputStream getWriter()
+		public java.io.OutputStream getOutput()
 		{
 			if (writer==null)
 				writer = new _Output();

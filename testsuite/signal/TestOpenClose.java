@@ -152,6 +152,9 @@ public class TestOpenClose extends ASignalTest
 			
 			Assert.assertTrue(p.read.getMaxSignalNameLength()==1024);
 			Assert.assertTrue(p.read.getMaxEventRecursionDepth()==0);
+			
+			Assert.assertTrue(p.write.getMaxSupportedSignalNameLength()==
+							  p.read.getMaxSupportedSignalNameLength());
 		leave();
 	};
 	
@@ -163,9 +166,21 @@ public class TestOpenClose extends ASignalTest
 		enter();
 			enter();
 			Pair p = create();
-			
+			/*
+				Note:
+					Some streams may report no upper limit
+					for name length because, by design, they
+					have no upper limit. In such case they
+					do report Integer.MAX_VALUE.
+					
+					This not necessarily means that such a limit may
+					be set, because reading format may require
+					to pre-allocate name buffer of such size.
+			*/
 			p.write.getMaxSignalNameLength();
-			p.write.setMaxSignalNameLength(p.write.getMaxSupportedSignalNameLength());
+			int L = Math.min(65536,p.write.getMaxSupportedSignalNameLength());
+			p.write.setMaxSignalNameLength(L);
+			Assert.assertTrue(p.write.getMaxSignalNameLength()==L);
 			p.write.setMaxEventRecursionDepth(1);
 			p.write.isDescribed();
 			
@@ -173,7 +188,9 @@ public class TestOpenClose extends ASignalTest
 			p.write.close();
 			
 			p.read.getMaxSignalNameLength();
-			p.read.setMaxSignalNameLength(p.read.getMaxSupportedSignalNameLength());
+			L = Math.min(65536,p.read.getMaxSupportedSignalNameLength());			
+			p.read.setMaxSignalNameLength(L);
+			Assert.assertTrue(p.read.getMaxSignalNameLength()==L);
 			p.read.setMaxEventRecursionDepth(1);
 			p.read.isDescribed();
 			p.read.close();

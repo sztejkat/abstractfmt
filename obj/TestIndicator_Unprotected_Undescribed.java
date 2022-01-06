@@ -7,7 +7,7 @@ import sztejkat.abstractfmt.testsuite.indicator.Pair;
 import java.io.IOException;
 import org.junit.BeforeClass;
 /**
-	Appplies indicator streams test suite.
+	Appplies indicator formats test suite.
 	See source code for exactly tested setup.	
 */
 public class TestIndicator_Unprotected_Undescribed extends TestSuite

@@ -12,33 +12,29 @@ import java.io.OutputStream;
 public class CBinSignalWriteFormat extends CSignalWriteFormat
 {			
 	/** Creates write format
-		@param max_events_recursion_depth see {@link ASignalWriteFormat#ASignalWriteFormat}
 		@param output see {@link ABinIndicatorWriteFormat1#ABinIndicatorWriteFormat1}	
 	*/
 	protected CBinSignalWriteFormat(
-							int max_events_recursion_depth,
 							OutputStream output
 							)
 	{
-		super(max_events_recursion_depth, 
+		super(
 				new CBinIndicatorWriteFormat(output)
 				);
 	};
 
 	/** Creates write format , using indicator format protector for defend against
 		API abuse by {@link CSignalWriteFormat}.
-		@param max_events_recursion_depth see {@link ASignalWriteFormat#ASignalWriteFormat}
 		@param output see {@link ABinIndicatorWriteFormat1#ABinIndicatorWriteFormat1}	
 		@param test_mode ignored
 	*/
 	CBinSignalWriteFormat(
-							int max_events_recursion_depth,
 							OutputStream output,
 							boolean test_mode
 							)
 	{
-		super(max_events_recursion_depth, 
-				new CIndicatorWriteFormatProtector( new CBinIndicatorWriteFormat(output))
+		super(
+				new CIndicatorWriteFormatProtector( new CBinIndicatorWriteFormat(output),true)
 				);
 	};	
 };

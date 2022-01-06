@@ -43,7 +43,7 @@ public class CXMLSignalWriteFormat extends CSignalWriteFormat
 	{
 		super(
 			new CIndicatorWriteFormatProtector(
-							new CXMLIndicatorWriteFormat( out, charset, settings, is_described )
+							new CXMLIndicatorWriteFormat( out, charset, settings, is_described ),true
 							)
 				);
 	};

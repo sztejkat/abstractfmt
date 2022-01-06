@@ -36,7 +36,15 @@ public interface ISignalReadFormat extends Closeable, IPrimitiveReadFormat
 		/** Returns maximum supported signal name length by this format.
 		This limit is non-adjustable and relates to physcial boundaries
 		of format.
-		@return length limit, non-zero positive, life-time constant */
+		<p>
+		<i>Note: Some implementation may not posses a built-in format limit.
+		Such implementations do return Integer.MAX_VALUE. This does not mean
+		that it will be possible to setMaxSignalNameLength to that value
+		because in most cases buffer for a name will have to be pre-allocated
+		and JVM will fail with OutOfMemoryException.
+		</i> 
+		@return length limit, non-zero positive, life-time constant
+		*/
 		public int getMaxSupportedSignalNameLength();
 	/* .........................................................
 			Events nesting limits.

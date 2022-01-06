@@ -309,7 +309,7 @@ public class CBinDescIndicatorReadFormat extends ABinIndicatorReadFormat1
 	};
 	private TIndicator processTYPE_CHAR_BLOCK(int header, CAdaptivePushBackInputStream in)throws IOException
 	{
-		processTYPE_x_BLOCK(header,2);		
+		processTYPE_x_BLOCK(header,1);		
 		return TIndicator.TYPE_CHAR_BLOCK;
 	};
 	private TIndicator processTYPE_SHORT_BLOCK(int header, CAdaptivePushBackInputStream in)throws IOException

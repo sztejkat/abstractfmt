@@ -12,15 +12,13 @@ import java.io.InputStream;
 public class CBinSignalReadFormat extends CSignalReadFormat
 {			
 	/** Creates write format
-		@param max_events_recursion_depth see {@link ASignalReadFormat#ASignalReadFormat}
 		@param input see {@link ABinIndicatorReadFormat1#ABinIndicatorReadFormat1}	
 	*/
 	public CBinSignalReadFormat(
-							int max_events_recursion_depth,
 							InputStream input
 							)
 	{
-		super(max_events_recursion_depth, new CBinIndicatorReadFormat(input));
+		super(new CBinIndicatorReadFormat(input));
 	};
 	/** Creates write format , using indicator format protector for defend against
 		API abuse by {@link CSignalReadFormat}.
@@ -29,12 +27,11 @@ public class CBinSignalReadFormat extends CSignalReadFormat
 		@param test_mode ignored parameter.
 	*/
 	CBinSignalReadFormat(
-							int max_events_recursion_depth,
 							InputStream input,
 							boolean test_mode
 							)
 	{
-		super(max_events_recursion_depth,
+		super(
 				new CIndicatorReadFormatProtector( new CBinIndicatorReadFormat(input))
 				);
 	};

@@ -58,8 +58,8 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 	/** Returns {@link #isDescribed} since XML describing element
 	must surround primitive from both ends */ 
 	@Override public final boolean isFlushing(){ return isDescribed(); };
-	/** Set to 1024*1024 characters */
-	@Override public int getMaxSupportedSignalNameLength(){ return 1024*1024; }
+	/** Set to Integer.MAX_VALUE characters */
+	@Override public int getMaxSupportedSignalNameLength(){ return Integer.MAX_VALUE; }
 	/* --------------------------------------------------
 			Signals related indicators
 	--------------------------------------------------*/

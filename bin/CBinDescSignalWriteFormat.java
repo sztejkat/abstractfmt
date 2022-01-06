@@ -12,7 +12,6 @@ import java.io.OutputStream;
 public class CBinDescSignalWriteFormat extends CSignalWriteFormat
 {			
 	/** Creates write format
-		@param max_events_recursion_depth see {@link ASignalWriteFormat#ASignalWriteFormat}
 		@param output see {@link ABinIndicatorWriteFormat1#ABinIndicatorWriteFormat1}	
 	*/
 	protected CBinDescSignalWriteFormat(
@@ -20,25 +19,19 @@ public class CBinDescSignalWriteFormat extends CSignalWriteFormat
 							OutputStream output
 							)
 	{
-		super(max_events_recursion_depth, 
-				new CBinDescIndicatorWriteFormat(output)
-				);
+		super(new CBinDescIndicatorWriteFormat(output));
 	};
 
 	/** Creates write format , using indicator format protector for defend against
 		API abuse by {@link CSignalWriteFormat}.
-		@param max_events_recursion_depth see {@link ASignalWriteFormat#ASignalWriteFormat}
 		@param output see {@link ABinIndicatorWriteFormat1#ABinIndicatorWriteFormat1}	
 		@param test_mode ignored
 	*/
 	CBinDescSignalWriteFormat(
-							int max_events_recursion_depth,
 							OutputStream output,
 							boolean test_mode
 							)
 	{
-		super(max_events_recursion_depth, 
-				new CIndicatorWriteFormatProtector( new CBinIndicatorWriteFormat(output))
-				);
+		super(new CIndicatorWriteFormatProtector( new CBinDescIndicatorWriteFormat(output),true));
 	};	
 };

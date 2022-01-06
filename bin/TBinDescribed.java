@@ -56,7 +56,7 @@ interface TBinDescribed
 			
 			case TYPE_BOOLEAN_BLOCK: return 7;
 			case TYPE_BYTE_BLOCK:	 return 1*7;
-			case TYPE_CHAR_BLOCK:	  
+			case TYPE_CHAR_BLOCK:	 return 7;
 			case TYPE_SHORT_BLOCK:   return 2*7;
 			case TYPE_INT_BLOCK: 	 return 4*7;
 			case TYPE_LONG_BLOCK:	 return 8*7;
@@ -79,7 +79,7 @@ interface TBinDescribed
 		{
 			case TYPE_BOOLEAN_BLOCK: return 1;
 			case TYPE_BYTE_BLOCK: return 1;
-			case TYPE_CHAR_BLOCK: return 2;
+			case TYPE_CHAR_BLOCK: return 1;
 			case TYPE_SHORT_BLOCK: return 2;
 			case TYPE_INT_BLOCK: return 4;
 			case TYPE_LONG_BLOCK: return 8;

@@ -377,7 +377,8 @@ public class CBinDescIndicatorWriteFormat extends ABinIndicatorWriteFormat1
 		int s = getPayloadSize();	//this size is expressed in bytes.
 		assert((s>=0)||(s<=TBinDescribed.chunkPayloadForType(header_indicator))); //type specific limits.	
 		int items = s / TBinDescribed.chunkPayloadUnitForBlockType(header_indicator);
-		assert(items *TBinDescribed.chunkPayloadUnitForBlockType(header_indicator)==s);
+		assert(items *TBinDescribed.chunkPayloadUnitForBlockType(header_indicator)==s):
+				"getPayloadSize()="+s+" is not multiple of "+TBinDescribed.chunkPayloadUnitForBlockType(header_indicator)+" for "+header_indicator;
 		assert(items<=7);
 		//encode type
 		header_buffer[0]=(byte)(header_type | (items<<5));
