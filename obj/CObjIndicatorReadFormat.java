@@ -75,7 +75,7 @@ public class CObjIndicatorReadFormat implements IIndicatorReadFormat
 		{
 			assert(characters>0);
 			assert(characters<=max_supported_signal_name_length);
-			this.max_signal_name_length=max_signal_name_length;
+			this.max_signal_name_length=characters;
 		};
 		@Override final public int getMaxSignalNameLength()
 		{
