@@ -51,7 +51,7 @@ abstract class ASignalTest extends ATestCase<Pair>
 			if ((expected.FLAGS & TContentType.CONTENT_TYPED)!=0)
 			{
 				if (n!=TContentType.PRMTV_UNTYPED)
-					Assert.fail("readSignal()="+n+" or PRMTV_UNTYPED while expected "+expected);
+					Assert.fail("readSignal()="+n+" while expected "+expected+" or PRMTV_UNTYPED");
 			}
 		}
 	};

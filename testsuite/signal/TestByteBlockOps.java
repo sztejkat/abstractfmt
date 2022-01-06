@@ -10,10 +10,10 @@ import org.junit.Assert;
 import java.io.IOException;
 
 /**
-	Tests if boolean blocks are properly processed,
+	Tests if byte blocks are properly processed,
 	including boundary conditions. 
 */
-public class TestBooleanBlockOps extends ATestBooleanOps
+public class TestByteBlockOps extends ATestByteOps
 {
 	
 	@Test public void fullBlockWriteRead()throws IOException
@@ -25,19 +25,19 @@ public class TestBooleanBlockOps extends ATestBooleanOps
 		*/
 		enter();
 		Pair p = create();
-		boolean [] sequence = createSequence(100);
+		byte [] sequence = createSequence(100);
 		p.write.open();
 		p.write.begin("array");
-		p.write.writeBooleanBlock(sequence);
+		p.write.writeByteBlock(sequence);
 		p.write.end();
 		p.write.close();		
 		
 		//read them back.
 		p.read.open();
 		assertNext(p.read,"array");
-		assertWhatNext(p.read,TContentType.PRMTV_BOOLEAN_BLOCK);
-		boolean [] x = new boolean[sequence.length];
-		int r = p.read.readBooleanBlock(x);
+		assertWhatNext(p.read,TContentType.PRMTV_BYTE_BLOCK);
+		byte [] x = new byte[sequence.length];
+		int r = p.read.readByteBlock(x);
 		Assert.assertTrue(r==x.length);
 		assertEqual(x,0,r,sequence,0);
 		assertWhatNext(p.read,TContentType.SIGNAL);
@@ -56,10 +56,10 @@ public class TestBooleanBlockOps extends ATestBooleanOps
 		*/
 		enter();
 		Pair p = create();
-		boolean [] sequence = createSequence(100);
+		byte [] sequence = createSequence(100);
 		p.write.open();
 		p.write.begin("array");
-		p.write.writeBooleanBlock(sequence);
+		p.write.writeByteBlock(sequence);
 		p.write.begin("borka");
 		p.write.end();
 		p.write.end();
@@ -68,9 +68,9 @@ public class TestBooleanBlockOps extends ATestBooleanOps
 		//read them back.
 		p.read.open();
 		assertNext(p.read,"array");
-		assertWhatNext(p.read,TContentType.PRMTV_BOOLEAN_BLOCK);
-		boolean [] x = new boolean[sequence.length];
-		int r = p.read.readBooleanBlock(x);
+		assertWhatNext(p.read,TContentType.PRMTV_BYTE_BLOCK);
+		byte [] x = new byte[sequence.length];
+		int r = p.read.readByteBlock(x);
 		Assert.assertTrue(r==x.length);
 		assertEqual(x,0,r,sequence,0);
 		assertWhatNext(p.read,TContentType.SIGNAL);
@@ -93,13 +93,13 @@ public class TestBooleanBlockOps extends ATestBooleanOps
 		*/
 		enter();
 		Pair p = create();
-		boolean [] sequence = createSequence(block_size);
+		byte [] sequence = createSequence(block_size);
 		p.write.open();
 		p.write.begin("array");
 		for(int i=0;i<sequence.length;i+=transfer_size)
 		{
 			int t = Math.min(transfer_size,sequence.length-i);
-			p.write.writeBooleanBlock(sequence,i,t);
+			p.write.writeByteBlock(sequence,i,t);
 		};
 		p.write.end();
 		p.write.close();		
@@ -107,9 +107,9 @@ public class TestBooleanBlockOps extends ATestBooleanOps
 		//read them back.
 		p.read.open();
 		assertNext(p.read,"array");
-		assertWhatNext(p.read,TContentType.PRMTV_BOOLEAN_BLOCK);
-		boolean [] x = new boolean[sequence.length];
-		int r = p.read.readBooleanBlock(x);
+		assertWhatNext(p.read,TContentType.PRMTV_BYTE_BLOCK);
+		byte [] x = new byte[sequence.length];
+		int r = p.read.readByteBlock(x);
 		Assert.assertTrue(r==x.length);
 		assertEqual(x,0,r,sequence,0);
 		assertWhatNext(p.read,TContentType.SIGNAL);
@@ -142,10 +142,10 @@ public class TestBooleanBlockOps extends ATestBooleanOps
 		*/
 		enter();
 		Pair p = create();
-		boolean [] sequence = createSequence(block_size);
+		byte [] sequence = createSequence(block_size);
 		p.write.open();
 		p.write.begin("array");
-		p.write.writeBooleanBlock(sequence);
+		p.write.writeByteBlock(sequence);
 		
 		p.write.end();
 		p.write.close();		
@@ -157,9 +157,9 @@ public class TestBooleanBlockOps extends ATestBooleanOps
 		for(int i=0;i<sequence.length;i+=transfer_size)
 		{
 			int t = Math.min(transfer_size,sequence.length-i);
-			assertWhatNext(p.read,TContentType.PRMTV_BOOLEAN_BLOCK);
-			boolean [] x = new boolean[t+10];
-			int r = p.read.readBooleanBlock(x,10,t);
+			assertWhatNext(p.read,TContentType.PRMTV_BYTE_BLOCK);
+			byte [] x = new byte[t+10];
+			int r = p.read.readByteBlock(x,10,t);
 			Assert.assertTrue(r==t);
 			assertEqual(x,10,r,sequence,i);
 		};
@@ -200,10 +200,10 @@ public class TestBooleanBlockOps extends ATestBooleanOps
 		assert(block_size % transfer_size!=0):"this setting will not produce partial read.";
 		enter();
 		Pair p = create();
-		boolean [] sequence = createSequence(block_size);
+		byte [] sequence = createSequence(block_size);
 		p.write.open();
 		p.write.begin("array");
-		p.write.writeBooleanBlock(sequence);
+		p.write.writeByteBlock(sequence);
 		
 		p.write.end();
 		p.write.close();		
@@ -215,9 +215,9 @@ public class TestBooleanBlockOps extends ATestBooleanOps
 		for(int i=0;i<sequence.length;i+=transfer_size)
 		{
 			
-			assertWhatNext(p.read,TContentType.PRMTV_BOOLEAN_BLOCK);
-			boolean [] x = new boolean[transfer_size];
-			int r = p.read.readBooleanBlock(x,0,transfer_size);
+			assertWhatNext(p.read,TContentType.PRMTV_BYTE_BLOCK);
+			byte [] x = new byte[transfer_size];
+			int r = p.read.readByteBlock(x,0,transfer_size);
 			Assert.assertTrue(r>=0);
 			Assert.assertTrue(r<=transfer_size);
 			assertEqual(x,0,r,sequence,i);
@@ -259,24 +259,24 @@ public class TestBooleanBlockOps extends ATestBooleanOps
 		*/
 		enter();
 		Pair p = create();
-		boolean [] sequence = createSequence(100);
+		byte [] sequence = createSequence(100);
 		p.write.open();
 		p.write.begin("array");
-		p.write.writeBooleanBlock(sequence);
+		p.write.writeByteBlock(sequence);
 		p.write.end();
 		p.write.close();		
 		
 		//read them back.
 		p.read.open();
 		assertNext(p.read,"array");
-		assertWhatNext(p.read,TContentType.PRMTV_BOOLEAN_BLOCK);
-		boolean [] x = new boolean[sequence.length];
+		assertWhatNext(p.read,TContentType.PRMTV_BYTE_BLOCK);
+		byte [] x = new byte[sequence.length];
 		
-		int r = p.read.readBooleanBlock(x);
+		int r = p.read.readByteBlock(x);
 		Assert.assertTrue(r==x.length);
-		r = p.read.readBooleanBlock(x);
+		r = p.read.readByteBlock(x);
 		Assert.assertTrue(r==0);
-		r = p.read.readBooleanBlock(x);
+		r = p.read.readByteBlock(x);
 		Assert.assertTrue(r==0);
 		
 		assertWhatNext(p.read,TContentType.SIGNAL);
@@ -296,10 +296,10 @@ public class TestBooleanBlockOps extends ATestBooleanOps
 		*/
 		enter();
 		Pair p = create();
-		boolean [] sequence = createSequence(100);
+		byte [] sequence = createSequence(100);
 		p.write.open();
 		p.write.begin("array");
-		p.write.writeBooleanBlock(sequence);
+		p.write.writeByteBlock(sequence);
 		p.write.begin("borka");
 		p.write.end();
 		p.write.end();
@@ -308,14 +308,14 @@ public class TestBooleanBlockOps extends ATestBooleanOps
 		//read them back.
 		p.read.open();
 		assertNext(p.read,"array");
-		assertWhatNext(p.read,TContentType.PRMTV_BOOLEAN_BLOCK);
-		boolean [] x = new boolean[sequence.length];
+		assertWhatNext(p.read,TContentType.PRMTV_BYTE_BLOCK);
+		byte [] x = new byte[sequence.length];
 		
-		int r = p.read.readBooleanBlock(x);
+		int r = p.read.readByteBlock(x);
 		Assert.assertTrue(r==x.length);
-		r = p.read.readBooleanBlock(x);
+		r = p.read.readByteBlock(x);
 		Assert.assertTrue(r==0);
-		r = p.read.readBooleanBlock(x);
+		r = p.read.readByteBlock(x);
 		Assert.assertTrue(r==0);
 		
 		assertWhatNext(p.read,TContentType.SIGNAL);
@@ -339,19 +339,19 @@ public class TestBooleanBlockOps extends ATestBooleanOps
 		Pair p = create();
 		p.write.open();
 		p.write.begin("array");
-		p.write.writeBooleanBlock(new boolean[0]);
+		p.write.writeByteBlock(new byte[0]);
 		p.write.end();
 		p.write.close();		
 		
 		//read them back.
 		p.read.open();
 		assertNext(p.read,"array");
-		boolean [] x = new boolean[100];
-		int r = p.read.readBooleanBlock(x);
+		byte [] x = new byte[100];
+		int r = p.read.readByteBlock(x);
 		Assert.assertTrue(r==0);
-		r = p.read.readBooleanBlock(x);
+		r = p.read.readByteBlock(x);
 		Assert.assertTrue(r==0);
-		r = p.read.readBooleanBlock(x);
+		r = p.read.readByteBlock(x);
 		Assert.assertTrue(r==0);
 		
 		assertWhatNext(p.read,TContentType.SIGNAL);
@@ -363,5 +363,150 @@ public class TestBooleanBlockOps extends ATestBooleanOps
 	
 	
 	
+	
+	@Test public void fullByte_by_byte_BlockWriteRead()throws IOException
+	{
+		/*
+			We test if we can perform a byte-by-byte
+			block write and read it in one operation
+		*/
+		enter();
+		Pair p = create();
+		byte [] sequence = createSequence(100);
+		p.write.open();
+		p.write.begin("array");
+		for(int i=0;i<sequence.length;i++)
+			p.write.writeByteBlock(sequence[i]);
+		p.write.end();
+		p.write.close();		
+		
+		//read them back.
+		p.read.open();
+		assertNext(p.read,"array");
+		assertWhatNext(p.read,TContentType.PRMTV_BYTE_BLOCK);
+		byte [] x = new byte[sequence.length];
+		int r = p.read.readByteBlock(x);
+		Assert.assertTrue(r==x.length);
+		assertEqual(x,0,r,sequence,0);
+		assertWhatNext(p.read,TContentType.SIGNAL);
+		assertNext(p.read,null);
+		assertWhatNext(p.read,TContentType.EOF);
+		p.read.close();
+		leave();
+	};
+	
+	
+	@Test public void fullBlockWrite_byte_byte_Read()throws IOException
+	{
+		/*
+			We test if we can perform a block write and read it byte-by-byte
+		*/
+		enter();
+		Pair p = create();
+		byte [] sequence = createSequence(100);
+		p.write.open();
+		p.write.begin("array");
+		p.write.writeByteBlock(sequence);
+		p.write.end();
+		p.write.close();		
+		
+		//read them back.
+		p.read.open();
+		assertNext(p.read,"array");
+		assertWhatNext(p.read,TContentType.PRMTV_BYTE_BLOCK);
+		byte [] x = new byte[sequence.length];
+		for(int i=0;i<x.length;i++)
+		{
+			int r = p.read.readByteBlock();				
+			Assert.assertTrue(r>=0);
+			Assert.assertTrue(r<=255);
+			x[i]=(byte)r;
+		};
+		assertEqual(x,0,x.length,sequence,0);
+		assertWhatNext(p.read,TContentType.SIGNAL);
+		assertNext(p.read,null);
+		assertWhatNext(p.read,TContentType.EOF);
+		p.read.close();
+		leave();
+	};
+	
+	
+	
+	@Test public void fullBlockWrite_byte_byte_ReadEndOf()throws IOException
+	{
+		/*
+			We test if we can perform a full block 
+			write and read back byte-by-byte.
+		*/
+		enter();
+		Pair p = create();
+		byte [] sequence = createSequence(100);
+		p.write.open();
+		p.write.begin("array");
+		p.write.writeByteBlock(sequence);
+		p.write.begin("borka");
+		p.write.end();
+		p.write.end();
+		p.write.close();		
+		
+		//read them back.
+		p.read.open();
+		assertNext(p.read,"array");
+		assertWhatNext(p.read,TContentType.PRMTV_BYTE_BLOCK);
+		byte [] x = new byte[sequence.length];
+		for(int i=0;i<x.length;i++)
+		{
+			int r = p.read.readByteBlock();				
+			Assert.assertTrue(r>=0);
+			Assert.assertTrue(r<=255);
+			x[i]=(byte)r;
+		};
+		Assert.assertTrue(p.read.readByteBlock()==-1);
+		Assert.assertTrue(p.read.readByteBlock()==-1);
+		Assert.assertTrue(p.read.readByteBlock()==-1);
+		
+		assertWhatNext(p.read,TContentType.SIGNAL);
+		assertNext(p.read,"borka");
+		assertWhatNext(p.read,TContentType.SIGNAL);
+		assertNext(p.read,null);
+		assertNext(p.read,null);
+		assertWhatNext(p.read,TContentType.EOF);
+		p.read.close();
+		leave();
+	};
+	
+	
+	@Test public void fullBlockWrite_byte_byte_ReadZeroData()throws IOException
+	{
+		/*
+			We test if we can perform a zero block 
+			write and read back byte-by-byte.
+		*/
+		enter();
+		Pair p = create();
+		p.write.open();
+		p.write.begin("array");
+		p.write.writeByteBlock(new byte[0]);
+		p.write.begin("borka");
+		p.write.end();
+		p.write.end();
+		p.write.close();		
+		
+		//read them back.
+		p.read.open();
+		assertNext(p.read,"array");
+		Assert.assertTrue(p.read.readByteBlock()==-1);
+		Assert.assertTrue(p.read.readByteBlock()==-1);
+		Assert.assertTrue(p.read.readByteBlock()==-1);
+		
+		assertWhatNext(p.read,TContentType.SIGNAL);
+		assertNext(p.read,"borka");
+		assertWhatNext(p.read,TContentType.SIGNAL);
+		assertNext(p.read,null);
+		assertNext(p.read,null);
+		assertWhatNext(p.read,TContentType.EOF);
+		p.read.close();
+		leave();
+	};
 };
 	

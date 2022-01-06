@@ -22,7 +22,17 @@ import org.junit.runners.Suite.SuiteClasses;
 			TestFloatPrimitiveOps.class,
 			TestDoublePrimitiveOps.class,
 			
-			TestBooleanBlockOps.class
+			TestBooleanBlockOps.class,
+			TestByteBlockOps.class,
+			TestCharBlockOps.class,
+			TestAltCharBlockOps.class,
+			TestShortBlockOps.class,
+			TestIntBlockOps.class,
+			TestLongBlockOps.class,
+			TestFloatBlockOps.class,
+			TestDoubleBlockOps.class,
+			
+			TestWhatNext.class
 				})	//list, using {x.class,y.class,....} test components.
 public class TestSuite extends ATestCase<Pair>
 {	

@@ -28,4 +28,19 @@ abstract class ATestCharOps extends ASignalTest
 		leave();
 		return x;
 	};
+	/** Validates if x is a fragment of expected
+	@param x fragment to test
+	@param x_offset offset in x to match expected[exp_offset]
+	@param length how many elements to compare
+	@param exp_offset offest in expected to match
+	*/
+	protected static void assertEqual(char []x , int x_offset, int length,
+							  		 char []expected, int exp_offset)
+    {
+    	for(int i=0;i<length;i++)
+    	{
+    		if (x[x_offset+i]!=expected[exp_offset+i])
+    			Assert.fail("Content differs at "+i+", x="+x[x_offset+i]+" expected="+expected[exp_offset+i]);
+    	}
+    };
 }
