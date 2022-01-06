@@ -32,7 +32,11 @@ import org.junit.runners.Suite.SuiteClasses;
 			TestFloatBlockOps.class,
 			TestDoubleBlockOps.class,
 			
-			TestWhatNext.class
+			TestWhatNext.class,
+			TestEvents.class,
+			TestSkips.class,
+			
+			TestAbuseDefense.class
 				})	//list, using {x.class,y.class,....} test components.
 public class TestSuite extends ATestCase<Pair>
 {	

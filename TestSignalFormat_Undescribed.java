@@ -26,7 +26,7 @@ public class TestSignalFormat_Undescribed extends TestSuite
 						new CIndicatorWriteFormatProtector(
 							new CDumpingObjIndicatorWriteFormat(
 											media,//final CObjListFormat media,	
-											2,//final int max_registrations,
+											4,//final int max_registrations,
 											1024,//final int max_supported_signal_name_length,										
 											false,//final boolean is_described,
 											false,//final boolean is_flushing
@@ -39,7 +39,7 @@ public class TestSignalFormat_Undescribed extends TestSuite
 							new CIndicatorReadFormatProtector(
 								new CObjIndicatorReadFormat(
 												media,//final CObjListFormat media, 
-												2,//final int max_registrations,
+												4,//final int max_registrations,
 												1024,//final int max_supported_signal_name_length,
 												false,//final boolean is_described,
 												false //final boolean is_flushing

@@ -90,7 +90,7 @@ public interface ISignalWriteFormat extends Closeable, Flushable,IPrimitiveWrite
 		@param do_not_optimize if true informs the stream format that this signal
 				is so rare, that there is no reason optimize its writing by any
 				means. Especially formats which convert strings to numbers from 
-				the limited set are expected to not waste numbers on it.
+				the limited set are expected to not waste numbers pool on it.
 				
 		@throws AssertionError if <code>signal</code> is null.
 		@throws IllegalArgumentException if name of signal is too long.

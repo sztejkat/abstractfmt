@@ -216,17 +216,17 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 				Signals
 	-------------------------------------------------------------*/
 	@Override public String next()throws IOException
-	{
-		if (max_events_recursion_depth>0)
-		{
-			if (current_depth>max_events_recursion_depth)
-				throw new EFormatBoundaryExceeded("Too deep recursion");
-		};
+	{		
 		final String s = nextImpl();
 		if (s!=null)
 		{
 			current_depth++;
 			if (current_depth<0) throw new IllegalStateException("Used up more than 2^32 recursion levels");
+			if (max_events_recursion_depth>0)
+			{
+				if (current_depth>max_events_recursion_depth)
+					throw new EFormatBoundaryExceeded("Too deep recursion");
+			}
 		}	
 		else
 		{

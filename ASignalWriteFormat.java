@@ -180,9 +180,11 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 			int hash = name.hashCode();
 			for(int i=names_registry.length;--i>=0;)
 			{
+				//Note: it is possible that some strings have zero hash.				
 				if (names_registry_hash[i]==hash)
 				{
-					if (names_registry[i].equals(name)) return i;
+					String n = names_registry[i];
+					if ((n!=null)&&(n.equals(name))) return i;
 				}
 			};
 			return -1;

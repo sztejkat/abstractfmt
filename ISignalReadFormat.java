@@ -116,6 +116,20 @@ public interface ISignalReadFormat extends Closeable, IPrimitiveReadFormat
 		figured out that You are not interested at all in what is in it,
 		regardless how many prmitives and events is inside
 		and You need to move to after the end of it.
+		<p>
+		<pre>
+			A{
+			      -- here call skip
+				B{
+					C
+				}
+				-- here call skip
+				D{		}
+				E{		}
+			  }
+			F{	  -- this will be returned by nearest {@link #next}
+			}
+		</pre>
 		
 		@throws IOException if low level i/o failed or an appropriate
 		subclass to represent encountered problem.

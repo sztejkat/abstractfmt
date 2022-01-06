@@ -10,8 +10,11 @@ import org.junit.Assert;
 import java.io.IOException;
 
 /**
-	Tests if described format correctly provides
+	Tests if format correctly provides
 	information about described primitives.
+	<p>
+	Valid for both described and un-described
+	formats.
 */
 public class TestWhatNext extends ATestShortOps
 {
