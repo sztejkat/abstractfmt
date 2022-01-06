@@ -15,17 +15,14 @@ public class CSignalReadFormat extends ASignalReadFormat
 	
 	* *************************************************/
 	/** Creates read format
-		@param max_events_recursion_depth {@link ASignalReadFormat#ASignalReadFormat}
 		@param input --//--		
 	*/
 	public CSignalReadFormat(
-								 int max_events_recursion_depth,
 								 IIndicatorReadFormat input
 								 )
 	 {
 	 	super( 
-			  max_events_recursion_depth,								 
-			  input
+			 input
 			  );
 	 };
 	

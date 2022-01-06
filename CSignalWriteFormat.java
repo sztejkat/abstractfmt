@@ -15,16 +15,13 @@ public class CSignalWriteFormat extends ASignalWriteFormat
 	
 	* *************************************************/
 	/** Creates write format
-		@param max_events_recursion_depth see {@link ASignalWriteFormat#ASignalWriteFormat}
 		@param output --//--		
 	*/
 	public CSignalWriteFormat(
-								 int max_events_recursion_depth,
 								 IIndicatorWriteFormat output
 								 )
 	 {
-	 	super(max_events_recursion_depth,								 
-			  output);
+	 	super(output);
 	 };
 	 
 };

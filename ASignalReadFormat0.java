@@ -101,27 +101,20 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 			/* ---------------------------------------------------
 							Depth tracking
 			-----------------------------------------------------*/
-			/** Maximum recursion depth, -1 disables it */
-			private final int max_events_recursion_depth;
+			/** Maximum recursion depth, 0 disables it */
+			private  int max_events_recursion_depth;
 			/** Current events depth */
-			private int depth;
+			private int current_depth;
 			
 	/** Creates read format		
-		@param max_events_recursion_depth specifies the allowed depth of events
-		nesting.Zero disables limit, 1 sets limit to: "no nested elements allowed",
-		2 allows element within an element and so on. If this limit is exceed
-		the {@link #next} will throw {@link EFormatBoundaryExceeded} if stream
-		contains too deep recursion of elements.	
 		@param input output to set. If null will be set to <code>(IIndicatorWriteFormat)this</code>.
 		@throws AssertionError error if parameters do not match.
 		@see IIndicatorReadFormat#getMaxRegistrations
 		*/
 	protected ASignalReadFormat0(
-								  int max_events_recursion_depth,
 								  IIndicatorReadFormat input
 								 )
 	{
-		assert(max_events_recursion_depth>=0):"max_events_recursion_depth="+max_events_recursion_depth;
 		if (input==null) input = (IIndicatorReadFormat)this;
 		this.input = input;					
 		this.max_events_recursion_depth=max_events_recursion_depth;
@@ -206,6 +199,14 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 	@Override final public boolean isDescribed(){ return input.isDescribed(); };
 	/** Returns what input returns.	*/
 	@Override final public int getMaxSupportedSignalNameLength(){ return input.getMaxSupportedSignalNameLength(); };
+	@Override public void setMaxEventRecursionDepth(int max_events_recursion_depth)throws IllegalStateException
+	{
+		assert(max_events_recursion_depth>=0):"max_events_recursion_depth="+max_events_recursion_depth;
+		this.max_events_recursion_depth=max_events_recursion_depth;
+		if ((max_events_recursion_depth>0)&&(max_events_recursion_depth<current_depth))
+			throw new IllegalStateException("Too deep events recursion, limit set to "+max_events_recursion_depth);			
+	};
+	@Override final public int getMaxEventRecursionDepth(){ return max_events_recursion_depth; };
 		
 	/* -------------------------------------------------------------
 				Signals
@@ -214,19 +215,19 @@ abstract class ASignalReadFormat0 implements ISignalReadFormat
 	{
 		if (max_events_recursion_depth>0)
 		{
-			if (depth>max_events_recursion_depth)
+			if (current_depth>max_events_recursion_depth)
 				throw new EFormatBoundaryExceeded("Too deep recursion");
 		};
 		final String s = nextImpl();
 		if (s!=null)
 		{
-			depth++;
-			if (depth<0) throw new IllegalStateException("Used up more than 2^32 recursion levels");
+			current_depth++;
+			if (current_depth<0) throw new IllegalStateException("Used up more than 2^32 recursion levels");
 		}	
 		else
 		{
-			if (depth==0) throw new ECorruptedFormat("end signal, but no active begin signal.");
-			depth--;
+			if (current_depth==0) throw new ECorruptedFormat("end signal, but no active begin signal.");
+			current_depth--;
 		};
 		return s;
 	};

@@ -13,17 +13,15 @@ public abstract class ASignalReadFormat extends ASignalReadFormat0
 					private boolean is_broken;
 					
 	/** Creates read format
-	@param max_events_recursion_depth see {@link ASignalReadFormat0#ASignalReadFormat0}
 	@param input --//--
 	@throws AssertionError error if parameters do not match.
 	@see IIndicatorReadFormat#getMaxRegistrations
 	*/
 	protected ASignalReadFormat(
-								 int max_events_recursion_depth,
 								 IIndicatorReadFormat input
 								 )
 	{
-		super(max_events_recursion_depth,input);
+		super(input);
 	};				
 	/* ****************************************************************
 	

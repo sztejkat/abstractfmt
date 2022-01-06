@@ -82,7 +82,7 @@ public class CObjIndicatorWriteFormat implements IIndicatorWriteFormat
 				  is_flushing,
 				  false);
 		};
-		
+		protected final CObjListFormat getMedia(){ return media; };
 		
 		/* ***************************************************************
 		

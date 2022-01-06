@@ -1,3 +1,4 @@
 #Generated documentation package
 package-doc/**
+#Data produced by tests
 test-data/**

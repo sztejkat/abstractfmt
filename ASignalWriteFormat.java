@@ -90,7 +90,7 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 					/** Set with {@link #setMaxSignalNameLength} */
 					private int max_name_length = 1024;
 					/** See constructor */
-					private final int max_events_recursion_depth;				
+					private int max_events_recursion_depth;				
 					/** Keeps track of current events depth */
 					private int current_depth;
 					/** A names registry, filled up with names, first
@@ -110,20 +110,14 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		
 		*********************************************************/
 		/** Creates write format
-		@param max_events_recursion_depth specifies the allowed depth of elements
-			nesting. Zero disables limit, 1 sets limit to: "no nested elements allowed",
-			2 allows element within an element and so on. If this limit is exceed
-			the {@link #begin(String,boolean)} will throw <code>IllegalStateException</code>.
 		@param output output to set. If null will be set to <code>(IIndicatorWriteFormat)this</code>.
 		@throws AssertionError error if parameters do not match.
 		@see IIndicatorWriteFormat#getMaxRegistrations
 		*/
-		protected ASignalWriteFormat(int max_events_recursion_depth,
-									 IIndicatorWriteFormat output
+		protected ASignalWriteFormat(
+								IIndicatorWriteFormat output
 									 )
 		{
-			assert(max_events_recursion_depth>=0):"max_events_recursion_depth="+max_events_recursion_depth;
-			
 			if (output==null) output = (IIndicatorWriteFormat)this;
 			this.output = output;
 			
@@ -307,6 +301,15 @@ public abstract class ASignalWriteFormat implements ISignalWriteFormat
 		@Override final public boolean isDescribed(){ return output.isDescribed(); };
 		/** Returns what output returns.	*/
 		@Override final public int getMaxSupportedSignalNameLength(){ return output.getMaxSupportedSignalNameLength(); };
+		@Override public void setMaxEventRecursionDepth(int max_events_recursion_depth)throws IllegalStateException
+		{
+			assert(max_events_recursion_depth>=0):"max_events_recursion_depth="+max_events_recursion_depth;
+			this.max_events_recursion_depth=max_events_recursion_depth;
+			if ((max_events_recursion_depth>0)&&(max_events_recursion_depth<current_depth))
+				throw new IllegalStateException("Too deep events recursion, limit set to "+max_events_recursion_depth);			
+		};
+		@Override final public int getMaxEventRecursionDepth(){ return max_events_recursion_depth; };
+		
 		/* ---------------------------------------------------------
 					Signals
 		---------------------------------------------------------*/

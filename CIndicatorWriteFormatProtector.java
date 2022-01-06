@@ -55,6 +55,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		assert(to_protect!=null);
 		this.bare=to_protect;
 		this.validate_if_flushed_before_close=validate_if_flushed_before_close;
+		this.is_flushed = true; //to allow close without open.
 	};
 	
 	private void validateOpenWasCalled()throws AssertionError
@@ -582,7 +583,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		validateNotClosed();
 		if (is_open) throw new AssertionError("Calling open() twice may have unpredictable results");
 		is_open = true;
-		is_flushed = false;
+		is_flushed = false;	//because open could have written some data.
 		bare.open();
 	};
 	@Override public void close()throws IOException
@@ -592,7 +593,7 @@ public class CIndicatorWriteFormatProtector implements IIndicatorWriteFormat
 		if (validate_if_flushed_before_close)
 		{
 			if (!is_flushed)
-				throw new AssertionError("Calling close() with some un-flushed data may result in unpredictable read errors."); 
+				throw new AssertionError("Calling close() after open with some un-flushed data may result in unpredictable read errors."); 
 		}
 		bare.close();
 	};
