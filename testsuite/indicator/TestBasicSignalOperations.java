@@ -3,6 +3,7 @@ import sztejkat.abstractfmt.testsuite.*;
 import sztejkat.abstractfmt.IIndicatorWriteFormat;
 import sztejkat.abstractfmt.IIndicatorReadFormat;
 import sztejkat.abstractfmt.TIndicator;
+import sztejkat.abstractfmt.EFormatBoundaryExceeded;
 import org.junit.Test;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -365,6 +366,42 @@ public class TestBasicSignalOperations extends AIndicatorTest
 	{
 		enter();
 		testSingleDirectBegin("półśżącz");
+		leave();
+	};
+	
+	
+	@Test public void testMaxSignalNameLength()throws IOException
+	{
+		/*
+			Check if read format correctly defends against
+			too long signal names.
+		*/
+		enter();
+		Pair p = create();
+		int max = Math.min(p.write.getMaxSupportedSignalNameLength(),16);
+		Assert.assertTrue(p.write.getMaxSupportedSignalNameLength()==
+						  p.read.getMaxSupportedSignalNameLength());
+		p.read.setMaxSignalNameLength(max);
+		Assert.assertTrue(p.read.getMaxSignalNameLength()==max);
+		
+		p.write.open();
+			p.write.writeBeginDirect("0123456789abcdef");
+			p.write.writeEnd();
+			p.write.writeBeginDirect("0123456789abcdefG");
+			p.write.writeEnd();
+		p.write.flush();
+		p.write.close();
+		
+		p.read.open();
+		assertReadIndicator(p.read,TIndicator.BEGIN_DIRECT);
+		Assert.assertTrue("0123456789abcdef".equals(p.read.getSignalName()));
+		assertReadIndicator(p.read,TIndicator.END);
+		try{
+			assertReadIndicator(p.read,TIndicator.BEGIN_DIRECT);
+			Assert.fail();
+		}catch(EFormatBoundaryExceeded ex){ System.out.println(ex); };
+		p.read.close();
+		
 		leave();
 	};
 };
