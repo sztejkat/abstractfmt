@@ -12,7 +12,17 @@ import org.junit.runners.Suite.SuiteClasses;
 			TestOpenClose.class,
 			TestFailsBeforeOpen.class,
 			TestFailsAfterClose.class,
-			TestBooleanPrimitiveOps.class
+			
+			TestBooleanPrimitiveOps.class,
+			TestBytePrimitiveOps.class,
+			TestCharPrimitiveOps.class,
+			TestShortPrimitiveOps.class,
+			TestIntPrimitiveOps.class,
+			TestLongPrimitiveOps.class,
+			TestFloatPrimitiveOps.class,
+			TestDoublePrimitiveOps.class,
+			
+			TestBooleanBlockOps.class
 				})	//list, using {x.class,y.class,....} test components.
 public class TestSuite extends ATestCase<Pair>
 {	

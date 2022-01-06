@@ -201,7 +201,7 @@ public interface ISignalReadFormat extends Closeable, IPrimitiveReadFormat
 				is in progress.
 		@throws IOException if low level i/o failed
 		@throws ENoMoreData if stream cursor is at the signal and there is no
-				data to initiate operation.
+				data to initiate operation or i signal is reached inside primitive element.
 		@throws EUnexpectedEof if read resulted in end-of-file condition
 		@throws EDataMissmatch if format is {@link #isDescribed} and the type information
 				describing this primitive found in stream is not matching the type of
@@ -232,18 +232,18 @@ public interface ISignalReadFormat extends Closeable, IPrimitiveReadFormat
 		@param length number of bytes to read
 		@return number of bytes read, which can be less that <code>length</code> (including zero)
 				only if signal was reached. Once the partial read is returned this method
-				must always return zero and do not move cursor past the end of a block;
+				must always return zero and do not move cursor past the end of a block.			
 				
 		@throws IllegalStateException if call is made outside of an event.
 		@throws IllegalStateException if there is block operation of another type in progress.  
 		@throws IOException if failed at low level.
-		@throws ENoMoreData if it was a first read in block reading sequence and it could not
-						start because cursor is already at signal. Notice this exception is not
-						thrown if reading reaches a signal. In such case a partial read is returned.
+		
 		@throws EUnexpectedEof if physical end of stream was reached before the "end signal" was 
 						reached.
 		@throws EDataMissmatch if this is an initial read, format is {@link #isDescribed} and the type
-				 information found in stream is not matching the type of this request.		
+				 information found in stream is not matching the type of this request.	
+		@throws ENoMoreData if reaches end signal inside a single element of an array. Notice,
+				it is never thrown if signal is reached during read between array elements. 	
 		@throws EDataTypeRequired or {@link ECorruptedFormat}  if this is an initial read,
 		 		format is {@link #isDescribed} but there is no type	information.
 		*/

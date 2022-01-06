@@ -34,9 +34,11 @@ abstract class ASignalTest extends ATestCase<Pair>
 		assert((s==expected)||(s.equals(expected)));
 	};
 	/** Calls {@link ISignalReadFormat#whatNext} and validates if is expected. 
-	
+	It transparently handles un-described and described format accepting
+	{@link TContentType#PRMTV_UNTYPED} as valid response for any typed 
+	expected in undescribed formats. 
 	@param f from where to read
-	@param expected what is expected
+	@param expected what is expected, should assume format is described.
 	@throws IOException if failed to read
 	@throws AssertionError if read is different than expected.
 	*/
@@ -45,7 +47,12 @@ abstract class ASignalTest extends ATestCase<Pair>
 		TContentType n = f.whatNext();
 		if (n!=expected)
 		{
-			Assert.fail("readSignal()="+n+" while expected "+expected);
+			if (f.isDescribed()) Assert.fail("readSignal()="+n+" while expected "+expected);
+			if ((expected.FLAGS & TContentType.CONTENT_TYPED)!=0)
+			{
+				if (n!=TContentType.PRMTV_UNTYPED)
+					Assert.fail("readSignal()="+n+" or PRMTV_UNTYPED while expected "+expected);
+			}
 		}
 	};
 };

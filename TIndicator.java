@@ -234,7 +234,28 @@ public enum TIndicator
 		{
 			this.FLAGS = FLAGS;
 		};
-		
+		/** Tests if <code>found</code> is flush which can be used in place of <code>expected_flush</code>
+		@param expected_flush one of FLUSH_xxx, type specific.
+		@param found also one of above, but can include generic flushes.
+		@return true if <code>found</code> can be accepted in place where <code>expected_flush</code>
+			should be.
+		*/
+		public static boolean isMatchingFlush(TIndicator expected_flush, TIndicator found)
+		{
+			assert((expected_flush.FLAGS & FLUSH)!=0);
+			if (expected_flush==found) return true;
+			if ((found.FLAGS & FLUSH)==0) return false;
+			
+			if ((expected_flush.FLAGS & BLOCK)!=0)
+			{
+				if ((found.FLAGS & BLOCK)!=0) return true;
+			};
+			if ((expected_flush.FLAGS & ELEMENT)!=0)
+			{
+				if ((found.FLAGS & ELEMENT)!=0) return true;
+			};
+			return true;
+		};
 		/** Returns matching FLUSH indicator for TYPE indicator
 		@param type TYPE indicator
 		@return flush indicator

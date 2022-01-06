@@ -869,7 +869,8 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 			};
 			int digit_1 = HEX2D(c);
 			if (digit_1==-1) throw new EDataMissmatch("Invalid character \""+c+"\" in byte block");
-			c = input.readChar();	//note: no inside byte termination allowed.
+			c = input.readChar();	//Note: need to recover correctly from signal.
+			if (c=='<'){ input.unread(c); tryThrowOnPartialRead(); throw new ENoMoreData();}
 			int digit_0 = HEX2D(c);
 			if (digit_0==-1) throw new EDataMissmatch("Invalid character \""+c+"\" in byte block");
 			
@@ -897,7 +898,8 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 			};
 			int digit_1 = HEX2D(c);
 			if (digit_1==-1) throw new EDataMissmatch("Invalid character \""+c+"\" in byte inside a byte block");
-			c = input.readChar();	//note: no inside byte termination allowed.
+			c = input.readChar();	//Note: need to recover correctly from signal.
+			if (c=='<'){ input.unread(c); tryThrowOnPartialRead(); throw new ENoMoreData();}
 			int digit_0 = HEX2D(c);
 			if (digit_0==-1) throw new EDataMissmatch("Invalid character \""+c+"\" in byte inside a byte block");		
 			return ((digit_1<<4) | (digit_0));

@@ -439,10 +439,43 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 	{
 		if (settings.ROOT_ELEMENT!=null)
 		{
-				output.write("</");
-				output.write(settings.ROOT_ELEMENT);
-				output.write('>');
-				output.flush();
+				/*
+				Note:
+					Close may be called even if some events
+					are not closed.
+					
+					Writing </root> closing element in such
+					case will result in not-well formed XML file.
+					
+					We have following choices:
+					
+						1.Write closing root element and produce not-well formed
+						  XML with a surprising error of un-balanced events;
+						2.Close silently all un-closed elements.
+						3.Not write closing element, producing clearly dangling end XML
+						4.Throw.
+						
+					Option 1 will be most confusing.
+					Option 4 will prevent closing on errornous state.
+					Option 2 will leak use errors which may be exposed when
+					user moves to some other format.
+					
+					I do choose option 3 with comment written to XML file
+					indicating why it is malformed. This gives more consistent
+					error reporting because stream will complain on unexpected
+					end of file instead of root element where it should not be.
+				*/
+				if (events_stack.isEmpty())
+				{
+					output.write("</");
+					output.write(settings.ROOT_ELEMENT);
+					output.write('>');
+					output.flush();
+				}else
+				{
+					output.write("\n<!-- Warning: Since "+getClass()+".close() was called with dangling, unclosed signals\n"+
+								 "\t the closing "+settings.ROOT_ELEMENT+" xml element was intentionally NOT written to a stream. -->"); 
+				};
 		};
 		super.close();
 	};

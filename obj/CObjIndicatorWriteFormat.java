@@ -225,10 +225,12 @@ public class CObjIndicatorWriteFormat implements IIndicatorWriteFormat
 		
 		 public void writeBooleanBlock(boolean [] buffer, int offset, int length)throws IOException
 		 {
+		 	if (length!=0)
 			media.add(Arrays.copyOfRange(buffer,offset,offset+length));
 		 };
 		 public void writeByteBlock(byte [] buffer, int offset, int length)throws IOException
 		 {
+		 	if (length!=0)
 			media.add(Arrays.copyOfRange(buffer,offset,offset+length));
 		 };
 		 public void writeByteBlock(byte data)throws IOException
@@ -237,30 +239,37 @@ public class CObjIndicatorWriteFormat implements IIndicatorWriteFormat
 		 };
 		 public void writeCharBlock(char [] buffer, int offset, int length)throws IOException
 		 {
+		 	if (length!=0)
 			media.add(Arrays.copyOfRange(buffer,offset,offset+length));
 		 };
 		 public void writeCharBlock(CharSequence characters, int offset, int length)throws IOException
 		 {
+		 	if (length!=0)
 			media.add(characters.subSequence(offset,offset+length).toString().toCharArray());
 		 };
 		 public void writeShortBlock(short [] buffer, int offset, int length)throws IOException
 		 {
+		 	if (length!=0)
 			media.add(Arrays.copyOfRange(buffer,offset,offset+length));
 		 };  
 		 public void writeIntBlock(int [] buffer, int offset, int length)throws IOException
 		 {
+		 	if (length!=0)
 			media.add(Arrays.copyOfRange(buffer,offset,offset+length));
 		 };
 		 public void writeLongBlock(long [] buffer, int offset, int length)throws IOException
 		 {
+		 	if (length!=0)
 			media.add(Arrays.copyOfRange(buffer,offset,offset+length));
 		 };
 		 public void writeFloatBlock(float [] buffer, int offset, int length)throws IOException
 		 {
+		 	if (length!=0)
 			media.add(Arrays.copyOfRange(buffer,offset,offset+length));
 		 };
 		 public void writeDoubleBlock(double [] buffer, int offset, int length)throws IOException
 		 {
+		 	if (length!=0)
 			media.add(Arrays.copyOfRange(buffer,offset,offset+length));
 		};
 };
