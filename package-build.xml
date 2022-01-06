@@ -24,6 +24,7 @@
 					sztejkat.abstractfmt.obj,
 					sztejkat.abstractfmt.bin,
 					sztejkat.abstractfmt.xml,
+                                        sztejkat.abstractfmt.testsuite,
                                         sztejkat.abstractfmt.testsuite.signal,
                                         sztejkat.abstractfmt.testsuite.indicator
                                         "/>

@@ -61,7 +61,7 @@ public interface ISignalReadFormat extends Closeable, IPrimitiveReadFormat
 	  	@param max_events_recursion_depth specifies the allowed depth of elements
 			nesting. Zero disables limit, 1 sets limit to: "no nested elements allowed",
 			2 allows element within an element and so on. If this limit is exceed
-			the {@link #begin(String,boolean)} will throw <code>IllegalStateException</code>.
+			the {@link #next()} will throw {@link EFormatBoundaryExceeded}.
 		Changing limit on the fly is allowed.
 		@throws IllegalStateException if specified limit is non zero and lower than
 		current event recursion depth.
@@ -124,7 +124,6 @@ public interface ISignalReadFormat extends Closeable, IPrimitiveReadFormat
 		figured out that You are not interested at all in what is in it,
 		regardless how many prmitives and events is inside
 		and You need to move to after the end of it.
-		<p>
 		<pre>
 			A{
 			      -- here call skip

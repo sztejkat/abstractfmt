@@ -22,7 +22,6 @@ public class CBinSignalReadFormat extends CSignalReadFormat
 	};
 	/** Creates write format , using indicator format protector for defend against
 		API abuse by {@link CSignalReadFormat}.
-		@param max_events_recursion_depth see {@link ASignalReadFormat#ASignalReadFormat}
 		@param input see {@link ABinIndicatorReadFormat1#ABinIndicatorReadFormat1}	
 		@param test_mode ignored parameter.
 	*/

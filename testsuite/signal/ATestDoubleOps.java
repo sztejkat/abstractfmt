@@ -32,6 +32,7 @@ abstract class ATestDoubleOps extends ASignalTest
 	@param x fragment to test
 	@param x_offset offset in x to match expected[exp_offset]
 	@param length how many elements to compare
+	@param expected to match with what
 	@param exp_offset offest in expected to match
 	*/
 	protected static void assertEqual(double []x , int x_offset, int length,

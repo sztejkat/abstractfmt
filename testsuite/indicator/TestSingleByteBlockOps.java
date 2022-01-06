@@ -16,6 +16,7 @@ public class TestSingleByteBlockOps extends ATestByteOps
 	/** Writes sequence using fixed size block operations. 
 	@param x what to write 
 	@param write where to write
+	@throws IOException if failed at low level
 	*/
 	private void writeBlock(byte [] x, IIndicatorWriteFormat write)throws IOException
 	{
@@ -41,6 +42,7 @@ public class TestSingleByteBlockOps extends ATestByteOps
 	This operation is using reads which will excactly match the size of x array.
 	@param x what to expect	
 	@param read where to read from
+	@throws IOException if failed at low level
 	*/
 	private void expectBlockAccurate(byte [] x, IIndicatorReadFormat read)throws IOException
 	{

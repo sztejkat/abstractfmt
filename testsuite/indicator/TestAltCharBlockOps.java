@@ -17,6 +17,7 @@ public class TestAltCharBlockOps extends ATestCharOps
 	@param x what to write
 	@param op_size  block transfer size 
 	@param write where to write
+	@throws IOException if failed at low level
 	*/
 	private void writeBlock(char [] x, int op_size, IIndicatorWriteFormat write)throws IOException
 	{
@@ -45,18 +46,12 @@ public class TestAltCharBlockOps extends ATestCharOps
 				Size accurate transfers
 	
 	-----------------------------------------------------------------------------*/
-	
-	
-	
-	
-	
-	
-	
 	/** Read sequence using elementary single ops and validates if correct. 
 	This operation is using reads which will excactly match the size of x array.
 	@param x what to expect	
 	@param op_size  block transfer size 
 	@param read where to read from
+	@throws IOException if failed at low level
 	*/
 	private void expectBlockAccurate(char [] x, int op_size, IIndicatorReadFormat read)throws IOException
 	{
@@ -177,19 +172,12 @@ public class TestAltCharBlockOps extends ATestCharOps
 				Size inaccurate transfers with partial reads.
 	
 	-----------------------------------------------------------------------------*/
-	
-	
-	
-	
-	
-	
-	
-	
 	/** Read sequence using elementary single ops and validates if correct. 
 	This operation is using reads which may give partial read
 	@param x what to expect	
 	@param op_size  block transfer size 
 	@param read where to read from
+	@throws IOException if failed at low level
 	*/
 	private void expectBlockInaccurate(char [] x, int op_size, IIndicatorReadFormat read)throws IOException
 	{	

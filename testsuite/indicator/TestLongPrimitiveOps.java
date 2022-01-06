@@ -16,6 +16,7 @@ public class TestLongPrimitiveOps extends ATestLongOps
 	/** Writes sequence using elementary single ops 
 	@param x what to write
 	@param write where to write
+	@throws IOException if failed at low level
 	*/
 	private void writeElementary(long [] x, IIndicatorWriteFormat write)throws IOException
 	{
@@ -32,6 +33,7 @@ public class TestLongPrimitiveOps extends ATestLongOps
 	/** Read sequence using elementary single ops and validates if correct. 
 	@param x what to expect
 	@param read where to read from
+	@throws IOException if failed at low level
 	*/
 	private void expectElementary(long [] x, IIndicatorReadFormat read)throws IOException
 	{

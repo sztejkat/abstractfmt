@@ -15,7 +15,6 @@ public class CBinDescSignalWriteFormat extends CSignalWriteFormat
 		@param output see {@link ABinIndicatorWriteFormat1#ABinIndicatorWriteFormat1}	
 	*/
 	protected CBinDescSignalWriteFormat(
-							int max_events_recursion_depth,
 							OutputStream output
 							)
 	{

@@ -25,7 +25,7 @@ public class CDumpingObjIndicatorWriteFormat extends CObjIndicatorWriteFormat
 	@param folder optional folder to be used where create files.
 		If not null and not existing will be created.			
 	@param file_name_pattern file name with # inside to be replaced 
-		with {@link #numerator}. File will be created, written
+		with per VM run unique sequence number. File will be created, written
 		and read with "UTF-8" encoding.
 		Files will be overwritten.
 	@throws AssertionError is something is wrong.

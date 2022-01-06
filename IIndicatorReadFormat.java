@@ -193,9 +193,9 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 		<li>with {@link TIndicator#SIGNAL} flag set if not {@link #isFlushing};</li>
 	</ul>
 	This method may be called <u>only</u> if it was 
-	validate with {@link #getIndicator} that cursor is at {@link TIndicator#DATA}</u>
+	validated with {@link #getIndicator} that cursor is at {@link TIndicator#DATA}
 	prior to calling this method. If this method is called without this validating call
-	 the effect may be unpredictable.
+	the effect may be unpredictable.
 	<p>
 	In un-described format using read method not matching data
 	should <u>not</u> throw {@link EBrokenFormat} and format
@@ -234,9 +234,9 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 		<li> an indicator with {@link TIndicator#SIGNAL} flag set if not {@link #isFlushing};</li>
 	</ul>
 	This method may be called <u>only</u> if it was 
-	validate with {@link #getIndicator} that cursor is at {@link TIndicator#DATA}</u>
+	validated with {@link #getIndicator} that cursor is at {@link TIndicator#DATA}
 	prior to calling this method. If this method is called without this validating call
-	 the effect may be unpredictable.
+	the effect may be unpredictable.
 	<p>
 	Effectively there is no such behaviour like: 
 	<i>"if it returns partial read, then subsequent calls will return 0"</i>

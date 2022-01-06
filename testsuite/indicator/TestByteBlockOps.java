@@ -16,6 +16,7 @@ public class TestByteBlockOps extends ATestByteOps
 	@param x what to write
 	@param op_size  block transfer size 
 	@param write where to write
+	@throws IOException if failed at low level
 	*/
 	private void writeBlock(byte [] x, int op_size, IIndicatorWriteFormat write)throws IOException
 	{
@@ -43,18 +44,12 @@ public class TestByteBlockOps extends ATestByteOps
 				Size accurate transfers
 	
 	-----------------------------------------------------------------------------*/
-	
-	
-	
-	
-	
-	
-	
 	/** Read sequence using elementary single ops and validates if correct. 
 	This operation is using reads which will excactly match the size of x array.
 	@param x what to expect	
 	@param op_size  block transfer size 
 	@param read where to read from
+	@throws IOException if failed at low level
 	*/
 	private void expectBlockAccurate(byte [] x, int op_size, IIndicatorReadFormat read)throws IOException
 	{
@@ -176,19 +171,12 @@ public class TestByteBlockOps extends ATestByteOps
 				Size inaccurate transfers with partial reads.
 	
 	-----------------------------------------------------------------------------*/
-	
-	
-	
-	
-	
-	
-	
-	
 	/** Read sequence using elementary single ops and validates if correct. 
 	This operation is using reads which may give partial read
 	@param x what to expect	
 	@param op_size  block transfer size 
 	@param read where to read from
+	@throws IOException if failed at low level
 	*/
 	private void expectBlockInaccurate(byte [] x, int op_size, IIndicatorReadFormat read)throws IOException
 	{

@@ -26,7 +26,7 @@ public final class CObjListFormat extends LinkedList<Object>
 	
 	/** Prints human readable form to specified output
 	@param w where to print
-	@param spearator which what separate each element
+	@param separator which what separate each element
 	@throws IOException if failed 
 	*/
 	public void printTo(Appendable w,String separator)throws IOException

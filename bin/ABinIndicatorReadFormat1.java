@@ -54,7 +54,7 @@ public abstract class ABinIndicatorReadFormat1 extends ABinIndicatorReadFormat0
 		bit_in_byte=0;
 		byte_cache=0;
 	};
-	/** Used, together with {@link #invalidateCachedDataState}
+	/** Used, together with {@link #invalidateCachedData}
 	to manage anything what is cached beside of chunk content.
 	Invoked in {@link #getIndicator} to check, if even tough we
 	are at the end of chunk ({@link #isPayloadEof}) we still
