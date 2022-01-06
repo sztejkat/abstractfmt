@@ -1,6 +1,7 @@
 package sztejkat.abstractfmt.xml;
 import sztejkat.abstractfmt.EUnexpectedEof;
 import sztejkat.abstractfmt.EBrokenFormat;
+import sztejkat.abstractfmt.EDataMissmatch;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.IOException;
@@ -66,14 +67,14 @@ public class TestCDecodingXMLReader extends sztejkat.utils.test.ATest
 	{
 		enter();
 		/* Check escaped reading when terminator is optimized 
-		and XML tag is found */
+		and XML tag is found, but content is still invalid */
 		CDecodingXMLReader r = new CDecodingXMLReader(
 					new StringReader("%20;%30G<"),10,100, SXMLSettings.LONG_BARE
 					);
 		Assert.assertTrue(-0x20-1==r.readBodyChar());
 		try{
 			r.readBodyChar(); Assert.fail();
-			}catch(EBrokenFormat ex){};
+			}catch(EDataMissmatch ex){};
 		
 		leave();
 	};
@@ -107,6 +108,22 @@ public class TestCDecodingXMLReader extends sztejkat.utils.test.ATest
 		Assert.assertTrue(-'<'-1==r.readBodyChar());
 		try{
 			r.readBodyChar(); Assert.fail();
+			}catch(EDataMissmatch ex){};
+		
+		leave();
+	};
+	
+	@Test public void testDecodingStandardEscapesUnknownAlt()throws IOException
+	{
+		enter();
+		/* Check escaped reading */
+		CDecodingXMLReader r = new CDecodingXMLReader(
+					new StringReader("&gt;&lt;&ampere;"),10,100, SXMLSettings.LONG_BARE
+					);
+		Assert.assertTrue(-'>'-1==r.readEncodedChar());
+		Assert.assertTrue(-'<'-1==r.readEncodedChar());
+		try{
+			r.readEncodedChar(); Assert.fail();
 			}catch(EBrokenFormat ex){};
 		
 		leave();

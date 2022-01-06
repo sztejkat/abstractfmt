@@ -2,6 +2,7 @@ package sztejkat.abstractfmt.xml;
 import sztejkat.abstractfmt.IIndicatorWriteFormat;
 import sztejkat.abstractfmt.TIndicator;
 import sztejkat.abstractfmt.EBrokenFormat;
+import sztejkat.abstractfmt.EDataMissmatch;
 import sztejkat.abstractfmt.EFormatBoundaryExceeded;
 import java.io.StringReader;
 import java.io.IOException;
@@ -161,6 +162,28 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 		leave();
 	};
 	
+	@Test public void testWrongEscapeInAttribiteValue()throws IOException
+	{
+		enter();
+		/*
+			This is a test when long event tag is missing a name attribute
+		*/
+		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
+			new StringReader(
+					"<event name=\"s&&&;paaa\"></>"
+								),//final Reader input,
+								SXMLSettings.LONG_BARE,//final CXMLSettings settings,
+								false //boolean is_described
+								);
+			Assert.assertTrue(f.isDescribed()==false);
+			Assert.assertTrue(f.isFlushing()==false);			
+			try{
+				f.getIndicator();
+				Assert.fail();
+				}catch(EBrokenFormat ex){ System.out.println(ex); };
+		leave();
+	};
+	
 	@Test public void testTooLongShortEventName()throws IOException
 	{
 		enter();
@@ -210,9 +233,6 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 		enter();
 		/*
 			Check if detects invalid boolean
-			
-			Note: This must throw EBrokenFormat not EDataMissmatch, because indicators
-			are not type checking and this is unrecoverable in XML.
 		*/
 		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
 			new StringReader(
@@ -224,7 +244,7 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 			try{
 				f.readBoolean();
 				Assert.fail();
-				}catch(EBrokenFormat ex){ System.out.println(ex); };
+				}catch(EDataMissmatch ex){ System.out.println(ex); };
 		leave();
 	};
 	
@@ -234,9 +254,6 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 		enter();
 		/*
 			Check if detects boolean of too many valid characters
-			
-			Note: This must throw EBrokenFormat not EDataMissmatch, because indicators
-			are not type checking and this is unrecoverable in XML.
 		*/
 		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
 			new StringReader(
@@ -248,7 +265,7 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 			try{
 				f.readBoolean();
 				Assert.fail();
-				}catch(EBrokenFormat ex){ System.out.println(ex); };
+				}catch(EDataMissmatch ex){ System.out.println(ex); };
 		leave();
 	};
 	
@@ -258,9 +275,6 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 		enter();
 		/*
 			Check if detects char 
-			
-			Note: This must throw EBrokenFormat not EDataMissmatch, because indicators
-			are not type checking and this is unrecoverable in XML.
 		*/
 		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
 			new StringReader(
@@ -272,7 +286,7 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 			try{
 				f.readChar();
 				Assert.fail();
-				}catch(EBrokenFormat ex){ System.out.println(ex); };
+				}catch(EDataMissmatch ex){ System.out.println(ex); };
 		leave();
 	};
 	
@@ -281,9 +295,6 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 		enter();
 		/*
 			Check if detects char 
-			
-			Note: This must throw EBrokenFormat not EDataMissmatch, because indicators
-			are not type checking and this is unrecoverable in XML.
 		*/
 		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
 			new StringReader(
@@ -295,7 +306,7 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 			try{
 				f.readChar();
 				Assert.fail();
-				}catch(EBrokenFormat ex){ System.out.println(ex); };
+				}catch(EDataMissmatch ex){ System.out.println(ex); };
 		leave();
 	};
 	
@@ -305,9 +316,6 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 		enter();
 		/*
 			Check if detects char 
-			
-			Note: This must throw EBrokenFormat not EDataMissmatch, because indicators
-			are not type checking and this is unrecoverable in XML.
 		*/
 		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
 			new StringReader(
@@ -319,7 +327,7 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 			try{
 				f.readChar();
 				Assert.fail();
-				}catch(EBrokenFormat ex){ System.out.println(ex); };
+				}catch(EDataMissmatch ex){ System.out.println(ex); };
 		leave();
 	};
 	
@@ -343,7 +351,7 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 			try{
 				f.readChar();
 				Assert.fail();
-				}catch(EBrokenFormat ex){ System.out.println(ex); };
+				}catch(EDataMissmatch ex){ System.out.println(ex); };
 		leave();
 	};
 	
@@ -352,9 +360,6 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 		enter();
 		/*
 			Check if detects char 
-			
-			Note: This must throw EBrokenFormat not EDataMissmatch, because indicators
-			are not type checking and this is unrecoverable in XML.
 		*/
 		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
 			new StringReader(
@@ -366,7 +371,7 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 			try{
 				f.readChar();
 				Assert.fail();
-				}catch(EBrokenFormat ex){ System.out.println(ex); };
+				}catch(EDataMissmatch ex){ System.out.println(ex); };
 		leave();
 	};
 	
@@ -377,9 +382,6 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 		enter();
 		/*
 			Check if detects invalid byte
-			
-			Note: This must throw EBrokenFormat not EDataMissmatch, because indicators
-			are not type checking and this is unrecoverable in XML.
 		*/
 		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
 			new StringReader(
@@ -391,7 +393,7 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 			try{
 				f.readByte();
 				Assert.fail();
-				}catch(EBrokenFormat ex){ System.out.println(ex); };
+				}catch(EDataMissmatch ex){ System.out.println(ex); };
 		leave();
 	};
 	
@@ -400,9 +402,6 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 		enter();
 		/*
 			Check if detects invalid byte
-			
-			Note: This must throw EBrokenFormat not EDataMissmatch, because indicators
-			are not type checking and this is unrecoverable in XML.
 		*/
 		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
 			new StringReader(
@@ -414,7 +413,7 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 			try{
 				f.readByte();
 				Assert.fail();
-				}catch(EBrokenFormat ex){ System.out.println(ex); };
+				}catch(EDataMissmatch ex){ System.out.println(ex); };
 		leave();
 	};
 	
@@ -423,9 +422,6 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 		enter();
 		/*
 			Check if detects too long numeric primitive
-			
-			Note: This must throw EBrokenFormat not EDataMissmatch, because indicators
-			are not type checking and this is unrecoverable in XML.
 		*/
 		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
 			new StringReader(
@@ -437,7 +433,7 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 			try{
 				f.readByte();
 				Assert.fail();
-				}catch(EBrokenFormat ex){ System.out.println(ex); };
+				}catch(EDataMissmatch ex){ System.out.println(ex); };
 		leave();
 	};
 	@Test public void testPrimitiveLengthAttack2()throws IOException
@@ -445,9 +441,6 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 		enter();
 		/*
 			Check if detects too long numeric primitive
-			
-			Note: This must throw EBrokenFormat not EDataMissmatch, because indicators
-			are not type checking and this is unrecoverable in XML.
 		*/
 		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
 			new StringReader(
@@ -459,7 +452,7 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 			try{
 				f.readShort();
 				Assert.fail();
-				}catch(EBrokenFormat ex){ System.out.println(ex); };
+				}catch(EDataMissmatch ex){ System.out.println(ex); };
 		leave();
 	};
 	@Test public void testPrimitiveLengthAttack3()throws IOException
@@ -467,9 +460,6 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 		enter();
 		/*
 			Check if detects too long numeric primitive
-			
-			Note: This must throw EBrokenFormat not EDataMissmatch, because indicators
-			are not type checking and this is unrecoverable in XML.
 		*/
 		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
 			new StringReader(
@@ -481,7 +471,7 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 			try{
 				f.readInt();
 				Assert.fail();
-				}catch(EBrokenFormat ex){ System.out.println(ex); };
+				}catch(EDataMissmatch ex){ System.out.println(ex); };
 		leave();
 	};
 	@Test public void testPrimitiveLengthAttack4()throws IOException
@@ -489,9 +479,6 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 		enter();
 		/*
 			Check if detects too long numeric primitive
-			
-			Note: This must throw EBrokenFormat not EDataMissmatch, because indicators
-			are not type checking and this is unrecoverable in XML.
 		*/
 		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
 			new StringReader(
@@ -503,7 +490,7 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 			try{
 				f.readLong();
 				Assert.fail();
-				}catch(EBrokenFormat ex){ System.out.println(ex); };
+				}catch(EDataMissmatch ex){ System.out.println(ex); };
 		leave();
 	};
 	
@@ -514,9 +501,6 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 		/*
 			Check if detects invalid byte block, specifically how does it
 			react on whitespaces.
-			
-			Note: This must throw EBrokenFormat not EDataMissmatch, because indicators
-			are not type checking and this is unrecoverable in XML.
 		*/
 		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
 			new StringReader(
@@ -529,7 +513,7 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 			try{
 				f.readByteBlock();
 				Assert.fail();
-				}catch(EBrokenFormat ex){ System.out.println(ex); };
+				}catch(EDataMissmatch ex){ System.out.println(ex); };
 		leave();
 	};
 	
@@ -539,9 +523,6 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 		/*
 			Check if detects invalid byte block, specifically how does it
 			react on whitespaces.
-			
-			Note: This must throw EBrokenFormat not EDataMissmatch, because indicators
-			are not type checking and this is unrecoverable in XML.
 		*/
 		CXMLIndicatorReadFormat f = new CXMLIndicatorReadFormat(
 			new StringReader(
@@ -554,7 +535,7 @@ public class TestCXMLIndicatorReadFormatRobustness extends sztejkat.utils.test.A
 			try{
 				f.readByteBlock();
 				Assert.fail();
-				}catch(EBrokenFormat ex){ System.out.println(ex); };
+				}catch(EDataMissmatch ex){ System.out.println(ex); };
 		leave();
 	};
 };

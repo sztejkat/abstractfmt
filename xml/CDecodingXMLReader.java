@@ -2,6 +2,7 @@ package sztejkat.abstractfmt.xml;
 import sztejkat.abstractfmt.util.CAdaptivePushBackReader;
 import sztejkat.abstractfmt.util.CBoundAppendable;
 import sztejkat.abstractfmt.EBrokenFormat;
+import sztejkat.abstractfmt.EDataMissmatch;
 import sztejkat.abstractfmt.EUnexpectedEof;
 import java.io.IOException;
 import java.io.Reader;
@@ -65,9 +66,33 @@ class CDecodingXMLReader extends CAdaptivePushBackReader
 		if (c==-1) throw new EUnexpectedEof();
 		return (char)c;
 	};
+	
+	
+	/** This method behaves exactly as {@link #readBodyChar}
+	but instead of throwing {@link EDataMissmatch}
+	throws {@link EBrokenFormat}.
+	<p>
+	This method is to be used inside attribute value reads since it throws
+	a correct, un-recoverable exception on deconding problems.
+	@return --//--
+	@throws EUnexpectedEof if reached end of file
+	@throws EBrokenFormat if could not decode the sequence.
+	@throws IOException if failed at low level.
+	@see #readBodyCharImpl
+	*/
+	public int readEncodedChar()throws IOException,EUnexpectedEof,EBrokenFormat
+	{
+		try{
+			return readBodyCharImpl();
+		}catch(ECouldNotDecodeChar ex){ throw new EBrokenFormat(ex);}
+	};
 	/** Reads XML body character, un-escaping it if necessary.
 	This method understands both standard XML escapes declared
 	in settings and our custom XML escape.	
+	<p>
+	This method is to be used inside primitive reads since it throws
+	a correct, recoverable exception on deconding problems.
+	
 	@return if non-negative, this is a directly read character.
 				If negative this is an un-escaped character
 				computed as:
@@ -76,9 +101,18 @@ class CDecodingXMLReader extends CAdaptivePushBackReader
 					character = -return_value -1
 				</pre>
 	@throws EUnexpectedEof if reached end of file
-	@throws EBrokenFormat if could not decode the sequence.
+	@throws EDataMissmatch if could not decode the sequence.
+	@throws IOException if failed at low level.
+	@see #readBodyCharImpl
 	*/	
-	public int readBodyChar()throws IOException,EUnexpectedEof,EBrokenFormat
+	public int readBodyChar()throws IOException,EUnexpectedEof,EDataMissmatch
+	{
+		try{
+			return readBodyCharImpl();
+		}catch(ECouldNotDecodeChar ex){ throw new EDataMissmatch(ex);}
+	};
+			
+	protected int readBodyCharImpl()throws IOException,EUnexpectedEof,ECouldNotDecodeChar
 	{
 		char c = readChar();		
 		final char esc =settings.ESCAPE_CHARACTER; 
@@ -105,7 +139,7 @@ class CDecodingXMLReader extends CAdaptivePushBackReader
 				{
 					//variable length hex escape.
 					int unescaped = HEX2D(digit);
-					if (unescaped==-1) throw new EBrokenFormat("Found "+esc+" escape start but "+digit+" follows instead of 0...F");
+					if (unescaped==-1) throw new ECouldNotDecodeChar("Found "+esc+" escape start but "+digit+" follows instead of 0...F");
 					int i=4;
 					for(;;)
 					{
@@ -116,13 +150,13 @@ class CDecodingXMLReader extends CAdaptivePushBackReader
 							if (digit!=end_esc)
 							{
 								//Non-consumable end can be only the < 
-								if (digit!='<')  throw new EBrokenFormat("Found in character escape sequence "+digit+" but either "+end_esc+" or < are expected");
+								if (digit!='<')  throw new ECouldNotDecodeChar("Found in character escape sequence "+digit+" but either "+end_esc+" or < are expected");
 								unread(digit);	//non-consumable end.
 							};
 							return -unescaped-1;
 						}
 						{	//and it should be a digit.
-							if ((--i)==0) throw new EBrokenFormat("Escape sequence too long");
+							if ((--i)==0) throw new ECouldNotDecodeChar("Escape sequence too long");
 							unescaped <<= 4;
 							unescaped += nibble;
 						}
@@ -157,7 +191,7 @@ class CDecodingXMLReader extends CAdaptivePushBackReader
 						}
 					}	
 					//None did capture partial match
-					throw new EBrokenFormat("The "+escape_completion_buffer+" does not match any known &xx; escape");
+					throw new ECouldNotDecodeChar("The "+escape_completion_buffer+" does not match any known &xx; escape");
 				}
 		}else
 			return c;
