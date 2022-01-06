@@ -135,7 +135,14 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	at nearest indicator.
 	<p>
 	If cursor is at an indicator this indicator is skipped and cursor
-	is set to an element after it which may be either data or indicator.	 	
+	is set to an element after it which may be either data or indicator.	
+	<p>
+	<i>Note:This method must work correctly if cursor is 
+	in data block, regardless if reading data failed due to
+	either miss-interpretation or {@link ECorruptedFormat}. 
+	In other words, if user abuses primitive reads this still should work correctly.
+	The only exception is when the {@link EBrokenFormat} was thrown.
+	</i>
 	@throws EUnexpectedEof if hit physical end of stream
 		before reaching next indicator.
 	*/
@@ -190,7 +197,13 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	prior to calling this method. If this method is called without this validating call
 	 the effect may be unpredictable.
 	<p>
-	<i>Note: All remaining block reads do behave alike.</i>	
+	In un-described format using read method not matching data
+	should <u>not</u> throw {@link EBrokenFormat} and format
+	should recover to normal state after nearest {@link #next}.
+	The behaviour during the errornous state is requires that
+	only indicator related operations do work as expected.
+	<p>
+	<i>Note: All remaining primitive reads do behave alike.</i>	
 	
 	@throws ENoMoreData if reached indicator <u>inside</u> a single element.	
 	@throws EUnexpectedEof if there is not enough data physically in stream to complete
@@ -198,6 +211,8 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	@throws ECorruptedFormat if could initialize operation, but
 		reached the indicator before completion of an operation.
 		In such case the indicator must be available for {@link #readIndicator}
+	@throws EDataMissmatch recommended if could not interprete data as requested type
+		(undescribed format only)
 	*/
 	@Override public boolean readBoolean()throws IOException;
 	/**
@@ -234,6 +249,14 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 	<p>
 	This method reads data item by item, as long as the requested number
 	of items is read <u>or</u> and indicator is reached.
+	<p>
+	In un-described format using read method not matching data
+	should <u>not</u> throw {@link EBrokenFormat} and format
+	should recover to normal state after nearest {@link #next}.
+	The behaviour during the errornous state is requires that
+	only indicator related operations do work as expected.
+	<p>
+	<i>Note: All remaining block reads do behave alike.</i>
 	
 	@return number of read elements. Partial read can be returned only 
 			if at an attempt to read a next item the cursor was at an indicator. 
@@ -243,6 +266,8 @@ public interface IIndicatorReadFormat extends Closeable, IPrimitiveReadFormat
 		
 	@throws EUnexpectedEof if there is not enough data physically in stream
 		to complete operation for a single element.
+	@throws EDataMissmatch recommended if could not interprete data as requested type
+		(undescribed format only)
 	*/
 	@Override public int readBooleanBlock(boolean [] buffer, int offset, int length)throws IOException;		
 	/**

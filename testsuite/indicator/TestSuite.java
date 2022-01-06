@@ -33,7 +33,15 @@ import org.junit.runners.Suite.SuiteClasses;
 			   TestNestedSignalOperations.class,
 			   TestNextSkipGetOps.class,
 			   TestNextSkipGetOpsBoolean.class,
-			   TestNextSkipGetOpsByte.class
+			   TestNextSkipGetOpsByte.class,
+			   TestNextSkipGetOpsChar.class,
+			   TestNextSkipGetOpsShort.class,
+			   TestNextSkipGetOpsInt.class,
+			   TestNextSkipGetOpsLong.class,
+			   TestNextSkipGetOpsFloat.class,
+			   TestNextSkipGetOpsDouble.class,
+			   
+			   TestMissalignedSkips.class
 				})	//list, using {x.class,y.class,....} test components.
 public class TestSuite extends ATestCase<Pair>
 {	
