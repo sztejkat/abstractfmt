@@ -1,0 +1,307 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>sztejkat.abstractfmt.json</title>
+      
+  <meta http-equiv="content-type"
+ content="text/html; charset=UTF-8">
+</head>
+<body>
+	  This package contains a JSON back-end for signal and indicator format.
+      <p>
+      Detailed specification of used syntax can be found in
+      <a href="doc-files/json-syntax.html">that document</a>
+        
+      <h1>Brief review of JSON syntax</h1>
+      <i>Note: Detailed JSON specification is bundled
+      with this package and can be found
+      <a href="doc-files/JSON_ECMA-404_2nd_edition.pdf">in this file</a></i>
+      <p>
+      First of all JSON is a text interchange format.
+      <p>
+      It clearly specifies that it can carry all Unicode characters, even those "undefined",
+      but neither tell how Unicode is encoded into byte streams nor how to pass
+      this information. This is the same pain as with XML and comes from the legacy of http
+      data exchange protocol.
+      <p>
+	  The primary element of JSON is <i>value</i>.
+	  <p>
+	  The stream itself is one, single <i>value</i>.
+	  <p> 
+	  JSON defines following kinds of <i>values</i>:
+      <ul>
+      	<li>object;</li>
+      	<li>array;</li>
+      	<li>number;</li>
+      	<li>string;</li>
+      	<li>and literal constants encoded directly:
+      		<ul>
+      			<li>true</li>
+      			<li>false</li>
+      			<li>null</li>
+      		</ul>
+      	</li>
+      </ul>
+      
+      <h2>Whitespaces</h2>
+      Whitespaces (subset defined in specs) are token separators and are
+      insignificant. 
+      
+      <h2>JSON object</h2>
+      JSON object is a comma separeted list of <i>name:value</i> pairs
+      enclosed in { }
+      <pre>
+      		{
+      			<i>string name</i>    :   <i>JSON value</i> ,....
+      		}
+      </pre>
+      Object can be empty.
+      
+         
+     <h2>JSON array</h2>
+     Alike object, but list of values without names:
+     <pre>
+     	[ <i>value</i>,....]
+     </pre>
+     Array can be empty.
+     <p>
+     <i>Note: As You might have noticed JSON arrays
+     are not typed. Any mixture of values may be present inside.</i>
+     
+     <h2>JSON number</h2>
+     Basically Java string representation of <code>double</code>,
+     except NaN and Infinity.
+     <p>
+     No hex, binary and etc. is supported.
+     
+     <h2>JSON strings</h2>
+     A "" enclosed unicode text with escapes which must cover:
+     <code>"\</code> and all characters in 0x0000....0x001F range.
+     <p>
+     There is a pre-defined set of escapes and 
+     <code>\uxxxx</code> escape syntax where x is hex digit upper or lower case.
+     <p>
+     Notice, there is no <i>must escape</i> for anything 
+     outside of above specified region. Since all EOL have to
+     be escaped JSON string is always a single line.
+     
+     
+     
+     <h1>JSON and AJAX</h1>
+     A JSON defined as it is can be used in many different ways.
+     The primary, I suppose, area of use is to interchange data
+     between web browser and a server.
+     <p>
+     The formal specification is at 
+     <code>https://tc39.es/ecma262/multipage/structured-data.html#sec-json.parse</code>
+     <p>
+     Altough it is unclear to me it seems that this imposes strong
+     restrictions on what can be uses as a <i>name</i> in an object
+     and how duplicate names do behave (error).
+     <p>
+     Remember, JSON itself puts no restrictions on what is used inside a string
+     representing a name.
+     
+     
+     
+     <h1>Variants of JSON we support</h1>
+     
+     We support following JSON variants:
+     <ul>
+     	<li>enclosed, non-appendable;</li>
+     	<li>bare, appendable variant which is a sequence of
+     	values spearated with white-spaces without any enclosing value;</li>
+     	
+     </ul>
+     both as described and un-described.
+     
+     <h2>Enclosed variant</h2>
+     The indicator format does not require any enclosing element.
+     It does support it with <code>open()</code> and <code>close()</code>, but does not require it.
+     <p>
+     The JSON on the other hand do require an enclosing element, so
+     indicator format would always have to be presented as a
+     JSON array:
+     <prE>
+     	[
+     		....
+     	]
+     </pre> 
+     The enclosed variant is using array syntax.
+     
+     <h2>Bare variant</h2>   
+     This kind of "enclosure", similiar to XML root element, makes
+     appending content to already existing and formally correct stream
+     tricky. You need to find closing [, remove it and then append
+     the content. I can be done, but why it should be done?
+     <p> 
+     Bare variant is not using enclosing <code>[]</code>  and thous is not a well formed JSON.
+     
+
+     
+     
+     
+     
+     <h2>AJAX compatibility</h2>
+     This is the most problematic part. First of all it must
+     clearly transform indicator stream to AJAX but it has to do it 
+     in a way which is JavaScritpt friendly. 
+     <p>
+     The JavaStript arrays do not create problems, as
+     they can contain sequence of any kind of values,
+     but JavaScript objects do.
+     <p>
+     
+     <h2>Object vs stream philosophy</h2>
+     Both the indicator format and JSON were  designed with serialization
+     of objects in mind, and both are capable of carying practically anything.
+     There is no build-in assumption in JSON that "name" in "object" is in
+     fact a "field name". 
+     <p>
+     The most significant difference is that AJAX <u>is actually using</u>
+     JSON to serialize JavaScript objects while indicator format,
+     like JSON itself, is purpose-agnostic.
+     
+     
+     <h2>JavaScript object and format event</h2>
+     Our format "events" are named lists of values where each value
+     may have additional type information. Each value, of course,
+     can also be an "event".
+     <p>
+     Alike JSON we do not place any restrictions on how names of events
+     may look like, should they be unique and etc.
+     <p>
+     The AJAX serialization of JavaScript object <u>do put such limitations</u>.
+     <p>
+     Neither JSON nor JavaScript do have anything to say about type information.     
+    
+    <h2>Representing indicators as JavaScript arrays</h2>
+    In this approach we say, that we use objects
+    only to represent signals.
+    <p>
+    The begin-indicator will then look like:
+    <pre>
+    {
+    	"begin" :"<i>name of signal</i>,
+    	"content": [
+    </pre>
+    and the end indicator will look like:
+    <pre>
+    	] }
+    </pre>    
+    Any primitive write just writes next element in the "content" array.
+    Any described write which needs to write type information do write something like:
+    <pre>
+    	{ 
+    		"_<i>type_name</i>":<i>content</i>
+    	}
+    </pre>
+    <p>
+    The example, enclosed, described stream may look like:
+    <pre>
+    [
+    	{ "begin":"my signal with spaces",
+    	  "content":
+    	  	 [
+    	  	 	{"_byte":123},
+    	  	 	{"_text":"marina"}
+    	  	 	{"begin":"my internal signal",
+    	  	 	 "content":[ {"_char":"c"}, {"_byte_array":[10,30,40,55,-10]}]
+    	  	 	 }
+    	  	 	]
+    	  },
+    	 { "begin":"my empty signal",
+    	   "content":[]
+    	   },
+    	 { "begin":"myname",
+    	   "content":[{"_text":"aniki"}]
+    	   },
+    	  { "begin":"just_array",
+    	   "content":[ {"_int_array":[10,30,40,55,-10]}]
+    	   }
+    ] 
+    </pre>
+    The same example in undescribed version may look like:
+   <pre>
+    [
+    	{ "begin":"my signal with spaces",
+    	  "content":
+    	  	 [
+    	  	 	123,
+    	  	 	"marina",
+    	  	 	{"begin":"my internal signal",
+    	  	 	 "content":[ "c",[10,30,40,55,-10] ]
+    	  	 	 }
+    	  	 	]
+    	  },
+    	 { "begin":"my empty signal",
+    	   "content":[]
+    	   },
+    	  { "begin":"myname",
+    	   "content":["aniki"]
+    	   }
+    	  { "begin":"just_array",
+    	   "content":[[10,30,40,55,-10]]
+    	   }
+    ] 
+    </pre>    
+    This approach is easy to implement, is somewhat JavaScript friendly,
+    mainly because it is using a closed set of names and makes sure they 
+    do not duplicate. Yet it is far from just plain objects with fields. 
+    <p>
+    Can it be made more JavaScript friendly?
+    <p>
+    Let us inspect it again, focusing on un-described version first:
+    <pre>
+    [
+    	{ "begin":"my signal with spaces",	(*1)
+    	  "content":
+    	  	 [
+    	  	 	123,
+    	  	 	"marina",
+    	  	 	{"begin":"my internal signal",
+    	  	 	 "content":[ "c",[10,30,40,55,-10] ]
+    	  	 	 }
+    	  	 	]
+    	  },
+    	 { "begin":"my empty signal",
+    	   "content":[]
+    	   },
+    	  { "begin":"myname", 			(*2)
+    	   "content":["aniki"]			(*3)
+    	   },
+    	    { "begin":"just_array",
+    	   "content":[[10,30,40,55,-10]] (*3)
+    	   }
+    ] 
+    </pre> 
+    <ul>
+    	<li> (*1) is a first place of a problem. The name is NOT JavaScript friendly.
+    	We can't do nothing about it and we need to carry it as a <i>JSON value</i> instead of
+    	<i>JSON name</i>;</li>
+    	<li> (*2) is a place where name is an acceptable JavaScript identifier. It could be then
+    	re-written to:
+    	<pre>
+    		{ "myname":["aniki"] }
+    	</pre>
+    	Of course it is possible only if "myname" is not any of reserved
+    	words both in JavaScript and our pool ("begin","content","_boolean"... etc.).
+    	</li>
+    	<li>(*3) at this position it would be nice, if we could skip [] enclosing a single
+    		value. Unfortunately to do it we would have to buffer the entire first
+    		element of a "content" in memory and send it down to a stream at second
+    		element or end indicator write. This content may be large and may 
+    		be recursive. It is doable, but has one big disadvantage: if the size
+    		of an element is too long to fit in a buffer it must be send with [ anyway.
+    		Effectively the syntax of "content" would depend on content size. This can 
+    		be at least confusing on JavaScript when user will once receive array 
+    		and once a single element. In soft type languages as JavaScript it may
+    		escape unnoticed and generate a lot of problems. So better leave it as it is.
+    	</li>
+    </ul>
+    
+      
+</body>
+</html>
+
+

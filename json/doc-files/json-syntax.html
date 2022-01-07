@@ -1,0 +1,163 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>The syntax of JSON used to represent indicator format</title>
+      
+  <meta http-equiv="content-type"
+ content="text/html; charset=UTF-8">
+</head>
+<body>
+      <h1>JSON indicator format definition</h1>
+      This document contains specification of how to use JSON
+      format to implement indicator format.
+      
+ 	  <h1>Adjustable behaviour</h1>
+ 	  Following format elements are adjustable:
+ 	  <ul>
+ 	  	<li>character encoding. The selection of encoding
+ 	  	drives when and if <code>\uXXXX</code> escape sequence
+ 	  	is used;</li>
+ 	  	<li>if format is <i>enclosed</i> in <code> [ ] </code>
+ 	  	JSON element or if it is <i>bare</i>;</li>
+ 	  	<li>if it is <i>described</i> or <i>un-described</i>;</li>
+ 	  	<li>what is a set of reserved words used to represent
+ 	  	fixed format elements;</li>
+ 	  </ul>     
+     
+ 	  
+ 	  <h1>Open/close sequence</h1>
+ 	  <h2>Bare format</h2>
+ 	  None.
+ 	  <h2>Enclosed format</h2>
+ 	  The <code>open()</code> operation writes 
+ 	  <pre>
+ 	  	[
+ 	  </pre>
+ 	  the <code>close()</code> operation writes
+ 	  <pre>
+ 	  	]
+ 	  </pre>
+ 	  
+ 	  <h1>Values separator</h1>
+ 	  All values are separated with <code>,</code> (comma).
+ 	  For readability those 
+ 	  separators are not shown in below specifications.
+ 	  
+ 	  
+ 	  <h1>Begin indicator</h1>
+ 	  The format always using <i>direct indicator</i> 
+ 	  and is not using any kind of names registry nor
+ 	  end-begin optimization.
+ 	  <p>
+ 	  If the <i>signal name</i> is not a <i>reserved word</i>
+ 	  and is a valid JavaScript identifier then begin indicator 
+ 	  is written like:
+ 	  <pre>
+ 	  	{ "<i>signal name</i>":[
+ 	  </pre>
+ 	  <p>
+ 	  If the <i>signal name</i> is not like said above begin
+ 	  indicator is written like:
+ 	  <pre>
+ 	  	{ "begin":"<i>signal name</i>",
+ 	  	   "content":
+ 	  </pre>
+ 	  where <code>begin</code> and <code>content</code> are 
+ 	  part of adjustable behaviour.
+ 	  
+ 	  
+ 	  <h1>End indicator</h1>
+ 	  The end indicator is written as:
+ 	  <pre>
+ 	  	]}
+ 	  </pre>
+ 	  
+ 	  <h1>Type indicator</h1>
+ 	  Type indicator is written like:
+ 	  <pre>
+ 	  	{"<i>type name</i>":
+ 	  </pre>
+ 	  where <i>type name</i> must be an allowed JavaScript identifier
+ 	  and should be able to represent primitive types.
+ 	  The default set of type names is:
+ 	  <code>
+ 	  _boolean, _byte, _char, _short, _int, _long, _float, _double, 
+ 	  _boolean_array, _byte_array, _char_array, _short_array, _int_array, _long_array, _float_array, _double_array
+ 	  </code>
+ 	  <p>
+ 	  This set is adjustable.
+ 	  
+
+ 	  <h1>Flush indicator</h1>
+ 	  Flush indicator is written as:
+ 	  <pre>
+ 	  }
+ 	  </pre> 	  
+ 	  
+ 	  
+ 	  <h1>Primitive elements</h1>
+ 	  There is following mapping of indicator format primitive elements to JSON values:
+ 	  <ul>
+ 	  	<li><code>boolean</code> &rarr; <code>true</code> or <code>false</code>;</li>
+ 	  	<li><code>byte,short,int,long,float,double</code>  &rarr; JSON <i>number</i>;</li>
+ 	  	<li><code>char</code>  &rarr; to single character long JSON <i>string</i>;</li>
+ 	  	
+ 	  	<li><code>boolean[]</code> &rarr; JSON array <code>[ ]</code> of  <code>true</code> or <code>false</code>;</li>
+ 	  	<li><code>short[],int[],long[],float[],double[]</code>  &rarr; JSON array <code>[ ]</code> of  JSON <i>number</i>;</li>
+ 	  	<li><code>char[]</code>  &rarr; JSON <i>string</i>;</li>
+ 	  	<li><code>byte[]</code>  &rarr; JSON <i>string</i>, using two upper case HEX digits for each byte, most significant
+ 	  	nibble first, without any white-spaces and etc;</li>
+ 	  </ul>
+ 	  
+ 	  
+ 	  <h1>Relaxed parsing</h1>
+ 	  The format writer will always format JSON stream as described.
+ 	  <p>
+ 	  The format reader will accept following changes to the specification:
+ 	  <ul>
+ 	  	<li>any first field in an object which is not <code>"begin"</code> is a signal name and is carying the
+ 	  	value, regardless if it is 	a valid JavaScript identifier or not;</li>
+ 	  	<li>the <code> [ ] </code> enclosing content of signal may be ommited and reader will assume that the content
+ 	  	is made of a single value;</li>
+ 	  	<li>the lower case characters are accepted as byte hex digits;</li>
+ 	  	<li>upper and lower case true or false is also accepted;</li>
+ 	  	<li>if there are more fields in an object than expected, like:
+ 	  	<pre>
+ 	  		{
+ 	  			"vvv":1029,
+ 	  			"szz":2099
+ 	  		}
+ 	  	</pre>
+ 	  	then each such field is understood as a begin signal encoded exactly as if it would be the first field.
+ 	  	Thous following JSON:
+ 	  	<pre>
+ 	  		{
+ 	  			"begin":"my signal",
+ 	  			"content":["alice"],
+ 	  			"vocal":123,
+ 	  			"begin":"my granpa",
+ 	  			"content":["horhe"]
+ 	  		}
+ 	  	</pre>
+ 	  	is an equivalent of:
+ 	  		<pre>
+ 	  		{
+ 	  			"begin":"my signal",
+ 	  			"content":["alice"]
+ 	  		},
+ 	  		{
+ 	  			"vocal":123
+ 	  		},
+ 	  		{
+ 	  			"begin":"my granpa",
+ 	  			"content":["horhe"]
+ 	  		}
+ 	  	</pre>
+ 	  	and will be reported as such.
+ 	  	<p>
+ 	  	<i>Note: This is intentional that this type of behaviour is not present when writing. If done in
+ 	  	writing it might generate duplicated field names.</i> 
+ 	  	</li>
+ 	  </ul>
+</body>
+</html>
