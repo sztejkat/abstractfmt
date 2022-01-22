@@ -163,7 +163,7 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 	<p>
 	Even tough this method looks like "do-nothing" in non-described formats,
 	implementations are allowed to use it to do some housekeeping so it
-	must be called.
+	<u>must</u> be called.
 	
 	@param type indicator with {@link TIndicator#TYPE} flag set.
 		Passing other indicators may have unpredictable efects. 
@@ -224,6 +224,8 @@ public interface IIndicatorWriteFormat extends Closeable, Flushable, IPrimitiveW
 	<p>
 	<i>Note: All other primitive block writes do behave alike.</i>
 	@see #isDescribed
+	@throws AssertionError if buffer, offset or length are incorrect the behaviour
+			of this method is unpredictable.
 	*/
 	@Override public void writeBooleanBlock(boolean [] buffer, int offset, int length)throws IOException;		
 	

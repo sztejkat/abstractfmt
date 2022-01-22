@@ -10,7 +10,10 @@ public abstract class AEscapingWriter extends Writer
 {
 				/** Output to which data are written */
 				protected final Writer output;
-				
+		
+	/** Creates
+	@param output output to which write, can't be null.
+	*/		
 	protected AEscapingWriter(Writer output)
 	{
 		assert(output!=null);

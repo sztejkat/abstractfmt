@@ -1,6 +1,7 @@
 package sztejkat.abstractfmt.xml;
 import sztejkat.abstractfmt.IIndicatorReadFormat;
 import sztejkat.abstractfmt.util.CAdaptivePushBackReader;
+import static sztejkat.abstractfmt.util.SHex.HEX2D;
 import java.io.IOException;
 import sztejkat.abstractfmt.EBrokenFormat;
 import java.io.Reader;

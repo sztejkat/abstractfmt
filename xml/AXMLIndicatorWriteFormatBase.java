@@ -2,6 +2,7 @@ package sztejkat.abstractfmt.xml;
 import sztejkat.abstractfmt.IIndicatorWriteFormat;
 import sztejkat.abstractfmt.TIndicator;
 import sztejkat.abstractfmt.EClosed;
+import static sztejkat.abstractfmt.util.SHex.D2HEX;
 import java.io.Writer;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -17,6 +18,13 @@ import java.util.ArrayList;
 abstract class AXMLIndicatorWriteFormatBase extends AXMLFormat 
 											implements IIndicatorWriteFormat
 {
+				/* Designer note: 
+				
+				    This could be sztejkat.abstractfmt.util.ACharsetEscapingWriter,
+				    but we have different encoding conditions in different places
+				    in XML so this "transparent escaping" concept is not best
+				    suited for it. I may however retro-fit it later.
+				*/  
 				/** Output to which data are written */
 				protected final Writer output;
 				/** Used to implement {@link #canWrite}. Can be null. */

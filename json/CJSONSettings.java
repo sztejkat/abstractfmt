@@ -1,5 +1,5 @@
 package sztejkat.abstractfmt.json;
-
+import sztejkat.abstractfmt.TIndicator;
 /**
 	Represents a set of JSON settings,
 	as described in <a href="doc-files/json-syntax.html">syntax</a>
@@ -71,7 +71,8 @@ public class CJSONSettings
 		 @param LONG_BLOCK_ELEMENT non null
 		 @param FLOAT_BLOCK_ELEMENT non null
 		 @param DOUBLE_BLOCK_ELEMENT non null
-		 @param RESERVED_WORD non null, can't carry null.
+		 @param RESERVED_WORDS non null, can't carry null. This
+		 		array is taken not copied.
 	*/
 	public CJSONSettings(
 		 final String BEGIN,
@@ -92,7 +93,7 @@ public class CJSONSettings
 		 final String LONG_BLOCK_ELEMENT,
 		 final String FLOAT_BLOCK_ELEMENT,
 		 final String DOUBLE_BLOCK_ELEMENT,
-		 final String [] RESERVED_WORD
+		 final String [] RESERVED_WORDS
 		 )
 	 {
 	 	 assert( BEGIN!=null);
@@ -113,7 +114,7 @@ public class CJSONSettings
 		 assert( LONG_BLOCK_ELEMENT!=null);
 		 assert( FLOAT_BLOCK_ELEMENT!=null);
 		 assert( DOUBLE_BLOCK_ELEMENT!=null);
-		 assert(RESERVED_WORD!=null);
+		 assert(RESERVED_WORDS!=null);
 		 
 		 this.BEGIN=BEGIN;
 		 this.CONTENT=CONTENT;
@@ -133,6 +134,89 @@ public class CJSONSettings
 		 this.LONG_BLOCK_ELEMENT=LONG_BLOCK_ELEMENT;
 		 this.FLOAT_BLOCK_ELEMENT=FLOAT_BLOCK_ELEMENT;
 		 this.DOUBLE_BLOCK_ELEMENT=DOUBLE_BLOCK_ELEMENT;
-		 this.RESERVED_WORD=RESERVED_WORD;
+		 this.RESERVED_WORDS=RESERVED_WORDS;
 	 };
-},
+	 
+	 /** Tests if <code>s</code> is in {@link #RESERVED_WORDS}
+	 list. The comparison is case sensitive.
+	 @param s string to check.
+	 @return true if on reserved words list.
+	 */ 
+	 public boolean isReservedWord(String s)
+	 {
+	 	for(String r: RESERVED_WORDS)
+	 	{
+	 		if (r.equals(s)) return true; 
+	 	};
+	 	return false;
+	 };
+	 /** Tests if <code>s</code> allowed signal name
+	 to be directly encoded in JSON.
+	 @param s string to check.
+	 @param is_described true if stream is described. Described streams do
+	 	exclude <code>xxx_ELEMENT</code> from the allowed list while
+	 	un-described streams do allow them.
+	 @return true if on reserved words list.
+	 */ 
+	 public boolean isAllowedSignalName(String s, boolean is_described)
+	 {
+	 	if (isReservedWord(s) 
+	 		||
+	 		BEGIN.equals(s)
+	 		||
+	 		CONTENT.equals(s)
+	 		) return false;
+	 	if (!is_described) return true;
+	 	if (
+	 		BOOLEAN_ELEMENT.equals(s) ||
+	 		BYTE_ELEMENT.equals(s) ||
+	 		CHAR_ELEMENT.equals(s) ||
+	 		SHORT_ELEMENT.equals(s) ||
+	 		INT_ELEMENT.equals(s) ||
+	 		LONG_ELEMENT.equals(s) ||
+	 		FLOAT_ELEMENT.equals(s) ||
+	 		DOUBLE_ELEMENT.equals(s) ||
+	 		
+	 		BOOLEAN_BLOCK_ELEMENT.equals(s) ||
+	 		BYTE_BLOCK_ELEMENT.equals(s) ||
+	 		CHAR_BLOCK_ELEMENT.equals(s) ||
+	 		SHORT_BLOCK_ELEMENT.equals(s) ||
+	 		INT_BLOCK_ELEMENT.equals(s) ||
+	 		LONG_BLOCK_ELEMENT.equals(s) ||
+	 		FLOAT_BLOCK_ELEMENT.equals(s) ||
+	 		DOUBLE_BLOCK_ELEMENT.equals(s)
+	 		) return false;
+	 	return true;
+	 };
+	 
+	 /** Returns type describing string <code>xxx_ELEMENT</code>
+	 depending on indicator.
+	 @param type_indicator type indicator with {@link TIndicator#TYPE}
+	 flag set.
+	 */
+	 public String getTypeString(TIndicator type_indicator)
+	 {
+	 	switch(type_indicator)
+	 	{
+	 		case TYPE_BOOLEAN: return BOOLEAN_ELEMENT;
+	 		case TYPE_BYTE: return BYTE_ELEMENT;
+	 		case TYPE_CHAR: return CHAR_ELEMENT;
+	 		case TYPE_SHORT: return SHORT_ELEMENT;
+	 		case TYPE_INT: return INT_ELEMENT;
+	 		case TYPE_LONG: return LONG_ELEMENT;
+	 		case TYPE_FLOAT: return FLOAT_ELEMENT;
+	 		case TYPE_DOUBLE: return DOUBLE_ELEMENT;
+	 		
+	 		case TYPE_BOOLEAN_BLOCK: return BOOLEAN_BLOCK_ELEMENT;
+	 		case TYPE_BYTE_BLOCK: return BYTE_BLOCK_ELEMENT;
+	 		case TYPE_CHAR_BLOCK: return CHAR_BLOCK_ELEMENT;
+	 		case TYPE_SHORT_BLOCK: return SHORT_BLOCK_ELEMENT;
+	 		case TYPE_INT_BLOCK: return INT_BLOCK_ELEMENT;
+	 		case TYPE_LONG_BLOCK: return LONG_BLOCK_ELEMENT;
+	 		case TYPE_FLOAT_BLOCK: return FLOAT_BLOCK_ELEMENT;
+	 		case TYPE_DOUBLE_BLOCK: return DOUBLE_BLOCK_ELEMENT;
+	 		
+	 		default: throw new AssertionError();
+	 	}
+	 }
+};

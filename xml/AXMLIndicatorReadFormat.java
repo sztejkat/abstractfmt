@@ -9,6 +9,7 @@ import sztejkat.abstractfmt.ECorruptedFormat;
 import sztejkat.abstractfmt.EBrokenFormat;
 import sztejkat.abstractfmt.EDataMissmatch;
 import sztejkat.abstractfmt.ENoMoreData;
+import static sztejkat.abstractfmt.util.SHex.HEX2D;
 import java.io.*;
 import java.util.ArrayList;
 

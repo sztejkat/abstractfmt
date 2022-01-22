@@ -2,6 +2,7 @@ package sztejkat.abstractfmt.xml;
 import sztejkat.abstractfmt.IIndicatorWriteFormat;
 import sztejkat.abstractfmt.TIndicator;
 import sztejkat.abstractfmt.EClosed;
+import static sztejkat.abstractfmt.util.SHex.D2HEX;
 import java.io.Writer;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -218,8 +219,7 @@ public abstract class AXMLIndicatorWriteFormat extends AXMLIndicatorWriteFormatB
 	private void setPendingPrimitiveSeparator()throws IOException{ pending_primitive_separator=true; }
 	
 	private void startElementaryPrimitive()throws IOException
-	{
-		
+	{		
 		flushPendingPrimitiveSeparator();
 	};
 	private void endElementaryPrimitive()throws IOException
