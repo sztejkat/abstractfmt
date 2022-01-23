@@ -71,13 +71,13 @@ class CJSONEscapingWriter extends ACharsetEscapingWriter
 			//Note: the / does not have to be escaped so we do not write it as escaped.
 			case (char)0x0008: output.write("\\b"); break;
 			case (char)0x000C: output.write("\\f"); break;
-			case '\n': output.write("\\n"); break;
-			case '\r': output.write("\\r"); break;
-			case '\t': output.write("\\t"); break;
+			case '\n': output.write("\\n"); break; //0x0A
+			case '\r': output.write("\\r"); break; //0x0D
+			case '\t': output.write("\\t"); break; //0x09
 			default:
 			//Now we need to write full hex escape. We can't use Integer.toHexString
 			//because it is producing variable length sequence.
-					output.write('\\');
+					output.write("\\u");
 					output.write(D2HEX( (c >> (3*4)) & 0x0F));
 					output.write(D2HEX( (c >> (2*4)) & 0x0F));
 					output.write(D2HEX( (c >> (1*4)) & 0x0F));

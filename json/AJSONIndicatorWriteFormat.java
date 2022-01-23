@@ -342,4 +342,18 @@ abstract class AJSONIndicatorWriteFormat extends AJSONFormat implements IIndicat
 	 		writeDouble(buffer[offset++]);
 	 	}	
 	 };
+	 /* ----------------------------------------------------------------
+	 			Flushable
+	 ----------------------------------------------------------------*/
+	 @Override public void flush()throws IOException
+	 {
+	 	output.flush();
+	 };
+	 /* ----------------------------------------------------------------
+	 			Closable
+	 ----------------------------------------------------------------*/
+	 @Override public void close()throws IOException
+	 {
+	 	output.close();
+	 };
 };
