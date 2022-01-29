@@ -71,8 +71,8 @@
  	  part of adjustable behaviour.
  	  <p>
  	  This means that the content between begin and end signal
- 	  is always <u>written</u> as JSON array. This format accepts
- 	  simplified forms during parsing. 
+ 	  is always <u>written</u> as JSON array.
+ 	  
  	  
  	  <h1 id="END">End indicator</h1>
  	  The end indicator is written as:
@@ -133,49 +133,10 @@
  	  <p>
  	  The format reader will accept following changes to the specification:
  	  <ul>
- 	  	<li>any first field in an object which is not <code>"begin"</code> is a signal name and is carying the
+ 	  	<li>any first field in an object which is not <code>"begin"</code> then it is a signal name and is carying the
  	  	value, regardless if it is a valid JavaScript identifier or not;</li>
- 	  	<li>the <code> [ ] </code> enclosing content of signal may be ommited and reader will assume that the content
- 	  	is made of a single value;</li>
  	  	<li>the lower case characters are accepted as byte hex digits;</li>
- 	  	<li>upper and lower case true or false is also accepted;</li>
- 	  	<li>if there are fields beyond signal name or "begin" and "content" in an object, like:
- 	  	<pre>
- 	  		{
- 	  			"vvv":1029,
- 	  			"szz":2099
- 	  		}
- 	  	</pre>
- 	  	then each such field is understood as a begin signal encoded exactly as if it would be the first field.
- 	  	Thous following JSON:
- 	  	<pre>
- 	  		{
- 	  			"begin":"my signal",
- 	  			"content":["alice"],
- 	  			"vocal":123,
- 	  			"begin":"my granpa",
- 	  			"content":["horhe"]
- 	  		}
- 	  	</pre>
- 	  	is an equivalent of:
- 	  		<pre>
- 	  		{
- 	  			"begin":"my signal",
- 	  			"content":["alice"]
- 	  		},
- 	  		{
- 	  			"vocal":123
- 	  		},
- 	  		{
- 	  			"begin":"my granpa",
- 	  			"content":["horhe"]
- 	  		}
- 	  	</pre>
- 	  	and will be reported as such.
- 	  	<p>
- 	  	<i>Note: This is intentional that this type of behaviour is not present when writing. If done in
- 	  	writing it might generate duplicated field names.</i> 
- 	  	</li>
+ 	  	<li>upper and lower case true or false is also accepted;</li> 	  	
  	  </ul>
 </body>
 </html>
