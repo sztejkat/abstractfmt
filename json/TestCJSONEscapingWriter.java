@@ -63,6 +63,24 @@ public class TestCJSONEscapingWriter extends sztejkat.utils.test.ATest
 		leave();
 	};
 	
+	@Test public void testCharsetEscaped_2()throws IOException
+	{
+		enter();
+		
+			StringWriter s = new StringWriter();
+			CJSONEscapingWriter w = new CJSONEscapingWriter(s, Charset.forName("ASCII"));
+			
+			w.writeString("p\"\n\r\t");;
+			w.close();
+			
+			String y = s.toString();
+			System.out.println(y);
+			Assert.assertTrue("p\\\"\\n\\r\\t".equals(y));
+			
+		
+		leave();
+	};
+	
 	@Test public void testZoneEscaped_1()throws IOException
 	{
 		enter();
@@ -122,6 +140,26 @@ public class TestCJSONEscapingWriter extends sztejkat.utils.test.ATest
 			String y = s.toString();
 			System.out.println(y);
 			String expected = "\"Malinkaja \\\"dievoczka\\\" \\\\ tuze malczik\"";
+			Assert.assertTrue(expected.equals(y));
+			
+		
+		leave();
+	};
+	
+	
+	@Test public void testIndexed()throws IOException
+	{
+		enter();
+		
+			StringWriter s = new StringWriter();
+			CJSONEscapingWriter w = new CJSONEscapingWriter(s, Charset.forName("UTF-8"));
+			
+			w.writeString("AR\"KA",0,5);
+			w.close();
+			
+			String y = s.toString();
+			System.out.println(y);
+			String expected = "AR\\\"KA";
 			Assert.assertTrue(expected.equals(y));
 			
 		

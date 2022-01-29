@@ -41,7 +41,7 @@ class CJSONEscapingWriter extends ACharsetEscapingWriter
 	@Override protected boolean canWrite(char c)
 	{
 		if (string_mode)
-		{
+		{			
 			//escape what can't be directly present inside JSON string.
 			if ((c=='"')||(c=='\\')||(c<=0x1F)) return false;
 			//and what can't be carried by charset.
@@ -105,13 +105,13 @@ class CJSONEscapingWriter extends ACharsetEscapingWriter
 		}finally{ string_mode = false; };
 	};
 	/** Operates in string escaping mode
-	@param c string to write
+	@param s string to write
 	@throws IOException if failed */
-	public void writeString(String c)throws IOException
+	public void writeString(String s)throws IOException
 	{
 		string_mode = true;
 		try{
-			write(c);
+			write(s);
 		}finally{ string_mode = false; };
 	};
 	/** Operates in string escaping mode
@@ -135,7 +135,7 @@ class CJSONEscapingWriter extends ACharsetEscapingWriter
 	{
 		string_mode = true;
 		try{
-			output.append(b, off, off+len);
+			append(b, off, off+len);
 		}finally{ string_mode = false; }
 	};
 };

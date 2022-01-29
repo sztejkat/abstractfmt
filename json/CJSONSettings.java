@@ -156,7 +156,8 @@ public class CJSONSettings
 	 @param is_described true if stream is described. Described streams do
 	 	exclude <code>xxx_ELEMENT</code> from the allowed list while
 	 	un-described streams do allow them.
-	 @return true if on reserved words list.
+	 @return true if on reserved words list, is begin, content, or for
+	 	described, a type element.
 	 */ 
 	 public boolean isAllowedSignalName(String s, boolean is_described)
 	 {

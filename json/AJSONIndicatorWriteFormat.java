@@ -117,10 +117,10 @@ abstract class AJSONIndicatorWriteFormat extends AJSONFormat implements IIndicat
 		needs_value_separator = false; //so that first element does not write separator.
 	 	if (settings.isAllowedSignalName(signal_name,isDescribed()))
 	 	{
-	 		writeLongFormBeginDirect(signal_name);
+	 		writeShortFormBeginDirect(signal_name);
 	 	}else
 	 	{
-	 		writeShortFormBeginDirect(signal_name);
+	 		writeLongFormBeginDirect(signal_name);
 	 	};
 	 };
 	 /** Always as end followed by begin. No end-begin optimization. */
@@ -293,12 +293,12 @@ abstract class AJSONIndicatorWriteFormat extends AJSONFormat implements IIndicat
 	 
 	 @Override public void writeCharBlock(CharSequence characters, int offset, int length)throws IOException
 	 {
-	 	output.writeString(characters,offset,length);
+	 	 	output.writeString(characters,offset,length);
 	 };		
 		
 	 @Override public void writeCharBlock(char [] buffer, int offset, int length)throws IOException
 	 {
-	 	output.writeString(buffer,offset,length);
+	 		output.writeString(buffer,offset,length);
 	 };
 	 
 	 @Override public void writeShortBlock(short [] buffer, int offset, int length)throws IOException
