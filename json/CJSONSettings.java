@@ -136,7 +136,36 @@ public class CJSONSettings
 		 this.DOUBLE_BLOCK_ELEMENT=DOUBLE_BLOCK_ELEMENT;
 		 this.RESERVED_WORDS=RESERVED_WORDS;
 	 };
-	 
+	 /** Returns maximum length of all configurable
+	 elements and reserved words. */
+	 public int getMaximumReserverWordLength()
+	 {
+	 	int L = BEGIN.length();
+	 	L = Math.max(L,CONTENT.length());
+	 	L = Math.max(L,BOOLEAN_ELEMENT.length());
+	 	L = Math.max(L,BYTE_ELEMENT.length());
+	 	L = Math.max(L,CHAR_ELEMENT.length());
+	 	L = Math.max(L,SHORT_ELEMENT.length());
+	 	L = Math.max(L,INT_ELEMENT.length());
+	 	L = Math.max(L,LONG_ELEMENT.length());
+	 	L = Math.max(L,FLOAT_ELEMENT.length());
+	 	L = Math.max(L,DOUBLE_ELEMENT.length());
+	 	
+	 	L = Math.max(L,BOOLEAN_BLOCK_ELEMENT.length());
+	 	L = Math.max(L,BYTE_BLOCK_ELEMENT.length());
+	 	L = Math.max(L,CHAR_BLOCK_ELEMENT.length());
+	 	L = Math.max(L,SHORT_BLOCK_ELEMENT.length());
+	 	L = Math.max(L,INT_BLOCK_ELEMENT.length());
+	 	L = Math.max(L,LONG_BLOCK_ELEMENT.length());
+	 	L = Math.max(L,FLOAT_BLOCK_ELEMENT.length());
+	 	L = Math.max(L,DOUBLE_BLOCK_ELEMENT.length()); 
+	 	
+	 	for(String S: RESERVED_WORDS)
+	 	{
+	 		L = Math.max(L,S.length());
+	 	};
+	 	return L;
+	 };
 	 /** Tests if <code>s</code> is in {@link #RESERVED_WORDS}
 	 list. The comparison is case sensitive.
 	 @param s string to check.

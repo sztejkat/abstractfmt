@@ -113,8 +113,8 @@ public abstract class AXMLIndicatorReadFormat extends AXMLIndicatorReadFormatBas
 		//Limit must be set two fold: by adjusting capactity of name buffer (upwards)
 		//and by setting hard limit for testing.
 		this.max_signal_name_length = characters;
-		//no re-allocate other buffers if necessary
-		token_buffer = new CBoundAppendable(Math.max(characters,settings.getMaximumTokenLength()));
+		//no re-allocate other buffers if necessary, 37 characters for floating points
+		token_buffer = new CBoundAppendable(Math.max(Math.max(37,characters,settings.getMaximumTokenLength())));
 	};
 	@Override public int getMaxSignalNameLength(){ return max_signal_name_length;}
 	/** Set to Integer.MAX_VALUE characters */
