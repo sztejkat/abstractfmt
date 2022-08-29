@@ -47,7 +47,7 @@ public abstract class AParserStateMachine<TState extends Object, TElement extend
 		inside a stream.
 		<p>
 		We have three kinds of state transition:
-		<ol>
+		<ol id="TRANSITION_KIND">
 			<li>Stright, representing motion from state to state: <code>from_state &rarr; due_to_element ; &rarr; to_state</code>;</li>
 			<li>Enterig, representing a beginning of a recursive state:
 				<pre>
@@ -133,10 +133,24 @@ public abstract class AParserStateMachine<TState extends Object, TElement extend
 			{
 				return this.from==state && this.due_to==element;
 			};
-			
+			/** Checks if transition is of specified <a href="#TRANSITION_KIND">kind</a>
+			@return if is of that kind
+			*/ 
 			private final boolean isStright(){ return (push==null)&&(to!=null); };
+			/** Checks if transition is of specified <a href="#TRANSITION_KIND">kind</a>
+			@return if is of that kind
+			*/ 
 			private final boolean isEntering(){ return (push!=null)&&(to!=null); };
+			/** Checks if transition is of specified <a href="#TRANSITION_KIND">kind</a>
+			@return if is of that kind
+			*/ 
 			private final boolean isReturning(){ return (push==null)&&(to==null); };
+			
+			/**
+				Invoked when transition did happen.
+				Default: empty.
+			*/
+			protected void onTransitionMade(){};
 			
 			public String toString()
 			{
@@ -251,10 +265,29 @@ public abstract class AParserStateMachine<TState extends Object, TElement extend
 	/* *******************************************************************************************
 	
 	
-				Creation & setup.
+				Action
 					
 	
 	
 	********************************************************************************************/
-	
+	public void TState next(TElement element)throws ENotAllowedElement,EParsingStackOverflow
+	{
+		//Identify the state transition
+		TState c = current_state;
+		for(Transition<TState,TElement> t:syntax)
+		{
+			if (t.matches(c,element))
+			{
+				if (t.isStright())
+				{
+					...to do
+				}else
+				if (t.isEntering())
+				{
+				}else
+				{
+				}
+			};
+		};
+	};
 }
