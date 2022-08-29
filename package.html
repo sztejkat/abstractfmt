@@ -7,374 +7,304 @@
  content="text/html; charset=UTF-8">
 </head>
 <body>
-	This package defines basic contracts for signal/event based data format.
+	This package defines basic contracts for structured format made around 
+	a concept of "signals"
 
+	
+	
+	
 	<h1>Definitions</h1>
-	<h2>Event base format</h1>
-	The data stream expressed in a form of an event based format consists 
-	of a sequence of possibly nested <a href="#event"><i>events</i></a>
-	interlaved with a non-interruptible 
-	sequence of <a href="#primitives"><i>primitive data</i></a>
+	<h2>Cursor</h2>
+	A location in a stream from which next data will be read.
 	<p>
-	This is a three tire format.
-	
-	<h3 id="tree-tire">Three tire format</h3>
-	<p>
-	First tire are <a href="#event">"events"</a> and their primiary task is to identify
-	and arrange data by giving them some <i>names</i>.
-	<p>
-	Second tire are <a href="#signals">"signals"</a> which are used to detect events boundaries.
-	This is a tire at which public API in this package is defined. 
-	Check <a href="ISignalReadFormat.html">ISignalReadFormat</a> and <a href="ISignalWriteFormat.html">ISignalWriteFormat</a>
-	for details.
-	<p>
-	And a last tire is made of <a href="#indicators">"indicators"</a> which are used
-	to indicate where signals, names and primitives are located and in what form they are
-	described. This last tire is used as a possible back-end for upper level tires,
-	but does not have to be. Check <a href="IIndicatorReadFormat.html">IIndicatorReadFormat</a>
-	and <a href="IIndicatorWriteFormat.html">IIndicatorWriteFormat</a>.
+	In generic implementing a stream may involve some "read-ahead" or
+	"unreading" but from the user API point of view cursor always moves
+	only forward.
 	
 	
-	<h1>Properties of an event based format</h1>
+	
+	
+	<h2 id="PRIMITIVE_DATA">Primitive data</h2>
+	Any data which is reflecting native JAVA data types,
+	including <code>String</code> and arrays and excluding references.
+	<p>
+	Primitive data are divided in two categories:
 	<ul>
-		<li>the set of operations necessary to write data is bound, known and simple;</li>
-		<li>operations which may benefit from a specific data packing are defined 
-		as <a href="#block"><i>block</i></a> operations;</li>
-		<li>the format does not know anything about objects, references and etc;</li>
-		<li>any binary or textual representation can be used, providing there is a proper back-end;</li>
+		<li><a href="#ELEMENTARY_PRIMITIVE">elementary primitives</a>;</li>
+		<li><a href="#PRIMITIVE_SEQUENCES">primitive sequences</a>;</li>
 	</ul>
-	Additionally the <a href="#fullydescribed"><i>described format</i></a> allows:
+	The stream format carries <u>no information</u> about what type of
+	primitive is stored where. 
+	<p>
+	It is allowed however to <u>fail misserably</u>	if type of primitive is found in stream is different from the type 
+	expected by the reading code. This failure is allowed to be delayed	and corrupt reading of all other primitive 
+	data up to the nearest <a href="#SIGNAL">signal</a>. Reaching the signal <u>must correct</u>
+	that faulty condition and reading of data after the signal must be unaffected by previous mistake.
+	This correction must take place even if signal happens to appear in the middle of primitive data.
+	
+	
+	
+	
+	
+	
+	 
+	<h2 id="SIGNAL">Signal</h2>
+	A unique sequence of bits (or other entities) in stream which can
+	be always correctly idenitified regardless of the position of a cursor
+	inside any portion of primitive data.
+	<p>
+	The signal must have such a property that:
 	<ul>
-		<li>strong, type based validation;</li>
-		<li>format transcoding without the need of any additional knowledge about what data are contained in stream;</li>
+		<li>it must be always possible to move cursor from one signal to
+		another signal;</li>
+		<li>it must be always possible to move cursor from inside of primitive
+		data to next signal regardless if cursor is at logically correct location or not.
+		<p>
+		This is explicite reuqired that this operation must be possible 
+		even if primitive data were interpreted incorrectly and read with
+		incorrect functions or if some primitive data were left not processed yet;</li>		
 	</ul>
+	See also <a href="#BEGIN">begin signal</a> and <a href="#END">end signal</a>.
 	
 	
 	
-	<h1>Standards used in this package and sub-packages</h1>
-	<h2>Exceptions</h2>
-	In generic <code>AssertionError</code> is thrown by <code>assert</code> and is a required
-	minimum of defense against coder errors. The implementations are allowed to
-	use strictier, always enabled error testing and may throw any subclass of 
-	<code>RuntimeException</code>.
 	
-	
-	
-	<hr></hr>
-	<a name="event"><h1>Events</h1></a>
-	An <a href="#event"><i>event</i></a> is a <i>named</i> block of possibly nested events
-	interlaved with a non-interruptible sequence of <a href="#primitives"><i>primitive data</i></a>.
+	<h2 id="BEGIN">Begin signal</h2>
+	Begin signal is a signal which is always paired with a <code>String</code>
+	representing signal name. This is totally irrelevant how this pairing is achived
+	and no assumption is made about the technique.
 	<p>
-	A beginning of an event is indicated by <a href="#begin"><i>begin signal</i></a> and an end of
-	an event is indicated by <a href="#end"><i>end signal</i></a>.
-	
-	
-	
-	<a name="signal"><h1>Signals</h1></a>
-	By <a href="#signal"><i>signal</i></a> we do understand some means used to indicate beginning and
-	an end of an <a href="#event"><i>event</i></a>.
+	The name of signal may be an empty string.
 	<p>
-	This is requied that a mechanism used for storig signals must be designed in such way,
-	that there must be a possibility to	iterate through the stream from signal to signal 
-	without the need of understanding anything of a stream content between signals.
-	
-	<a name="begin"><h3>Begin signal</h3></a>
-	A named <a href="#signal"><i>signal</i></a> which is carying a <a href="#name"><i>name</i></a>
-	and indicates the start of an <a href="#event"><i>event</i></a>.
-	
-	<a name="name"><h4>Name of signal</h4></a>
-	A text made of of full Java <tt>char</tt> characters space with no charset nor size restriction,
-	represented in API as <Tt>String</tt> object.
+	The begin signal starts the <a href="#STRUCT">structure</a>.
 	<p>
-	A formats are recommended to use as compact as possible mapping from <tt>String</tt> event representation
-	to internal one stored in a stream. The recommended policy is to assign a number to first (limited in count by size
-	of that number) few signals, store this information in stream and use assigned numbers later instead of full,
-	textual form. Notice, this policy must
-	not restrict the total number of supported signals. If more different signals is
-	to be written to a stream then the stream must write them directly,
-	in full textual form, without any mapping.
-	<p>
-	This mapping is not visible through API and handled transparently by formats.
-	<p>
-	The formats may limit the length of signal name to defend against "out-of-memory" attacks
-	but the limit may not be smaller than 8 characters and must be directly reported through API.
+	The implementations are strongly recommended to somehow optimize the storage
+	and avoid storing frequently used signal names in full textual. A kind of
+	frequently used names registry is recommended.
 	
 	
-	<h4>Decodnig signals and acting according to the names</h4>
 	
-	In plenty of use scenarios stream readers will have to react on names of incomming signals.
-	If there is a signal X do one thing, if there is a signal Y do the other thing.
-	<p>
-	This package have chosen signal names to be strings rather than numbers
-	because this do let us to be less prone to <i>name clash</i> if different pieces
-	of code are written by different persons, projects or teams.
-	<p>
-	The price for using strings is a less efficient comparison.
-	<p>
-	Since JDK 7 there is the <code>switch(String)</code> is using <u>cached hash code</u>:
+	
+	<h2 id="END">End signal</h2>
+	A signal which is having no name and terminates the <a href="#STRUCT">structure</a>.
+	
+	
+	
+	
+	<h2 id="STRUCTURE">Structure</h2>
+	Anything between <a href="#BEGIN">begin signal</a> and <a href="#END">end signal</a>,
+	that is any combination of <a href="#PRIMITIVE_DATA">primitive data</a> and structures.
+	
+	
+	
+	
+	<h2 id="ELEMENTARY_PRIMITIVE">Elementary primitives</h2>
+	All primitive JAVA types:
 	<pre>
-		switch(<i>some string</i>)
-		{
-			case "one":
-			case "two":...
-		};
+	boolean,byte,char,short,int,long,float,double
 	</pre>
-	which is NOT implemented as:
-        <pre>
-             if ("one".equals(x))
-             {
-             }else
-             if ("two".equals(x))
-             {
-             }...
-        </pre>
-        Instead it is implemented, roughly speaking, as:
-        <pre>
-                static final int ONE = "one".hashCode();   //thanks to cast in stone JLS implementation of hashCode()
-                static final int TWO = "two".hashCode();
-                ...
-                switch(x.hashCode)
-                {
-                    case ONE:     // grouping all identical hash codes at compile time
-                    case TWO:
-                           if ("one".equals(....))
-                };
-        </pre>
-        This is quite efficient when there is a large switch statement
-        over short strings. The primary cost comes from the need of
-        computing hashCode which takes ages for very, very long strings.
-        Second cost comes from the possibility that all <code>case:</code> hash codes
-        will be the same. And at last, from the fact, that at least one <code>String.equals(...)</code>
-        will have to be executed.
-        <p>
-        If this performance is not good for You may restrict Your names length
-        and still keep them somehow human readable. For an example
-        if You will restrict recognized names to up to 4 ASCII letters,
-        where each ASCII is 0...255 number You may easily transform
-        the string to 1:1 identity mapped integer:
-        <pre>
-             int v = (char[0] & 0xff)+((char[1] & 0xff)&lt;&lt;8)...
-        </pre>
-        and use the <code>v</code> in <code>switch</code> statement
-        directly. With restriction to only capital letters (without numbers you have 26
-        ASCII letters) you may use only 5 bits per letter, so you can have
-        six letters long unique names identity mapped to single integer.
-        <p>
-        And finally You may make a use from a fact, that even tough names <u>are</u>
-        strings, they do <u>not have to be human readable</u>. A single character long
-        string may be good enough for You if You just use it as a number like:
-        <pre>
-             if (x.length()==1)
-             {
-              switch(x.charAt(0))
-              {
-               case 0x0909:
-               case 0xFFAA:
-              };
-             };
-        </pre>
-        which is a fastest possible solution.
+	stored in stream as single entities and written or read using dedicated single 
+	argument API.
 	
 	
-	<a name="end"><h3>End signal</h3></a>
-	A plain signal, without a name, which indicates the end of a last event. This is an error when
-	<a href="#end"><i>end signal</i></a> appears without a matching <a href="#begin"><i>begin signal</i></a>.
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	<a name="primitives"><h1>Primitive data</h1></a>
-	<p>
-	<i>Note: This part is JAVA specific.</i>
-	<p>
-	A sequence of <a href="#elementary"><i>elementary primitives</i></a>
-	and  <a href="#block"><i>block operations</i></a>.
-	Those operations are <a href="#uninterruptible"><i>un-interruptible</i></a>.
-	
-	<a name="elementary"><h3>An elementary primitive</h3></a>
-	Elementary primitive data consists of sequences of data representing following Java data types:
-	<ul>
-			<li>boolean</li>
-			<li>byte</li>
-			<li>char</li>
-			<li>short</li>
-			<li>int</li>
-			<li>long</li>
-			<li>float</li>
-			<li>double</li>
-	</ul>
-	
-	<a name="block"><h3>A block operation</h3></a>
-	A block operation is a continous sequence of data taken from following Java types:
-	<ul>
-			<li>boolean[]</li>
-			<li>byte[]</li>
-			<li>char[]</li>
-			<li>short[]</li>
-			<li>int[]</li>
-			<li>long[]</li>
-			<li>float[]</li>
-			<li>double[]</li>
-	</ul>
-	A block operation terminates with an <a href="#end"><i>end signal</i></a> 
-	of an enclosing	<a href="#event"><i>event</i></a> or with <a href="#begin">begin signal</a> of next event.
-	<p>
-	Of them <code>byte[],char[]</code> are <i>primary</i> block operations which
-	should be always implemented in as compact way as possible.
-	<p>
-	<i>This is because if You start playing with it, You will notice, that
-	in many cases You will use <code>byte[]</code> to store raw data (aka <code>InputStream/OutputStream</code>)
-	and <code>char[]</code> to preserve class names, structure names and etc, which are usually
-	ASCII.</i>
-	
-	
-	<h4>Difference between <code>byte[]</code> and <code>byte,byte,...</code></h4>
-	This package assumes, that when user writes data using sequnce of elementary primitives,
-	user is focused on preserving it's readability to humans, give them names and etc.
-	<p>
-	On the contrary, if user is using block operation, he/se is suggesting that each element
-	in block has less of importance and that this is important, that whole block is properly
-	named, indentified, described and etc.
-	<p>
-	See also <a href="doc-files/block-operations.html">this document for some discussion.</a>
-	<p>
-	
-	
-	<a name="uninterruptible"><h3>Un-interruptible primitives</h3></a>
-	Each primitive operation is <i>un-interruptible</i> what means, that stream format requires that
-	primitive written with operation of type X must be read by an operation of the same type. This has a side
-	effect which prevents from fetching "long" by a sequence of "byte" fetches and etc.
-	<p>
-	For block operation  <i>un-interruptible</i> means additionally, that one cannot mix block operations
-	of different types nor introduce a non-block operation until the next <a href="#begin"><i>begin signal</i></a> 
-	or <a href="#end"><i>end signal</i></a>.
-	<p>
-	The format reaction on breaking this rule are different for <a href="#fullydescribed"><i>fully described</i></a>
-	formats and <a href="#nondescribed"><i>non-described</i></a> formats.
-	
-	<a name="nondescribed"><h2>Non described format</h2></a>
-	A non-described format is bound, in addition to stated generic requirements, to ensure that:
-	<ul>
-			<li>regardless of in what state it is, there is always a possibility to move to next signal
-			skipping the un-processed content without any complaints. This should be true
-			also if primitives are read with incorrect methods;</li>
-			<li>to ensure that if any <i>primitive operation</i> attempts to initiate a read when there is no data 
-			due to presence of a <a href="#signal"><i>signal</i></a> the <a href="ENoMoreData.html">ENoMoreData</a>
-			exception is thrown;</li>
-			<li>to ensure that if any primitive operation encounters end-of-stream condition
-			the <a href="EUnexpectedEof.html">EUnexpectedEof</a> exception is thrown;</li>
-			<li>to ensure that once block operation initiated only block operation of same type is allowed till next signal;</li>			
-	</ul>
-	<i>Note: The effect of encountering signal inside a primitive element body is unspecified.</i>
-	
-	<a name="fullydescribed"><h2>Described formats</h2></a>
-	Fully described format extends functionality of <a href="#nondescribed"><i>non-described format</i></a> and
-	is bound to use means which can ensure that:
-	<ul>
-		<li>an attempt to read primitive data with method non matching type in stream (breaking the interruptibility)
-		results in <a href="EDataMissmatch.html">EDataMissmatch</a> exception;</li>
-		<li>user may ask stream format, while reading, if next stream content is a <a href="#signal"><i>signal</i></a> or
-		a <a href="#primititves"><i>primitive</i></a> and may get information what primitive type is is;</li>
-	</ul>
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	<hr></hr>
-	<h1 id="indicators">Indicators</h1>
-	Indicators are third-tier API and usually will be part of implementation and will not
-	be used by users directly. If You are however going to implement own back-end format,
-	then the easiest way will be to make it by providing Your own implementation of
-	indicators.
-	<p>
-	<i>See <a href="IIndicatorReadFormat.html">IIndicatorReadFormat</a> and 
-	<a href="IIndicatorWriteFormat.html">IIndicatorWriteFormat</a>.</i>
-	<p>
-	Indicators are used to compose signals and tell about primitives.
-	<p>
-	An "indictator" must have following properties:
-	<ul>
-		<li>stream should be always able to tell apart data from indicator;</li>
-		<li>stream should be always able to look for an indicator;</li>
-		<li>stream should be always able to check if and what indicator is under cursor;</li> 
-	</ul>
-	For an informat discussions see <a href="doc-files/escapes-chunks-and-signals.html">this document</a>.
-	
-	<h2>Indicators used to build signals</h2>
-	The begin signal is built with following indicators:
-	<ul>
-	<li>if names are encoded directly, without any re-use optimization:
+	<h2 id="PRIMITIVE_SEQUENCES">Primitive sequences</h2>
+	All primitive JAVA array types:
 	<pre>
-		begin-indicator <i>or</i> end-begin-indicator
-		direct-indicator
-		<i>signal-name-data</i>
+	boolean[],byte[],char[],short[],int[],long[],float[],double[]
 	</pre>
-	</li>
-	<li>if names are encoded with re-use optimization and name is used for a first time
-	<pre>
-		begin-indicator <i>or</i> end-begin-indicator
-		register-indicator (with re-use identifier)
-		<i>signal-name-data</i>
-	</pre>
-	</li>
-	<li>if names are encoded with re-use optimization and name is reused
-	<pre>
-		begin-indicator <i>or</i> end-begin-indicator
-		register-use (with re-use identifier)
-	</pre>
-	</li>
-	</ul>
-	The end signal is built with following indicators:
+	and JAVA <code>String</code> stored in stream in a compact form terminated
+	by <a href="#SIGNAL">signal</a>.
+	<p>
+	This format assumes, that a primitive sequence of type T cannot be 
+	read using repetitive operation of elementary primitive read of type T.
+	<p>
+	This format requires that there is no size limit of primitive sequence.
+	<p>
+	This format does not store any information about the length of primitive
+	sequence except of terminating it with a <a href="#SIGNAL">signal</a>.
+	<p>
+	This format requires that a single continous sequence may be written
+	with more that one call to writig API and may be read with any combination
+	of calls to sequence reading API.
+	<p>
+	Once primitive sequence operation of type T is initialized only that operation
+	and signal operations can be used. All other operations are prohibitted and
+	must throw <code>IllegalStateException</code>.
+	
+	
+	
+	
+	
+	
+	
+	<h1>Operations on stream</h1>
+	This chapter defines elementary operations on streams.
+	
+	<h2>Writing a stream</h2>
+	The writing of stream is performed using following operations:
 	<ul>
-	<li>if there is no end-followed-by-begin optimization:
-	<pre>
-		end-indicator
-	</pre>
-	</li>
-	<li>if there is end-followed-by-begin optimization AND there is begin signal afterwards
-	<pre>
-		end-begin-indicator <i>which is a part of begin signal</i>
-	</pre>
-	</li>
+		<li>writing signals;</li>
+		<li>writing elementary primitives;</li>
+		<li>writing primitive sequneces;</li>
 	</ul>
 	
-	<h2>Indicators used to provide information about primitives</h2>
-	Indicators can be also use to provide informations about
-	primitives if format is <a href="fullydescribed">described.</a>
+	<h3>Writing singals</h3>
+	 <h4>Writing begin signal</h4>
+	   Writing begin signal can happen in any place and always takes signal 
+	   name as an agrument. How name is encoded in stream is not a concern
+	   of this api.
+	   <p>
+	   There must be no uncessary limitation on how deep signal recursion
+	   can be, some implementations may however put such a restriction due to
+	   the need of using some kind of memory structure to trace the 
+	   depth of stream structure. If such limitation is present it should
+	   be adjustable by a user in a format specific API and must be strictly
+	   enforced. There is absolutely prohibited to rely on "out of memory"
+	   condition.
+	 <h4>Writing end signal</h4>
+	   Writing an end signal is allowed only inside an existing structure,
+	   that is the number of begin and end signals must be balanced.
+	   <p>
+	   Writing API takes no argument.
+	   
+	<h3>Writing elementary primitive</h3>
+	   Writing an elementary primitive is allowed in any place, except if
+	   primitive sequence write was initialized.
+	   <p>
+	   This format especially allows to write primitives outside any structure
+	   (that is without any unclosed begin signal present).
+	   <p>
+	   There is no requirement that any kind of type information is to be
+	   stored.
+	   <p>
+	   Writing API takes exactly one argument.
+	   
+	<h3>Writing primitive sequences</h3>
+	   Writing of primitive sequence is allowed in any place, except if
+	   primitive sequence write of an another type was initialized.
+	   <p>
+	   First write of primitive sequence of type T initializes the primitive
+	   sequence in stream and since that moment only allowed subsequent
+	   writes are signals and sequence of the same type.
+	   <p>
+	   Writing any signal terminates the sequence.
+	   <p>
+	   Writing API takes as an argument single element, array of elements
+	   or <code>String</code>.
+	   <p>
+	   The sequence of <code>char[]</code> is <u>not compatible</u> 
+	   with sequence of <code>String</code>.  
+	   
+	   
+	   
+	<h2>Reading stream</h2>
+	Reading stream consists of operations:
+	<ul>
+		<li>elementary primitive reads;</li>
+		<li>primitive sequence reads;</li>
+		<li>signal reads;</li> 
+	</ul>
+	The format requires that a <u>permanent</u> "no more data" condition
+	is represented by throwing and IOException.
 	<p>
-	Following indicators are used in following sequence.
-	<pre>
-		type-indicator <i>separate for each elementary and array primitive</i>
-		<i>actual primitive data</i>
-		flush-type-indicator <i>separate for each elementary and array primitive</i>
-	</pre>
+	How the API behaves if there is temporary no more data in stream
+	it is unspecified and depends on implementation. It may 
+	be either blocking or throwing an exception. If however and
+	exception is throw and implementation is such, that this exception
+	is recoverable (that is one can re-try an operation and stream is
+	still usable) the IOException of recoverable (ie. <code>ERecoverableIOException</code>)
+	 subclass should be thrown.
 	<p>
-	<i>Note: flush-type-indicator indicator is optional. Can be type specific, class generic (elementary/block),
-	generic or not present at all.</i>
+	API should consider all exceptions not inherited from
+	recoverable as non-recoverable failures and stream as non usable.
 	<p>
-	<i>Note: flush-type-indicator indicator is introduced to API because of some formats which require to
-	surround data with proper, matched indicators. Signal streams are using it, but indicator formats may
-	ignore them if not used in their specific context.</i>
-	<p>
+	This format requires, that if stream throws an unrecoverable exception
+	then all subsequent calls to all methods should throw <code>IOException</code>
+	indicating its permanently faulty state.
 	
 	
+	<h3>Signal reads</h3>
+		A signal read operation API is expected to 
+		move cursor from current location up to next 
+		signal in stream, read that signal, move cursor
+		past it and return the signal to user.
+		<p>
+		When begin signal is encountered API returns signal
+		name. When end signal is encountered API returns null.
 	
+	<h3>Elementary primitive read</h3>
+		This read may happen in any place except if sequence read is active.
+		<p>
+		Read starts at current cursor location and moves cursor as it reads
+		parts of data until all parts are read or a signal is reached.
+		The cursor can't be moved past the signal with this read.
+		<p>
+		This is not expected that stream validates if correct elementary read is
+		used to read stored type.
+		<p>
+		This is allowed to fail misserably and break all subsequent readings,
+		as described in <a href="#ELEMENTARY_PRIMITIVE">there</a> if type does not
+		match.
+		<p>
+		If elementary read finds any signal in a place it expectes part or beginnig
+		of primitive data it should throw an IOException indicating unexpected end of
+		structure.
+		<p>
+		Elementary read API takes no argument and returns single value.
+		
+	<h3>Primitive sequence read</h3>
+		This read may happen in any place except if sequence read of different type is active.
+		<p>
+  	    First read of primitive sequence of type T initializes the primitive
+	    sequence in stream and since that moment only allowed subsequent
+	    read are signals and sequence of the same type.
+	    <p>
+		Read starts at current cursor location and moves cursor as it reads
+		parts of data until all parts are read or a signal is reached.
+		The cursor can't be moved past the signal with this read.
+		<p>
+		If sequence read finds any signal where it expectes the beginning of next
+		primitive entitiy in sequence it should return "partial read condition".
+		If however a signal is found inside a primitive entity it should throw
+		and IOException indicating unexpected end of sequence.
+		<p>
+		The reading API takes a buffer of bound size and returns 
+		information how much of it was filled up. 
+		<p>
+		The "partial read" condition is represented by returning the number of
+		entites read lower than the size of supplied buffer.
+		<p>
+		This API requires that "partial read" returning zero inidicates that nothing
+		could be read due to a "temporary lack of data" and -1 indicating that nothing
+		could be read due to reaching a signal. A persising lack of data without
+		reaching a signal is indicated by throwing an exception of apropriate type.
+		<p>
+		The <code>byte[]</code> API	also provides argument less API returning <code>int</code> with
+		-1 (no more data due to signal), -2 (temporary lack of data) or 0...255 if next byte of sequence is present.
+		
+	  
+		
+		
+		
+		
+		
+		
+		
+		
+	<h1>Extensions</h1>
+	This chapter describes functional extensions implemented <u>over</u> the basic structured stream.
 	
-
+	<h2>Typed stream</h2>
+	The stream which encloses each primitive operation withing own named structure where the name describes a type of
+	primitive.
+	<p>
+	This stream reserves some names as "type information". If user writes the signal of conflicting name this name is
+	transparently escaped and un-escaped after read.
+	<p>
+	All API behaves the same way as usuall and type information is hidden from a user, except the condition when incorrect
+	primitive operation is required. If this happens an exception is thrown.
+	<p>
+	The API is extended with "nextType" information which using read reserved signals informs user what type is at the cursor
+	in the stream. This API allows blind transcoding of streams of unknown structures. 
 </body>
 </html>
