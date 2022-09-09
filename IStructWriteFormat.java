@@ -4,7 +4,7 @@ import java.io.Flushable;
 import java.io.IOException;
 /**
 	Defines contract for structured format support 
-	as specified in <a href="package-summary.html">package	description</a>.
+	as specified in <a href="package-summary.html">package description</a>.
 	<p>
 	This is a writing end of a format.	
 	
@@ -27,10 +27,10 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 		
 		@param name non null name of a structure which now begins.
 				
-		@throws AssertionError if <code>signal</code> is null.
+		@throws AssertionError if <code>name</code> is null.
 		@throws IllegalArgumentException if name of signal is too long.
 			See {@link IFormatLimits#getMaxSignalNameLength}
-		@throws IllegalStateException if events recursion depth control is enabled
+		@throws EFormatBoundaryExceeded if structure recursion depth control is enabled
 			and this limit is exceeded. See {@link IFormatLimits#setMaxStructRecursionDepth}
 		@throws IOException if low level i/o fails.
 		*/
@@ -43,20 +43,27 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 		*/
 		public void end()throws IOException;
 		
-		/** Suggests stream implementation that specified name will
+		/** Suggests to the stream implementation that specified name will
 		be frequently used and should be optimized as much as possible.
 		This will usually require using some kind of signal registry
 		and mapping from strings to numbers.
 		<p>
 		Default implementationd doesn't do anything and returns true.
+		<p>
+		This operation by itself must not create any I/O operation and
+		any information stored to stream must be delayed till this name
+		is actually used for a first time.
 		@param name name to optimize, non null.
-		@return true if could optimize name or there is no need to do it at all,
-			 false if there is such a possiblity but resources are exceeded.
+		@return true if could optimize name or there is no need to do it at all
+			(ie. stream does not support any optimization). 
+			 <br>
+			 Returns false if there is such a possiblity but resources are exceeded
+			 so it could not optimize that name. 
+			 <p>
 			 Returning false may not cause stream to fail but
-			 may negatively impact performance. 
-		@throws IOException if failed. Notice the inability to optimize
-		the name, ie due to too many names, is <u>not a failure</u> */
-		public default boolean optimizeBeginName(String name) throws IOException{ return true; };
+			 may negatively impact performance.			  
+		*/
+		public default boolean optimizeBeginName(String name){ return true; };
 		
 		
 		
@@ -146,7 +153,12 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 				assert(buffer!=null);
 				writeBooleanBlock(buffer,0,buffer.length);
 		}
-		
+		/** See {@link #writeBooleanBlock(boolean[],int,int)},
+		single element version.
+		@param v single element
+		@throws IOException --//--
+		*/
+		public void writeBooleanBlock(boolean v)throws IOException;
 		
 		
 		
@@ -167,10 +179,10 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 				writeByteBlock(buffer,0,buffer.length);
 		}		
 		/** See {@link #writeBooleanBlock(boolean[],int,int)}
-		@param data single byte to write
+		@param v single byte to write
 		@throws IOException --//--
 		*/
-		public void writeByteBlock(byte data)throws IOException;
+		public void writeByteBlock(byte v)throws IOException;
 		
 		
 		
@@ -198,6 +210,11 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 				assert(characters!=null);
 				writeString(characters,0,characters.length());
 		}
+		/** A single character version.
+		@param c string character
+		@throws IOException see {@link #writeString(CharSequence)} */
+		public void writeString(char c)throws IOException;
+		
 		/**  See {@link #writeBooleanBlock(boolean[],int,int)}
 		This method write sequence of characters using fast, random access mode, ie. as a
 		sequence of 16 bit UTF-16 characters.
@@ -220,6 +237,11 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 				assert(buffer!=null);
 				writeCharBlock(buffer,0,buffer.length);
 		}
+		/** See {@link #writeBooleanBlock(boolean[],int,int)}
+		@param data single byte to write
+		@throws IOException --//--
+		*/
+		public void writeCharBlock(char data)throws IOException;
 		
 		
 		
@@ -240,6 +262,11 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 				assert(buffer!=null);
 				writeShortBlock(buffer,0,buffer.length);
 		}
+		/** See {@link #writeBooleanBlock(boolean[],int,int)}
+		@param data single byte to write
+		@throws IOException --//--
+		*/
+		public void writeShortBlock(short data)throws IOException;
 		
 		
 		
@@ -259,6 +286,11 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 				assert(buffer!=null);
 				writeIntBlock(buffer,0,buffer.length);
 		}
+		/** See {@link #writeBooleanBlock(boolean[],int,int)}
+		@param data single byte to write
+		@throws IOException --//--
+		*/
+		public void writeIntBlock(int data)throws IOException;
 		
 		
 		
@@ -278,6 +310,11 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 				assert(buffer!=null);
 				writeLongBlock(buffer,0,buffer.length);
 		}
+		/** See {@link #writeBooleanBlock(boolean[],int,int)}
+		@param data single byte to write
+		@throws IOException --//--
+		*/
+		public void writeLongBlock(long data)throws IOException;
 		
 		
 		
@@ -298,6 +335,11 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 				assert(buffer!=null);
 				writeFloatBlock(buffer,0,buffer.length);
 		}
+		/** See {@link #writeBooleanBlock(boolean[],int,int)}
+		@param data single byte to write
+		@throws IOException --//--
+		*/
+		public void writeFloatBlock(float data)throws IOException;
 		
 		
 		
@@ -317,6 +359,12 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 				assert(buffer!=null);
 				writeDoubleBlock(buffer,0,buffer.length);
 		}
+		/** See {@link #writeBooleanBlock(boolean[],int,int)}
+		@param data single byte to write
+		@throws IOException --//--
+		*/
+		public void writeDoubleBlock(double data)throws IOException;
+		
 				
 		/* ***********************************************************
 		
@@ -359,6 +407,8 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 		<p>
 		Once format is closed all methods except  {@link #close} and defined in {@link IFormatLimits} 
 		should throw {@link EClosed}.
+		<p>
+		Note: Closed format <u>cannot be opened</u>.
 		*/
 		public void close()throws IOException;
 };

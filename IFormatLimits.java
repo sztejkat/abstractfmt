@@ -12,7 +12,7 @@ public interface IFormatLimits
 		<p>
 		Changing limit on the fly is allowed.
 		@param characters name limit, non-zero positive.
-		@throws AssertionError if characters exceeds {@link #getMaxSupportedSignalNameLength}
+		@throws IllegalArgumentException if characters exceeds {@link #getMaxSupportedSignalNameLength}
 		*/
 		public void setMaxSignalNameLength(int characters);
 		/** Returns value set in {@link #setMaxSignalNameLength}
@@ -35,15 +35,16 @@ public interface IFormatLimits
 	  	/**
 	  	Sets current event recursion depth limit. 
 	  	
-	  	@param max_events_recursion_depth specifies the allowed depth of elements
+	  	@param max_depth specifies the allowed depth of elements
 			nesting. Zero disables limit, 1 sets limit to: "no nested elements allowed",
 			2 allows element within an element and so on. 
 			Changing limit on the fly is allowed.
+		@throws AssertionError if <code>max_depth</code> is negative
 		@throws IllegalStateException if specified limit is non zero and lower than
 		current event recursion depth, or higher than format allows.
 		@see #getMaxSupportedEventRecursionDepth
 		*/
-	  	public void setMaxStructRecursionDepth(int max_events_recursion_depth)throws IllegalStateException;
+	  	public void setMaxStructRecursionDepth(int max_depth)throws IllegalStateException;
 		/** Returns 0 if format supports un-bound recursion, otherwise a 
 		maximum recursion depth which can be set in {@link #setMaxStructRecursionDepth}
 		@return 0 or max recursion depth supported. */

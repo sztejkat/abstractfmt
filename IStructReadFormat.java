@@ -30,7 +30,10 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
 		@throws EFormatBoundaryExceeded if either name is longer than
 			{@link IFormatLimits#getMaxSignalNameLength} or 
 			recursion is too deep (see {@link IFormatLimits#setMaxStructRecursionDepth})
-		@throws EBrokenFormat if broken permanently
+		@throws EBrokenFormat if broken permanently, ie. if there is "end" 
+			signal without opening "begin" signal.
+		@throws ERecoverableIOException if broken, but can be recovered
+				by a retry.
 		*/
 		public String next()throws IOException;
 		
@@ -403,6 +406,8 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
 		Until format is open all methods except
 		{@link #close} and defined in {@link IFormatLimits}
 		should throw IOException.  Throwing {@link EClosed} is recommended.
+		<p>
+		Note: Closed format <u>cannot be opened</u>.
 		*/
 		public void close()throws IOException;	
 };
