@@ -1,7 +1,7 @@
 package sztejkat.abstractfmt;
 
 /**
-	Throw when operation is initiated , but stream was closed.
+	Throw when operation is initiated, but stream was closed.
 */
 public class EClosed extends java.io.IOException
 {

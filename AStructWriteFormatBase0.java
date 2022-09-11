@@ -14,18 +14,13 @@ import java.io.IOException;
 		<li>name and recursion boundary checking;</li>
 	</ul>
 */
-abstract class AStructWriteFormatBase0 extends AFormatLimits implements IStructWriteFormat
+abstract class AStructWriteFormatBase0 extends AStructFormatBase implements IStructWriteFormat
 {
 					/** Used by {@link #end} to postpone the operation 
 					and eventually optimize the <code>end();begin(...);</code>
 					sequence into a one operation */
 					private boolean pending_end;
-					/** Tracks format open state */
-					private boolean opened;
-					/** Tracks format closes state */
-					private boolean closed;
-					/** Non-null if stream is doing a block write. Carries block type */
-					private TContentType block_type;
+					
 					
 		/* ***********************************************************************
 		
@@ -85,6 +80,10 @@ abstract class AStructWriteFormatBase0 extends AFormatLimits implements IStructW
 		@param v value
 		@throws IOException if failed */
 		protected abstract void writeBooleanImpl(boolean v)throws IOException;
+		/** See {@link #writeBooleanImpl(boolean)}
+		@param v --//--
+		@throws IOException --//--
+		*/
 		protected abstract void writeByteImpl(byte v)throws IOException;
 		/** See {@link #writeBooleanImpl(boolean)}
 		@param v --//--
@@ -119,14 +118,7 @@ abstract class AStructWriteFormatBase0 extends AFormatLimits implements IStructW
 		/* ------------------------------------------------------------------
 				Datablock related.
 		------------------------------------------------------------------*/
-		/** Invoked by {@link #writeBooleanBlock} when boolean block is used for a first time
-		inside a structure and block operation is started.
-		<p>
-		Some implementations may find it usefull. 
-		<p>
-		Default: doesn't do anything 
-		@throws IOException if failed.*/
-		protected void startBooleanBlock()throws IOException{};
+		
 		/** Invoked by block operation {@link #writeBooleanBlock(boolean[],int,int)} after managing state and validating arguments.
 		By default implemented by using {@link #writeBooleanBlock(boolean)}.
 		@param buffer --//--
@@ -141,20 +133,11 @@ abstract class AStructWriteFormatBase0 extends AFormatLimits implements IStructW
 			};
 		};
 		protected abstract void writeBooleanBlockImpl(boolean v)throws IOException;
-		/** Invoked by {@link #end} when boolean block is active and is to be finished.
-		Some implementations may find it usefull. Usually boolean[] blocks can be optimized
-		this way into bit-streams. 
-		<p>
-		Default: doesn't do anything 
-		@throws IOException if failed.*/
-		protected void endBooleanBlock()throws IOException{};
 		
 		
 		
 		
-		/** See {@link #startBooleanBlock}
-		@throws IOException --//-- */
-		protected void startByteBlock()throws IOException{};
+		
 		/** See {@link #writeBooleanBlockImpl(boolean[],int,int)}.
 		@param buffer --//--
 		@param offset --//--
@@ -168,16 +151,10 @@ abstract class AStructWriteFormatBase0 extends AFormatLimits implements IStructW
 			};
 		};
 		protected abstract void writeByteBlockImpl(byte v)throws IOException;
-		/** See {@link #endBooleanBlock}
-		@throws IOException --//--*/
-		protected void endByteBlock()throws IOException{};
 		
 		
 		
 		
-		/** See {@link #startBooleanBlock}
-		@throws IOException --//-- */
-		protected void startCharBlock()throws IOException{};
 		/** See {@link #writeBooleanBlockImpl(boolean[],int,int)}.
 		@param buffer --//--
 		@param offset --//--
@@ -191,16 +168,10 @@ abstract class AStructWriteFormatBase0 extends AFormatLimits implements IStructW
 			};
 		};
 		protected abstract void writeCharBlockImpl(char v)throws IOException;
-		/** See {@link #endBooleanBlock}
-		@throws IOException --//--*/
-		protected void endCharBlock()throws IOException{};
 		
 		
 		
 		
-		/** See {@link #startBooleanBlock}
-		@throws IOException --//-- */
-		protected void startShortBlock()throws IOException{};
 		/** See {@link #writeBooleanBlockImpl(boolean[],int,int)}.
 		@param buffer --//--
 		@param offset --//--
@@ -214,15 +185,9 @@ abstract class AStructWriteFormatBase0 extends AFormatLimits implements IStructW
 			};
 		};
 		protected abstract void writeShortBlockImpl(short v)throws IOException;
-		/** See {@link #endBooleanBlock}
-		@throws IOException --//--*/
-		protected void endShortBlock()throws IOException{};
 		
 		
 		
-		/** See {@link #startBooleanBlock}
-		@throws IOException --//-- */
-		protected void startIntBlock()throws IOException{};
 		/** See {@link #writeBooleanBlockImpl(boolean[],int,int)}.
 		@param buffer --//--
 		@param offset --//--
@@ -236,15 +201,9 @@ abstract class AStructWriteFormatBase0 extends AFormatLimits implements IStructW
 			};
 		};
 		protected abstract void writeIntBlockImpl(int v)throws IOException;
-		/** See {@link #endBooleanBlock}
-		@throws IOException --//--*/
-		protected void endIntBlock()throws IOException{};
 		
 		
 		
-		/** See {@link #startBooleanBlock}
-		@throws IOException --//-- */
-		protected void startLongBlock()throws IOException{};
 		/** See {@link #writeBooleanBlockImpl(boolean[],int,int)}.
 		@param buffer --//--
 		@param offset --//--
@@ -258,16 +217,10 @@ abstract class AStructWriteFormatBase0 extends AFormatLimits implements IStructW
 			};
 		};
 		protected abstract void writeLongBlockImpl(long v)throws IOException;
-		/** See {@link #endBooleanBlock}
-		@throws IOException --//--*/
-		protected void endLongBlock()throws IOException{};
 		
 		
 		
 		
-		/** See {@link #startBooleanBlock}
-		@throws IOException --//-- */
-		protected void startFloatBlock()throws IOException{};
 		/** See {@link #writeBooleanBlockImpl(boolean[],int,int)}.
 		@param buffer --//--
 		@param offset --//--
@@ -281,15 +234,9 @@ abstract class AStructWriteFormatBase0 extends AFormatLimits implements IStructW
 			};
 		};
 		protected abstract void writeFloatBlockImpl(float v)throws IOException;
-		/** See {@link #endBooleanBlock}
-		@throws IOException --//--*/
-		protected void endFloatBlock()throws IOException{};
 		
 		
 		
-		/** See {@link #startBooleanBlock}
-		@throws IOException --//-- */
-		protected void startDoubleBlock()throws IOException{};
 		/** See {@link #writeBooleanBlockImpl(boolean[],int,int)}.
 		@param buffer --//--
 		@param offset --//--
@@ -303,104 +250,37 @@ abstract class AStructWriteFormatBase0 extends AFormatLimits implements IStructW
 			};
 		};
 		protected abstract void writeDoubleBlockImpl(double v)throws IOException;
-		/** See {@link #endBooleanBlock}
-		@throws IOException --//--*/
-		protected void endDoubleBlock()throws IOException{};
 		
 		
 		
-		
-		/** See {@link #startBooleanBlock}
-		@throws IOException --//-- */
-		protected void startStringBlock()throws IOException{};
 		/** See {@link #writeBooleanBlockImpl(boolean[],int,int)}.
 		@param characters --//--
 		@param offset --//--
 		@param length --//--
 		@throws IOException if failed. */
-		protected void writeStringBlockImpl(CharSequence characters, int offset, int length)throws IOException
+		protected void writeStringImpl(CharSequence characters, int offset, int length)throws IOException
 		{
 			while(length--!=0)
 			{
-				writeStringBlockImpl(characters.charAt(offset++));
+				writeStringImpl(characters.charAt(offset++));
 			};
 		};
-		protected abstract void writeStringBlockImpl(char c)throws IOException;
-		/** See {@link #endBooleanBlock}
-		@throws IOException --//--*/
-		protected void endStringBlock()throws IOException{};
-		
-		/* ***********************************************************************
-		
-				Services for subclasses
+		protected abstract void writeStringImpl(char c)throws IOException;
 		
 		
-		************************************************************************/
-		/** Throws if closed 
-		@throws EClosed .*/
-		private void validateNotClosed()throws EClosed
-		{
-			if (closed) throw new EClosed("Already closed");
-		};
-		/** @return set to true by {@link #close} */
-		protected final boolean isClosed(){ return closed; };
-		
-		/** Throws if not opened 
-		@throws ENotOpen .*/
-		private void validateOpen()throws ENotOpen
-		{
-			if (!opened) throw new ENotOpen("Not open yet");
-		};
-		/** @return set to true by {@link #open} */
-		protected final boolean isOpen(){ return opened; };
-				
-		/** Throws is any block operation is in progress 
-		@throws IllegalStateException if true */
-		private final void validateNoBlockOp()throws IllegalStateException
-		{
-			if (block_type!=null) throw new IllegalStateException("Block operation in progress");
-		};
-		/** Calls {@link #validateOpen} and {@link #validateNotClosed}
-		@throws EClosed if already closed
-		@throws ENotOpen if not open yet.
-		*/
-		private final void validateUsable()throws EClosed,ENotOpen
-		{
-			validateOpen();
-		 	validateNotClosed();
-		};
+			
+	
 		/* ***********************************************************************
 		
 				IStructWriteFormat
 		
 		
 		************************************************************************/
-		/** Terminates block operation, if any
-		by calling <code>endXXXBlock()</code>
-		@throws IOException if an eventual termination of block failed.
-		@see #block_type */
-		private void terminatePendingBlockOperation()throws IOException
-		{
-			if (block_type!=null)
-			{
-				switch(block_type)
-				{
-					case BOOLEAN_BLK: 	endBooleanBlock(); break;
-					case BYTE_BLK: 		endByteBlock(); break;
-					case CHAR_BLK: 		endCharBlock(); break;
-					case STRING: 		endStringBlock(); break;
-					case SHORT_BLK: 	endShortBlock(); break;
-					case INT_BLK: 		endIntBlock(); break;
-					case LONG_BLK: 		endLongBlock(); break;
-					case FLOAT_BLK: 	endFloatBlock(); break;
-					case DOUBLE_BLK: 	endDoubleBlock(); break;
-					default: throw new AssertionError("not a block "+block_type);
-				};
-				block_type = null;
-			};
-		};
+		
 		/** {@inheritDoc}
-		Used {@link #pending_end} to handle <code>end-begin</code> optimization
+		Calls {@link #terminatePendingBlockOperation} and {@link #leaveStruct}.
+		<p>
+		Uses {@link #pending_end} to handle <code>end-begin</code> optimization
 		and eventually passes call to {@link #endImpl} to actually perform single
 		"end" signal write operation 
 		*/
@@ -422,6 +302,9 @@ abstract class AStructWriteFormatBase0 extends AFormatLimits implements IStructW
 				endImpl();
 			};
 		}
+		/** {@inheritDoc}	
+		Calls {@link #terminatePendingBlockOperation} and {@link #enterStruct}.
+		*/		
 		@Override public void begin(String name)throws IOException
 		{
 			//Sanitize arguments
@@ -450,53 +333,49 @@ abstract class AStructWriteFormatBase0 extends AFormatLimits implements IStructW
 				Elementary primitives.
 			
 		-----------------------------------------------------------------------------*/
-		private void validateCanDoElementaryWrite()throws IOException
-		{
-				validateUsable();
-				validateNoBlockOp();
-		}
+		
 		/** {@inheritDoc}
 		  After validating if no block operaion is in progresss
 		  calls {@link #writeBooleanImpl}
 		*/
 		@Override public void writeBoolean(boolean v)throws IOException
 		{
-				validateCanDoElementaryWrite();
+				validateCanDoElementaryOp();
 				writeBooleanImpl(v);
 		};
 		@Override public void writeByte(byte v)throws IOException
 		{
-				validateCanDoElementaryWrite();
+				validateCanDoElementaryOp();
 				writeByteImpl(v);
 		};
 		@Override public void writeChar(char v)throws IOException
 		{
-				validateCanDoElementaryWrite();
+				validateCanDoElementaryOp();
 				writeCharImpl(v);
 		};
 		@Override public void writeShort(short v)throws IOException
 		{
-				validateCanDoElementaryWrite();
+				validateCanDoElementaryOp();
 				writeShortImpl(v);
 		};
 		@Override public void writeInt(int v)throws IOException
 		{
-				validateCanDoElementaryWrite();
+				validateCanDoElementaryOp();
 				writeIntImpl(v);
 		};
 		@Override public void writeLong(long v)throws IOException
 		{
-				validateCanDoElementaryWrite();
+				validateCanDoElementaryOp();
 				writeLongImpl(v);
 		};
 		@Override public void writeFloat(float v)throws IOException
 		{
-				validateCanDoElementaryWrite();
+				validateCanDoElementaryOp();
 				writeFloatImpl(v);
 		};
 		@Override public void writeDouble(double v)throws IOException
 		{
-				validateCanDoElementaryWrite();
+				validateCanDoElementaryOp();
 				writeDoubleImpl(v);
 		};
 		/* -----------------------------------------------------------------------------
@@ -504,26 +383,10 @@ abstract class AStructWriteFormatBase0 extends AFormatLimits implements IStructW
 				Primitive sequences
 			
 		-----------------------------------------------------------------------------*/
-		/** Validates if can do this block operation and initializes it if necessary
-		@throws IOException if stream is not open/closed or low level failed.
-		@throws IllegalStateException if can't do this block now.
-		@see #startBooleanBlock */
-		private void validateBooleanBlock()throws IOException, IllegalStateException
-		{
-			//state 
-			validateUsable();
-			//block state
-			if (block_type==null)
-			{
-				//initialize
-				block_type=TContentType.BOOLEAN_BLK;
-				startBooleanBlock();
-			}else
-				//validate type consistency
-				if (block_type!=TContentType.BOOLEAN_BLK) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
-		}
+		
 		/** {@inheritDoc}
 			After validating state and arguments call {@link #startBooleanBlock}
+			(through {@link #validateBooleanBlock})
 			and {@link #writeBooleanBlockImpl} according to situation
 		*/
 		@Override public void writeBooleanBlock(boolean [] buffer, int offset, int length)throws IOException		
@@ -545,24 +408,7 @@ abstract class AStructWriteFormatBase0 extends AFormatLimits implements IStructW
 		
 		
 		
-		/** Validates if can do this block operation and initializes it if necessary
-		@throws IOException if stream is not open/closed or low level failed.
-		@throws IllegalStateException if can't do this block now.
-		@see #startByteBlock */
-		private void validateByteBlock()throws IOException, IllegalStateException
-		{
-			//state 
-			validateUsable();
-			//block state
-			if (block_type==null)
-			{
-				//initialize
-				block_type=TContentType.BYTE_BLK;
-				startByteBlock();
-			}else
-				//validate type consistency
-				if (block_type!=TContentType.BYTE_BLK) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
-		}
+		
 		/** {@inheritDoc}
 			After validating state and arguments call {@link #startByteBlock}
 			and {@link #writeByteBlockImpl} according to situation
@@ -584,24 +430,7 @@ abstract class AStructWriteFormatBase0 extends AFormatLimits implements IStructW
 		};
 		
 		
-			/** Validates if can do this block operation and initializes it if necessary
-		@throws IOException if stream is not open/closed or low level failed.
-		@throws IllegalStateException if can't do this block now.
-		@see #startCharBlock */
-		private void validateCharBlock()throws IOException, IllegalStateException
-		{
-			//state 
-			validateUsable();
-			//block state
-			if (block_type==null)
-			{
-				//initialize
-				block_type=TContentType.CHAR_BLK;
-				startCharBlock();
-			}else
-				//validate type consistency
-				if (block_type!=TContentType.CHAR_BLK) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
-		}
+		
 		/** {@inheritDoc}
 			After validating state and arguments call {@link #startCharBlock}
 			and {@link #writeCharBlockImpl} according to situation
@@ -624,24 +453,7 @@ abstract class AStructWriteFormatBase0 extends AFormatLimits implements IStructW
 		
 		
 		
-			/** Validates if can do this block operation and initializes it if necessary
-		@throws IOException if stream is not open/closed or low level failed.
-		@throws IllegalStateException if can't do this block now.
-		@see #startShortBlock */
-		private void validateShortBlock()throws IOException, IllegalStateException
-		{
-			//state 
-			validateUsable();
-			//block state
-			if (block_type==null)
-			{
-				//initialize
-				block_type=TContentType.SHORT_BLK;
-				startShortBlock();
-			}else
-				//validate type consistency
-				if (block_type!=TContentType.SHORT_BLK) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
-		}
+		
 		/** {@inheritDoc}
 			After validating state and arguments call {@link #startShortBlock}
 			and {@link #writeShortBlockImpl} according to situation
@@ -664,24 +476,7 @@ abstract class AStructWriteFormatBase0 extends AFormatLimits implements IStructW
 		
 		
 		
-			/** Validates if can do this block operation and initializes it if necessary
-		@throws IOException if stream is not open/closed or low level failed.
-		@throws IllegalStateException if can't do this block now.
-		@see #startIntBlock */
-		private void validateIntBlock()throws IOException, IllegalStateException
-		{
-			//state 
-			validateUsable();
-			//block state
-			if (block_type==null)
-			{
-				//initialize
-				block_type=TContentType.INT_BLK;
-				startIntBlock();
-			}else
-				//validate type consistency
-				if (block_type!=TContentType.INT_BLK) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
-		}
+		
 		/** {@inheritDoc}
 			After validating state and arguments call {@link #startIntBlock}
 			and {@link #writeIntBlockImpl} according to situation
@@ -704,24 +499,7 @@ abstract class AStructWriteFormatBase0 extends AFormatLimits implements IStructW
 		
 		
 		
-			/** Validates if can do this block operation and initializes it if necessary
-		@throws IOException if stream is not open/closed or low level failed.
-		@throws IllegalStateException if can't do this block now.
-		@see #startLongBlock */
-		private void validateLongBlock()throws IOException, IllegalStateException
-		{
-			//state 
-			validateUsable();
-			//block state
-			if (block_type==null)
-			{
-				//initialize
-				block_type=TContentType.LONG_BLK;
-				startLongBlock();
-			}else
-				//validate type consistency
-				if (block_type!=TContentType.LONG_BLK) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
-		}
+		
 		/** {@inheritDoc}
 			After validating state and arguments call {@link #startLongBlock}
 			and {@link #writeLongBlockImpl} according to situation
@@ -744,24 +522,7 @@ abstract class AStructWriteFormatBase0 extends AFormatLimits implements IStructW
 		
 		
 		
-			/** Validates if can do this block operation and initializes it if necessary
-		@throws IOException if stream is not open/closed or low level failed.
-		@throws IllegalStateException if can't do this block now.
-		@see #startFloatBlock */
-		private void validateFloatBlock()throws IOException, IllegalStateException
-		{
-			//state 
-			validateUsable();
-			//block state
-			if (block_type==null)
-			{
-				//initialize
-				block_type=TContentType.FLOAT_BLK;
-				startFloatBlock();
-			}else
-				//validate type consistency
-				if (block_type!=TContentType.FLOAT_BLK) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
-		}
+		
 		/** {@inheritDoc}
 			After validating state and arguments call {@link #startFloatBlock}
 			and {@link #writeFloatBlockImpl} according to situation
@@ -784,24 +545,7 @@ abstract class AStructWriteFormatBase0 extends AFormatLimits implements IStructW
 		
 		
 		
-		/** Validates if can do this block operation and initializes it if necessary
-		@throws IOException if stream is not open/closed or low level failed.
-		@throws IllegalStateException if can't do this block now.
-		@see #startDoubleBlock */
-		private void validateDoubleBlock()throws IOException, IllegalStateException
-		{
-			//state 
-			validateUsable();
-			//block state
-			if (block_type==null)
-			{
-				//initialize
-				block_type=TContentType.DOUBLE_BLK;
-				startDoubleBlock();
-			}else
-				//validate type consistency
-				if (block_type!=TContentType.DOUBLE_BLK) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
-		}
+		
 		/** {@inheritDoc}
 			After validating state and arguments call {@link #startDoubleBlock}
 			and {@link #writeDoubleBlockImpl} according to situation
@@ -826,24 +570,7 @@ abstract class AStructWriteFormatBase0 extends AFormatLimits implements IStructW
 		
 		
 		
-		/** Validates if can do this block operation and initializes it if necessary
-		@throws IOException if stream is not open/closed or low level failed.
-		@throws IllegalStateException if can't do this block now.
-		@see #startDoubleBlock */
-		private void validateStringBlock()throws IOException, IllegalStateException
-		{
-			//state 
-			validateUsable();
-			//block state
-			if (block_type==null)
-			{
-				//initialize
-				block_type=TContentType.STRING;
-				startDoubleBlock();
-			}else
-				//validate type consistency
-				if (block_type!=TContentType.STRING) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
-		}
+		
 		/** {@inheritDoc}
 			After validating state and arguments call {@link #startDoubleBlock}
 			and {@link #writeDoubleBlockImpl} according to situation
@@ -856,12 +583,12 @@ abstract class AStructWriteFormatBase0 extends AFormatLimits implements IStructW
 			assert(length>=0):"length="+length;
 			assert(characters.length()<=offset+length):"Out of buffer operation: characters.length="+characters.length()+", offset="+offset+", length="+length;
 			validateStringBlock();
-			writeStringBlockImpl(characters,offset,length);	
+			writeStringImpl(characters,offset,length);	
 		};
 		@Override public void writeString(char c)throws IOException
 		{
 			validateStringBlock();
-			writeStringBlockImpl(c);
+			writeStringImpl(c);
 		};
 		
 		
@@ -918,31 +645,15 @@ abstract class AStructWriteFormatBase0 extends AFormatLimits implements IStructW
 			//do low level flushing.
 			flushImpl();
 		}
+		
 		/** {@inheritDoc}
-		   Handles state and delegates to {@link #openImpl}
-		   when necessary
-		*/
-		@Override public void open()throws IOException
-		{
-			validateNotClosed();
-			if (opened) return;			
-			openImpl();
-			opened = true; //not set if openImpl failed.
-						 //low level close will be invoked regardless.
-		};
-		/** {@inheritDoc}
-		   Handles state and delegates to {@link #openImpl}
+		   Handles state and delegates to {@link #closeImpl} and {@link #flush}
 		   when necessary
 		*/
 		@Override public void close()throws IOException
 		{
-			if (closed) return;
-			if (opened)
-						flush();
-			try{					
-					closeImpl();
-					super.close(); //zero depth tracking. We can skip it if failed tough.
-					//always set closed, even if low level failed.
-			}finally{ closed = true; }
+			if (isClosed()) return;
+			if (isOpen()) flush();
+			super.close();
 		};
 }

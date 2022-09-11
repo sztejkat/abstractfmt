@@ -3,11 +3,10 @@ package sztejkat.abstractfmt;
 /**
 	A generic exception indicating that there is something 
 	wrong with a stream because we did encounter a physical
-	end-of-file when not allowed.
-	<p>
-	This is an unrecoverable error.
+	end-of-file when not allowed. Usually may not recover from it
+	by re-trying.
 */
-public class EUnexpectedEof extends EBrokenFormat
+public class EUnexpectedEof extends EEof
 {
 		private static final long serialVersionUID=1L;
 	public EUnexpectedEof(){};

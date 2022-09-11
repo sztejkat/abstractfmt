@@ -1,11 +1,8 @@
 package sztejkat.abstractfmt;
 /**
-	A generic exception indicating that there is something 
-	wrong with a stream at format level and that the reason
-	is that certain format imposed limits are exceeded.
-	<p>
-	For an example a name of a signal is too long or recursion
-	is too deep and etc. This is a non-recoverable error.	
+	A generic exception indicating that certain format 
+	imposed limits are exceeded, for an example a name of a signal is too long or recursion
+	is too deep and etc. 	
 */
 public class EFormatBoundaryExceeded extends EBrokenFormat
 {

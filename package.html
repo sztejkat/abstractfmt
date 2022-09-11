@@ -209,19 +209,11 @@
 	<p>
 	How the API behaves if there is temporary no more data in stream
 	it is unspecified and depends on implementation. It may 
-	be either blocking or throwing an exception. If however and
-	exception is throw and implementation is such, that this exception
-	is recoverable (that is one can re-try an operation and stream is
-	still usable) the IOException of recoverable (ie. <code>ERecoverableIOException</code>)
-	 subclass should be thrown.
+	be either blocking or throwing an exception. 
 	<p>
-	API should consider all exceptions not inherited from
-	recoverable as non-recoverable failures and stream as non usable.
-	<p>
-	This format requires, that if stream throws an unrecoverable exception
-	then all subsequent calls to all methods should throw <code>IOException</code>
-	indicating its permanently faulty state.
-	
+	This format defines, that if stream throws an exception
+	then it is up to user of a stream to ensure that it is no longer used,
+	unless the implementation clearly states, that it can be re-tried.
 	
 	<h3>Signal reads</h3>
 		A signal read operation API is expected to 
@@ -279,8 +271,11 @@
 		could be read due to reaching a signal. A persising lack of data without
 		reaching a signal is indicated by throwing an exception of apropriate type.
 		<p>
-		The <code>byte[]</code> API	also provides argument less API returning <code>int</code> with
-		-1 (no more data due to signal), -2 (temporary lack of data) or 0...255 if next byte of sequence is present.
+		The API	also provides argument less API returning <code>int</code> with
+		-1 (no more data due to signal), -2 (temporary lack of data) or 0...xxx 
+		if next element of sequence is present. This API is provided for booleans,bytes,
+		chars,shorts. The API for int, long, float and double do throw if 
+		alike thing happens.
 		
 	  
 		

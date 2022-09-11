@@ -1,10 +1,7 @@
 package sztejkat.abstractfmt;
 import java.io.IOException;
 /**
-	An exception thrown when stream is broken beyond repair
-	and any subsequent attempt to use it <i>should</i> throw.
-	Will be also throw by any method once this exception is thrown
-	for a first time.
+	An exception thrown when stream is broken, usually beyond repair.
 */
 public class EBrokenFormat extends IOException
 {

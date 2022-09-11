@@ -1,13 +1,12 @@
 package sztejkat.abstractfmt;
 /**
 	An exception thrown when a primitive data read attempts to
-	cross event boundaries or sequence terminates inside a
-	single primitive entity.
+	cross event boundaries.
 	<p>
-	Stream can recover from this exception by skipping the event
+	Stream can always recover from this exception by skipping the event
 	content.
 */
-public class ENoMoreData extends ERecoverableIOException
+public class ENoMoreData extends java.io.IOException
 {
 		private static final long serialVersionUID=1L;
 	public ENoMoreData(){};
