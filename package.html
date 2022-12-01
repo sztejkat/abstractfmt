@@ -395,20 +395,18 @@
 		
 	<h1>Extensions</h1>
 	This chapter describes functional extensions implemented <u>over</u> the basic structured stream.
+
 	<h2>Fail-safe wrappers</h2>
-	A wrapper which catches any IOException except <code>ENoMoreData</code> used to indicate
-	an attempt to cross signal boundary in an allowed way. 
-	<h2>Typed stream</h2>
-	The stream which encloses each primitive operation withing own named structure where the name describes a type of
-	primitive.
-	<p>
-	This stream reserves some names as "type information". If user writes the signal of conflicting name this name is
-	transparently escaped and un-escaped after read.
-	<p>
-	All API behaves the same way as usuall and type information is hidden from a user, except the condition when incorrect
-	primitive operation is required. If this happens an exception is thrown.
-	<p>
-	The API is extended with "nextType" information which using read reserved signals informs user what type is at the cursor
-	in the stream. This API allows blind transcoding of streams of unknown structures. 
+	A wrapper which catches any EBrokenFormat exception and makes sure to throw
+        it at each attempt to call any operation.
+
+	<h2>Typed stream wrapper</h2>
+	The stream which:
+        <ul>
+            <li>prevents <a href="#MISSERABLE_FAULT">faults on type-missmatch</a> by transparently wrapping each primitive
+            in own structure during write and requiring it during reads;</li>
+            <li>provides a reading API allowing to check what stream element is found next
+            and thous allows <i>dumb transcoding</i> from format to format without any prior knowledge of content;</li>
+        </ul>
 </body>
 </html>
