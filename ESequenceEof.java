@@ -6,10 +6,10 @@ import java.io.IOException;
 	place, but this error condition does not break the stream.
 	<p>
 	This is assumed that when this exception is thrown all
-	data in sequence in question are discarded and cursor it
-	at the signal. 
+	data in sequence operation in question are discarded 
+	and cursor is left at the signal. 
 */
-public class ESequenceEof extends java.io.IOException
+public class ESequenceEof extends ESignalCrossed
 {
 		private static final long serialVersionUID=1L;
 	public ESequenceEof(){};

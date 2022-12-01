@@ -32,7 +32,7 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 		/* -------------------------------------------------
 			Block related
 		-------------------------------------------------*/
-		/** Invoked when boolean block is used for a first time
+		/** Invoked when {@link #validateBooleanBlock} is used for a first time
 		inside a structure and block operation is started.
 		<p>
 		Some implementations may find it usefull. 
@@ -40,7 +40,7 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 		Default: doesn't do anything 
 		@throws IOException if failed.*/
 		protected void startBooleanBlock()throws IOException{};
-		/** Invoked by when boolean block is active and is to be finished.
+		/** Invoked by {@link #terminatePendingBlockOperation} when boolean block is active and is to be finished.
 		Some implementations may find it usefull. Usually boolean[] blocks can be optimized
 		this way into bit-streams. 
 		<p>
@@ -145,6 +145,13 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 		/* ----------------------------------------------------------------
 					Block state validation and managment
 		----------------------------------------------------------------*/
+		/** Ensures that elementary primitive operations are allowed
+		@throws EClosed if already closed
+		@throws ENotOpen if not open yet.
+		@throws IllegalStateException if not allowed.
+		@see #validateUsable
+		@see #validateNoBlockOp
+		*/
 		final void validateCanDoElementaryOp()throws IllegalStateException,EClosed,ENotOpen
 		{
 			validateUsable();
@@ -157,9 +164,12 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 			if (block_type!=null) throw new IllegalStateException("Block operation in progress");
 		};
 		/** Terminates block operation, if any
-		by calling <code>endXXXBlock()</code>
+		by calling <code>endXXXBlock()</code>.
+		<p>
+		To be invoked by a code which is handling signal processing.
 		@throws IOException if an eventual termination of block failed.
-		@see #block_type */
+		@see #block_type
+		@see #endBooleanBlock */
 		final void terminatePendingBlockOperation()throws IOException
 		{
 			if (block_type!=null)

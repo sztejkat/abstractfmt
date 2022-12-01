@@ -6,9 +6,9 @@ import java.io.IOException;
 	<p>
 	This implementation supports:
 	<ul>
-		<li>optimization of <code>end-begin</code> sequence into one call;</li>
-		<li>open/close state validation, but no {@link EBrokenFormat} detection
-		and forced continous breaking of a stream;</li>
+		<li>optimization of <code>end-begin</code> sequence into one call for
+		compact structure sequencing;</li>
+		<li>flush and flush on close support;</li>
 		<li>arguments validation for all block writes;</li>
 		<li>state validation for block and primitive writes;</li>
 		<li>name and recursion boundary checking;</li>

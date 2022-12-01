@@ -35,12 +35,14 @@
 	</ul>
 	The stream format carries <u>no information</u> about what type of
 	primitive is stored where. 
-	<p>
-	It is allowed however to <u>fail misserably</u>	if type of primitive is found in stream is different from the type 
+	<p id="MISSERABLE_FAULT">
+	It is allowed however to <u>fail misserably</u>	if type of primitive which is found in stream is different from the type 
 	expected by the reading code. This failure is allowed to be delayed	and corrupt reading of all other primitive 
-	data up to the nearest <a href="#SIGNAL">signal</a>. Reaching the signal <u>must correct</u>
-	that faulty condition and reading of data after the signal must be unaffected by previous mistake.
-	This correction must take place even if signal happens to appear in the middle of primitive data.
+	data <u>up to the nearest <a href="#SIGNAL">signal</a></u>. Reaching the signal <u>must be correct</u> and
+	<u>must correct</u>	that faulty condition. Reading of the data after the signal must be unaffected by a previous mistake.
+	<p>
+	This correction must take place always and unconditionally,
+	even if signal happens to appear in the middle of primitive data.
 	
 	
 	
@@ -110,26 +112,72 @@
 	<h2 id="PRIMITIVE_SEQUENCES">Primitive sequences</h2>
 	All primitive JAVA array types:
 	<pre>
-	boolean[],byte[],char[],short[],int[],long[],float[],double[]
+	boolean[],byte[],char[],short[],int[],long[],float[],double[],String
 	</pre>
-	and JAVA <code>String</code> stored in stream in a compact form terminated
-	by <a href="#SIGNAL">signal</a>.
+	Sequences are stored in stream in a compact form and are always terminated by <a href="#SIGNAL">signal</a>.
 	<p>
-	This format assumes, that a primitive sequence of type T cannot be 
-	read using repetitive operation of elementary primitive read of type T.
+	This format:
+	<ul>
+		<li> assumes, that a primitive sequence of type T[] <u>cannot be</u> 
+		read using repetitive operation of elementary primitive read of type T;</li>
+		<li> requires that there is <u>no size</u> limit of primitive sequence. 	 
+		Specifically this format does not store any information about the length of primitive
+		sequence except of terminating it with a <a href="#SIGNAL">signal</a>;</li>
+		<li> requires that a single continous sequence T[] <u>may be</u> written
+		with <u>more that one</u> call to writig API and <u>may</u> be read with <u>any combination</u>
+		of calls to sequence T[] reading API;</li>
+	</ul>
 	<p>
-	This format requires that there is no size limit of primitive sequence.
-	<p>
-	This format does not store any information about the length of primitive
-	sequence except of terminating it with a <a href="#SIGNAL">signal</a>.
-	<p>
-	This format requires that a single continous sequence may be written
-	with more that one call to writig API and may be read with any combination
-	of calls to sequence reading API.
-	<p>
-	Once primitive sequence operation of type T is initialized only that operation
-	and signal operations can be used. All other operations are prohibitted and
-	must throw <code>IllegalStateException</code>.
+	The side effects of those requirements are:
+	<ul>
+		<li>Once primitive sequence operation of type T[] is initialized only that operation
+		and signal operations can be used. All other operations are prohibitted and
+		must throw <code>IllegalStateException</code>;</li>
+		<li>One can't write two sequences, either same type or another, without injecting
+		a signal between them. Especially this structure:
+		<pre>
+			struct{
+					int 
+					int 
+					double []
+					long []
+					int
+					}
+		</pre>
+		must be written as:
+		<pre>
+			<i>begin signal</i>
+					elementary int
+					elementary int
+					<i>begin signal</i>
+					sequence double []
+					<i>end signal</i>
+					<i>begin signal</i>
+					sequence long []
+					<i>end signal</i>
+					elementary int
+			<i>end signal</i>
+		</pre>
+		However the structure:
+		<pre>
+			struct{
+					int 
+					int 
+					double []
+					}
+		</pre>
+		<u>can</u> be written as:
+		<pre>
+			<i>begin signal</i>
+					elementary int
+					elementary int
+					sequence double []
+			<i>end signal</i>
+		</pre>
+		This is intentional.
+		</li>
+	</ul>
+		
 	
 	
 	
@@ -145,25 +193,46 @@
 	<ul>
 		<li>writing signals;</li>
 		<li>writing elementary primitives;</li>
-		<li>writing primitive sequneces;</li>
+		<li>writing primitive sequences;</li>
 	</ul>
 	
 	<h3>Writing singals</h3>
-	 <h4>Writing begin signal</h4>
+	 <h4>Writing the "begin signal"</h4>
 	   Writing begin signal can happen in any place and always takes signal 
-	   name as an agrument. How name is encoded in stream is not a concern
+	   name as an agrument. How that name is encoded in stream is not a concern
 	   of this api.
 	   <p>
-	   There must be no uncessary limitation on how deep signal recursion
-	   can be, some implementations may however put such a restriction due to
-	   the need of using some kind of memory structure to trace the 
-	   depth of stream structure. If such limitation is present it should
-	   be adjustable by a user in a format specific API and must be strictly
-	   enforced. There is absolutely prohibited to rely on "out of memory"
-	   condition.
-	 <h4>Writing end signal</h4>
-	   Writing an end signal is allowed only inside an existing structure,
-	   that is the number of begin and end signals must be balanced.
+	   The format:
+	   <ul>
+	   	<li>requires, that there is no hard, conceptually built-in limitation
+	   	   on the length of a signal name;</li>
+	   	<li>requires,  that there is no hard, conceptually built-in limitation
+	   	   on the depths of structures recursion;</li>
+	   	<li>requires,  that there is no limitation on what characters can be contained
+	   	    in name, including <code>(char)0</code> and names are stored as supplied, without
+	   	    any upper/lower case handling nor normalization of any kind. Especially the 
+	   	    "" (empty) name is allowed. However <code>null</code> reference does not 
+	   	    describe a valid name and is not the same as "" (empty);</li>
+	   	<li>requires, that formats must contain an adjustable function which
+	   	    will prevent it from reading and writing too long names;</li>
+	   	<li>requires, that formats must contain an adjustable function which
+	   	    will prevent it from reading and writing too deeply recursed structures;</li>
+	   	<li>requires, that formats which do contain some hard-coded, built in limits
+	   	    for names or recursion must report them to user through well defined API;</li>
+	   </ul>
+	   Additionally this format recommends that:
+	   <ul>
+	   	 <li>The way of encoding signals should be as compact as possible;</li>
+	   	 <li>The format should allow at least 17 signal names to be pre-defined as
+	   	 to be used in a most compact possible form. That number of names matches the
+	   	 number of primitive types and is intended to be used in <i>typed streams</i>
+	   	 to wrap all primitives and allow to detect the <a href="#MISSERABLE_FAULT">misserable fault</a>
+	   	 at incorrectly typed read;</li>
+	   </ul>
+	   
+	 <h4>Writing the "end signal"</h4>
+	   Writing an end signal is allowed only inside an existing structure.
+	   The number of begin and end signals must be balanced.
 	   <p>
 	   Writing API takes no argument.
 	   
@@ -175,7 +244,7 @@
 	   (that is without any unclosed begin signal present).
 	   <p>
 	   There is no requirement that any kind of type information is to be
-	   stored.
+	   stored, however signal names can be used to provide that kind of information.
 	   <p>
 	   Writing API takes exactly one argument.
 	   
@@ -192,9 +261,16 @@
 	   Writing API takes as an argument single element, array of elements
 	   or <code>String</code>.
 	   <p>
-	   The sequence of <code>char[]</code> is <u>not compatible</u> 
-	   with sequence of <code>String</code>.  
-	   
+	   The format assumes, that sequence <code>char[]</code> is <u>not compatible</u> 
+	   with <code>String</code> sequence and their API cannot be used interchangably.
+	   <p>
+	   <i>Note: This assumption was made with Java classes serialization in mind,
+	   where there will be, by convention, plenty of textual information which can
+	   be efficiently stored using compact UTF-8 encoding. The <code>char[]</code> is on the other
+	   hand reserved for cases when UFT-8 encoding would be not optimal and UTF-16 would be best.</i>   
+	   <p>
+	   There is no requirement that any kind of type information is to be
+	   stored, however signal names can be used to provide that kind of information.
 	   
 	   
 	<h2>Reading stream</h2>
@@ -204,16 +280,38 @@
 		<li>primitive sequence reads;</li>
 		<li>signal reads;</li> 
 	</ul>
+	
+	<h3 id="EOF_HANDLING">End-of-file condition</h3>
 	The format requires that a <u>permanent</u> "no more data" condition
-	is represented by throwing and IOException.
+	is represented by throwing an <code>IOException</code>.
 	<p>
-	How the API behaves if there is temporary no more data in stream
+	How the API behaves if there is <u>temporary</u> "no more data" in stream
 	it is unspecified and depends on implementation. It may 
-	be either blocking or throwing an exception. 
+	either block awaiting for new data to come, or throw an exception. 
+	 
 	<p>
+	<i>Note: The example of "permanent no more data" is the end of file on
+	disk when file is open in an exclusive mode. The example of "temporary no more data"
+	is when the network connection fails to supply data in specified time frame because
+	the data source has nothing to say at the moment but the connection is still alive.
+	</i>
+	<p>
+	<i>
+	The "permanent no more data" 
+	cannot be cleared, the "temporary no more data" can be when new data will be present.
+	</i> 
+	
+	<h3>Reading errors handling</h3>
 	This format defines, that if stream throws an exception
-	then it is up to user of a stream to ensure that it is no longer used,
-	unless the implementation clearly states, that it can be re-tried.
+	then it is up to the <u>user</u> of a stream to ensure that it is no longer used,
+	unless the <u>implementation</u> clearly states, that it can be re-tried.
+	<p>
+	The eventual re-try on failure is <u>implementation dependent</u> and
+	the API <u>does assume</u> no retry by default.
+	<p>
+	The format defines that a re-try on a failed stream which <u>does not</u> support a 
+	retrying may <u>fail misserably</u> in an unpredictable way. However a 
+	wrapper against such a miss-use will be provided by the API.
 	
 	<h3>Signal reads</h3>
 		A signal read operation API is expected to 
@@ -222,60 +320,69 @@
 		past it and return the signal to user.
 		<p>
 		When begin signal is encountered API returns signal
-		name. When end signal is encountered API returns null.
-	
-	<h3>Elementary primitive read</h3>
-		This read may happen in any place except if sequence read is active.
+		name. When end signal is encountered API returns <code>null</code>.
+		
+	<h3>Primitive read, in generic</h3>	
+		Reading starts at current cursor location and moves cursor step-by-steam as it is reading
+		parts of primitive element (ie. bytes in binary format or chars in text format)
+		until all parts are read <u>or a signal is reached.</u>
 		<p>
-		Read starts at current cursor location and moves cursor as it reads
-		parts of data until all parts are read or a signal is reached.
-		The cursor can't be moved past the signal with this read.
+		The cursor can't be moved past the signal with any elementary read. It just stops
+		there until signal is read.
 		<p>
-		This is not expected that stream validates if correct elementary read is
-		used to read stored type.
+		This is not expected that format validates if read API of correct type is used,
+		except if wrapped in <i>typed stream</i>.
 		<p>
-		This is allowed to fail misserably and break all subsequent readings,
+		Read is allowed to fail misserably and break all subsequent readings,
 		as described in <a href="#ELEMENTARY_PRIMITIVE">there</a> if type does not
 		match.
 		<p>
-		If elementary read finds any signal in a place it expectes part or beginnig
-		of primitive data it should throw an IOException indicating unexpected end of
-		structure.
+		A read which starts at the signal fails with an indicator
+		that there is "no more data in structure". 
+		This condition can be cleared only by reading a signal.
+		<p>
+		A read which makes an attempt to crross the signal inside an element
+		fails with an indicator	that there is "signal is crossed". 
+		This condition can be cleared only by reading a signal and is always 
+		indicated by throwing a dedicated exception.
+		
+	<h3>Elementary primitive read</h3>
+		This read may happen in any place except if sequence read is active.
 		<p>
 		Elementary read API takes no argument and returns single value.
+		<p>
+		Elementary read indicates "no more data in structure" by throwing a dedicated exception.
 		
 	<h3>Primitive sequence read</h3>
 		This read may happen in any place except if sequence read of different type is active.
 		<p>
-  	    First read of primitive sequence of type T initializes the primitive
+  	    First read of primitive sequence of type T[] initializes the primitive
 	    sequence in stream and since that moment only allowed subsequent
-	    read are signals and sequence of the same type.
+	    read are reading signals and sequence of the same type.
 	    <p>
-		Read starts at current cursor location and moves cursor as it reads
-		parts of data until all parts are read or a signal is reached.
-		The cursor can't be moved past the signal with this read.
-		<p>
-		If sequence read finds any signal where it expectes the beginning of next
-		primitive entitiy in sequence it should return "partial read condition".
-		If however a signal is found inside a primitive entity it should throw
-		and IOException indicating unexpected end of sequence.
-		<p>
-		The reading API takes a buffer of bound size and returns 
-		information how much of it was filled up. 
+	    Sequence read to check for "no more data in structure" at each fetched
+	    element of sequence. The "signal is crossed" is checked during fetching 
+	    each element of a sequence. 
+	    <p>
+	    Sequence reads do indicate "no more data in structure" by returning
+	    with "partial read condition" indicating this way, that a correctly
+	    marked end of sequence was reached. 
+	    <p>
+		The reading API takes <u>a buffer of bound size</u> and returns information how much of it was filled up.
+		There is <u>no unbound</u> operations. 
 		<p>
 		The "partial read" condition is represented by returning the number of
-		entites read lower than the size of supplied buffer.
+		read elements lower than the size of supplied buffer.
 		<p>
 		This API requires that "partial read" returning zero inidicates that nothing
 		could be read due to a "temporary lack of data" and -1 indicating that nothing
-		could be read due to reaching a signal. A persising lack of data without
-		reaching a signal is indicated by throwing an exception of apropriate type.
+		could be read due to reaching a signal.
+		<p> 
+		A permanent lack of data is handled as specified <a href="EOF_HANDLING">there</a>. 		
 		<p>
-		The API	also provides argument less API returning <code>int</code> with
-		-1 (no more data due to signal), -2 (temporary lack of data) or 0...xxx 
-		if next element of sequence is present. This API is provided for booleans,bytes,
-		chars,shorts. The API for int, long, float and double do throw if 
-		alike thing happens.
+		The sequence readinhg API provides buffer-less, single element fetching API which 
+		do indicate "partial read" by throwing the same exception as an elementary primitive
+		read would do on "no more data in structure".
 		
 	  
 		
@@ -288,7 +395,9 @@
 		
 	<h1>Extensions</h1>
 	This chapter describes functional extensions implemented <u>over</u> the basic structured stream.
-	
+	<h2>Fail-safe wrappers</h2>
+	A wrapper which catches any IOException except <code>ENoMoreData</code> used to indicate
+	an attempt to cross signal boundary in an allowed way. 
 	<h2>Typed stream</h2>
 	The stream which encloses each primitive operation withing own named structure where the name describes a type of
 	primitive.

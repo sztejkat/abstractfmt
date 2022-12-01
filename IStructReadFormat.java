@@ -8,27 +8,27 @@ import java.io.IOException;
 	This is a reading end of a format.
 	
 	<h1 id="TEMPEOF">Support for a temporary lack of data</h1>
-	Implementations must specify they support for 
-	case when low-level I/O returnes End-of-file condition.
+	Implementations must specify how do they behave in 
+	case when low-level I/O returns with an "End-of-file" condition.
 	<p>
 	This support may be:
 	<table border="1">
-	<caption>Eof handling support model</caption>
+	<caption>Eof handling support types</caption>
 	<tr>
-		<td>Support model</td>
-		<td>{@link #next()}</td>
-		<td>elementary reads</td>
-		<td>sequence reads</td>		
+		<td><b>Support type</b></td>
+		<td><b>{@link #next()}</b></td>
+		<td><b>elementary reads</b></td>
+		<td><b>sequence reads</b></td>		
 	</tr>
 	<tr>
-		<td>None</td>
+		<td><b>None</b></td>
 		<td>throws {@link EUnexpectedEof};</td>
 		<td>throws {@link EUnexpectedEof};</td>
 		<td>returns with a partial read or throws {@link EUnexpectedEof}
 		if could not read any data;</td>
 	</tr>
 	<tr>
-		<td>Frame</td>
+		<td><b>Frame</b></td>
 		<td>If structure recursion level is zero it throws {@link ETemporaryEndOfFile} and allows 
 		operation to be re-tried to check if next signal did appear.
 		<br>
@@ -37,33 +37,40 @@ import java.io.IOException;
 		<td>as "None"</td>
 	</tr>
 	<tr>
-		<td>Signal</td>
+		<td><b>Signal</b></td>
 		<td>throws {@link ETemporaryEndOfFile} and allows 
 		operation to be re-tried to check if next signal did appear;</td>
 		<td>as "None";</td>
 		<td>as "None"</td>
 	</tr>
 	<tr>
-		<td>Full</td>
+		<td><b>Full</b></td>
 		<td>throws {@link ETemporaryEndOfFile} and allows 
 		operation to be re-tried to check if next signal did appear;</td>
 		<td>throws {@link ETemporaryEndOfFile} and allows operation
-		to re-try reading this primitive element again. Notice reading
-		other primitive element is not allowed;</td>
+		to re-try reading this exact primitive element again using this exact
+		method;</td>
 		<td>returns with a partial read or throws {@link ETemporaryEndOfFile}
 		if could not read any data. Subsequent calls to the same block
-		read are allowed to try to read newly incomming data;</td>
+		read are allowed to try to read newly incomming data. 
+		Any partially read element must not be discarded and must be available
+		for subsequent reads;</td>
 	</tr>
 	</table>
 	<p>
 	Note: Usuall file stream or stream wrapped in carrier protocols
-	will use "None" model. Only low-level direct hardware connection
-	streams which decided to base their protocol directly on the 
-	structure format will need to support "Frame" model since only 
-	in that context a <i>timeout</i> condition indicates the end of protocol
-	frame or the lack of any protocol frame on the buss.
+	will use "None" model.
 	<p>
-	"Signal" and "Full" models will be rarely needed. 
+	The low-level direct hardware connection
+	streams which decided to use the <i>structure format</i>
+	described here as their <u>own low level protocol</u> will
+	need "Frame" model to correctly handle frame-by-frame boundaries.
+	<p>
+	"Signal" and "Full" models will be rarely needed, as a re-trying
+	carrier protocol will usually provide a warranty for stream continuity.
+	<p>
+	Implementing for "Full" model is especially cumbersome and tricky
+	and thous not recommended.
 	
 	<h1>Thread safety</h1>
 	Format are <u>not thread safe</u>.	
@@ -84,8 +91,8 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
 			    string if read "begin" signal. Each instance of 
 				"begin" signal is allowed to return different instance
 				of a <code>String</code>, even tough it is carrying an identical text.
-		@throws IOException if failed due to any reason. A dedicated subclass should
-				be used, especially according to <a href="#TEMPEOF">this description</a>.
+		@throws IOException if failed due to any reason.
+		@throws EEof of specific subclass according to <a href="#TEMPEOF">eof handling model</a>.
 		@throws EFormatBoundaryExceeded if either name is longer than
 			{@link IFormatLimits#getMaxSignalNameLength} or 
 			recursion is too deep (see {@link IFormatLimits#setMaxStructRecursionDepth})
@@ -133,15 +140,18 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
 			next()=="F"
 		</pre>
 		<p>		 
-		@param levels how many levels upwards to skip.
+		@param levels how many levels upwards to skip. Zero: skip just all remaning
+			body of current structure and its end signal, including all sub-structures.
 		@return number of levels it has left to skip. This value
 			can be non-zero only for <a href="#TEMPEOF">eof models
-			different than "None"</a> and can be used to re-try this
+			different than "None"</a> and should be used to re-try this
 			operation after an temporary end of file condition.
 		@throws IOException if low level i/o failed or an appropriate
 			subclass to represent encountered problem.
 			This method never throws {@link ETemporaryEndOfFile} because
-			it is intercepted and converted to non-zero return value.
+			default implementation depends on it to be thrown
+			by {@link #next} in which case the exception 
+			is intercepted and converted to non-zero return value.
 		@throws EBrokenFormat if broken permanently
 		*/ 
 		public default int skip(int levels)throws IOException
@@ -168,6 +178,20 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
 			return depth;
 		};
 		
+		/** An equivalent of <code>skip(0)</code>. 
+		Should <u>not</u> be used with streams supporting
+		<a href="#TEMPEOF">eof models different than "None"</a>
+		because in such case the information necessary to re-try
+		the operation is lost.  
+		@throws IOException if {@link #skip(int)} failed
+		@throws EEof if {@link #skip(int)} returned
+		non zero, since re-trying in this case is impossible.
+		*/ 
+		public default void skip()throws IOException
+		{
+			 if (skip(0)!=0) throw new EEof();  
+		};
+		
 		
 	/* *************************************************************
 	
@@ -186,9 +210,11 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
 		
 		/** An elementary primitive read.
 		@return value read from stream.
-		@throws IOException if fails due to many reasons. See also <a href="#TEMPEOF">there</a>.
+		@throws IOException if fails due to many reasons. 
 		@throws ENoMoreData if stream cursor is at the signal and there is no
 				data to initiate operation.			
+		@throws ESignalCrossed if an attempt to cross a signal is made inside a primitive element.
+		@throws EEof of specific subclass depending on <a href="#TEMPEOF">eof handling type</a>
 		@throws IllegalStateException if this method is called when any block operation
 				is in progress.
 		@see IStructWriteFormat#writeBoolean
@@ -242,35 +268,35 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
 			Primitive blocks
 			
 		=============================================================*/		
-		/** Reads a part of a primitive data block.
-		<h3>End-of-sequence vs temporary lack of data</h3>
-		The partial read condition may be returned both due to 
-		temporary lack of data or reaching a signal terminating the
-		sequence.
-		<p>
-		The only difference is in how it behaves if it could not
-		read <u>any data at all</u> (would return 0):
-		<ul>
-			<li>it returns -1 if signal is reached or;</li>
-			<li>it throws, as described in <a href="#TEMPEOF">there</a>;</li>
-		</ul>
+		/** Initiates a read of a primitive elements sequence or continues it. 
 		
 		@param buffer place to store data, can't be null;
 		@param offset first byte to write in <code>buffer</code>
-		@param length number of bytes to read
-		@return number of read primitives, can return a partial read if there is no
-				data or -1 did not read any data at all due to end-of-sequence. 
+		@param length number of elements to read
+		@return <code>n</code>, number of read primitive elements:
+				<ul>
+					<li><code>n==length</code> buffer is filled with data. Whether there are more
+					data in sequence or not is not specified;</li>
+					<li><code>n&lt;length &amp;&amp; n&gt;0</code> buffer is partially filled with
+					data. If due to end-of-file or a signal it is not specified;</li>
+					<li><code>n==0</code>, possible only only when <code>length==0</code>
+					and when no attempt to cross the signal was made in previous operations;</li>
+					<li><code>n==-1</code> nothing is read and signal is reached. All subsequent
+					calls will return -1 till signal will be read;</li>					
+				</ul>
 		@throws AssertionError if <code>buffer</code> is null
 		@throws AssertionError if <code>offset</code> or <code>length</code> are negative
 		@throws AssertionError if <code>buffer.length</code> with <code>offset</code> and <code>length</code>
 							   would result in {@link ArrayIndexOutOfBoundsException} exception;
-		@throws IOException if low level i/o fails. See also <a href="#TEMPEOF">there</a>.
-		@throws ESequenceEof accordingly
+		@throws IOException if low level i/o fails. 
+		@throws ESequenceEof accordingly, to indiate a problem.
+		@throws EEof of specific subclass depending on <a href="#TEMPEOF">eof handling type</a>
+			if could not read any data due to low level end of file.
 		@throws IllegalStateException if a sequence of incompatible type is in progress.
 		@see IStructWriteFormat#writeBooleanBlock(boolean[],int,int)
 		*/
 		public int readBooleanBlock(boolean [] buffer, int offset, int length)throws IOException;		
-		/** See {@link #readBooleanBlock(boolean[],int,int)}
+		/** See {@link #readBooleanBlock(boolean[],int,int)}, fills whole buffer from zero.
 		@param buffer --//--
 		@return --//--
  		@throws IOException --//--
@@ -287,10 +313,12 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
 			if (r==-1) throw new ENoMoreData();
 			return b[0];
 		</pre>
-		Subclasses are recommended to implement it in more reasonable way, thous no default implementation is provided.
+		Subclasses are recommended to implement it in more reasonable way thous no default implementation is provided.
 		@return read sequence element
  		@throws IOException see block read
  		@throws ENoMoreData if a block read would return -1.
+ 		@throws ESequenceEof accordingly to above code
+ 		@throws EEof accordingly to above code
 		*/
 		public boolean readBooleanBlock()throws IOException,ENoMoreData;
 		
@@ -305,7 +333,7 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
  		@see IStructWriteFormat#writeByteBlock(byte[],int,int)
 		*/
 		public int readByteBlock(byte [] buffer, int offset, int length)throws IOException;		
-		/** See {@link #readBooleanBlock(boolean[],int,int)}
+		/** See {@link #readBooleanBlock(boolean[],int,int)}, fills whole buffer from zero.
 		@param buffer --//--		
 		@return --//--
  		@throws IOException --//--
@@ -351,7 +379,7 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
  		@see IStructWriteFormat#writeCharBlock(char[],int,int)
 		*/
 		public int readCharBlock(char [] buffer, int offset, int length)throws IOException;		
-		/** See {@link #readBooleanBlock(boolean[],int,int)}
+		/** See {@link #readBooleanBlock(boolean[],int,int)}, fills whole buffer from zero.
 		@param buffer --//--
 		@return --//--
  		@throws IOException --//--
@@ -379,7 +407,7 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
  		@see IStructWriteFormat#writeShortBlock(short[],int,int)
 		*/
 		public int readShortBlock(short [] buffer, int offset, int length)throws IOException;		
-		/** See {@link #readBooleanBlock(boolean[],int,int)}
+		/** See {@link #readBooleanBlock(boolean[],int,int)}, fills whole buffer from zero.
 		@param buffer --//--		
 		@return --//--
  		@throws IOException --//--
@@ -406,7 +434,7 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
  		@see IStructWriteFormat#writeIntBlock(int[],int,int)
 		*/
 		public int readIntBlock(int [] buffer, int offset, int length)throws IOException;		
-		/** See {@link #readBooleanBlock(boolean[],int,int)}
+		/** See {@link #readBooleanBlock(boolean[],int,int)}, fills whole buffer from zero.
 		@param buffer --//--		
 		@return --//--
  		@throws IOException --//--
@@ -433,7 +461,7 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
  		@see IStructWriteFormat#writeLongBlock(long[],int,int)
 		*/
 		public int readLongBlock(long [] buffer, int offset, int length)throws IOException;		
-		/** See {@link #readBooleanBlock(boolean[],int,int)}
+		/** See {@link #readBooleanBlock(boolean[],int,int)}, fills whole buffer from zero.
 		@param buffer --//--		
 		@return --//--
  		@throws IOException --//--
@@ -461,7 +489,7 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
  		@see IStructWriteFormat#writeFloatBlock(float[],int,int)
 		*/
 		public int readFloatBlock(float [] buffer, int offset, int length)throws IOException;
-		/** See {@link #readBooleanBlock(boolean[],int,int)}
+		/** See {@link #readBooleanBlock(boolean[],int,int)}, fills whole buffer from zero.
 		@param buffer --//--		
 		@return --//--
  		@throws IOException --//--
@@ -490,7 +518,7 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
  		@see IStructWriteFormat#writeDoubleBlock(double[],int,int)
 		*/
 		public int readDoubleBlock(double [] buffer, int offset, int length)throws IOException;
-		/** See {@link #readBooleanBlock(boolean[],int,int)}
+		/** See {@link #readBooleanBlock(boolean[],int,int)}, fills whole buffer from zero.
 		@param buffer --//--		
 		@return --//--
  		@throws IOException --//--

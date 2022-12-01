@@ -1,3 +1,4 @@
+#!/bin/sh
 #@echo off
 #rem 
 #rem A template file to be copied to each package, together with modified
