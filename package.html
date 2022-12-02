@@ -408,5 +408,179 @@
             <li>provides a reading API allowing to check what stream element is found next
             and thous allows <i>dumb transcoding</i> from format to format without any prior knowledge of content;</li>
         </ul>
+
+
+        <h1>Testing policy</h1>
+        This is required that each functionality do have own automatic test routine.
+        <p>
+        The test system is Junit 4.0 (aka <code>org.junit.Test</code> and alike).
+        <p>
+        Tests are implemented by classes declared using following schema:
+        <pre>
+             public class TestXXXX
+             {
+                ....
+                @org.junit.Test public void test....
+             }
+             ....
+             public class Test_XXXX
+             {
+             .....
+             }
+             ...
+             public class XXXX
+             {
+                    ....
+                    public static class Test
+                    {
+                      ...
+                       org.junit.Test public void test....
+                    }
+             };
+        </pre>
+        where <code>XXXX</code> is a class under test.
+        <p>
+        The junit test system is expected to treat all those <code>Test...</code> classes as test
+        cases and run them.
+        <p>
+        Test classes for class <code>XXXX</code> are required to belong to the same package to which
+        class <code>XXXX</code> do belong. This non-standard requirement is <u>intentional</u>
+        because it:
+        <ul>
+            <li>enforces coders to at least make sure that tests do compile;</li>
+            <li>encourages them to run them, as running is as simple as typing <code>./test-package.sh</code>;</li>
+        </ul>
+        <i>Note: I have chosen to do it that way, because I did observe that industry standard approach when tests are moved
+        to other packages or to other source trees frequently encourages coders to introduce changes without
+        testing them. Simply compilation of tests do require additional effort.</i>
+
+        <p>
+        The <code>sztejkat.abstractfmt.test</code> package is expected to contain testing utilities.
+
+
+
+        <h1>Thread safety</h1>
+        All the classes are <u><b>not</b> thread-safe</u>.
+        <p>
+        I have chosen this non-standard approach because
+        in my experience ensuring true thread-safety and thread-awarness during complex I/O operation requires
+        actions far beyond what can be provided by I/O streams. Basically to save data in thread safe way to
+        a formatted stream You must not only ensure that single I/O is thread safe, but You must ensure that
+        entire blocks of operations are non-interlaving. Plus, of course, the data You save have to be protected
+        against concurrent modification.
+        <p>
+        Having this in mind burdening low level I/O with thread synchronisation will be usless waste of resources.
+
+
+
+        <h1>Debuging policy</h1>
+        This package is using following policies:
+        <ul>
+            <li>it relies on <code>assert(...):...</code> to control sanity
+            of arguments which are generated internally or known to
+            be passed by programmers using the API. This control style
+            is specified by javadoc:
+            <pre>
+            @#64throws AssertionError
+            </pre>;</li>
+            <li>it relies on <code> if... throw new IllegalArgumentException...</code>
+            on controlling parameters which are expected to be fetched from
+            user interaction on from data connections.This control style
+            is specified by javadoc:
+            <pre>
+            @#64throws IllegalArgumentException
+            </pre>;</li>
+            <li>it is using <code>assert(...):...</code> to control if code obeys contracts
+            and states internally;</li>
+            <li>it is using <code>sztejkat.abstractfmt.logging.SLogging</code>
+            and
+            <pre>
+                 public void x()
+                 {
+                    if (TRACE) TOUT.println("x() ENTER");
+                    ...
+                    if (TRACE) TOUT.println("x() LEAVE");
+                 };
+            </pre>
+            to support generation of per-class trace messages for debuging purposes.
+            The way to control it is described in <code>SLogging</code> and Your
+            forks of this library are encouraged to tune them to Your liking;</li>
+        </ul>
+
+
+        <h1>Quality assurance policy</h1>
+        Following rules must be obeyed:
+        <ul>
+            <li>UTF-8 is the only allowed source encoding;</li>
+            <li>Name Your classes wisely. Use following naming convention:
+                     <ul>
+                         <li><code>Imy_contract</code> to define interfaces describing contracts. Use <code>default</code>
+                         to declare parts of contracts if generic implementation is possible;</li>
+                         <li><code>Amy_abstract_base</code> to define abstract classes or base classes which are never
+                         intended to be instantized itself and are expected to be extended only. Never declare Your
+                         contract as an abstract class (ie. don't do like <code>java.io.InputStream</code> did). Instead
+                         always use interfaces;</li>
+                         <li><code>Cmy_class</code> to define classes which can be used to create regular objects;</li>
+                         <li><code>Emy_exception</code> to define exceptions;</li>
+                         <li><code>Smy_toolbox</code> to define toolbox classes which are containing only static methods
+                         or classes which are to be singletons implementing certain contracts.
+                         <br>
+                         The toolbox classes should follow the pattern:
+                         <pre>
+                         public final class SToolbox
+                         {
+                                private SToolbox(){}; //disable creation of instances
+                         };
+                         </pre>
+                         <br>
+                         The singleton classes (one instance per process) providing implementation of certain contracts should use pattern:
+                         <pre>
+                         public final class SSingleton implements IContract
+                         {
+                                public static final SSingleton INSTANCE = new SSingleton();
+                                private SToolbox(){}; //disable creation of instances
+                         };
+                         </pre>
+                         </li>
+                     </ul>
+            </li>
+            <li>code should be compiled with pedantic compilation warnings and no warnings should be generated;</li>
+            <li>javadoc should be generated with pedantic compilation warnings and no warnings or errors should be generated;</li>
+            <li>every class, field and non-private method must have a complete javadoc;</li>
+            <li>javadoc must explain what commented piece of code is <u>expected to do</u>. What is done is visible in code,
+            however if a bug happens, what is done is <u>not</u> what was ment to be done;</li>
+            <li>if any parameter, field or return value does not accept entire possible spectrum of values for its type the javadoc must specifiy
+            bounds;</li>
+            <li>if an array or collection or any other data structure is passed as an argument or returned it must be
+            clearly stated if it will be taken by reference or an internal copy will be made;</li>
+            <li>if an array or collection or any other data structure is passed as an argument by a reference it must be stated
+            if called code will alter it, or if it expects it to be immutable;</li>
+            <li>if alike is returned it must be clearly stated if returned reference points to a copy allocated for that
+            return or if it points to an internal, shared data structure;</li>
+            <li>if alike is returned and points to an internal structure it must be cleary stated if it is allowed to be modified
+            externally or not;</li>
+            <li>if alike is returned and points to an internal structure and it is not inherently immutable (ie StringBuilder versus String)
+            it must be clearly specified if it will be ever changed or not;</li>
+            <li>You must not use debuger (IDE like) for testing. Instead You must:
+                    <ul>
+                        <li>write debug logs with following pattern:
+             <pre>
+                 public void x()
+                 {
+                    if (TRACE) TOUT.println("x() ENTER");
+                    ...
+                    if (TRACE) TOUT.println("x() LEAVE");
+                 };
+            </pre>
+                        </li>
+                        <li>write junit tests demonstrating correctness of Your code;</li>
+                    </ul>
+            </li>
+            <li>if a  bug is detected and fixed You must first write a test demonstrating the bug (if possible)
+            and then write a test showing it is not there anymore (always). Those tests must be left in test system
+            to prevent future regression bugs;</li>
+            <li>comment Your code well telling what You are up to do, step by step, and why You are doing it. Remember,
+            somebody will read it many years after You wrote it;</li>
+        </ul>
 </body>
 </html>

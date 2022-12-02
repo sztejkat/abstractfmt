@@ -24,3 +24,40 @@ be used in other languages.
 
 Since markdown is not by favourite format please
 see [overview](overview.html)
+
+
+# Build system
+
+The build system is ANT.
+
+It is controlled by
+<pre>
+package-build.xml
+</pre>
+file which includes:
+<pre>
+build-common.xml
+setup-xml
+</pre>
+
+_Originally this was my common build system for all my works
+ and was providing a consistent build environment for all
+ packages I was creating. For needs of this library it will
+ be extracted and provided as a stand alone set of files._
+
+ Build scripts are (either *.sh or *.bat)
+ * build-package  - build single package
+ * build-package-doc - build single package javadoc in <code>package-doc</code> folder.
+ * build-subpackages - build package and sub-packages, by recursive process.
+ * test-package - run package Junit tests
+ * build-library-doc - build "library" documentation in <code>library-doc</code> folder.
+
+
+ # External dependencies
+
+ Junit 4.0. Apropriate jar files will be provided together with
+ sources, so no external downloads except ANT are necessary.
+
+ JDK 8 as minimum build environment (tested on Open-JDK 11)
+
+
