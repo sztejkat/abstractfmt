@@ -1,4 +1,5 @@
 package sztejkat.abstractfmt;
+import sztejkat.abstractfmt.logging.SLogging;
 import java.io.Closeable;
 import java.io.IOException;
 
@@ -19,6 +20,10 @@ import java.io.IOException;
 */
 public abstract class AStructReadFormatBase0 extends AStructFormatBase implements IStructReadFormat
 {
+ 		 private static final long TLEVEL = SLogging.getDebugLevelForClass(AStructReadFormatBase0.class);
+         private static final boolean TRACE = (TLEVEL!=0);
+         private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("AStructReadFormatBase0.",AStructReadFormatBase0.class) : null;
+
 		/* *******************************************************
 			
 			Services required from subclasses
@@ -234,14 +239,17 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 		----------------------------------------------------------*/
 		@Override public String next()throws IOException
 		{
+			if (TRACE) TOUT.println("next() ENTER");
 			//basic state
 			validateUsable();
 			//now terminate block operation in progress, if any.
 			terminatePendingBlockOperation();
 			//ask subclass
-			String signal = nextImpl();			
+			if (TRACE) TOUT.println("next()->nextImpl()");
+			String signal = nextImpl();						
 			if (signal!=null)
 			{
+				if (TRACE) TOUT.println("next() signal=\""+signal+"\", begin");
 				//Assert if name length check-up was NOT done by implementation?
 				assert(signal.length()>getMaxSignalNameLength()):
 					"Signal name length is beyond set limit. Subclass "+this.getClass()+" failed to implement contract.";
@@ -249,9 +257,11 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 				enterStruct();
 			}else
 			{
+			    if (TRACE) TOUT.println("next() null signal, end"); 
 				//validate and track recursin depth
 				leaveStruct();
 			};
+			if (TRACE) TOUT.println("next()="+(signal==null ? "null" : ("\""+signal+"\""))+" LEAVE");
 			return signal;
 		};
 		/* ----------------------------------------------------------
@@ -259,43 +269,67 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 		----------------------------------------------------------*/
 		@Override public boolean readBoolean()throws IOException
 		{	
+			if (TRACE) TOUT.println("readBoolean() ENTER");
 			validateCanDoElementaryOp();
-			return readBooleanImpl();
+			final boolean v= readBooleanImpl();
+			if (TRACE) TOUT.println("readBoolean()="+v+" LEAVE");
+			return v;
 		};
 		@Override public byte readByte()throws IOException
 		{	
+			if (TRACE) TOUT.println("readByte() ENTER");
 			validateCanDoElementaryOp();
-			return readByteImpl();
+			final byte v= readByteImpl();
+			if (TRACE) TOUT.println("readByte()="+v+" LEAVE");
+			return v;
 		};
 		@Override public char readChar()throws IOException
 		{	
+			if (TRACE) TOUT.println("readChar() ENTER");
 			validateCanDoElementaryOp();
-			return readCharImpl();
+			final char v= readCharImpl();
+			if (TRACE) TOUT.println("readChar()="+v+" LEAVE");
+			return v;
 		};
 		@Override public short readShort()throws IOException
 		{	
+			if (TRACE) TOUT.println("readShort() ENTER");
 			validateCanDoElementaryOp();
-			return readShortImpl();
+			final short v= readShortImpl();
+			if (TRACE) TOUT.println("readShort()="+v+" LEAVE");
+			return v;
 		};
 		@Override public int readInt()throws IOException
 		{	
+			if (TRACE) TOUT.println("readInt() ENTER");
 			validateCanDoElementaryOp();
-			return readIntImpl();
+			final int v= readIntImpl();
+			if (TRACE) TOUT.println("readInt()="+v+" LEAVE");
+			return v;
 		};
 		@Override public long readLong()throws IOException
 		{	
+			if (TRACE) TOUT.println("readLong() ENTER");
 			validateCanDoElementaryOp();
-			return readLongImpl();
+			final long v= readLongImpl();
+			if (TRACE) TOUT.println("readLong()="+v+" LEAVE");
+			return v;
 		};
 		@Override public float readFloat()throws IOException
 		{	
+			if (TRACE) TOUT.println("readFloat() ENTER");
 			validateCanDoElementaryOp();
-			return readFloatImpl();
+			final float v= readFloatImpl();
+			if (TRACE) TOUT.println("readFloat()="+v+" LEAVE");
+			return v;
 		};
 		@Override public double readDouble()throws IOException
 		{	
+			if (TRACE) TOUT.println("readDouble() ENTER");
 			validateCanDoElementaryOp();
-			return readDoubleImpl();
+			final double v= readDoubleImpl();
+			if (TRACE) TOUT.println("readDouble()="+v+" LEAVE");
+			return v;
 		};
 		/* ----------------------------------------------------------
 				Primitive sequences
@@ -307,16 +341,21 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
 			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
+			if (TRACE) TOUT.println("readBooleanBlock(...,"+offset+","+length+") ENTER");
 			validateBooleanBlock();
 			final int v = readBooleanBlockImpl(buffer,offset,length);
 			//Validate contract?
-			assert( (v>=-1)&&(v<=length) ):"subclass "+this.getClass()+" failed to implement contract"; 
+			assert( (v>=-1)&&(v<=length) ):"subclass "+this.getClass()+" failed to implement contract";
+			if (TRACE) TOUT.println("readBooleanBlock()="+v+" LEAVE"); 
 			return v;
 		}		
 		@Override public boolean readBooleanBlock()throws IOException,ENoMoreData
 		{
+			if (TRACE) TOUT.println("readBooleanBlock() ENTER");
 			validateBooleanBlock();
-			return readBooleanBlock();
+			final boolean v= readBooleanBlockImpl();
+			if (TRACE) TOUT.println("readBooleanBlock()="+v+" LEAVE");
+			return v;
 		};
 		@Override public int readByteBlock(byte [] buffer, int offset, int length)throws IOException
 		{
@@ -325,16 +364,21 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
 			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
+			if (TRACE) TOUT.println("readByteBlock(...,"+offset+","+length+") ENTER");
 			validateByteBlock();
 			final int v = readByteBlockImpl(buffer,offset,length);
 			//Validate contract?
 			assert( (v>=-1)&&(v<=length) ):"subclass "+this.getClass()+" failed to implement contract"; 
+			if (TRACE) TOUT.println("readByteBlock()="+v+" LEAVE"); 
 			return v;
 		}		
 		@Override public byte readByteBlock()throws IOException,ENoMoreData
 		{
+			if (TRACE) TOUT.println("readByteBlock() ENTER");			
 			validateByteBlock();
-			return readByteBlock();
+			final byte v= readByteBlockImpl();
+			if (TRACE) TOUT.println("readByteBlock()="+v+" LEAVE");
+			return v;
 		};
 		@Override public int readCharBlock(char [] buffer, int offset, int length)throws IOException
 		{
@@ -343,16 +387,21 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
 			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
+			if (TRACE) TOUT.println("readCharBlock(...,"+offset+","+length+") ENTER");
 			validateCharBlock();
 			final int v = readCharBlockImpl(buffer,offset,length);
 			//Validate contract?
 			assert( (v>=-1)&&(v<=length) ):"subclass "+this.getClass()+" failed to implement contract"; 
+			if (TRACE) TOUT.println("readCharBlock()="+v+" LEAVE"); 
 			return v;
 		}		
 		@Override public char readCharBlock()throws IOException,ENoMoreData
 		{
+			if (TRACE) TOUT.println("readCharBlock() ENTER");			
 			validateCharBlock();
-			return readCharBlock();
+			final char v= readCharBlockImpl();
+			if (TRACE) TOUT.println("readCharBlock()="+v+" LEAVE");
+			return v;
 		};
 		
 		@Override public int readShortBlock(short [] buffer, int offset, int length)throws IOException
@@ -362,16 +411,21 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
 			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
+			if (TRACE) TOUT.println("readShortBlock(...,"+offset+","+length+") ENTER");
 			validateShortBlock();
 			final int v = readShortBlockImpl(buffer,offset,length);
 			//Validate contract?
 			assert( (v>=-1)&&(v<=length) ):"subclass "+this.getClass()+" failed to implement contract"; 
+			if (TRACE) TOUT.println("readShortBlock()="+v+" LEAVE"); 
 			return v;
 		}		
 		@Override public short readShortBlock()throws IOException,ENoMoreData
 		{
+			if (TRACE) TOUT.println("readShortBlock() ENTER");			
 			validateShortBlock();
-			return readShortBlock();
+			final short v= readShortBlockImpl();
+			if (TRACE) TOUT.println("readShortBlock()="+v+" LEAVE");
+			return v;
 		};
 		@Override public int readIntBlock(int [] buffer, int offset, int length)throws IOException
 		{
@@ -380,16 +434,21 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
 			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
+			if (TRACE) TOUT.println("readIntBlock(...,"+offset+","+length+") ENTER");
 			validateIntBlock();
 			final int v = readIntBlockImpl(buffer,offset,length);
 			//Validate contract?
 			assert( (v>=-1)&&(v<=length) ):"subclass "+this.getClass()+" failed to implement contract"; 
+			if (TRACE) TOUT.println("readIntBlock()="+v+" LEAVE"); 
 			return v;
 		}		
 		@Override public int readIntBlock()throws IOException,ENoMoreData
 		{
+			if (TRACE) TOUT.println("readIntBlock() ENTER");			
 			validateIntBlock();
-			return readIntBlock();
+			final int v= readIntBlockImpl();
+			if (TRACE) TOUT.println("readIntBlock()="+v+" LEAVE");
+			return v;
 		};
 		@Override public int readLongBlock(long [] buffer, int offset, int length)throws IOException
 		{
@@ -398,16 +457,21 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
 			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
+			if (TRACE) TOUT.println("readLongBlock(...,"+offset+","+length+") ENTER");
 			validateLongBlock();
 			final int v = readLongBlockImpl(buffer,offset,length);
 			//Validate contract?
 			assert( (v>=-1)&&(v<=length) ):"subclass "+this.getClass()+" failed to implement contract"; 
+			if (TRACE) TOUT.println("readLongBlock()="+v+" LEAVE"); 
 			return v;
 		}		
 		@Override public long readLongBlock()throws IOException,ENoMoreData
 		{
+			if (TRACE) TOUT.println("readLongBlock() ENTER");			
 			validateLongBlock();
-			return readLongBlock();
+			final long v= readLongBlockImpl();
+			if (TRACE) TOUT.println("readLongBlock()="+v+" LEAVE");
+			return v;
 		};
 		@Override public int readFloatBlock(float [] buffer, int offset, int length)throws IOException
 		{
@@ -416,16 +480,21 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
 			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
+			if (TRACE) TOUT.println("readFloatBlock(...,"+offset+","+length+") ENTER");
 			validateFloatBlock();
 			final int v = readFloatBlockImpl(buffer,offset,length);
 			//Validate contract?
 			assert( (v>=-1)&&(v<=length) ):"subclass "+this.getClass()+" failed to implement contract"; 
+			if (TRACE) TOUT.println("readFloatBlock()="+v+" LEAVE"); 
 			return v;
 		}		
 		@Override public float readFloatBlock()throws IOException,ENoMoreData
 		{
+			if (TRACE) TOUT.println("readFloatBlock() ENTER");			
 			validateFloatBlock();
-			return readFloatBlock();
+			final float v= readFloatBlockImpl();
+			if (TRACE) TOUT.println("readFloatBlock()="+v+" LEAVE");
+			return v;
 		};
 		@Override public int readDoubleBlock(double [] buffer, int offset, int length)throws IOException
 		{
@@ -434,32 +503,42 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
 			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
+			if (TRACE) TOUT.println("readDoubleBlock(...,"+offset+","+length+") ENTER");
 			validateDoubleBlock();
 			final int v = readDoubleBlockImpl(buffer,offset,length);
 			//Validate contract?
 			assert( v>=-1 ):"subclass "+this.getClass()+" failed to implement contract"; 
+			if (TRACE) TOUT.println("readDoubleBlock()="+v+" LEAVE"); 
 			return v;
 		}		
 		@Override public double readDoubleBlock()throws IOException,ENoMoreData
 		{
+			if (TRACE) TOUT.println("readDoubleBlock() ENTER");			
 			validateDoubleBlock();
-			return readDoubleBlock();
+			final double v= readDoubleBlockImpl();
+			if (TRACE) TOUT.println("readDoubleBlock()="+v+" LEAVE");
+			return v;
 		};
 		@Override public int readString(Appendable characters,  int length)throws IOException
 		{
 			//arguments
 			assert(characters!=null):"null characters";
 			assert(length>=0):"length="+length;
+			if (TRACE) TOUT.println("readString(...,"+length+") ENTER");
 			validateStringBlock();
 			final int v = readStringImpl(characters,length);
 			//Validate contract?
 			assert( (v>=-1)&&(v<=length) ):"subclass "+this.getClass()+" failed to implement contract"; 
+			if (TRACE) TOUT.println("readString()="+v+" LEAVE"); 
 			return v;
 		}		
 		@Override public char readString()throws IOException,ENoMoreData
 		{
+			if (TRACE) TOUT.println("readString() ENTER");			
 			validateStringBlock();
-			return readStringImpl();
+			final char v= readStringImpl();
+			if (TRACE) TOUT.println("readString()="+v+" LEAVE");
+			return v;
 		};
 		/* -------------------------------------------------
 				State related.

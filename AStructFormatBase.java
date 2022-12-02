@@ -1,13 +1,39 @@
 package sztejkat.abstractfmt;
+import sztejkat.abstractfmt.logging.SLogging;
 import java.io.Closeable;
 import java.io.IOException;
 
 /**
 	A common denominator for read and write streams, 
-	basically open/close support
+	basically open/close support.
+	
+	<p>
+	This class is a state tracking machine which do:
+	<ul>
+		<li>redirects {@link #close} to {@link #closeImpl} to ensure an actual close it done
+			only once;</li>
+		<li>redirects {@link #open} to {@link #openImpl} ensuring proper prequisites;</li>
+		<li>provides set of {@link #validateBooleanBlock}, 
+			{@link #validateByteBlock}, and etc which are to be used by subclasses 
+			right inside block operations. Those methods do ensure that subsequent
+			attempts to call them will fail/pass according to contract 
+			and make sure that {@link #validateCanDoElementaryOp} wont let be run.
+			See also {@link #terminatePendingBlockOperation};</li>
+	    <li>provides {@link #validateCanDoElementaryOp} to be run at the begining
+	       of elementary primitive operations. This method checks if primitive op
+	       can be run;</li>	       
+	    <li>provides set of hooks {@link #startBooleanBlock}/{@link #endBooleanBlock}
+	    	which are invoked by state validation code and can be used by subclasses
+	    	to actually write apropriate codes to a stream before block operation
+	    	is initiated and after it is finished.</li>
+	</ul>
 */
 abstract class AStructFormatBase extends AFormatLimits implements Closeable
 {
+		 private static final long TLEVEL = SLogging.getDebugLevelForClass(AStructFormatBase.class);
+         private static final boolean TRACE = (TLEVEL!=0);
+         private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("AStructFormatBase.",AStructFormatBase.class) : null;
+ 
 					/** Tracks format open state */
 					private boolean opened;
 					/** Tracks format closes state */
@@ -166,14 +192,16 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 		/** Terminates block operation, if any
 		by calling <code>endXXXBlock()</code>.
 		<p>
-		To be invoked by a code which is handling signal processing.
+		Is to be invoked before {@link #enterStruct}/{@link #leaveStruct}
 		@throws IOException if an eventual termination of block failed.
 		@see #block_type
 		@see #endBooleanBlock */
 		final void terminatePendingBlockOperation()throws IOException
 		{
+			if (TRACE) TOUT.println("terminatePendingBlockOperation() ENTER");
 			if (block_type!=null)
 			{
+			    if (TRACE) TOUT.println("terminatePendingBlockOperation() ->Terminating block of "+block_type);
 				switch(block_type)
 				{
 					case BOOLEAN_BLK: 	endBooleanBlock(); break;
@@ -187,8 +215,12 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 					case DOUBLE_BLK: 	endDoubleBlock(); break;
 					default: throw new AssertionError("not a block "+block_type);
 				};
+				if (TRACE) TOUT.println("terminatePendingBlockOperation() LEAVE");
 				block_type = null;
-			};
+			}else
+			{
+				if (TRACE) TOUT.println("terminatePendingBlockOperation(), no block in progress LEAVE");
+			}
 		};
 		
 		/** Validates if can do this block operation and initializes it if necessary
@@ -204,6 +236,7 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 			{
 				//initialize
 				block_type=TContentType.BOOLEAN_BLK;
+				if (TRACE) TOUT.println("validateBooleanBlock() -> startBooleanBlock()");
 				startBooleanBlock();
 			}else
 				//validate type consistency
@@ -222,6 +255,7 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 			{
 				//initialize
 				block_type=TContentType.BYTE_BLK;
+				if (TRACE) TOUT.println("validateByteBlock() -> startByteBlock()");
 				startByteBlock();
 			}else
 				//validate type consistency
@@ -240,6 +274,7 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 			{
 				//initialize
 				block_type=TContentType.CHAR_BLK;
+				if (TRACE) TOUT.println("validateCharBlock() -> startCharBlock()");
 				startCharBlock();
 			}else
 				//validate type consistency
@@ -258,6 +293,7 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 			{
 				//initialize
 				block_type=TContentType.SHORT_BLK;
+				if (TRACE) TOUT.println("validateShortBlock() -> startShortBlock()");
 				startShortBlock();
 			}else
 				//validate type consistency
@@ -276,6 +312,7 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 			{
 				//initialize
 				block_type=TContentType.INT_BLK;
+				if (TRACE) TOUT.println("validateIntBlock() -> startIntBlock()");
 				startIntBlock();
 			}else
 				//validate type consistency
@@ -294,6 +331,7 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 			{
 				//initialize
 				block_type=TContentType.LONG_BLK;
+				if (TRACE) TOUT.println("validateLongBlock() -> startLongBlock()");
 				startLongBlock();
 			}else
 				//validate type consistency
@@ -312,6 +350,7 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 			{
 				//initialize
 				block_type=TContentType.FLOAT_BLK;
+				if (TRACE) TOUT.println("validateFloatBlock() -> startFloatBlock()");
 				startFloatBlock();
 			}else
 				//validate type consistency
@@ -330,6 +369,7 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 			{
 				//initialize
 				block_type=TContentType.DOUBLE_BLK;
+				if (TRACE) TOUT.println("validateDoubleBlock() -> startDoubleBlock()");
 				startDoubleBlock();
 			}else
 				//validate type consistency
@@ -348,11 +388,46 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 			{
 				//initialize
 				block_type=TContentType.STRING;
-				startDoubleBlock();
+				if (TRACE) TOUT.println("validateStringBlock() -> startStringBlock()");
+				startStringBlock();
 			}else
 				//validate type consistency
 				if (block_type!=TContentType.STRING) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
 		}
+		/* ****************************************************
+		
+			AFormatLimits
+			
+				Note: we do NOT override enterStruct/leaveStruct
+				to invoke terminatePendingBlockOperation()
+				because the processing of this termination
+				differs during writing and reading:
+				
+				
+					writing:
+							we DO know if we begin or end so:
+							
+							begin:
+								terminatePendingBlockOperation(); --> generates some I/O on block end
+								enterStruct();
+								write begin						  --> generates some I/O for a signal
+							end:
+								terminatePendingBlockOperation(); --> generates some I/O on block end
+								leaveStruct();
+								write end						  --> generates some I/O for a signal
+								
+					reading:
+					
+							we do NOT know when we request next signal to be read
+							if it will be begin or end
+							
+								terminatePendingBlockOperation(); --> generates some I/O to finish reading block, possibly
+								move and read signal		      --> also generates I/O
+								decide if enter or leave
+		
+		****************************************************/
+		
+	    
 		/* ****************************************************
 		
 			State operations
@@ -369,11 +444,18 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 		*/
 		public void open()throws IOException,EClosed
 		{
+			if (TRACE) TOUT.println("open() ENTER");
 			validateNotClosed();
-			if (opened) return;			
+			if (opened)
+			{
+				if (TRACE) TOUT.println("open(), already open LEAVE");
+				 return;
+		    };			
+		    if (TRACE) TOUT.println("open()->openImpl()");
 			openImpl();
 			opened = true; //not set if openImpl failed.
 						 //low level close will be invoked regardless.
+			if (TRACE) TOUT.println("open() LEAVE");
 		};
 		/** {@inheritDoc}
 		   Handles state and delegates to {@link #closeImpl}
@@ -381,12 +463,20 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 		*/
 		@Override public void close()throws IOException
 		{
-			if (closed) return;
+			if (TRACE) TOUT.println("close() ENTER");
+			if (closed) 
+			{
+				if (TRACE) TOUT.println("close(), alreay closed LEAVE");
+				return;
+			};
 			
 			try{					
+					if (TRACE) TOUT.println("close()->closeImpl()");
 					closeImpl();
+					if (TRACE) TOUT.println("close()->super.close()");
 					super.close(); //zero depth tracking. We can skip it if failed tough.
 					//always set closed, even if low level failed.
 				}finally{ closed = true; }
+			if (TRACE) TOUT.println("close()  LEAVE");
 		};
 };
