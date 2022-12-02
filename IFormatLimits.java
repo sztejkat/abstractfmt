@@ -8,7 +8,8 @@ public interface IFormatLimits
 	  .........................................................*/
 		/** Allows to set limit for signal name.
 		<p>
-		Default value is 1024.
+		Default value is 1024 or {@link #getMaxSupportedSignalNameLength}
+		whichever is less.
 		<p>
 		Changing limit on the fly is allowed.
 		@param characters name limit, non-zero positive.
@@ -28,25 +29,32 @@ public interface IFormatLimits
 	  .........................................................*/
 	  	/** Returns currently set {@link #setMaxStructRecursionDepth}
 	  	<p>
-	  	Default value is zero (disabled)	  	
-	  	@return limit set in {@link #setMaxStructRecursionDepth}. Zero means: limit is disabled.
+	  	Default value is -1 (disabled)	  	
+	  	@return limit set in {@link #setMaxStructRecursionDepth}.
 	  	*/
 	  	public int getMaxStructRecursionDepth();
 	  	/**
 	  	Sets current event recursion depth limit. 
 	  	
-	  	@param max_depth specifies the allowed depth of elements
-			nesting. Zero disables limit, 1 sets limit to: "no nested elements allowed",
-			2 allows element within an element and so on. 
+	  	@param max_depth specifies the allowed depth of structures nesting:
+	  		<ul>
+	  			<li>-1 - limit is disabled;</li>
+	  			<li>0 - no structure is allowed;</li>
+	  			<li>1 - begin... end - is allowed;</li>
+	  			<li>2 - begin begin end end - is allowed;</li>
+	  			<li>3 and so on</li>
+	  		</ul> 
 			Changing limit on the fly is allowed.
-		@throws AssertionError if <code>max_depth</code> is negative
-		@throws IllegalStateException if specified limit is non zero and lower than
-		current event recursion depth, or higher than format allows.
-		@see #getMaxSupportedEventRecursionDepth
+		@throws AssertionError if <code>max_depth</code> is &lt;-1
+		@throws IllegalStateException if specified limit is enbled and lower than current event recursion depth
+		@throws IllegalArgumentException if we request disabling a limit,
+			 but format is limited naturally ({@link #getMaxSupportedStructRecursionDepth} returns non -1).
+		@throws IllegalArgumentException if max_depth is greater than {@link #getMaxSupportedStructRecursionDepth}
+		@see #getMaxSupportedStructRecursionDepth
 		*/
-	  	public void setMaxStructRecursionDepth(int max_depth)throws IllegalStateException;
-		/** Returns 0 if format supports un-bound recursion, otherwise a 
+	  	public void setMaxStructRecursionDepth(int max_depth)throws IllegalStateException,IllegalArgumentException;
+		/** Returns -1 if format supports un-bound recursion, otherwise a 
 		maximum recursion depth which can be set in {@link #setMaxStructRecursionDepth}
-		@return 0 or max recursion depth supported. */
-	  	public int getMaxSupportedEventRecursionDepth();
+		@return -1 or max recursion depth supported. */
+	  	public int getMaxSupportedStructRecursionDepth();
 };

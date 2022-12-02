@@ -35,13 +35,15 @@ public class CNameRegistrySupport_Write
 						this.index = index;
 						this.name = name;						
 					}
-					/** Name assigned to this descriptor */
+					/** Name of a signal registered with this descriptor.  
+					@return a name. 
+					*/
 					public String getName(){ return name; };
 					/** Returns an index assigned to name 
 					@return 0...*/
 					public int getIndex(){ return index; };
 					/** Checks if name needs writing a registration
-					data to a stream.
+					data to a stream and remembers the status.
 					@return true if it needs, false if already done. One this method
 						returns true it will return false in all subseqent calls */
 					public boolean needsStreamRegistartion()
@@ -55,11 +57,11 @@ public class CNameRegistrySupport_Write
 					}; 
 			};
 				/** A map */
-				private final TreeMap<String,Integer> map;
+				private final TreeMap<String,Name> map;
 				/** Capacity limit */
 				private final int capacity_limit;
 				/** Next index to be assigned */
-				private int assig_next;	
+				private int assign_next;	
 		/** Creates
 			@param capacity maximum capacity of stream names.
 				Up to that count can be registered with {@link #optimizeBeginName}.
@@ -67,7 +69,7 @@ public class CNameRegistrySupport_Write
 		public CNameRegistrySupport_Write(int capacity)
 		{
 			assert(capacity>=0):"capacity="+capacity;			
-			this.map = new TreeMap<String,Integer>();
+			this.map = new TreeMap<String,Name>();
 			this.capacity_limit = capacity;
 		};
 		/** Registers name in name optimization map, if possible.

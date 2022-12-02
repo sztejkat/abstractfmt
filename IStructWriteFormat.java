@@ -38,7 +38,7 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 		
 		/** Writes "end" signal, thous closing the structure.
 		
-		@throws IllegalStateException if there is no un-closed structure.
+		@throws EFormatBoundaryExceeded if there is no un-closed structure.
 		@throws IOException if low level i/o fails.
 		*/
 		public void end()throws IOException;

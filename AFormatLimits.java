@@ -3,15 +3,53 @@ import java.io.Closeable;
 import java.io.IOException;
 /**
 	Implementation of {@link IFormatLimits}
+	<p>
+	Classes using it should call {@link #enterStruct}
+	and {@link #leaveStruct} at apropriate moments.
 */
 abstract class AFormatLimits implements IFormatLimits,Closeable
 {
 				/** A maximum signal name length, initialized to 1024  */
 				private int current_max_signal_name_length = 1024;
 				/** A max struct recursion, default = 0; control disabled */
-				private int max_struct_recursion = 0;
+				private int max_struct_recursion = -1;
 				/** A current recursion depth */
-				private int current_recursion_depth =0;
+				private int current_recursion_depth = 0;
+				
+				
+		/* **************************************************
+		
+		
+				Construction
+		
+		
+		***************************************************/
+		/**
+			Subclasses should take care to 
+			invoke {@link #initializeToSupportedLimits}
+		*/
+		AFormatLimits(){};
+		
+		/** See constructor.
+		
+			Sets limits to either predefined values
+			or supported bounds
+		*/
+		protected void initializeToSupportedLimits()
+		{
+			//name
+			int l = getMaxSupportedSignalNameLength();
+			
+			assert(current_max_signal_name_length==1024); //<-from defaults
+			if (l< current_max_signal_name_length) 
+						current_max_signal_name_length = l;			
+			assert(max_struct_recursion==-1); //<-from defaults, unbound.			
+			int r = getMaxSupportedStructRecursionDepth();
+			assert(r>=-1);
+			if (r!= max_struct_recursion)
+					max_struct_recursion = r;
+		};
+		
 				
 	    /* *****************************************************
 	    
@@ -30,37 +68,24 @@ abstract class AFormatLimits implements IFormatLimits,Closeable
 	    */	    
 	    protected void enterStruct()throws EFormatBoundaryExceeded
 	    {
-	       if (max_struct_recursion!=0)
+	       if (max_struct_recursion!=-1)
 	       {
 	       		if (current_recursion_depth>=max_struct_recursion) throw new EFormatBoundaryExceeded("maximum structure recursion depth of "+max_struct_recursion+" is exceeded");
 	       };	       
 	       if (++current_recursion_depth<0) throw new Error("Structure recursion cursor wrapped around");
 	    };
 	    /**
-	    	Should be invoked when structure is left, indented to be used during writes.
-	    	@throws IllegalStateException if there is no unclosed structure;
+	    	Should be invoked when structure is left
+	    	@throws EFormatBoundaryExceeded if there is no unclosed structure;
 	    	@see #getCurrentStructRecursionDepth
 	    */
-	    protected void leaveStruct()throws IllegalStateException
+	    protected void leaveStruct()throws EFormatBoundaryExceeded
 	    {
-	    	if (current_recursion_depth==0) throw new IllegalStateException("No unclosed structure");
+	    	if (current_recursion_depth==0) throw new EFormatBoundaryExceeded("No unclosed structure");
 	    	current_recursion_depth--;
 	    };
-	    /**
-	    	Should be invoked when structure is left, indented to be used during reading.
-	    	<p>
-	    	Note: The only difference between this method and {@link #leaveStruct} is in a type of
-	    	thrown exception.
-	    	@throws EBrokenFormat if there is no unclosed structure;
-	    	@see #getCurrentStructRecursionDepth
-	    */
-	    protected void leaveStructBreak()throws EBrokenFormat
-	    {
-	    	if (current_recursion_depth==0) throw new EBrokenFormat("No unclosed structure");
-	    	current_recursion_depth--;
-	    };
-	    /** Returns current recursion depth tracked by {@link #enterStruct} and {@link #leaveStruct}/{@link #leaveStructBreak} 
-	    @return recursion depht, 0 no struct is open.
+	    /** Returns current recursion depth tracked by {@link #enterStruct} and {@link #leaveStruct} 
+	    @return recursion depth, 0 no struct is open.
 	    */
 	    protected final int getCurrentStructRecursionDepth(){ return current_recursion_depth; };
 		/* ********************************************************
@@ -90,23 +115,33 @@ abstract class AFormatLimits implements IFormatLimits,Closeable
 		
 		/** {@inheritDoc}
 			
-			This method uses {@link #enterStruct} and {@link #leaveStruct}/{@link #leaveStructBreak} to track
+			This method uses {@link #enterStruct} and {@link #leaveStruct} to track
 			depth of structs recursion 
 		*/
 		@Override public void setMaxStructRecursionDepth(int max_depth)throws IllegalStateException
 		{
-				assert(max_depth>=0):"max_depth="+max_depth;
-				if (max_depth!=0)
+				assert(max_depth>=-1):"max_depth="+max_depth;
+				
+				//test system limits
+				int supported = getMaxSupportedStructRecursionDepth();
+				assert(supported>=-1);
+				if (supported==-1)
+				{
+					//unbound case, nothing to check.
+				}else
+				{
+					//bound case, not allow unbound or above limit
+					if (max_depth==-1) throw new IllegalArgumentException("Requested un-bound limit, but format does not support unlimited recursion");
+					if (max_depth>supported)
+						throw new IllegalArgumentException("Requested max_depth="+max_depth+" is greater than format supports getMaxSupportedEventRecursionDepth()="+supported);
+				};
+				
+				//test against current recursion level
+				if (max_depth!=-1)
 				{
 				   if ( max_depth<current_recursion_depth )
 				   	  	 throw new IllegalStateException("Requested max_depth="+max_depth+" is shallower than current depth ="+current_recursion_depth);
-				   if (
-				   	   (getMaxSupportedEventRecursionDepth()!=0)
-				   	     &&
-				   	   ( max_depth>getMaxSupportedEventRecursionDepth())
-				   	  )
-				   	    throw new IllegalStateException("Requested max_depth="+max_depth+" is greater than format supports getMaxSupportedEventRecursionDepth()="+getMaxSupportedEventRecursionDepth());
-		   	    };
+			    };
 		   	    this.max_struct_recursion=max_depth;
 		};
 };

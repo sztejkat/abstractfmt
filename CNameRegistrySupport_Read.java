@@ -51,8 +51,9 @@ public class CNameRegistrySupport_Read
 	@throws EBrokenFormat if there is name registered for that number
 	@throws AssertionError if number is negative
 	@throws AssertionError if the name is already registered under different number.
-		This is assertion due to cost and can pass unonticed in regular use. This
-		is intended, as there is no logical fault in having same name under two numbers.
+		This is assertion due to high cost of a lookup.
+		This is intended, as there is no logical fault in having same name under two numbers, however
+		it shows that something did happen wrong at writing side of a format.
 	*/
 	public void registerBeginName(String name, int assign_number)throws EFormatBoundaryExceeded,EBrokenFormat
 	{
@@ -73,7 +74,7 @@ public class CNameRegistrySupport_Read
 	public String getOptimizedName(int assigned_number)throws EFormatBoundaryExceeded,EBrokenFormat
 	{
 		assert(assigned_number>=0);
-		if (assigned_number>=table.length) throw new EFormatBoundaryExceeded("assign_number="+assign_number+" out of bounds");
+		if (assigned_number>=table.length) throw new EFormatBoundaryExceeded("assign_number="+assigned_number+" out of bounds");
 		String s = table[assigned_number];
 		if (s==null) throw new EBrokenFormat("assigned_number="+assigned_number+" is not registered yet");
 		return s;
