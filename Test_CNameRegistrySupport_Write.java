@@ -109,4 +109,44 @@ public class Test_CNameRegistrySupport_Write extends sztejkat.abstractfmt.test.A
 	};
 	
 	
+	@Test public void testIndexVsOrder()throws Throwable
+	{
+		/*
+			Tests index and order assignments
+		*/
+		enter();
+			CNameRegistrySupport_Write reg = new CNameRegistrySupport_Write(4);
+			CNameRegistrySupport_Write.Name n = null;
+			
+			Assert.assertTrue(reg.optimizeBeginName("marrie"));
+			Assert.assertTrue(reg.optimizeBeginName("carrie"));
+			
+			n=reg.getOptmizedName("carrie");
+			Assert.assertTrue(n!=null);
+			Assert.assertTrue(n.getIndex()==1);
+			Assert.assertTrue(n.needsStreamRegistartion());
+			Assert.assertTrue(n.getOrder()==0);
+			
+			n=reg.getOptmizedName("carrie");
+			Assert.assertTrue(n!=null);
+			Assert.assertTrue(n.getIndex()==1);
+			Assert.assertTrue(!n.needsStreamRegistartion());
+			Assert.assertTrue(n.getOrder()==0);
+			
+			n=reg.getOptmizedName("marrie");
+			Assert.assertTrue(n!=null);
+			Assert.assertTrue(n.getIndex()==0);
+			Assert.assertTrue(n.needsStreamRegistartion());
+			Assert.assertTrue(n.getOrder()==1);
+			
+			n=reg.getOptmizedName("marrie");
+			Assert.assertTrue(n!=null);
+			Assert.assertTrue(n.getIndex()==0);
+			Assert.assertTrue(!n.needsStreamRegistartion());
+			Assert.assertTrue(n.getOrder()==1);
+				
+		leave();
+	};
+	
+	
 };

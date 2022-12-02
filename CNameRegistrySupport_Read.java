@@ -89,4 +89,9 @@ public class CNameRegistrySupport_Read
 		if (TRACE) TOUT.println("getOptimizedName("+assigned_number+")=\""+s+"\" LEAVE");
 		return s;
 	};
+	/** Clears everything to virgin state */
+	public void clear()
+	{
+		for(int i=table.length;--i>=0;) table[i]=null;
+	};
 };

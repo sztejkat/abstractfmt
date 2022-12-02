@@ -14,6 +14,15 @@ import java.io.IOException;
 		<li>state validation for block and primitive writes;</li>
 		<li>name and recursion boundary checking;</li>
 	</ul>
+	<p>
+	This implementation requires that stream is using following
+	set of signals:
+	<pre>
+			begin
+			end
+			<i>optional:</i>
+			end-begin
+	</pre> 
 */
 abstract class AStructWriteFormatBase0 extends AStructFormatBase implements IStructWriteFormat
 {
@@ -43,7 +52,7 @@ abstract class AStructWriteFormatBase0 extends AStructFormatBase implements IStr
 		@throws IOException as {@link #begin}
 		 */
 		protected abstract void endImpl()throws IOException;
-		/** Should write signle "begin" signal as {@link #begin} do specify.
+		/** Should write single "begin" signal as {@link #begin} do specify.
 		Will be called in sane conditions.
 		@param name a sane, validated name.
 		@throws IOException as {@link #begin}
