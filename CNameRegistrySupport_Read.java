@@ -1,5 +1,7 @@
 package sztejkat.abstractfmt;
+import sztejkat.abstractfmt.logging.SLogging;
 import java.util.TreeMap;
+
 
 /**
 	A support for name registry based
@@ -17,6 +19,10 @@ import java.util.TreeMap;
 */
 public class CNameRegistrySupport_Read
 {
+ 		 private static final long TLEVEL = SLogging.getDebugLevelForClass(CNameRegistrySupport_Read.class);
+         private static final boolean TRACE = (TLEVEL!=0);
+         private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("CNameRegistrySupport_Read.",CNameRegistrySupport_Read.class) : null;
+       
 			private final String [] table;
 		
 	/** Creates name registry pre-allocating name table
@@ -29,6 +35,7 @@ public class CNameRegistrySupport_Read
 	public CNameRegistrySupport_Read(int capacity)
 	{
 		assert(capacity>=0):"capacity="+capacity;
+		if (TRACE) TOUT.println("new(capacity="+capacity+")");
 		this.table = new String[capacity];
 	};
 	/** Tests if name is registered, linear cost.
@@ -57,6 +64,7 @@ public class CNameRegistrySupport_Read
 	*/
 	public void registerBeginName(String name, int assign_number)throws EFormatBoundaryExceeded,EBrokenFormat
 	{
+		if (TRACE) TOUT.println("registerBeginName(\""+name+"\","+assign_number+")");
 		assert(name!=null);
 		assert(assign_number>=0);
 		assert(!containsName(name)):"name "+name+" is already registered";
@@ -73,10 +81,12 @@ public class CNameRegistrySupport_Read
 	*/
 	public String getOptimizedName(int assigned_number)throws EFormatBoundaryExceeded,EBrokenFormat
 	{
+		if (TRACE) TOUT.println("getOptimizedName("+assigned_number+") ENTER");
 		assert(assigned_number>=0);
 		if (assigned_number>=table.length) throw new EFormatBoundaryExceeded("assign_number="+assigned_number+" out of bounds");
 		String s = table[assigned_number];
 		if (s==null) throw new EBrokenFormat("assigned_number="+assigned_number+" is not registered yet");
+		if (TRACE) TOUT.println("getOptimizedName("+assigned_number+")=\""+s+"\" LEAVE");
 		return s;
 	};
 };

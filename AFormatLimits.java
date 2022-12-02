@@ -1,4 +1,5 @@
 package sztejkat.abstractfmt;
+import sztejkat.abstractfmt.logging.SLogging;
 import java.io.Closeable;
 import java.io.IOException;
 /**
@@ -9,6 +10,11 @@ import java.io.IOException;
 */
 abstract class AFormatLimits implements IFormatLimits,Closeable
 {
+ 		 private static final long TLEVEL = SLogging.getDebugLevelForClass(AFormatLimits.class);
+         private static final boolean TRACE = (TLEVEL!=0);
+         private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("AFormatLimits.",AFormatLimits.class) : null;
+       
+
 				/** A maximum signal name length, initialized to 1024  */
 				private int current_max_signal_name_length = 1024;
 				/** A max struct recursion, default = 0; control disabled */
@@ -38,8 +44,7 @@ abstract class AFormatLimits implements IFormatLimits,Closeable
 		protected void initializeToSupportedLimits()
 		{
 			//name
-			int l = getMaxSupportedSignalNameLength();
-			
+			int l = getMaxSupportedSignalNameLength();			
 			assert(current_max_signal_name_length==1024); //<-from defaults
 			if (l< current_max_signal_name_length) 
 						current_max_signal_name_length = l;			
@@ -48,6 +53,8 @@ abstract class AFormatLimits implements IFormatLimits,Closeable
 			assert(r>=-1);
 			if (r!= max_struct_recursion)
 					max_struct_recursion = r;
+			if (TRACE) TOUT.println("initializeToSupportedLimits() current_max_signal_name_length="+current_max_signal_name_length+
+									",max_struct_recursion="+max_struct_recursion);
 		};
 		
 				
@@ -68,6 +75,7 @@ abstract class AFormatLimits implements IFormatLimits,Closeable
 	    */	    
 	    protected void enterStruct()throws EFormatBoundaryExceeded
 	    {
+	       if (TRACE) TOUT.println("enterStruct() @current_recursion_depth="+current_recursion_depth);
 	       if (max_struct_recursion!=-1)
 	       {
 	       		if (current_recursion_depth>=max_struct_recursion) throw new EFormatBoundaryExceeded("maximum structure recursion depth of "+max_struct_recursion+" is exceeded");
@@ -81,6 +89,7 @@ abstract class AFormatLimits implements IFormatLimits,Closeable
 	    */
 	    protected void leaveStruct()throws EFormatBoundaryExceeded
 	    {
+	        if (TRACE) TOUT.println("leaveStruct() @current_recursion_depth="+current_recursion_depth);
 	    	if (current_recursion_depth==0) throw new EFormatBoundaryExceeded("No unclosed structure");
 	    	current_recursion_depth--;
 	    };
@@ -96,6 +105,7 @@ abstract class AFormatLimits implements IFormatLimits,Closeable
 		/** Resets depth counters. */
 		@Override public void close()throws IOException
 		{
+			if (TRACE) TOUT.println("close()");
 			this.current_recursion_depth=0;
 		}
 		/* ********************************************************
@@ -104,8 +114,9 @@ abstract class AFormatLimits implements IFormatLimits,Closeable
 		
 		********************************************************/
 		@Override public void setMaxSignalNameLength(int characters)
-		{
+		{			
 			assert(characters>0):"characters="+characters+" <= 0";
+			if (TRACE) TOUT.println("setMaxSignalNameLength("+characters+")");
 			if(characters>getMaxSupportedSignalNameLength()) throw new IllegalArgumentException("characters="+characters+" >getMaxSupportedSignalNameLength()="+getMaxSupportedSignalNameLength());
 			this.current_max_signal_name_length=characters;
 		};
@@ -119,11 +130,13 @@ abstract class AFormatLimits implements IFormatLimits,Closeable
 			depth of structs recursion 
 		*/
 		@Override public void setMaxStructRecursionDepth(int max_depth)throws IllegalStateException
-		{
+		{			
 				assert(max_depth>=-1):"max_depth="+max_depth;
-				
 				//test system limits
 				int supported = getMaxSupportedStructRecursionDepth();
+				if (TRACE) TOUT.println("setMaxStructRecursionDepth("+max_depth+")"+
+										" supported="+supported+
+										" current_recursion_depth="+current_recursion_depth);
 				assert(supported>=-1);
 				if (supported==-1)
 				{

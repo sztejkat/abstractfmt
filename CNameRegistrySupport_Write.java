@@ -1,4 +1,5 @@
 package sztejkat.abstractfmt;
+import sztejkat.abstractfmt.logging.SLogging;
 import java.util.TreeMap;
 /**
 	A support class for name registry, writing end.
@@ -23,6 +24,10 @@ import java.util.TreeMap;
 */
 public class CNameRegistrySupport_Write
 {
+		 private static final long TLEVEL = SLogging.getDebugLevelForClass(CNameRegistrySupport_Write.class);
+         private static final boolean TRACE = (TLEVEL!=0);
+         private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("CNameRegistrySupport_Write.",CNameRegistrySupport_Write.class) : null;
+
 			/** A registration data description. */
 			public final static class Name
 			{
@@ -32,6 +37,7 @@ public class CNameRegistrySupport_Write
 					
 					Name(String name, int index)					
 					{
+						if (TRACE) TOUT.println("new Name(\""+name+"\", index="+index+")");
 						this.index = index;
 						this.name = name;						
 					}
@@ -50,6 +56,7 @@ public class CNameRegistrySupport_Write
 					{
 					 	if (!has_been_written)
 					 	{
+					 		if (TRACE) TOUT.println("Name.needsStreamRegistartion()=true");
 					 		has_been_written = true;
 					 		return true;
 					 	};
@@ -68,6 +75,7 @@ public class CNameRegistrySupport_Write
 		*/
 		public CNameRegistrySupport_Write(int capacity)
 		{
+			if (TRACE) TOUT.println("new(capacity="+capacity+")");
 			assert(capacity>=0):"capacity="+capacity;			
 			this.map = new TreeMap<String,Name>();
 			this.capacity_limit = capacity;
@@ -78,13 +86,23 @@ public class CNameRegistrySupport_Write
 		*/
 		public boolean optimizeBeginName(String name)
 		{
+			if (TRACE) TOUT.println("optimizeBeginName(\""+name+"\") ENTER");
 			assert(name!=null);
 			//test boundary saturation
-			if (assign_next>=capacity_limit) return false;
+			if (assign_next>=capacity_limit)
+			{
+				 if (TRACE) TOUT.println("optimizeBeginName()=false, no more space, LEAVE");
+				 return false;
+			};
 			//test if already there
-			if (map.containsKey(name)) return true;
+			if (map.containsKey(name))
+			{
+				if (TRACE) TOUT.println("optimizeBeginName()=true, already registered, LEAVE");
+			 	return true;
+			 };
 			//assign next possible index.
 			map.put(name, new Name(name, assign_next++));
+			if (TRACE) TOUT.println("optimizeBeginName()=true, registered as new, LEAVE");
 			return true;
 		};
 		/** Checks if name is registered in optimization base

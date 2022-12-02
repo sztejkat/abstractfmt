@@ -13,7 +13,7 @@ package sztejkat.abstractfmt.logging;
    class X
    {
          private static final long TLEVEL = SLogging.getDebugLevelForClass(X.class);
-         private static final boolean TRACE = (TLEVEL!=0)
+         private static final boolean TRACE = (TLEVEL!=0);
          private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("X.",X.class) : null;
          ....
 

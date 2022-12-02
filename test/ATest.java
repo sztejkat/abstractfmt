@@ -59,14 +59,14 @@ public abstract class ATest
 	};
 	
 	/** Prints test routine leave message with test method name to System.out.
-	Also invokes {@link #validateBackgroundJobs}
+
 	*/
 	protected void leave()
 	{
 		leave(null,2);
 	};
 	/** Prints, using additional previx 
-	@param _eprefix optional additional prefix.
+	@param _lprefix optional additional prefix.
 	*/
 	protected void leave(String _lprefix)
 	{
