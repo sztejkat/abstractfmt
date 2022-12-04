@@ -34,12 +34,27 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
          private static final boolean TRACE = (TLEVEL!=0);
          private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("AStructFormatBase.",AStructFormatBase.class) : null;
  
+         		/** Used to for state tracking
+         		when managing block operations.
+         		*/
+         		private static enum TBlockType
+				{
+					BOOLEAN_BLK(),
+					BYTE_BLK(),
+					CHAR_BLK(),
+					STRING(),
+					SHORT_BLK(),
+					INT_BLK(),
+					LONG_BLK(),
+					FLOAT_BLK(),
+					DOUBLE_BLK();
+				};
 					/** Tracks format open state */
 					private boolean opened;
 					/** Tracks format closes state */
 					private boolean closed;
 					/** Non-null if stream is doing a block write. Carries block type */
-					private TContentType block_type;
+					private TBlockType block_type;
 		/* ***********************************************************************
 		
 				Services required from subclasses
@@ -213,7 +228,7 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 					case LONG_BLK: 		endLongBlock(); break;
 					case FLOAT_BLK: 	endFloatBlock(); break;
 					case DOUBLE_BLK: 	endDoubleBlock(); break;
-					default: throw new AssertionError("not a block "+block_type);
+					default: throw new AssertionError("unknown enum "+block_type);
 				};
 				if (TRACE) TOUT.println("terminatePendingBlockOperation() LEAVE");
 				block_type = null;
@@ -235,12 +250,12 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 			if (block_type==null)
 			{
 				//initialize
-				block_type=TContentType.BOOLEAN_BLK;
+				block_type=TBlockType.BOOLEAN_BLK;
 				if (TRACE) TOUT.println("validateBooleanBlock() -> startBooleanBlock()");
 				startBooleanBlock();
 			}else
 				//validate type consistency
-				if (block_type!=TContentType.BOOLEAN_BLK) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
+				if (block_type!=TBlockType.BOOLEAN_BLK) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
 		}
 		/** Validates if can do this block operation and initializes it if necessary
 		@throws IOException if stream is not open/closed or low level failed.
@@ -254,12 +269,12 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 			if (block_type==null)
 			{
 				//initialize
-				block_type=TContentType.BYTE_BLK;
+				block_type=TBlockType.BYTE_BLK;
 				if (TRACE) TOUT.println("validateByteBlock() -> startByteBlock()");
 				startByteBlock();
 			}else
 				//validate type consistency
-				if (block_type!=TContentType.BYTE_BLK) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
+				if (block_type!=TBlockType.BYTE_BLK) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
 		}
 		/** Validates if can do this block operation and initializes it if necessary
 		@throws IOException if stream is not open/closed or low level failed.
@@ -273,12 +288,12 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 			if (block_type==null)
 			{
 				//initialize
-				block_type=TContentType.CHAR_BLK;
+				block_type=TBlockType.CHAR_BLK;
 				if (TRACE) TOUT.println("validateCharBlock() -> startCharBlock()");
 				startCharBlock();
 			}else
 				//validate type consistency
-				if (block_type!=TContentType.CHAR_BLK) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
+				if (block_type!=TBlockType.CHAR_BLK) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
 		}
 			/** Validates if can do this block operation and initializes it if necessary
 		@throws IOException if stream is not open/closed or low level failed.
@@ -292,12 +307,12 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 			if (block_type==null)
 			{
 				//initialize
-				block_type=TContentType.SHORT_BLK;
+				block_type=TBlockType.SHORT_BLK;
 				if (TRACE) TOUT.println("validateShortBlock() -> startShortBlock()");
 				startShortBlock();
 			}else
 				//validate type consistency
-				if (block_type!=TContentType.SHORT_BLK) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
+				if (block_type!=TBlockType.SHORT_BLK) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
 		}
 		/** Validates if can do this block operation and initializes it if necessary
 		@throws IOException if stream is not open/closed or low level failed.
@@ -311,12 +326,12 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 			if (block_type==null)
 			{
 				//initialize
-				block_type=TContentType.INT_BLK;
+				block_type=TBlockType.INT_BLK;
 				if (TRACE) TOUT.println("validateIntBlock() -> startIntBlock()");
 				startIntBlock();
 			}else
 				//validate type consistency
-				if (block_type!=TContentType.INT_BLK) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
+				if (block_type!=TBlockType.INT_BLK) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
 		}
 			/** Validates if can do this block operation and initializes it if necessary
 		@throws IOException if stream is not open/closed or low level failed.
@@ -330,12 +345,12 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 			if (block_type==null)
 			{
 				//initialize
-				block_type=TContentType.LONG_BLK;
+				block_type=TBlockType.LONG_BLK;
 				if (TRACE) TOUT.println("validateLongBlock() -> startLongBlock()");
 				startLongBlock();
 			}else
 				//validate type consistency
-				if (block_type!=TContentType.LONG_BLK) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
+				if (block_type!=TBlockType.LONG_BLK) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
 		}
 			/** Validates if can do this block operation and initializes it if necessary
 		@throws IOException if stream is not open/closed or low level failed.
@@ -349,12 +364,12 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 			if (block_type==null)
 			{
 				//initialize
-				block_type=TContentType.FLOAT_BLK;
+				block_type=TBlockType.FLOAT_BLK;
 				if (TRACE) TOUT.println("validateFloatBlock() -> startFloatBlock()");
 				startFloatBlock();
 			}else
 				//validate type consistency
-				if (block_type!=TContentType.FLOAT_BLK) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
+				if (block_type!=TBlockType.FLOAT_BLK) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
 		}
 		/** Validates if can do this block operation and initializes it if necessary
 		@throws IOException if stream is not open/closed or low level failed.
@@ -368,12 +383,12 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 			if (block_type==null)
 			{
 				//initialize
-				block_type=TContentType.DOUBLE_BLK;
+				block_type=TBlockType.DOUBLE_BLK;
 				if (TRACE) TOUT.println("validateDoubleBlock() -> startDoubleBlock()");
 				startDoubleBlock();
 			}else
 				//validate type consistency
-				if (block_type!=TContentType.DOUBLE_BLK) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
+				if (block_type!=TBlockType.DOUBLE_BLK) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
 		}
 		/** Validates if can do this block operation and initializes it if necessary
 		@throws IOException if stream is not open/closed or low level failed.
@@ -387,12 +402,12 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 			if (block_type==null)
 			{
 				//initialize
-				block_type=TContentType.STRING;
+				block_type=TBlockType.STRING;
 				if (TRACE) TOUT.println("validateStringBlock() -> startStringBlock()");
 				startStringBlock();
 			}else
 				//validate type consistency
-				if (block_type!=TContentType.STRING) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
+				if (block_type!=TBlockType.STRING) throw new IllegalStateException("Incompatible block operation "+block_type+" in progress");
 		}
 		/* ****************************************************
 		

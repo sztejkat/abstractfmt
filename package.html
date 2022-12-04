@@ -196,7 +196,7 @@
 		<li>writing primitive sequences;</li>
 	</ul>
 	
-	<h3>Writing singals</h3>
+	<h3>Writing signals</h3>
 	 <h4>Writing the "begin signal"</h4>
 	   Writing begin signal can happen in any place and always takes signal 
 	   name as an agrument. How that name is encoded in stream is not a concern
@@ -420,7 +420,7 @@
              public class TestXXXX
              {
                 ....
-                @org.junit.Test public void test....
+                &#64;org.junit.Test public void test....
              }
              ....
              public class Test_XXXX
@@ -481,14 +481,14 @@
             be passed by programmers using the API. This control style
             is specified by javadoc:
             <pre>
-            @#64throws AssertionError
+            &#64;throws AssertionError
             </pre>;</li>
             <li>it relies on <code> if... throw new IllegalArgumentException...</code>
             on controlling parameters which are expected to be fetched from
-            user interaction on from data connections.This control style
+            user interaction or from a data connection.This control style
             is specified by javadoc:
             <pre>
-            @#64throws IllegalArgumentException
+            &#64;throws IllegalArgumentException
             </pre>;</li>
             <li>it is using <code>assert(...):...</code> to control if code obeys contracts
             and states internally;</li>
@@ -552,7 +552,7 @@
             <li>if any parameter, field or return value does not accept entire possible spectrum of values for its type the javadoc must specifiy
             bounds;</li>
             <li>if an array or collection or any other data structure is passed as an argument or returned it must be
-            clearly stated if it will be taken by reference or an internal copy will be made;</li>
+            clearly stated if it will be done by reference or an independent copy will be made;</li>
             <li>if an array or collection or any other data structure is passed as an argument by a reference it must be stated
             if called code will alter it, or if it expects it to be immutable;</li>
             <li>if alike is returned it must be clearly stated if returned reference points to a copy allocated for that
@@ -560,7 +560,7 @@
             <li>if alike is returned and points to an internal structure it must be cleary stated if it is allowed to be modified
             externally or not;</li>
             <li>if alike is returned and points to an internal structure and it is not inherently immutable (ie StringBuilder versus String)
-            it must be clearly specified if it will be ever changed or not;</li>
+            it must be clearly specified under what conditions its content will be changed;</li>
             <li>You must not use debuger (IDE like) for testing. Instead You must:
                     <ul>
                         <li>write debug logs with following pattern:
@@ -580,7 +580,7 @@
             and then write a test showing it is not there anymore (always). Those tests must be left in test system
             to prevent future regression bugs;</li>
             <li>comment Your code well telling what You are up to do, step by step, and why You are doing it. Remember,
-            somebody will read it many years after You wrote it;</li>
+            some poor lad will have to read it many, many years after You wrote it;</li>
         </ul>
 </body>
 </html>

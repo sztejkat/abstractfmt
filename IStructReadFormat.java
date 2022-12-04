@@ -22,10 +22,10 @@ import java.io.IOException;
 	</tr>
 	<tr>
 		<td><b>None</b></td>
-		<td>throws {@link EUnexpectedEof};</td>
-		<td>throws {@link EUnexpectedEof};</td>
+		<td>throws {@link EUnexpectedEof}, the effect of future use of stream is unpredicatable;</td>
+		<td>throws {@link EUnexpectedEof}, the effect of future use of stream is unpredicatable;</td>
 		<td>returns with a partial read or throws {@link EUnexpectedEof}
-		if could not read any data;</td>
+		if could not read any data. If thrown, the effect of future use of stream is unpredicatable;</td>
 	</tr>
 	<tr>
 		<td><b>Frame</b></td>
@@ -49,7 +49,8 @@ import java.io.IOException;
 		operation to be re-tried to check if next signal did appear;</td>
 		<td>throws {@link ETemporaryEndOfFile} and allows operation
 		to re-try reading this exact primitive element again using this exact
-		method;</td>
+		method. Any partially read element must not be discarded and must be available
+		for subsequent reads;</td>
 		<td>returns with a partial read or throws {@link ETemporaryEndOfFile}
 		if could not read any data. Subsequent calls to the same block
 		read are allowed to try to read newly incomming data. 
@@ -58,22 +59,20 @@ import java.io.IOException;
 	</tr>
 	</table>
 	<p>
-	Note: Usuall file stream or stream wrapped in carrier protocols
-	will use "None" model.
+	<i>Note: File-based stream or stream wrapped in carrier protocols
+	which do warrant the delivery will use "None" model since it does not
+	have any benefits from using other eof-support models.</i>
 	<p>
-	The low-level direct hardware connection
-	streams which decided to use the <i>structure format</i>
-	described here as their <u>own low level protocol</u> will
-	need "Frame" model to correctly handle frame-by-frame boundaries.
+	<i>The low-level direct hardware connection	streams which decided to use this format
+	as <u>their own protocol</u> will need "Frame" model to allow for infinite silence 
+	between frames and to be able to detect lack of response from remote party.</i>
 	<p>
-	"Signal" and "Full" models will be rarely needed, as a re-trying
-	carrier protocol will usually provide a warranty for stream continuity.
-	<p>
-	Implementing for "Full" model is especially cumbersome and tricky
-	and thous not recommended.
+	<i>"Signal" and "Full" models will be rarely needed. Implementing the "Full" model
+	is especially cumbersome and tricky	and thous not recommended.</i>
 	
 	<h1>Thread safety</h1>
-	Format are <u>not thread safe</u>.	
+	Formats are <u>not thread safe</u>.	Yes, this is intentional. Check package description
+	for detailed explanation.
 */
 public interface IStructReadFormat extends Closeable, IFormatLimits
 {	
@@ -279,8 +278,7 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
 					data in sequence or not is not specified;</li>
 					<li><code>n&lt;length &amp;&amp; n&gt;0</code> buffer is partially filled with
 					data. If due to end-of-file or a signal it is not specified;</li>
-					<li><code>n==0</code>, possible only only when <code>length==0</code>
-					and when no attempt to cross the signal was made in previous operations;</li>
+					<li><code>n==0</code>, possible only only when <code>length==0</code>;</li>
 					<li><code>n==-1</code> nothing is read and signal is reached. All subsequent
 					calls will return -1 till signal will be read;</li>					
 				</ul>
@@ -291,7 +289,7 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
 		@throws IOException if low level i/o fails. 
 		@throws ESequenceEof accordingly, to indiate a problem.
 		@throws EEof of specific subclass depending on <a href="#TEMPEOF">eof handling type</a>
-			if could not read any data due to low level end of file.
+			if could not read <u>any data</u> due to low level end of file.
 		@throws IllegalStateException if a sequence of incompatible type is in progress.
 		@see IStructWriteFormat#writeBooleanBlock(boolean[],int,int)
 		*/

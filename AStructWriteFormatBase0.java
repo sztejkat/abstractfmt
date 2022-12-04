@@ -23,8 +23,9 @@ import java.io.IOException;
 			<i>optional:</i>
 			end-begin
 	</pre> 
+	<p>This class is symetric to {@link AStructReadFormatBase0}.
 */
-abstract class AStructWriteFormatBase0 extends AStructFormatBase implements IStructWriteFormat
+public abstract class AStructWriteFormatBase0 extends AStructFormatBase implements IStructWriteFormat
 {
 		 private static final long TLEVEL = SLogging.getDebugLevelForClass(AStructWriteFormatBase0.class);
          private static final boolean TRACE = (TLEVEL!=0);

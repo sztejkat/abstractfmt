@@ -17,13 +17,35 @@ import java.io.IOException;
 		<li>state validation for block and primitive reads;</li>
 		<li>recursion boundary checking;</li>
 	</ul>
+	<p>This class is symetric to {@link AStructWriteFormatBase0}. 
 */
 public abstract class AStructReadFormatBase0 extends AStructFormatBase implements IStructReadFormat
 {
  		 private static final long TLEVEL = SLogging.getDebugLevelForClass(AStructReadFormatBase0.class);
          private static final boolean TRACE = (TLEVEL!=0);
          private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("AStructReadFormatBase0.",AStructReadFormatBase0.class) : null;
-
+			/** Signals returned by {@link #readSignal} */
+			protected static enum TSignal
+			{
+				/** To be returned by {@link #readSignal} when 
+				it reads what {@link AStructWriteFormatBase0#beginImpl} wrote.
+				A a side effect the {@link #pickLastSignalName} should be set
+				to a proper and <u>validated </u> signal name */
+				SIG_BEGIN,
+				/** To be returned by {@link #readSignal} when 
+				it reads what {@link AStructWriteFormatBase0#endImpl} wrote.
+				A a side effect the {@link #pickLastSignalName} should be set
+				to null */
+				SIG_END,
+				/** To be returned by {@link #readSignal} when 
+				it reads what {@link AStructWriteFormatBase0#endBeginImpl} wrote.
+				A a side effect the {@link #pickLastSignalName} should be set
+				to a proper and <u>validated </u> signal name */
+				SIG_END_BEGIN;
+			};
+         			/** Set to true if {@link TSignal#SIG_END_BEGIN}
+         			is returned by {@link #readSignal} */
+         			private boolean begin_pending;
 		/* *******************************************************
 			
 			Services required from subclasses
@@ -31,30 +53,40 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 		********************************************************/
 		/* ------------------------------------------------------------------
 					Signal related
-		------------------------------------------------------------------*/		
-		/** Must behave as {@link IStructReadFormat#next} with following 
-		exceptions:
-		<ul>
-			<li>it does not have to check recursion depth limit, it will
-			be checked and balanced by a caller;</li>
-			<li>it does not have to manage block reads, it will be managed
-			by a caller;</li>
-			<li>if format supports "end-begin" combining this method must
-			un-combine it into two separate calls;</li>
-		</ul>
-		@return --//-- 
+		------------------------------------------------------------------*/
+			
+				
+		/** Invoked by {@link #nextImpl} to move to next signal in stream.
+		Returns signal and updates certain variables according to returned
+		state. This method is also responsible for checking if name
+		is too long and abort the reading process.
+		@return signal, non null.
 		@throws IOException if fialed.
 		@throws EFormatBoundaryExceeded if name length is exceeded. */
-		protected abstract String nextImpl()throws IOException;
+		protected abstract TSignal readSignal()throws IOException;
+		/** Set by {@link #readSignal} when a validated name of 
+		begin signal is read. Subsequent calls of this method
+		do return <code>null</code>
+		<p>
+		@return name, null for {@link TSignal#SIG_END}
+				or when name was already read.
+		*/
+		protected abstract String pickLastSignalName();
+		
 		/* ------------------------------------------------------------------
 				Primitive related, elementary
 		------------------------------------------------------------------*/
 		/** Invoked by an elementary primitive read after ensuring that read
-		is possible.
+		is allowed. This method is expected to check end-of-file, no
 		<p>
 		Note: all <code>readXXXImpl(v)</code> share the same contract.
 		@return value of an elementary primitive
-		@throws IOException if failed */
+		@throws IOException if fails due to many reasons. 
+		@throws ENoMoreData if stream cursor is at the signal and there is no
+				data to initiate operation.			
+		@throws ESignalCrossed if an attempt to cross a signal is made inside a primitive element.
+		@throws EEof of specific subclass depending on <a href="#TEMPEOF">eof handling type</a>
+		*/
 		protected abstract boolean readBooleanImpl()throws IOException;
 		/** See {@link #readBooleanImpl()}
 		@return value of an elementary primitive
@@ -234,6 +266,41 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 		
 		
 		* ***********************************************************/
+			
+		/** Invoked to implement {@link IStructReadFormat#next} after ensuring that
+		all the house keeping is managed. This house-keeping includes:
+		exceptions:
+		<ul>
+			<li>recursion depth control;</li>
+			<li>block operation control;</li>
+		</ul>
+		but does <u>not</u> include name sanitization.
+		@return --//-- 
+		@throws IOException if fialed.
+		@throws EFormatBoundaryExceeded if name length is exceeded. */
+		protected String nextImpl()throws IOException
+		{
+			//check if we have an end-begin optimization in progress?
+			if (begin_pending)
+			{
+					 begin_pending = false;
+					 return pickLastSignalName();
+			}else
+			{
+				//ask implementation and deal with state machinery.
+				switch(readSignal())
+				{
+						case SIG_BEGIN:
+								return pickLastSignalName();
+						case SIG_END:
+								return null;
+						case SIG_END_BEGIN:
+								begin_pending = true;
+								return null;
+						default: throw new AssertionError("unkown enum");
+				}
+			}
+		};
 		/* ----------------------------------------------------------
 				Signal operations
 		----------------------------------------------------------*/
