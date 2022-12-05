@@ -25,4 +25,10 @@ public final class ELMT_BYTE extends AByteValue implements IObjStructFormat0
 	};
 	public String toString(){ return "ELMT_BYTE("+v+")";};
 	@Override public byte byteValue(){ return v; };
+	@Override public boolean equalsTo(IObjStructFormat0 x)
+	{
+		if (x==null) return false;
+		if (!(x instanceof ELMT_BYTE)) return false;
+		return ((ELMT_BYTE)x).v == v;
+	};
 };

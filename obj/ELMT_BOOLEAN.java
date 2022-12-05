@@ -15,4 +15,10 @@ public final class ELMT_BOOLEAN extends ABooleanValue implements IObjStructForma
 	public String toString(){ return "ELMT_BOOLEAN("+v+")";};
 	
 	@Override public boolean booleanValue(){ return v; };
+	@Override public boolean equalsTo(IObjStructFormat0 x)
+	{
+		if (x==null) return false;
+		if (!(x instanceof ELMT_BOOLEAN)) return false;
+		return ((ELMT_BOOLEAN)x).v == v;
+	};
 };

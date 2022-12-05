@@ -20,6 +20,8 @@ package sztejkat.abstractfmt.obj;
 	<p>
 	Blocks are always written using single element per object, regardless
 	if stored by array operations or single item operation.
+	
+	
 */
 public interface IObjStructFormat0
 {
@@ -31,4 +33,9 @@ public interface IObjStructFormat0
 	flase if primitive data. False means it is instance of
 	{@link IObjStructFormat0Value} */
 	public default boolean isSignal(){ return this instanceof IObjStructFormat0Value; };
+	/** Tests if exactly same type and value
+	@param x what to compare with. 
+	@return true if same type and value
+	*/
+	public boolean equalsTo(IObjStructFormat0 x);
 };

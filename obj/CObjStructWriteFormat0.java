@@ -43,6 +43,8 @@ public class CObjStructWriteFormat0 extends AStructWriteFormatBase0
 		this.max_supported_name_length=max_supported_name_length;
 		
 		stream = new ArrayList<IObjStructFormat0>();
+		
+		initializeToSupportedLimits();
 	};
 	/* ***********************************************************************
 		

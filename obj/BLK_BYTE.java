@@ -25,4 +25,10 @@ public final class BLK_BYTE extends AByteValue implements IObjStructFormat0
 	};
 	public String toString(){ return "BLK_BYTE("+v+")";};
 	@Override public byte byteValue(){ return v; };
+	@Override public boolean equalsTo(IObjStructFormat0 x)
+	{
+		if (x==null) return false;
+		if (!(x instanceof BLK_BYTE)) return false;
+		return ((BLK_BYTE)x).v == v;
+	};
 };

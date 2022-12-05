@@ -22,7 +22,13 @@ public final class BLK_STRING  extends ACharValue implements IObjStructFormat0
 	public static BLK_STRING valueOf(char v)
 	{
 		return INSTANCE[(int)v-Character.MIN_VALUE];
-	};
+	};	
 	public String toString(){ return "BLK_STRING("+v+")";};
 	@Override public char charValue(){ return v; };
+	@Override public boolean equalsTo(IObjStructFormat0 x)
+	{
+		if (x==null) return false;
+		if (!(x instanceof BLK_STRING)) return false;
+		return ((BLK_STRING)x).v == v;
+	};
 };

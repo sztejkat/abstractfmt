@@ -15,4 +15,10 @@ public final class BLK_BOOLEAN extends ABooleanValue implements IObjStructFormat
 	public String toString(){ return "BLK_BOOLEAN("+v+")";};
 	
 	@Override public boolean booleanValue(){ return v; };
+	@Override public boolean equalsTo(IObjStructFormat0 x)
+	{
+		if (x==null) return false;
+		if (!(x instanceof BLK_BOOLEAN)) return false;
+		return ((BLK_BOOLEAN)x).v == v;
+	};
 };

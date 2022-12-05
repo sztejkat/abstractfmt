@@ -283,15 +283,29 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 		protected abstract void writeStringImpl(char c)throws IOException;
 		
 		
-			
-	
+		
 		/* ***********************************************************************
 		
 				IStructWriteFormat
 		
-		
+				
 		************************************************************************/
-		
+		/** Tests if end-begin optimization has pending and and flushes it.
+		To be invoked before any primitive operation.
+		@throws IOException if failed 
+		*/
+		private void flushPendingEnd()throws IOException
+		{			
+		 	if (pending_end)
+		 	{
+		 		pending_end = false;
+		 		if (TRACE) TOUT.println("flushPendingEnd()->has pending, flushing it");
+		 		endImpl();
+		 	}else
+		 	{
+		 		if (TRACE) TOUT.println("flushPendingEnd()->no pending end.");
+		 	};
+		};
 		/** {@inheritDoc}
 		Calls {@link #terminatePendingBlockOperation} and {@link #leaveStruct}.
 		<p>
@@ -329,7 +343,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 			//Sanitize arguments
 		    assert(name!=null):"null name";
 		    if (TRACE) TOUT.println("begin(\""+name+"\") ENTER");
-		    if (name.length()>getMaxSignalNameLength()) throw new IllegalArgumentException("begin signal name of "+name.length()+" chars is longer than set limit "+getMaxSignalNameLength());
+		    if (name.length()>getMaxSignalNameLength()) throw new EFormatBoundaryExceeded("begin signal name of "+name.length()+" chars is longer than set limit "+getMaxSignalNameLength());
 		    
 		    validateUsable();
 		    //validat recursion levels.
@@ -364,48 +378,56 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 		{
 				if (TRACE) TOUT.println("writeBoolean("+v+")");
 				validateCanDoElementaryOp();
+				flushPendingEnd();
 				writeBooleanImpl(v);
 		};
 		@Override public void writeByte(byte v)throws IOException
 		{
 				if (TRACE) TOUT.println("writeByte("+v+")");
 				validateCanDoElementaryOp();
+				flushPendingEnd();
 				writeByteImpl(v);
 		};
 		@Override public void writeChar(char v)throws IOException
 		{
 				if (TRACE) TOUT.println("writeChar("+v+")");
 				validateCanDoElementaryOp();
+				flushPendingEnd();
 				writeCharImpl(v);
 		};
 		@Override public void writeShort(short v)throws IOException
 		{
 				if (TRACE) TOUT.println("writeShort("+v+")");
 				validateCanDoElementaryOp();
+				flushPendingEnd();
 				writeShortImpl(v);
 		};
 		@Override public void writeInt(int v)throws IOException
 		{
 				if (TRACE) TOUT.println("writeInt("+v+")");
 				validateCanDoElementaryOp();
+				flushPendingEnd();
 				writeIntImpl(v);
 		};
 		@Override public void writeLong(long v)throws IOException
 		{
 				if (TRACE) TOUT.println("writeLong("+v+")");
 				validateCanDoElementaryOp();
+				flushPendingEnd();
 				writeLongImpl(v);
 		};
 		@Override public void writeFloat(float v)throws IOException
 		{
 				if (TRACE) TOUT.println("writeFloat("+v+")");
 				validateCanDoElementaryOp();
+				flushPendingEnd();
 				writeFloatImpl(v);
 		};
 		@Override public void writeDouble(double v)throws IOException
 		{
 				if (TRACE) TOUT.println("writeDouble("+v+")");
 				validateCanDoElementaryOp();
+				flushPendingEnd();
 				writeDoubleImpl(v);
 		};
 		/* -----------------------------------------------------------------------------
@@ -428,6 +450,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 			
 			if (TRACE) TOUT.println("writeBooleanBlock(...,"+offset+","+length+") ENTER");
+			flushPendingEnd();
 			validateBooleanBlock();
 			writeBooleanBlockImpl(buffer,offset,length);
 			if (TRACE) TOUT.println("writeBooleanBlock() LEAVE");	
@@ -435,6 +458,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 		@Override public void writeBooleanBlock(boolean v)throws IOException
 		{
 			if (TRACE) TOUT.println("writeBooleanBlock("+v+") ENTER");
+			flushPendingEnd();
 			validateBooleanBlock();
 			writeBooleanBlockImpl(v);
 			if (TRACE) TOUT.println("writeBooleanBlock() LEAVE");
@@ -456,6 +480,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 			assert(length>=0):"length="+length;
 			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 			if (TRACE) TOUT.println("writeByteBlock(...,"+offset+","+length+") ENTER");
+			flushPendingEnd();
 			validateByteBlock();
 			writeByteBlockImpl(buffer,offset,length);	
 			if (TRACE) TOUT.println("writeByteBlock() LEAVE");
@@ -463,6 +488,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 		@Override public void writeByteBlock(byte v)throws IOException
 		{
 			if (TRACE) TOUT.println("writeByteBlock("+v+") ENTER");
+			flushPendingEnd();
 			validateByteBlock();
 			writeByteBlockImpl(v);
 			if (TRACE) TOUT.println("writeByteBlock() LEAVE");
@@ -482,6 +508,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 			assert(length>=0):"length="+length;
 			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 			if (TRACE) TOUT.println("writeCharBlock(...,"+offset+","+length+") ENTER");
+			flushPendingEnd();
 			validateCharBlock();
 			writeCharBlockImpl(buffer,offset,length);	
 			if (TRACE) TOUT.println("writeCharBlock() LEAVE");
@@ -489,6 +516,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 		@Override public void writeCharBlock(char v)throws IOException
 		{
 			if (TRACE) TOUT.println("writeCharBlock("+v+") ENTER");
+			flushPendingEnd();
 			validateCharBlock();
 			writeCharBlockImpl(v);
 			if (TRACE) TOUT.println("writeCharBlock() LEAVE");
@@ -509,6 +537,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 			assert(length>=0):"length="+length;
 			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 			if (TRACE) TOUT.println("writeShortBlock(...,"+offset+","+length+") ENTER");
+			flushPendingEnd();
 			validateShortBlock();
 			writeShortBlockImpl(buffer,offset,length);	
 			if (TRACE) TOUT.println("writeShortBlock() LEAVE");
@@ -516,6 +545,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 		@Override public void writeShortBlock(short v)throws IOException
 		{
 			if (TRACE) TOUT.println("writeShortBlock("+v+") ENTER");
+			flushPendingEnd();
 			validateShortBlock();
 			writeShortBlockImpl(v);
 			if (TRACE) TOUT.println("writeShortBlock() LEAVE");
@@ -536,13 +566,15 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 			assert(length>=0):"length="+length;
 			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 			if (TRACE) TOUT.println("writeIntBlock(...,"+offset+","+length+") ENTER");
+			flushPendingEnd();
 			validateIntBlock();
 			writeIntBlockImpl(buffer,offset,length);
 			if (TRACE) TOUT.println("writeIntBlock() LEAVE");	
 		};
 		@Override public void writeIntBlock(int v)throws IOException
-		{
+		{		
 			if (TRACE) TOUT.println("writeIntBlock("+v+") ENTER");
+			flushPendingEnd();
 			validateIntBlock();
 			writeIntBlockImpl(v);
 			if (TRACE) TOUT.println("writeIntBlock() LEAVE");
@@ -563,6 +595,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 			assert(length>=0):"length="+length;
 			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 			if (TRACE) TOUT.println("writeLongBlock(...,"+offset+","+length+") ENTER");
+			flushPendingEnd();
 			validateLongBlock();
 			writeLongBlockImpl(buffer,offset,length);
 			if (TRACE) TOUT.println("writeLongBlock() LEAVE");			
@@ -570,6 +603,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 		@Override public void writeLongBlock(long v)throws IOException
 		{
 			if (TRACE) TOUT.println("writeLongBlock("+v+") ENTER");
+			flushPendingEnd();
 			validateLongBlock();
 			writeLongBlockImpl(v);
 			if (TRACE) TOUT.println("writeLongBlock() LEAVE");
@@ -590,6 +624,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 			assert(length>=0):"length="+length;
 			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 			if (TRACE) TOUT.println("writeFloatBlock(...,"+offset+","+length+") ENTER");
+			flushPendingEnd();
 			validateFloatBlock();
 			writeFloatBlockImpl(buffer,offset,length);
 			if (TRACE) TOUT.println("writeFloatBlock() LEAVE");	
@@ -597,6 +632,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 		@Override public void writeFloatBlock(float v)throws IOException
 		{
 			if (TRACE) TOUT.println("writeFloatBlock("+v+") ENTER");
+			flushPendingEnd();
 			validateFloatBlock();
 			writeFloatBlockImpl(v);
 			if (TRACE) TOUT.println("writeFloatBlock() LEAVE");
@@ -617,6 +653,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 			assert(length>=0):"length="+length;
 			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 			if (TRACE) TOUT.println("writeDoubleBlock(...,"+offset+","+length+") ENTER");
+			flushPendingEnd();
 			validateDoubleBlock();
 			writeDoubleBlockImpl(buffer,offset,length);
 			if (TRACE) TOUT.println("writeDoubleBlock() LEAVE");	
@@ -624,6 +661,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 		@Override public void writeDoubleBlock(double v)throws IOException
 		{
 			if (TRACE) TOUT.println("writeDoubleBlock("+v+") ENTER");
+			flushPendingEnd();
 			validateDoubleBlock();
 			writeDoubleBlockImpl(v);
 			if (TRACE) TOUT.println("writeDoubleBlock() LEAVE");
@@ -646,6 +684,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 			assert(length>=0):"length="+length;
 			assert(characters.length()<=offset+length):"Out of buffer operation: characters.length="+characters.length()+", offset="+offset+", length="+length;
 			if (TRACE) TOUT.println("writeString(...,"+offset+","+length+") ENTER");
+			flushPendingEnd();
 			validateStringBlock();
 			writeStringImpl(characters,offset,length);	
 			if (TRACE) TOUT.println("writeString() LEAVE");
@@ -653,6 +692,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 		@Override public void writeString(char c)throws IOException
 		{
 			if (TRACE) TOUT.println("writeString("+c+") ENTER");
+			flushPendingEnd();
 			validateStringBlock();
 			writeStringImpl(c);
 			if (TRACE) TOUT.println("writeString() LEAVE");
@@ -705,12 +745,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 		{			
 			if (TRACE) TOUT.println("flush() ENTER");
 			//handle end-begin optimization
-			if (pending_end)
-			{
-				pending_end = false;
-				if (TRACE) TOUT.println("flush(), pending end->endImpl()");
-				endImpl();
-			};
+			flushPendingEnd();
 			//do low level flushing.
 			if (TRACE) TOUT.println("flush()->fluhsImpl()");
 			flushImpl();

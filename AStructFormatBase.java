@@ -186,7 +186,7 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 		/* ----------------------------------------------------------------
 					Block state validation and managment
 		----------------------------------------------------------------*/
-		/** Ensures that elementary primitive operations are allowed
+		/** Ensures that elementary primitive operations are allowed.
 		@throws EClosed if already closed
 		@throws ENotOpen if not open yet.
 		@throws IllegalStateException if not allowed.
@@ -237,7 +237,6 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 				if (TRACE) TOUT.println("terminatePendingBlockOperation(), no block in progress LEAVE");
 			}
 		};
-		
 		/** Validates if can do this block operation and initializes it if necessary
 		@throws IOException if stream is not open/closed or low level failed.
 		@throws IllegalStateException if can't do this block now.

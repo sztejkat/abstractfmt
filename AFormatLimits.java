@@ -75,7 +75,7 @@ abstract class AFormatLimits implements IFormatLimits,Closeable
 	    */	    
 	    protected void enterStruct()throws EFormatBoundaryExceeded
 	    {
-	       if (TRACE) TOUT.println("enterStruct() @current_recursion_depth="+current_recursion_depth);
+	       if (TRACE) TOUT.println("enterStruct() @current_recursion_depth="+current_recursion_depth+" max_struct_recursion="+max_struct_recursion);
 	       if (max_struct_recursion!=-1)
 	       {
 	       		if (current_recursion_depth>=max_struct_recursion) throw new EFormatBoundaryExceeded("maximum structure recursion depth of "+max_struct_recursion+" is exceeded");

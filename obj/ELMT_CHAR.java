@@ -25,4 +25,10 @@ public final class ELMT_CHAR extends ACharValue implements IObjStructFormat0
 	};
 	public String toString(){ return "ELMT_CHAR("+v+")";};
 	@Override public char charValue(){ return v; };
+	@Override public boolean equalsTo(IObjStructFormat0 x)
+	{
+		if (x==null) return false;
+		if (!(x instanceof ELMT_CHAR)) return false;
+		return ((ELMT_CHAR)x).v == v;
+	};
 };

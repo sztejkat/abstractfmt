@@ -131,7 +131,7 @@
 	The side effects of those requirements are:
 	<ul>
 		<li>Once primitive sequence operation of type T[] is initialized only that operation
-		and signal operations can be used. All other operations are prohibitted and
+		and signal operations (both "end" and "begin") can be used. All other operations are prohibitted and
 		must throw <code>IllegalStateException</code>;</li>
 		<li>One can't write two sequences, either same type or another, without injecting
 		a signal between them. Especially this structure:
@@ -174,7 +174,25 @@
 					sequence double []
 			<i>end signal</i>
 		</pre>
-		This is intentional.
+		and the structure:
+		<pre>
+			struct{
+					double []
+					double []
+					}
+		</pre>
+		<u>can</u> be written as:
+		<pre>
+			<i>begin signal</i>
+					sequence double []
+					<i>begin signal</i>
+					sequence double []
+					<i>end signal</i>
+			<i>end signal</i>
+		</pre>
+		altough it is not recommended due to lack of clarity.
+		<p>
+		All those variants are intentional.
 		</li>
 	</ul>
 		

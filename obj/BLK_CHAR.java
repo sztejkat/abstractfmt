@@ -25,4 +25,10 @@ public final class BLK_CHAR extends ACharValue implements IObjStructFormat0
 	};
 	public String toString(){ return "BLK_CHAR("+v+")";};
 	@Override public char charValue(){ return v; };
+	@Override public boolean equalsTo(IObjStructFormat0 x)
+	{
+		if (x==null) return false;
+		if (!(x instanceof BLK_CHAR)) return false;
+		return ((BLK_CHAR)x).v == v;
+	};
 };

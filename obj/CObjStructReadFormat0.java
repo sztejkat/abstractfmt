@@ -52,6 +52,8 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 		this.stream = new CRollbackIterator<IObjStructFormat0>(stream);
 		this.max_supported_recursion_depth=max_supported_recursion_depth;
 		this.max_supported_name_length=max_supported_name_length;
+		
+		initializeToSupportedLimits();
 	};
 	/* ***********************************************************************
 		

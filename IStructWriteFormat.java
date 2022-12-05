@@ -28,7 +28,7 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	@param name non null name of a structure which now begins.
 			
 	@throws AssertionError if <code>name</code> is null.
-	@throws IllegalArgumentException if name of signal is too long.
+	@throws EFormatBoundaryExceeded if name of signal is too long.
 		See {@link IFormatLimits#getMaxSignalNameLength}
 	@throws EFormatBoundaryExceeded if structure recursion depth control is enabled
 		and this limit is exceeded. See {@link IFormatLimits#setMaxStructRecursionDepth}
