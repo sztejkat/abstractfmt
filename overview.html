@@ -127,7 +127,7 @@
     don't care about the record, but You can't recognize it because it is from a newer class file version than
     Your code knows about.
     <p>
-    I don't like it case. Especially because I had to write once a code to extract some data from
+    I don't like it. Especially because I had to write once a code to extract some data from
     ASCII human readable format which was made around lines:
     <pre>
     ELEMENT <i>name</i>,<i>type</i>,<i>shapes count</i>,<i>attributes count</i>
@@ -138,7 +138,7 @@
     MULTILINE_ATTRIBUTE <i>name</i>,<i>lines</i>   |+ those are possible atrribute formats.
     <i>text</i>                             /
     </pre>
-    to just extract a <u>single attribute</u> for each of elements.
+    to just extract a <u>single attribute</u> from each of shapes.
     <p>
     Can You do it without parsing the shape definitions?
 
@@ -147,7 +147,7 @@
     In the C/C++ word the 99% of cracks and hacks are about <i>exceeding data boundaries</i>. Reading past the
     block, writing past the buffer and etc. I don't like it.
     <p>
-    And again, having blocks of data allows You to implement them in such a way, that they will simply complain
+    And again, having named (or un-named, it doesn't matter) blocks of data allows You to implement them in such a way, that they will simply complain
     if You read past the end of it. You can read whatever is <u>inside a block</u>, but reading across the block
     boundary may be detected and an exception may be thrown.
 
@@ -176,7 +176,8 @@
     Why not let it to be infinite?
 
     <p>
-    <i>Note: Serialization can't live infinitely long. It leaks memory on both ends and leaks reference identifiers.
+    <i>Note: Standard JAVA serialization can't live infinitely long. I was very dissapointed to find that it <u>by design</u>
+    leaks memory on both ends and also leaks reference identifiers.
     And obviously it can't transfer infinite arrays because it transfers objects which do reside in RAM.</i>
 
 
@@ -212,7 +213,7 @@
     There is no adjustable size limit. According to contract the max length of string is 64k <u>bytes</u>.
     Notice: <u>bytes</u>. Not characters. Bytes. After a hard to predict UTF-8 encoding.
     <p>
-    This is bad i two ways: first You can't store all strings You like. And second, You must be <u>always
+    This is bad in two ways: first You can't store all strings You like. And second, You must be <u>always
     prepared</u> to read 64k bytes.
     <p>
     Removing the upper limit is <i>easy</i>. We already break the contract not encoding it in a binary
