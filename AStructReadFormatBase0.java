@@ -280,21 +280,30 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 		@throws EFormatBoundaryExceeded if name length is exceeded. */
 		protected String nextImpl()throws IOException
 		{
+			if (TRACE) TOUT.println("nextImpl() ENTER");
 			//check if we have an end-begin optimization in progress?
 			if (begin_pending)
 			{
 					 begin_pending = false;
-					 return pickLastSignalName();
+					 final String signame = pickLastSignalName(); 
+					 if (TRACE) TOUT.println("nextImpl(), picking pednging begin \""+signame+" LEAVE");
+					 return signame;
 			}else
 			{
 				//ask implementation and deal with state machinery.
 				switch(readSignal())
 				{
 						case SIG_BEGIN:
-								return pickLastSignalName();
+								{
+									final String signame = pickLastSignalName();
+									if (TRACE) TOUT.println("nextImpl(), SIG_BEGIN \""+signame+" LEAVE");
+									return signame;
+								}
 						case SIG_END:
+								if (TRACE) TOUT.println("nextImpl()=null, SIG_END  LEAVE");
 								return null;
 						case SIG_END_BEGIN:
+								if (TRACE) TOUT.println("nextImpl()=null, SIG_END_BEGIN, setting up pedning begin LEAVE");
 								begin_pending = true;
 								return null;
 						default: throw new AssertionError("unkown enum");
@@ -318,8 +327,8 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 			{
 				if (TRACE) TOUT.println("next() signal=\""+signal+"\", begin");
 				//Assert if name length check-up was NOT done by implementation?
-				assert(signal.length()>getMaxSignalNameLength()):
-					"Signal name length is beyond set limit. Subclass "+this.getClass()+" failed to implement contract.";
+				assert(signal.length()<=getMaxSignalNameLength()):
+					"Signal name length "+signal.length()+" is beyond set limit "+getMaxSignalNameLength()+" Subclass "+this.getClass()+" failed to implement readSignal() contract?";
 				//validate and track recursin depth
 				enterStruct();
 			}else

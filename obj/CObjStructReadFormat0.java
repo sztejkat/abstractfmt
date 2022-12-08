@@ -1,4 +1,5 @@
 package sztejkat.abstractfmt.obj;
+import sztejkat.abstractfmt.logging.SLogging;
 import sztejkat.abstractfmt.AStructReadFormatBase0;
 import sztejkat.abstractfmt.EUnexpectedEof;
 import sztejkat.abstractfmt.ENoMoreData;
@@ -24,7 +25,10 @@ import java.io.IOException;
 */
 public class CObjStructReadFormat0 extends AStructReadFormatBase0 
 {			
-			
+		 private static final long TLEVEL = SLogging.getDebugLevelForClass(CObjStructReadFormat0.class);
+         private static final boolean TRACE = (TLEVEL!=0);
+         private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("CObjStructReadFormat0.",AStructReadFormatBase0.class) : null;
+	
 				/** A collection to which objects representing
 				stream operations are added. */
 				public final CRollbackIterator<IObjStructFormat0> stream;
@@ -69,15 +73,17 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 	};
 	@Override protected TSignal readSignal()throws IOException
 	{
+		if (TRACE) TOUT.println("readSignal() ENTER");
 		while(stream.hasNext())
 		{
 			IObjStructFormat0 item = stream.next();
+			if (TRACE) TOUT.println("readSignal() item="+item);
 			if (item instanceof SIG_BEGIN)
 			{
 				 String n = ((SIG_BEGIN)item).name;
 				 validateName(n);
 			     last_signal_name = n; 
-				 return TSignal.SIG_END;
+				 return TSignal.SIG_BEGIN;
 			};
 			if (item instanceof SIG_END_BEGIN)
 			{
