@@ -15,15 +15,15 @@ import java.util.Iterator;
 */
 public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 {
-	
-				/** Just a convinience implementation, if for the future I would have to
+				
+					/** Just a convinience implementation, if for the future I would have to
 					change it or modify */
 					private static final class DUT extends CObjStructReadFormat0
 					{
 						public DUT(Iterator<IObjStructFormat0> stream,
 											  int max_supported_recursion_depth,
 											  int max_supported_name_length
-											  ){ super(stream,
+											  ){ super( new CPollableIterator<IObjStructFormat0>(stream,false),
 														max_supported_recursion_depth,
 														max_supported_name_length
 														);};

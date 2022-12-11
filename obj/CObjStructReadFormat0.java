@@ -6,6 +6,9 @@ import sztejkat.abstractfmt.ENoMoreData;
 import sztejkat.abstractfmt.EFormatBoundaryExceeded;
 import sztejkat.abstractfmt.IFormatLimits;
 import sztejkat.abstractfmt.logging.SLogging;
+import sztejkat.abstractfmt.utils.IRollbackPollable;
+import sztejkat.abstractfmt.utils.IPollable;
+import sztejkat.abstractfmt.utils.CRollbackPollable;
 import java.util.Iterator;
 import java.io.IOException;
 /**
@@ -31,7 +34,7 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 	
 				/** A collection to which objects representing
 				stream operations are added. */
-				public final CRollbackIterator<IObjStructFormat0> stream;
+				public final IRollbackPollable<IObjStructFormat0> stream;
 				/** A bounadry of format */
 				private final int max_supported_recursion_depth;
 				/** A bounadry of format */
@@ -39,12 +42,11 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 				/** Used by {@link #pickLastSignalName} */
 				private String last_signal_name;
 	/** Creates
-	
-	@param stream stream to read content from, non null.
+	@param stream stream to read content from, non null. 
 	@param max_supported_recursion_depth see {@link IFormatLimits#getMaxSupportedStructRecursionDepth}
 	@param max_supported_name_length see {@link IFormatLimits#getMaxSupportedSignalNameLength}
     */
-	public CObjStructReadFormat0(Iterator<IObjStructFormat0> stream,
+	public CObjStructReadFormat0(IRollbackPollable<IObjStructFormat0> stream,
 								  int max_supported_recursion_depth,
 								  int max_supported_name_length
 								  )
@@ -53,11 +55,26 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 		assert(max_supported_recursion_depth>=-1);
 		assert(stream!=null);
 		
-		this.stream = new CRollbackIterator<IObjStructFormat0>(stream);
+		this.stream = stream;
 		this.max_supported_recursion_depth=max_supported_recursion_depth;
 		this.max_supported_name_length=max_supported_name_length;
 		
 		initializeToSupportedLimits();
+	};
+	/** Creates
+	@param stream stream to read content from, non null. 
+	@param max_supported_recursion_depth see {@link IFormatLimits#getMaxSupportedStructRecursionDepth}
+	@param max_supported_name_length see {@link IFormatLimits#getMaxSupportedSignalNameLength}
+    */
+	public CObjStructReadFormat0(IPollable<IObjStructFormat0> stream,
+								  int max_supported_recursion_depth,
+								  int max_supported_name_length
+								  )
+	{
+		this( new CRollbackPollable<IObjStructFormat0>(stream),
+				max_supported_recursion_depth,
+				max_supported_name_length
+				);
 	};
 	/* ***********************************************************************
 		
@@ -74,9 +91,9 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 	@Override protected TSignal readSignal()throws IOException
 	{
 		if (TRACE) TOUT.println("readSignal() ENTER");
-		while(stream.hasNext())
+		IObjStructFormat0 item;
+		while((item=stream.poll())!=null)
 		{
-			IObjStructFormat0 item = stream.next();
 			if (TRACE) TOUT.println("readSignal() item="+item);
 			if (item instanceof SIG_BEGIN)
 			{
@@ -114,9 +131,8 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 	*/
 	private IObjStructFormat0Value nextValue()throws IOException
 	{
-		if (!stream.hasNext()) throw new EUnexpectedEof();
-		IObjStructFormat0 item = stream.next();
-		assert(item!=null);
+		IObjStructFormat0 item = stream.poll();
+		if (item==null) throw new EUnexpectedEof();
 		if (item.isSignal())
 		{
 				stream.rollback();
@@ -169,12 +185,12 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 	private IObjStructFormat0Value nextBlockValue(int r)throws IOException
 	{
 		//See block API for details.
-		if (!stream.hasNext())
+		IObjStructFormat0 item =stream.poll();
+		if (item==null)
 		{
 			if (r==0) throw new EUnexpectedEof();
 		 	else return null;
 		};
-		IObjStructFormat0 item = stream.next();
 		assert(item!=null);
 		if (item.isSignal())
 		{

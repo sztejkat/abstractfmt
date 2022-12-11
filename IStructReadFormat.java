@@ -73,6 +73,10 @@ import java.io.IOException;
 	<h1>Thread safety</h1>
 	Formats are <u>not thread safe</u>.	Yes, this is intentional. Check package description
 	for detailed explanation.
+	
+	<h1>IOException</h1>
+	Whenever this contract states that something <i>throws IOException</i> it is strictly
+	required that a specific exception is throws for a specific reason.
 */
 public interface IStructReadFormat extends Closeable, IFormatLimits
 {	
@@ -90,7 +94,7 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
 			    string if read "begin" signal. Each instance of 
 				"begin" signal is allowed to return different instance
 				of a <code>String</code>, even tough it is carrying an identical text.
-		@throws IOException if failed due to any reason.
+		@throws IOException if failed due to any reason. 
 		@throws EEof of specific subclass according to <a href="#TEMPEOF">eof handling model</a>.
 		@throws EFormatBoundaryExceeded if either name is longer than
 			{@link IFormatLimits#getMaxSignalNameLength} or 

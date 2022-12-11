@@ -1,5 +1,6 @@
 package sztejkat.abstractfmt;
 import sztejkat.abstractfmt.obj.*;
+import sztejkat.abstractfmt.utils.CAddablePollableArrayList;
 import org.junit.Test;
 import org.junit.Assert;
 import java.io.IOException;
@@ -18,13 +19,19 @@ public class Test_AStructWriteFormatBase0 extends sztejkat.abstractfmt.test.ATes
 					change it or modify */
 					private static final class DUT extends CObjStructWriteFormat0
 					{
+								/** A stream body */
+								public final CAddablePollableArrayList<IObjStructFormat0> pollable;
+						@SuppressWarnings("unchecked")
 						public DUT(boolean end_begin_enabled,
 											  int max_supported_recursion_depth,
 											  int max_supported_name_length
 											  ){ super(end_begin_enabled,
 														max_supported_recursion_depth,
-														max_supported_name_length
-														);};
+														max_supported_name_length,
+														new CAddablePollableArrayList<IObjStructFormat0>()
+														);
+											    this.pollable = (CAddablePollableArrayList<IObjStructFormat0>)stream;
+											  };
 								int _openImpl;	
 						@Override protected void openImpl()throws IOException{_openImpl++;};
 								int _closeImpl;
@@ -84,9 +91,9 @@ public class Test_AStructWriteFormatBase0 extends sztejkat.abstractfmt.test.ATes
 				d.begin("sandy");
 				d.end();
 			d.close();			
-			printStream(d.stream);
+			printStream(d.pollable);
 			
-			Iterator<IObjStructFormat0> I = d.stream.iterator();
+			Iterator<IObjStructFormat0> I = d.pollable.iterator();
 			Assert.assertTrue(new SIG_BEGIN("andy").equalsTo(I.next()));
 			Assert.assertTrue(new SIG_END_BEGIN("sandy").equalsTo(I.next()));
 			Assert.assertTrue(SIG_END.INSTANCE.equalsTo(I.next()));
@@ -105,9 +112,9 @@ public class Test_AStructWriteFormatBase0 extends sztejkat.abstractfmt.test.ATes
 				d.begin("sandy");
 				d.end();
 			d.close();			
-			printStream(d.stream);
+			printStream(d.pollable);
 			
-			Iterator<IObjStructFormat0> I = d.stream.iterator();
+			Iterator<IObjStructFormat0> I = d.pollable.iterator();
 			Assert.assertTrue(new SIG_BEGIN("andy").equalsTo(I.next()));
 			Assert.assertTrue(SIG_END.INSTANCE.equalsTo(I.next()));
 			Assert.assertTrue(new SIG_BEGIN("sandy").equalsTo(I.next()));
@@ -132,9 +139,9 @@ public class Test_AStructWriteFormatBase0 extends sztejkat.abstractfmt.test.ATes
 				d.begin("sandy");				
 				d.end();
 			d.close();			
-			printStream(d.stream);
+			printStream(d.pollable);
 			
-			Iterator<IObjStructFormat0> I = d.stream.iterator();
+			Iterator<IObjStructFormat0> I = d.pollable.iterator();
 			Assert.assertTrue(new SIG_BEGIN("andy").equalsTo(I.next()));
 			Assert.assertTrue(new SIG_END_BEGIN("sandy").equalsTo(I.next()));
 			Assert.assertTrue(new SIG_END_BEGIN("sandy").equalsTo(I.next()));
@@ -161,9 +168,9 @@ public class Test_AStructWriteFormatBase0 extends sztejkat.abstractfmt.test.ATes
 				d.begin("sandy");				
 				d.end();
 			d.close();			
-			printStream(d.stream);
+			printStream(d.pollable);
 			
-			Iterator<IObjStructFormat0> I = d.stream.iterator();
+			Iterator<IObjStructFormat0> I = d.pollable.iterator();
 			Assert.assertTrue(new SIG_BEGIN("andy").equalsTo(I.next()));
 			Assert.assertTrue(new SIG_END_BEGIN("sandy").equalsTo(I.next()));
 			Assert.assertTrue(new SIG_END_BEGIN("sandy").equalsTo(I.next()));
@@ -189,9 +196,9 @@ public class Test_AStructWriteFormatBase0 extends sztejkat.abstractfmt.test.ATes
 				d.begin("randy");
 				d.end();
 			d.close();			
-			printStream(d.stream);
+			printStream(d.pollable);
 			
-			Iterator<IObjStructFormat0> I = d.stream.iterator();
+			Iterator<IObjStructFormat0> I = d.pollable.iterator();
 			Assert.assertTrue(new SIG_BEGIN("andy").equalsTo(I.next()));
 			Assert.assertTrue(new SIG_END_BEGIN("sandy").equalsTo(I.next()));
 			Assert.assertTrue(new SIG_BEGIN("jonny").equalsTo(I.next()));
@@ -219,9 +226,9 @@ public class Test_AStructWriteFormatBase0 extends sztejkat.abstractfmt.test.ATes
 						System.out.println(ex);
 					};
 			d.close();			
-			printStream(d.stream);
+			printStream(d.pollable);
 			
-			Iterator<IObjStructFormat0> I = d.stream.iterator();
+			Iterator<IObjStructFormat0> I = d.pollable.iterator();
 			Assert.assertTrue(new SIG_BEGIN("andy").equalsTo(I.next()));
 			Assert.assertTrue(SIG_END.INSTANCE.equalsTo(I.next()));
 			Assert.assertTrue(!I.hasNext());
@@ -243,9 +250,9 @@ public class Test_AStructWriteFormatBase0 extends sztejkat.abstractfmt.test.ATes
 						System.out.println(ex);
 					};
 			d.close();			
-			printStream(d.stream);
+			printStream(d.pollable);
 			
-			Iterator<IObjStructFormat0> I = d.stream.iterator();
+			Iterator<IObjStructFormat0> I = d.pollable.iterator();
 			Assert.assertTrue(!I.hasNext());
 		leave();
 	}; 
@@ -264,9 +271,9 @@ public class Test_AStructWriteFormatBase0 extends sztejkat.abstractfmt.test.ATes
 						System.out.println(ex);
 					};
 			d.close();			
-			printStream(d.stream);
+			printStream(d.pollable);
 			
-			Iterator<IObjStructFormat0> I = d.stream.iterator();
+			Iterator<IObjStructFormat0> I = d.pollable.iterator();
 			Assert.assertTrue(new SIG_BEGIN("rolly").equalsTo(I.next()));			
 			Assert.assertTrue(!I.hasNext());
 		leave();
@@ -288,9 +295,9 @@ public class Test_AStructWriteFormatBase0 extends sztejkat.abstractfmt.test.ATes
 						System.out.println(ex);
 					};
 			d.close();			
-			printStream(d.stream);
+			printStream(d.pollable);
 			
-			Iterator<IObjStructFormat0> I = d.stream.iterator();
+			Iterator<IObjStructFormat0> I = d.pollable.iterator();
 			Assert.assertTrue(new SIG_BEGIN("rorry").equalsTo(I.next()));
 			Assert.assertTrue(SIG_END.INSTANCE.equalsTo(I.next()));
 			Assert.assertTrue(new SIG_BEGIN("morice").equalsTo(I.next()));
@@ -314,9 +321,9 @@ public class Test_AStructWriteFormatBase0 extends sztejkat.abstractfmt.test.ATes
 						System.out.println(ex);
 					};
 			d.close();			
-			printStream(d.stream);
+			printStream(d.pollable);
 			
-			Iterator<IObjStructFormat0> I = d.stream.iterator();
+			Iterator<IObjStructFormat0> I = d.pollable.iterator();
 			Assert.assertTrue(new SIG_BEGIN("rol").equalsTo(I.next()));			
 			Assert.assertTrue(!I.hasNext());
 		leave();
@@ -339,9 +346,9 @@ public class Test_AStructWriteFormatBase0 extends sztejkat.abstractfmt.test.ATes
 				d.writeFloat(1.44f);
 				d.writeDouble(33e3);
 			d.close();			
-			printStream(d.stream);
+			printStream(d.pollable);
 			
-			Iterator<IObjStructFormat0> I = d.stream.iterator();
+			Iterator<IObjStructFormat0> I = d.pollable.iterator();
 			Assert.assertTrue(ELMT_BOOLEAN.valueOf(false).equalsTo(I.next()));
 			Assert.assertTrue(ELMT_BYTE.valueOf((byte)-3).equalsTo(I.next()));
 			Assert.assertTrue(ELMT_CHAR.valueOf('x').equalsTo(I.next()));
@@ -370,9 +377,9 @@ public class Test_AStructWriteFormatBase0 extends sztejkat.abstractfmt.test.ATes
 				d.end();
 				d.writeBoolean(true);
 			d.close();			
-			printStream(d.stream);
+			printStream(d.pollable);
 			
-			Iterator<IObjStructFormat0> I = d.stream.iterator();
+			Iterator<IObjStructFormat0> I = d.pollable.iterator();
 			Assert.assertTrue(ELMT_BOOLEAN.valueOf(false).equalsTo(I.next()));
 			Assert.assertTrue(new SIG_BEGIN("array").equalsTo(I.next()));
 				Assert.assertTrue(ELMT_BOOLEAN.valueOf(true).equalsTo(I.next()));
@@ -403,9 +410,9 @@ public class Test_AStructWriteFormatBase0 extends sztejkat.abstractfmt.test.ATes
 				d.end();
 				d.writeBoolean(false);
 			d.close();			
-			printStream(d.stream);
+			printStream(d.pollable);
 			
-			Iterator<IObjStructFormat0> I = d.stream.iterator();
+			Iterator<IObjStructFormat0> I = d.pollable.iterator();
 			Assert.assertTrue(ELMT_BOOLEAN.valueOf(false).equalsTo(I.next()));
 			Assert.assertTrue(new SIG_BEGIN("array").equalsTo(I.next()));
 				Assert.assertTrue(BLK_BOOLEAN.valueOf(true).equalsTo(I.next()));
@@ -440,9 +447,9 @@ public class Test_AStructWriteFormatBase0 extends sztejkat.abstractfmt.test.ATes
 				d.end();
 				d.writeDouble(44445);
 			d.close();			
-			printStream(d.stream);
+			printStream(d.pollable);
 			
-			Iterator<IObjStructFormat0> I = d.stream.iterator();
+			Iterator<IObjStructFormat0> I = d.pollable.iterator();
 			Assert.assertTrue(BLK_BOOLEAN.valueOf(true).equalsTo(I.next()));
 			Assert.assertTrue(BLK_BOOLEAN.valueOf(false).equalsTo(I.next()));
 			Assert.assertTrue(BLK_BOOLEAN.valueOf(false).equalsTo(I.next()));

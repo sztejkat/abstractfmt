@@ -105,7 +105,7 @@ import java.io.IOException;
 	<pre>
 	&#64;org.junit.runner.RunWith(org.junit.runners.Suite.class)
 	//Here You list test cases You like to apply to the implementation.
-	&#64;org.junit.runners.Suite.SuiteClass{[ATestCaseXXX.class,ATestCaseXXX_2.class....]}	
+	&#64;org.junit.runners.Suite.SuiteClasses({ATestCaseXXX.class,ATestCaseXXX_2.class....})	
 	public class TestXXX extends ATest
 	{
 		&#64;org.junit.BeforeClass public static void armImplementation()
@@ -142,6 +142,8 @@ public class AInterOpTestCase<R extends IStructReadFormat,
 		};
 		
 		/** Just calls <code>getFactory().createTestDevice(temp_folder)</code>
+		after ensuring that temp folder do exist.
+		<p>
 		Used to save on typing.
 		@param <R> see {@link IInteropTestDeviceFactory#createTestDevice}
 		@param <W> --//--
@@ -153,6 +155,41 @@ public class AInterOpTestCase<R extends IStructReadFormat,
 			    W extends IStructWriteFormat>
 			    CPair<R,W> createTestDevice(File temp_folder)throws IOException
 		{
+				assert(temp_folder!=null);
+				if (!temp_folder.exists()) temp_folder.mkdirs();
 				return getFactory().createTestDevice(temp_folder);
+		};
+					/** Used to generate per-test folder names if we have a problem with stack */
+					private static int name_generator;
+		/** Calls <code>getFactory().createTestDevice(temp_folder)</code>.
+		It is deducing a temp folder from current class simple name followed
+		by "-temp" postfix and a sub-folder made of a caller method name.
+		<p>
+		Will print on <code>System.out</code> the message indicating what file it is using.
+		@param <R> see {@link IInteropTestDeviceFactory#createTestDevice}
+		@param <W> --//--
+		@return --//--
+		@throws IOException --//--
+		*/
+		protected final <R extends IStructReadFormat,
+			    W extends IStructWriteFormat>
+			    CPair<R,W> createTestDevice()throws IOException
+		{
+				String base = this.getClass().getSimpleName()+"-temp/";
+				String tail;
+				{
+					StackTraceElement [] stack = Thread.currentThread().getStackTrace();
+					if ((stack==null)||(stack.length<3))
+					{
+						System.out.println("some stack info missing, generating random name");
+						tail = Integer.toString(name_generator++);
+					}else
+					{
+						tail = stack[2].getMethodName();
+					}
+				}
+				final File temp_folder = new File(base+tail);
+				System.out.println("test is using temp_folder \""+temp_folder.getCanonicalPath()+"\"");
+				return createTestDevice(temp_folder);
 		};
 };

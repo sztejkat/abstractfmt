@@ -2,6 +2,8 @@ package sztejkat.abstractfmt.obj;
 import sztejkat.abstractfmt.AStructWriteFormatBase0;
 import sztejkat.abstractfmt.IFormatLimits;
 import sztejkat.abstractfmt.logging.SLogging;
+import sztejkat.abstractfmt.utils.IAddable;
+import sztejkat.abstractfmt.utils.CAddablePollableArrayList;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.ArrayList;
@@ -15,7 +17,7 @@ public class CObjStructWriteFormat0 extends AStructWriteFormatBase0
 			
 				/** A collection to which objects representing
 				stream operations are added. */
-				public final Collection<IObjStructFormat0> stream;
+				public final IAddable<IObjStructFormat0> stream;
 				/** Controls end-begin optimization */
 				private final boolean end_begin_enabled;
 				/** A bounadry of format */
@@ -29,22 +31,43 @@ public class CObjStructWriteFormat0 extends AStructWriteFormatBase0
 		is left and a pair of signals {@link SIG_END}+{@link SIG_BEGIN} is used.
 	@param max_supported_recursion_depth see {@link IFormatLimits#getMaxSupportedStructRecursionDepth}
 	@param max_supported_name_length see {@link IFormatLimits#getMaxSupportedSignalNameLength}
+	@param stream a stream to add data to.
+    */
+	public CObjStructWriteFormat0(boolean end_begin_enabled,
+								  int max_supported_recursion_depth,
+								  int max_supported_name_length,
+								  IAddable<IObjStructFormat0> stream
+								  )
+	{
+		assert(max_supported_name_length>0);
+		assert(max_supported_recursion_depth>=-1);
+		assert(stream!=null);
+		this.end_begin_enabled = end_begin_enabled;
+		this.max_supported_recursion_depth=max_supported_recursion_depth;
+		this.max_supported_name_length=max_supported_name_length;
+		this.stream = stream;
+		initializeToSupportedLimits();
+	};
+	/** Creates, using {@link CAddablePollableArrayList} as a stream back-end  
+		and sets it to {@link #stream}.
+	@param end_begin_enabled if true the {@link SIG_END_BEGIN} is used
+		to implement {@link #endBeginImpl}. If false default implementation
+		is left and a pair of signals {@link SIG_END}+{@link SIG_BEGIN} is used.
+	@param max_supported_recursion_depth see {@link IFormatLimits#getMaxSupportedStructRecursionDepth}
+	@param max_supported_name_length see {@link IFormatLimits#getMaxSupportedSignalNameLength}
     */
 	public CObjStructWriteFormat0(boolean end_begin_enabled,
 								  int max_supported_recursion_depth,
 								  int max_supported_name_length
 								  )
 	{
-		assert(max_supported_name_length>0);
-		assert(max_supported_recursion_depth>=-1);
-		
-		this.end_begin_enabled = end_begin_enabled;
-		this.max_supported_recursion_depth=max_supported_recursion_depth;
-		this.max_supported_name_length=max_supported_name_length;
-		
-		stream = new ArrayList<IObjStructFormat0>();
-		
-		initializeToSupportedLimits();
+		this(
+			end_begin_enabled,
+			max_supported_recursion_depth,
+			max_supported_name_length,
+			new CAddablePollableArrayList<IObjStructFormat0>()
+			);
+			
 	};
 	/* ***********************************************************************
 		
