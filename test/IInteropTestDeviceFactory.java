@@ -1,6 +1,10 @@
 package sztejkat.abstractfmt.test;
 import sztejkat.abstractfmt.IStructReadFormat;
 import sztejkat.abstractfmt.IStructWriteFormat;
+import sztejkat.abstractfmt.ESignalCrossed;
+import sztejkat.abstractfmt.ENoMoreData;
+import sztejkat.abstractfmt.ETypeMissmatch;
+import sztejkat.abstractfmt.EBrokenFormat;
 import java.io.File;
 import java.io.IOException;
 /**
@@ -21,10 +25,10 @@ public interface IInteropTestDeviceFactory
 					<li>reader is configured in such a way, that it will be
 					ready to read data produced by writer once writer <code>flush()</code>
 					method is invoked;</li>
-					<li>any temporary data created by writer are deleted by 
-					<code>reader.close()</code>. They should <u>not</u> be deleted
-					otherwise since if test-case fails they should be available for
-					an inspection;</li>
+					<li>any temporary data created by writer are allowed to be deleted at 
+					<code>reader.close()</code>. They must <u>not</u> be deleted
+					without <code>reader.close()</code> since if test-case fails 
+					they should be available for an inspection;</li>
 				</ul>
 			@param <R>  contract. This factory may be used for 
 					some specific contract extensions too and this typed
@@ -35,4 +39,5 @@ public interface IInteropTestDeviceFactory
 		public <R extends IStructReadFormat,
 			    W extends IStructWriteFormat>
 			    CPair<R,W> createTestDevice(File temp_folder)throws IOException;
+		  
 };

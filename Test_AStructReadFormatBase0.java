@@ -144,7 +144,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 							);
 				d.open();
 				boolean [] t = new boolean [32];
-				Assert.assertTrue(d.readBooleanBlock(t,1,100)==3);
+				Assert.assertTrue(d.readBooleanBlock(t,1,30)==3);
 				Assert.assertTrue(t[1]==true);
 				Assert.assertTrue(t[2]==false);
 				Assert.assertTrue(t[3]==true);
@@ -152,7 +152,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				//Notice, according to contract -1 is retured on logic eof (signal)
 				//while physical eof is an exception
 				try{
-						d.readBooleanBlock(t,1,100);
+						d.readBooleanBlock(t,1,30);
 				Assert.fail();
 				}catch(EEof ex){ System.out.println(ex); };
 		leave();
@@ -181,13 +181,13 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
 				boolean [] t = new boolean [32];
-				Assert.assertTrue(d.readBooleanBlock(t,1,100)==3);
+				Assert.assertTrue(d.readBooleanBlock(t,1,30)==3);
 				Assert.assertTrue(t[1]==true);
 				Assert.assertTrue(t[2]==false);
 				Assert.assertTrue(t[3]==true);
-				Assert.assertTrue(d.readBooleanBlock(t,1,100)==-1);
-				Assert.assertTrue(d.readBooleanBlock(t,1,100)==-1);
-				Assert.assertTrue(d.readBooleanBlock(t,1,100)==-1);
+				Assert.assertTrue(d.readBooleanBlock(t,1,30)==-1);
+				Assert.assertTrue(d.readBooleanBlock(t,1,30)==-1);
+				Assert.assertTrue(d.readBooleanBlock(t,1,30)==-1);
 				Assert.assertTrue(null==d.next());
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
@@ -325,7 +325,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 							);
 				d.open();
 				byte [] t = new byte [32];
-				Assert.assertTrue(d.readByteBlock(t,1,100)==3);
+				Assert.assertTrue(d.readByteBlock(t,1,30)==3);
 				Assert.assertTrue(t[1]==(byte)44);
 				Assert.assertTrue(t[2]==(byte)14);
 				Assert.assertTrue(t[3]==(byte)45);
@@ -333,7 +333,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				//Notice, according to contract -1 is retured on logic eof (signal)
 				//while physical eof is an exception
 				try{
-						d.readByteBlock(t,1,100);
+						d.readByteBlock(t,1,30);
 				Assert.fail();
 				}catch(EEof ex){ System.out.println(ex); };
 		leave();
@@ -362,13 +362,13 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
 				byte [] t = new byte [32];
-				Assert.assertTrue(d.readByteBlock(t,1,100)==3);
+				Assert.assertTrue(d.readByteBlock(t,1,30)==3);
 				Assert.assertTrue(t[1]==(byte)44);
 				Assert.assertTrue(t[2]==(byte)14);
 				Assert.assertTrue(t[3]==(byte)45);
-				Assert.assertTrue(d.readByteBlock(t,1,100)==-1);
-				Assert.assertTrue(d.readByteBlock(t,1,100)==-1);
-				Assert.assertTrue(d.readByteBlock(t,1,100)==-1);
+				Assert.assertTrue(d.readByteBlock(t,1,30)==-1);
+				Assert.assertTrue(d.readByteBlock(t,1,30)==-1);
+				Assert.assertTrue(d.readByteBlock(t,1,30)==-1);
 				Assert.assertTrue(null==d.next());
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
@@ -505,7 +505,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 							);
 				d.open();
 				char [] t = new char [32];
-				Assert.assertTrue(d.readCharBlock(t,1,100)==3);
+				Assert.assertTrue(d.readCharBlock(t,1,30)==3);
 				Assert.assertTrue(t[1]==(char)44);
 				Assert.assertTrue(t[2]==(char)14);
 				Assert.assertTrue(t[3]==(char)45);
@@ -513,7 +513,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				//Notice, according to contract -1 is retured on logic eof (signal)
 				//while physical eof is an exception
 				try{
-						d.readCharBlock(t,1,100);
+						d.readCharBlock(t,1,30);
 				Assert.fail();
 				}catch(EEof ex){ System.out.println(ex); };
 		leave();
@@ -542,13 +542,13 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
 				char [] t = new char [32];
-				Assert.assertTrue(d.readCharBlock(t,1,100)==3);
+				Assert.assertTrue(d.readCharBlock(t,1,30)==3);
 				Assert.assertTrue(t[1]==(char)44);
 				Assert.assertTrue(t[2]==(char)14);
 				Assert.assertTrue(t[3]==(char)45);
-				Assert.assertTrue(d.readCharBlock(t,1,100)==-1);
-				Assert.assertTrue(d.readCharBlock(t,1,100)==-1);
-				Assert.assertTrue(d.readCharBlock(t,1,100)==-1);
+				Assert.assertTrue(d.readCharBlock(t,1,30)==-1);
+				Assert.assertTrue(d.readCharBlock(t,1,30)==-1);
+				Assert.assertTrue(d.readCharBlock(t,1,30)==-1);
 				Assert.assertTrue(null==d.next());
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
@@ -690,7 +690,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 							);
 				d.open();
 				short [] t = new short [32];
-				Assert.assertTrue(d.readShortBlock(t,1,100)==3);
+				Assert.assertTrue(d.readShortBlock(t,1,30)==3);
 				Assert.assertTrue(t[1]==44);
 				Assert.assertTrue(t[2]==14);
 				Assert.assertTrue(t[3]==45);
@@ -698,7 +698,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				//Notice, according to contract -1 is retured on logic eof (signal)
 				//while physical eof is an exception
 				try{
-						d.readShortBlock(t,1,100);
+						d.readShortBlock(t,1,30);
 				Assert.fail();
 				}catch(EEof ex){ System.out.println(ex); };
 		leave();
@@ -727,13 +727,13 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
 				short [] t = new short [32];
-				Assert.assertTrue(d.readShortBlock(t,1,100)==3);
+				Assert.assertTrue(d.readShortBlock(t,1,30)==3);
 				Assert.assertTrue(t[1]==44);
 				Assert.assertTrue(t[2]==14);
 				Assert.assertTrue(t[3]==45);
-				Assert.assertTrue(d.readShortBlock(t,1,100)==-1);
-				Assert.assertTrue(d.readShortBlock(t,1,100)==-1);
-				Assert.assertTrue(d.readShortBlock(t,1,100)==-1);
+				Assert.assertTrue(d.readShortBlock(t,1,30)==-1);
+				Assert.assertTrue(d.readShortBlock(t,1,30)==-1);
+				Assert.assertTrue(d.readShortBlock(t,1,30)==-1);
 				Assert.assertTrue(null==d.next());
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
@@ -874,7 +874,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 							);
 				d.open();
 				long [] t = new long [32];
-				Assert.assertTrue(d.readLongBlock(t,1,100)==3);
+				Assert.assertTrue(d.readLongBlock(t,1,30)==3);
 				Assert.assertTrue(t[1]==44);
 				Assert.assertTrue(t[2]==14);
 				Assert.assertTrue(t[3]==45);
@@ -882,7 +882,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				//Notice, according to contract -1 is retured on logic eof (signal)
 				//while physical eof is an exception
 				try{
-						d.readLongBlock(t,1,100);
+						d.readLongBlock(t,1,30);
 				Assert.fail();
 				}catch(EEof ex){ System.out.println(ex); };
 		leave();
@@ -911,13 +911,13 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
 				long [] t = new long [32];
-				Assert.assertTrue(d.readLongBlock(t,1,100)==3);
+				Assert.assertTrue(d.readLongBlock(t,1,30)==3);
 				Assert.assertTrue(t[1]==44);
 				Assert.assertTrue(t[2]==14);
 				Assert.assertTrue(t[3]==45);
-				Assert.assertTrue(d.readLongBlock(t,1,100)==-1);
-				Assert.assertTrue(d.readLongBlock(t,1,100)==-1);
-				Assert.assertTrue(d.readLongBlock(t,1,100)==-1);
+				Assert.assertTrue(d.readLongBlock(t,1,30)==-1);
+				Assert.assertTrue(d.readLongBlock(t,1,30)==-1);
+				Assert.assertTrue(d.readLongBlock(t,1,30)==-1);
 				Assert.assertTrue(null==d.next());
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
@@ -1058,7 +1058,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 							);
 				d.open();
 				float [] t = new float [32];
-				Assert.assertTrue(d.readFloatBlock(t,1,100)==3);
+				Assert.assertTrue(d.readFloatBlock(t,1,30)==3);
 				Assert.assertTrue(t[1]==44);
 				Assert.assertTrue(t[2]==14);
 				Assert.assertTrue(t[3]==45);
@@ -1066,7 +1066,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				//Notice, according to contract -1 is retured on logic eof (signal)
 				//while physical eof is an exception
 				try{
-						d.readFloatBlock(t,1,100);
+						d.readFloatBlock(t,1,30);
 				Assert.fail();
 				}catch(EEof ex){ System.out.println(ex); };
 		leave();
@@ -1095,13 +1095,13 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
 				float [] t = new float [32];
-				Assert.assertTrue(d.readFloatBlock(t,1,100)==3);
+				Assert.assertTrue(d.readFloatBlock(t,1,30)==3);
 				Assert.assertTrue(t[1]==44);
 				Assert.assertTrue(t[2]==14);
 				Assert.assertTrue(t[3]==45);
-				Assert.assertTrue(d.readFloatBlock(t,1,100)==-1);
-				Assert.assertTrue(d.readFloatBlock(t,1,100)==-1);
-				Assert.assertTrue(d.readFloatBlock(t,1,100)==-1);
+				Assert.assertTrue(d.readFloatBlock(t,1,30)==-1);
+				Assert.assertTrue(d.readFloatBlock(t,1,30)==-1);
+				Assert.assertTrue(d.readFloatBlock(t,1,30)==-1);
 				Assert.assertTrue(null==d.next());
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
@@ -1245,7 +1245,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 							);
 				d.open();
 				double [] t = new double [32];
-				Assert.assertTrue(d.readDoubleBlock(t,1,100)==3);
+				Assert.assertTrue(d.readDoubleBlock(t,1,30)==3);
 				Assert.assertTrue(t[1]==44);
 				Assert.assertTrue(t[2]==14);
 				Assert.assertTrue(t[3]==45);
@@ -1253,7 +1253,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				//Notice, according to contract -1 is retured on logic eof (signal)
 				//while physical eof is an exception
 				try{
-						d.readDoubleBlock(t,1,100);
+						d.readDoubleBlock(t,1,30);
 				Assert.fail();
 				}catch(EEof ex){ System.out.println(ex); };
 		leave();
@@ -1282,13 +1282,13 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
 				double [] t = new double [32];
-				Assert.assertTrue(d.readDoubleBlock(t,1,100)==3);
+				Assert.assertTrue(d.readDoubleBlock(t,1,30)==3);
 				Assert.assertTrue(t[1]==44);
 				Assert.assertTrue(t[2]==14);
 				Assert.assertTrue(t[3]==45);
-				Assert.assertTrue(d.readDoubleBlock(t,1,100)==-1);
-				Assert.assertTrue(d.readDoubleBlock(t,1,100)==-1);
-				Assert.assertTrue(d.readDoubleBlock(t,1,100)==-1);
+				Assert.assertTrue(d.readDoubleBlock(t,1,30)==-1);
+				Assert.assertTrue(d.readDoubleBlock(t,1,30)==-1);
+				Assert.assertTrue(d.readDoubleBlock(t,1,30)==-1);
 				Assert.assertTrue(null==d.next());
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
@@ -1615,7 +1615,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 							);
 				d.open();
 				int [] t = new int [32];
-				Assert.assertTrue(d.readIntBlock(t,1,100)==3);
+				Assert.assertTrue(d.readIntBlock(t,1,30)==3);
 				Assert.assertTrue(t[1]==44);
 				Assert.assertTrue(t[2]==14);
 				Assert.assertTrue(t[3]==45);
@@ -1623,7 +1623,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				//Notice, according to contract -1 is retured on logic eof (signal)
 				//while physical eof is an exception
 				try{
-						d.readIntBlock(t,1,100);
+						d.readIntBlock(t,1,30);
 				Assert.fail();
 				}catch(EEof ex){ System.out.println(ex); };
 		leave();
@@ -1652,13 +1652,13 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
 				int [] t = new int [32];
-				Assert.assertTrue(d.readIntBlock(t,1,100)==3);
+				Assert.assertTrue(d.readIntBlock(t,1,30)==3);
 				Assert.assertTrue(t[1]==44);
 				Assert.assertTrue(t[2]==14);
 				Assert.assertTrue(t[3]==45);
-				Assert.assertTrue(d.readIntBlock(t,1,100)==-1);
-				Assert.assertTrue(d.readIntBlock(t,1,100)==-1);
-				Assert.assertTrue(d.readIntBlock(t,1,100)==-1);
+				Assert.assertTrue(d.readIntBlock(t,1,30)==-1);
+				Assert.assertTrue(d.readIntBlock(t,1,30)==-1);
+				Assert.assertTrue(d.readIntBlock(t,1,30)==-1);
 				Assert.assertTrue(null==d.next());
 				Assert.assertTrue(d.readChar()=='4');
 		leave();

@@ -416,7 +416,7 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 			assert(buffer!=null):"null buffer";
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
-			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
+			assert(buffer.length>=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 			if (TRACE) TOUT.println("readBooleanBlock(...,"+offset+","+length+") ENTER");
 			validateBooleanBlock();
 			final int v = readBooleanBlockImpl(buffer,offset,length);
@@ -439,7 +439,7 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 			assert(buffer!=null):"null buffer";
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
-			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
+			assert(buffer.length>=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 			if (TRACE) TOUT.println("readByteBlock(...,"+offset+","+length+") ENTER");
 			validateByteBlock();
 			final int v = readByteBlockImpl(buffer,offset,length);
@@ -462,7 +462,7 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 			assert(buffer!=null):"null buffer";
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
-			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
+			assert(buffer.length>=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 			if (TRACE) TOUT.println("readCharBlock(...,"+offset+","+length+") ENTER");
 			validateCharBlock();
 			final int v = readCharBlockImpl(buffer,offset,length);
@@ -486,7 +486,7 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 			assert(buffer!=null):"null buffer";
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
-			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
+			assert(buffer.length>=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 			if (TRACE) TOUT.println("readShortBlock(...,"+offset+","+length+") ENTER");
 			validateShortBlock();
 			final int v = readShortBlockImpl(buffer,offset,length);
@@ -509,7 +509,7 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 			assert(buffer!=null):"null buffer";
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
-			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
+			assert(buffer.length>=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 			if (TRACE) TOUT.println("readIntBlock(...,"+offset+","+length+") ENTER");
 			validateIntBlock();
 			final int v = readIntBlockImpl(buffer,offset,length);
@@ -532,7 +532,7 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 			assert(buffer!=null):"null buffer";
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
-			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
+			assert(buffer.length>=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 			if (TRACE) TOUT.println("readLongBlock(...,"+offset+","+length+") ENTER");
 			validateLongBlock();
 			final int v = readLongBlockImpl(buffer,offset,length);
@@ -555,7 +555,7 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 			assert(buffer!=null):"null buffer";
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
-			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
+			assert(buffer.length>=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 			if (TRACE) TOUT.println("readFloatBlock(...,"+offset+","+length+") ENTER");
 			validateFloatBlock();
 			final int v = readFloatBlockImpl(buffer,offset,length);
@@ -578,7 +578,7 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 			assert(buffer!=null):"null buffer";
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
-			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
+			assert(buffer.length>=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 			if (TRACE) TOUT.println("readDoubleBlock(...,"+offset+","+length+") ENTER");
 			validateDoubleBlock();
 			final int v = readDoubleBlockImpl(buffer,offset,length);

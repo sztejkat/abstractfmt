@@ -25,7 +25,11 @@ import java.io.PrintStream;
 		using struct level indentation. 
 */
 @RunWith(Suite.class)
-@Suite.SuiteClasses({ATestCase_BasicSignalOperations.class})
+@Suite.SuiteClasses({
+					ATestCase_BasicSignalOperations.class,
+					ATestCase_SignalOperationsSafety.class,
+					ATestCase_BooleanElementaryPrimitive.class
+					})
 public class TestSuite_ObjFormat0 extends ATest
 {
 	
