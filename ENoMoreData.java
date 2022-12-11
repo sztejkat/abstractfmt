@@ -3,8 +3,8 @@ package sztejkat.abstractfmt;
 	An exception thrown when a primitive data read 
 	is attempted with cursor at signal boundary.
 	<p>
-	Stream can always recover from this exception by skipping the event
-	content.
+	Stream can always recover from this exception by
+	reading the signal.
 	<p>
 	This is a usual way to indicate that 
 	<i>"you correctly read it and there is nothing more in structure".</i>

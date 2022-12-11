@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.TreeMap;
 /**
 	A write format filter which allows to introduce a 
-	certain set of begin signal names which are reserved
+	certain set of "begin signal" names which are reserved
 	and hidden from a user.	
 	<p>
 	A subclass may register a certain set of names as "reserved".
@@ -23,8 +23,8 @@ import java.util.TreeMap;
 	<p>
 	The reading side runs below process:
 	<pre>
-		n - read signal name
-		if n is one of known reserved names a special action is performed.
+		n = read signal name
+		if n is one of known reserved names a <i>special action</i> is performed.
 		if n starts with escape char, this character is removed
 			and modified name is returned from an API. 
 	</pre>

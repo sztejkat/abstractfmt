@@ -152,6 +152,8 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
 			by {@link #next} in which case the exception 
 			is intercepted and converted to non-zero return value.
 		@throws EBrokenFormat if broken permanently
+		@throws EFormatBoundaryExceeded if skipping required to dig too deep into
+			a structures or encountered a begin signal name out of allowed limits.
 		*/ 
 		public default int skip(int levels)throws IOException
 		{

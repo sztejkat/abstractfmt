@@ -9,6 +9,7 @@ public final class BLK_SHORT extends AShortValue implements IObjStructFormat0
 		this.v = v;
 	};
 	public String toString(){ return "BLK_SHORT("+v+")";};
+	public static BLK_SHORT valueOf(short v){ return new BLK_SHORT(v); };
 	@Override public short shortValue(){ return v; };
 	@Override public boolean equalsTo(IObjStructFormat0 x)
 	{
