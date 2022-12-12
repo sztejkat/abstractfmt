@@ -7,7 +7,7 @@ import java.io.IOException;
 import org.junit.Test;
 import org.junit.Assert;
 /**
-	A test case running tests for boolean elementsry primitives.
+	A test case running tests for boolean elementary primitives.
 	<p>
 	<i>Note: This is a pattern for all other primitives. Shame java has no
 	preprocessor.</i>

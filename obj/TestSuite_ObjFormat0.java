@@ -28,7 +28,8 @@ import java.io.PrintStream;
 @Suite.SuiteClasses({
 					ATestCase_BasicSignalOperations.class,
 					ATestCase_SignalOperationsSafety.class,
-					ATestCase_BooleanElementaryPrimitive.class
+					ATestCase_BooleanElementaryPrimitive.class,
+					ATestCase_BooleanBlockPrimitive.class
 					})
 public class TestSuite_ObjFormat0 extends ATest
 {

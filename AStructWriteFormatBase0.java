@@ -447,7 +447,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 			assert(buffer!=null):"null buffer";
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
-			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
+			assert(buffer.length>=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 			
 			if (TRACE) TOUT.println("writeBooleanBlock(...,"+offset+","+length+") ENTER");
 			flushPendingEnd();
@@ -478,7 +478,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 			assert(buffer!=null):"null buffer";
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
-			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
+			assert(buffer.length>=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 			if (TRACE) TOUT.println("writeByteBlock(...,"+offset+","+length+") ENTER");
 			flushPendingEnd();
 			validateByteBlock();
@@ -506,7 +506,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 			assert(buffer!=null):"null buffer";
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
-			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
+			assert(buffer.length>=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 			if (TRACE) TOUT.println("writeCharBlock(...,"+offset+","+length+") ENTER");
 			flushPendingEnd();
 			validateCharBlock();
@@ -535,7 +535,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 			assert(buffer!=null):"null buffer";
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
-			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
+			assert(buffer.length>=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 			if (TRACE) TOUT.println("writeShortBlock(...,"+offset+","+length+") ENTER");
 			flushPendingEnd();
 			validateShortBlock();
@@ -564,7 +564,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 			assert(buffer!=null):"null buffer";
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
-			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
+			assert(buffer.length>=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 			if (TRACE) TOUT.println("writeIntBlock(...,"+offset+","+length+") ENTER");
 			flushPendingEnd();
 			validateIntBlock();
@@ -593,7 +593,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 			assert(buffer!=null):"null buffer";
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
-			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
+			assert(buffer.length>=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 			if (TRACE) TOUT.println("writeLongBlock(...,"+offset+","+length+") ENTER");
 			flushPendingEnd();
 			validateLongBlock();
@@ -622,7 +622,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 			assert(buffer!=null):"null buffer";
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
-			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
+			assert(buffer.length>=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 			if (TRACE) TOUT.println("writeFloatBlock(...,"+offset+","+length+") ENTER");
 			flushPendingEnd();
 			validateFloatBlock();
@@ -651,7 +651,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 			assert(buffer!=null):"null buffer";
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
-			assert(buffer.length<=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
+			assert(buffer.length>=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 			if (TRACE) TOUT.println("writeDoubleBlock(...,"+offset+","+length+") ENTER");
 			flushPendingEnd();
 			validateDoubleBlock();
