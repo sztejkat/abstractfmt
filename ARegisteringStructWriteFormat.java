@@ -24,7 +24,7 @@ import java.io.IOException;
 			end-begin-registered <i>(with numeric argument)</i>
 	</pre>
 */
-abstract class ARegisteringStructWriteFormat extends AStructWriteFormatBase0
+public abstract class ARegisteringStructWriteFormat extends AStructWriteFormatBase0
 {
 				/** Signal names registry. Null if registry is disabled */
 				private final CNameRegistrySupport_Write registry;
@@ -51,18 +51,40 @@ abstract class ARegisteringStructWriteFormat extends AStructWriteFormatBase0
 		as an argument should have the same logic effect as {@link #beginImpl} with
 		<code>name</code>.
 		<p>
-		The implementation may choose to use <code>index</code> and <code>order</code>
-		to their liking and implement one of following policies:
+		The implementation may choose to use either <code>index</code> or <code>order</code>
+		as a "signal identifier" and implement one of following policies:
 		<ul>
 			<li>direct name mapping, in which <code>index</code> is written to a stream
 			together with a <code>name</code> during registration.
 			Subsequent calls to <code>beginRegisteredImpl(index,order)</code> should
-			write <code>index</code> to the stream;</li> 
+			write <code>index</code> to the stream;
+			</li>
+			<li>direct order based mapping, in which <code>order</code> is written to a stream
+			together with a <code>name</code> during registration.
+			Subsequent calls to <code>beginRegisteredImpl(index,order)</code> should
+			write <code>order</code> to the stream;
+			</li>			
 			<li>indirect name mapping, in which neither <code>index</code> nor <code>order</code>
 			is written together with a <code>name</code>, but it is assumed that reading side will
 			count registration events and restore <code>order</code> from that count.
 			Subsequent calls to <code>beginRegisteredImpl(index,order)</code> should
-			write <code>order</code> to the stream;</li> 
+			write <code>order</code> to the stream;
+			</li>			 
+		</ul>
+		The choice between methods should take in an account following facts:
+		<ul>
+			<li>direct methods are easier to debug, especially in human readable formats;</li>
+			<li>direct methods theoretically allow to un-register the name in future,
+			altough this format does not provide such functionality;</li>
+			<li>indirect method is more compact and especially well suited for non-human readable formats
+			like binary ones;</li>
+			<li>index based methods will assign smaller, possibly more compact encoded numbers,
+			to names <u>registered</u> first, while order based methods to names <u>used</u> first.
+			This means, that a {@link ITypedStructWriteFormat} implementation
+			over a compact binary format with variable length "signal identifier" encoding may benefit
+			strongly from <u>direct index based</u> method, because such an implementation
+			may after opening a stream quickly register names describing types as optimized ones
+			and thous make them shortest possible;</li>
 		</ul>
 		Will be called in sane conditions.
 		<p>
@@ -72,7 +94,8 @@ abstract class ARegisteringStructWriteFormat extends AStructWriteFormatBase0
 				Will be in range 0...name_registry_capacity-1 (see constructor).
 		@param order an ordinal number assigned to this call.
 				This number will start from 0 and be incremented by one 
-				after each call to this method.
+				after each call to this method, efficiently will also
+				be in bounds of 0...name_registry_capacity-1
 		@throws IOException as {@link #begin}
 		*/
 		protected abstract void beginAndRegisterImpl(String name, int index, int order)throws IOException;
