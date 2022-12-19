@@ -1,4 +1,5 @@
 package sztejkat.abstractfmt.obj;
+import sztejkat.abstractfmt.ARegisteringStructWriteFormat;
 import sztejkat.abstractfmt.AStructWriteFormatBase0;
 import sztejkat.abstractfmt.IFormatLimits;
 import sztejkat.abstractfmt.logging.SLogging;
@@ -8,11 +9,17 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.ArrayList;
 /**
-	Format writing {@link IObjStructFormat0} stream.
+	Format writing {@link IObjStructFormat1} stream.
+	<p>
+	<i>Design note: This code is practically a copy and paste of {@link CObjStructWriteFormat0}.
+	This is intentional, since it should be a separate proof of concept. In a real world
+	implementation it is up to developer to decide if to extend {@link AStructWriteFormatBase0}
+	and not have name registry, or if to extend {@link ARegisteringStructWriteFormat}
+	and have a name registry.</i>
 	
-	@see CObjStructReadFormat0
+	@see CObjStructReadFormat1
 */
-public class CObjStructWriteFormat0 extends AStructWriteFormatBase0 
+public class CObjStructWriteFormat1 extends ARegisteringStructWriteFormat 
 {			
 			
 				/** A collection to which objects representing
@@ -30,15 +37,19 @@ public class CObjStructWriteFormat0 extends AStructWriteFormatBase0
 		to implement {@link #endBeginImpl}. If false default implementation
 		is left and a pair of signals {@link SIG_END}+{@link SIG_BEGIN} is used.
 	@param max_supported_recursion_depth see {@link IFormatLimits#getMaxSupportedStructRecursionDepth}
-	@param max_supported_name_length see {@link IFormatLimits#getMaxSupportedSignalNameLength}
+	@param max_supported_name_length see {@link IFormatLimits#getMaxSupportedSignalNameLength}	
+	@param name_registry_capacity capactity of name registry used	
+			to support {@link #optimizeBeginName}. Zero to disable optimization.
 	@param stream a stream to add data to.
     */
-	public CObjStructWriteFormat0(boolean end_begin_enabled,
+	public CObjStructWriteFormat1(boolean end_begin_enabled,
 								  int max_supported_recursion_depth,
 								  int max_supported_name_length,
+								  int name_registry_capacity,
 								  IAddable<IObjStructFormat0> stream
 								  )
 	{
+		super(name_registry_capacity);
 		assert(max_supported_name_length>0);
 		assert(max_supported_recursion_depth>=-1);
 		assert(stream!=null);
@@ -55,19 +66,69 @@ public class CObjStructWriteFormat0 extends AStructWriteFormatBase0
 		is left and a pair of signals {@link SIG_END}+{@link SIG_BEGIN} is used.
 	@param max_supported_recursion_depth see {@link IFormatLimits#getMaxSupportedStructRecursionDepth}
 	@param max_supported_name_length see {@link IFormatLimits#getMaxSupportedSignalNameLength}
+	@param name_registry_capacity capactity of name registry used	
+			to support {@link #optimizeBeginName}. Zero to disable optimization.
+	
     */
-	public CObjStructWriteFormat0(boolean end_begin_enabled,
+	public CObjStructWriteFormat1(boolean end_begin_enabled,
 								  int max_supported_recursion_depth,
-								  int max_supported_name_length
+								  int max_supported_name_length,
+								  int name_registry_capacity
 								  )
 	{
 		this(
 			end_begin_enabled,
 			max_supported_recursion_depth,
 			max_supported_name_length,
+			name_registry_capacity,
 			new CAddablePollableArrayList<IObjStructFormat0>()
 			);
 			
+	};
+	/* ***********************************************************************
+		
+				AStructWriteFormatBase1
+				
+		
+	************************************************************************/
+	/** Overriden to add to {@link #stream} the instance of {@link SIG_BEGIN_AND_REGISTER} */
+	@Override protected void beginAndRegisterImpl(String name, int index, int order)throws IOException
+	{
+		stream.add(new SIG_BEGIN_AND_REGISTER(name,index,order));
+	};
+	/** Overriden to add to {@link #stream} the instance of {@link SIG_END_BEGIN_AND_REGISTER} */
+	@Override protected void endBeginAndRegisterImpl(String name, int index, int order)throws IOException
+	{
+		if (end_begin_enabled)
+			stream.add(new SIG_END_BEGIN_AND_REGISTER(name,index,order));
+		else
+			super.endBeginAndRegisterImpl(name,index,order);
+	};
+	/** Overriden to add to {@link #stream} the instance of {@link SIG_BEGIN_REGISTERED} */
+	@Override protected void beginRegisteredImpl(int index, int order)throws IOException
+	{
+		stream.add(new SIG_BEGIN_REGISTERED(index,order));
+	};
+	/** Overriden to add to {@link #stream} the instance of {@link SIG_END_BEGIN_REGISTERED} */
+	@Override protected void endBeginRegisteredImpl(int index, int order)throws IOException
+	{
+		if (end_begin_enabled)
+			stream.add(new SIG_END_BEGIN_REGISTERED(index,order));
+		else
+			super.endBeginRegisteredImpl(index,order);
+	};
+	/** Overriden to add to {@link #stream} the instance of {@link SIG_BEGIN} */
+	@Override protected void beginDirectImpl(String name)throws IOException
+	{
+		stream.add(new SIG_BEGIN(name));		
+	};
+	/** Overriden to add to {@link #stream} the instance of {@link SIG_END_BEGIN} */
+	@Override protected void endBeginDirectImpl(String name)throws IOException
+	{
+		if (end_begin_enabled)
+			stream.add(new SIG_END_BEGIN(name));
+		else
+			super.endBeginDirectImpl(name);
 	};
 	/* ***********************************************************************
 		
@@ -80,19 +141,7 @@ public class CObjStructWriteFormat0 extends AStructWriteFormatBase0
 	{
 		stream.add(SIG_END.INSTANCE);			
 	};
-	/** Overriden to add to {@link #stream} the instance of {@link SIG_BEGIN} */
-	@Override protected void beginImpl(String name)throws IOException
-	{
-		stream.add(new SIG_BEGIN(name));		
-	};
-	/** Overriden to add to {@link #stream} the instance of {@link SIG_END_BEGIN} */
-	@Override protected void endBeginImpl(String name)throws IOException
-	{
-		if (end_begin_enabled)
-			stream.add(new SIG_END_BEGIN(name));
-		else
-			super.endBeginImpl(name);
-	};
+	
 	/** Doesn't do anything */
 	@Override protected void openImpl()throws IOException{};
 	/** Doesn't do anything */

@@ -2,7 +2,8 @@ package sztejkat.abstractfmt.obj;
 
 /**
 	Common data types for {@link CObjStructWriteFormat0}/
-	{@link CObjStructReadFormat0}.
+	{@link CObjStructReadFormat0} and {@link CObjStructWriteFormat1}/
+	{@link CObjStructReadFormat1}
 	
 	<h1>Format</h1>
 	An object stream is a collection of instances
@@ -32,7 +33,7 @@ public interface IObjStructFormat0
 	@return true if element represent signal
 	flase if primitive data. False means it is instance of
 	{@link IObjStructFormat0Value} */
-	public default boolean isSignal(){ return this instanceof IObjStructFormat0Value; };
+	public default boolean isSignal(){ return !(this instanceof IObjStructFormat0Value); };
 	/** Tests if exactly same type and value
 	@param x what to compare with. 
 	@return true if same type and value

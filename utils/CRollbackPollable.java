@@ -1,14 +1,16 @@
 package sztejkat.abstractfmt.utils;
-/** A {@link #IPollable} with roll-back capabilities.
+/** A {@link IPollable} with roll-back capabilities.
 */
 public class CRollbackPollable<T extends Object> implements IRollbackPollable<T>
 {
 				/** Back-end pollable */
 				private final IPollable<T> on;
-				/** A value returned from most recent {@link #next} */
+				/** A value returned from most recent {@link #poll},
+				used for rolling back
+				*/
 				private T recent_poll;
-				/** True if {@link #next} was invoked, indicates
-					that we can roll back */
+				/** True if {@link #poll} was invoked at all, indicates
+				that we can roll back */
 				private boolean can_rollback;
 				/** True if {@link #rollback} was called and not consumed yet */
 				private boolean rollback_active;
@@ -46,7 +48,7 @@ public class CRollbackPollable<T extends Object> implements IRollbackPollable<T>
 	@Override public void rollback()
 	{
 		if (rollback_active) throw new IllegalStateException("can't rollback twice");
-		if (!can_rollback) throw new IllegalStateException("can't rollback without next()");
+		if (!can_rollback) throw new IllegalStateException("can't rollback without poll()");
 		rollback_active = true;
 	};
 	

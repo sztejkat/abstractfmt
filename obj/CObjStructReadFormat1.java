@@ -1,6 +1,8 @@
 package sztejkat.abstractfmt.obj;
 import sztejkat.abstractfmt.logging.SLogging;
 import sztejkat.abstractfmt.AStructReadFormatBase0;
+import sztejkat.abstractfmt.ARegisteringStructReadFormat;
+import sztejkat.abstractfmt.ARegisteringStructWriteFormat;
 import sztejkat.abstractfmt.EUnexpectedEof;
 import sztejkat.abstractfmt.ENoMoreData;
 import sztejkat.abstractfmt.EFormatBoundaryExceeded;
@@ -12,7 +14,7 @@ import sztejkat.abstractfmt.utils.CRollbackPollable;
 import java.util.Iterator;
 import java.io.IOException;
 /**
-	Format reading {@link IObjStructFormat0} stream.
+	Format reading {@link IObjStructFormat1} stream.
 	<p>
 	This stream is <u>intentionally</u> implemented as non-type checking
 	even tough type information <u>is</u> stored in stream. As an effect
@@ -24,9 +26,9 @@ import java.io.IOException;
 	(<a href="../IStructReadFormat.html#TEMPEOF">"None"</a>). 
 	
 	
-	@see CObjStructWriteFormat0
+	@see CObjStructWriteFormat1
 */
-public class CObjStructReadFormat0 extends AStructReadFormatBase0 
+public class CObjStructReadFormat1 extends ARegisteringStructReadFormat 
 {			
 		 private static final long TLEVEL = SLogging.getDebugLevelForClass(CObjStructReadFormat0.class);
          private static final boolean TRACE = (TLEVEL!=0);
@@ -38,19 +40,39 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 				/** A bounadry of format */
 				private final int max_supported_recursion_depth;
 				/** A bounadry of format */
-				private final int max_supported_name_length; 
-				/** Used by {@link #pickLastSignalName} */
-				private String last_signal_name;
+				private final int max_supported_name_length;
+				/** Controls if name registry is build using index
+				or order.
+				<p>
+				Note: Even tough in this type of stream both are present
+				we need to be able to select just one of them. */
+				private final boolean use_index_instead_of_order;
+				/** Used by {@link #pickLastSignalRegName} */
+				private String last_signal_reg_name;
+				/** Used by {@link #pickLastSignalIndex} */
+				private int last_signal_index;
+				/** Used only to validate if writing and wrote order correctly */
+				private int order_tracking;
 	/** Creates
 	@param stream stream to read content from, non null. 
 	@param max_supported_recursion_depth see {@link IFormatLimits#getMaxSupportedStructRecursionDepth}
 	@param max_supported_name_length see {@link IFormatLimits#getMaxSupportedSignalNameLength}
+	@param use_index_instead_of_order if true index attached to registered name will be used,
+			if false order. Regular streams will have this option on writing side, we use
+			it on reading side to test implementations more thoughly.
+	@param name_registry_capacity capactity of name registry used
+			to support {@link ARegisteringStructWriteFormat#optimizeBeginName}.
+			Zero to disable optimization. This value should be at least equal
+			to value used at writing side or an error will occur. 
     */
-	public CObjStructReadFormat0(IRollbackPollable<IObjStructFormat0> stream,
+	public CObjStructReadFormat1(IRollbackPollable<IObjStructFormat0> stream,
 								  int max_supported_recursion_depth,
-								  int max_supported_name_length
+								  int max_supported_name_length,
+								  boolean use_index_instead_of_order,
+								  int name_registry_capacity
 								  )
 	{
+		super(name_registry_capacity);
 		assert(max_supported_name_length>0);
 		assert(max_supported_recursion_depth>=-1);
 		assert(stream!=null);
@@ -58,6 +80,7 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 		this.stream = stream;
 		this.max_supported_recursion_depth=max_supported_recursion_depth;
 		this.max_supported_name_length=max_supported_name_length;
+		this.use_index_instead_of_order = use_index_instead_of_order;
 		
 		initializeToSupportedLimits();
 	};
@@ -65,20 +88,31 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 	@param stream stream to read content from, non null. 
 	@param max_supported_recursion_depth see {@link IFormatLimits#getMaxSupportedStructRecursionDepth}
 	@param max_supported_name_length see {@link IFormatLimits#getMaxSupportedSignalNameLength}
+	@param use_index_instead_of_order if true index attached to registered name will be used,
+			if false order. Regular streams will have this option on writing side, we use
+			it on reading side to test implementations more thoughly.
+	@param name_registry_capacity capactity of name registry used
+			to support {@link ARegisteringStructWriteFormat#optimizeBeginName}.
+			Zero to disable optimization. This value should be at least equal
+			to value used at writing side or an error will occur. 
     */
-	public CObjStructReadFormat0(IPollable<IObjStructFormat0> stream,
+	public CObjStructReadFormat1(IPollable<IObjStructFormat0> stream,
 								  int max_supported_recursion_depth,
-								  int max_supported_name_length
+								  int max_supported_name_length,
+								  boolean use_index_instead_of_order,
+								  int name_registry_capacity
 								  )
 	{
 		this( new CRollbackPollable<IObjStructFormat0>(stream),
 				max_supported_recursion_depth,
-				max_supported_name_length
+				max_supported_name_length,
+				use_index_instead_of_order,
+				name_registry_capacity
 				);
 	};
 	/* ***********************************************************************
 		
-				AStructReadFormatBase0
+				AStructReadFormatBase1
 				
 		
 	************************************************************************/
@@ -88,41 +122,96 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 		//		or during fetching. We can do it afterwards.
 		if (n.length()>getMaxSignalNameLength()) throw new EFormatBoundaryExceeded("name too long");
 	};
-	@Override protected TSignal readSignal()throws IOException
+	
+	@Override protected TSignalReg readSignalReg()throws IOException
 	{
-		if (TRACE) TOUT.println("readSignal() ENTER");
+		if (TRACE) TOUT.println("readSignalReg() ENTER");
 		IObjStructFormat0 item;
 		while((item=stream.poll())!=null)
 		{
-			if (TRACE) TOUT.println("readSignal() item="+item);
+			if (TRACE) TOUT.println("readSignalReg() item="+item);
 			if (item instanceof SIG_BEGIN)
 			{
 				 String n = ((SIG_BEGIN)item).name;
 				 validateName(n);
-			     last_signal_name = n; 
-				 return TSignal.SIG_BEGIN;
+			     this.last_signal_reg_name = n; 
+			     this.last_signal_index = -1; //to make sure picking will fail
+				 return TSignalReg.SIG_BEGIN_DIRECT;
+			};
+			if (item instanceof SIG_BEGIN_AND_REGISTER)
+			{
+				 SIG_BEGIN_AND_REGISTER sig = (SIG_BEGIN_AND_REGISTER)item; 
+				 String n = sig.name;
+				 validateName(n);
+			     this.last_signal_reg_name = n; 
+			     this.last_signal_index = use_index_instead_of_order ? sig.index : sig.order;
+			     
+			     assert(sig.order == order_tracking);
+			     order_tracking++;
+			     
+				 return TSignalReg.SIG_BEGIN_AND_REGISTER;
+			};
+			if (item instanceof SIG_BEGIN_REGISTERED)
+			{
+				 SIG_BEGIN_REGISTERED sig = (SIG_BEGIN_REGISTERED)item; 
+				 this.last_signal_reg_name = null; 
+			     this.last_signal_index = use_index_instead_of_order ? sig.index : sig.order;
+				 return TSignalReg.SIG_BEGIN_REGISTERED;
+			};
+			if (item instanceof SIG_END)
+			{
+				 this.last_signal_reg_name = null;
+				 this.last_signal_index = -1; //to make sure picking will fail
+				 return TSignalReg.SIG_END;
 			};
 			if (item instanceof SIG_END_BEGIN)
 			{
 			     String n = ((SIG_END_BEGIN)item).name;
 				 validateName(n);
-			     last_signal_name = n;
-				 return TSignal.SIG_END_BEGIN;
+			     this.last_signal_reg_name = n; 
+			     this.last_signal_index = -1; //to make sure picking will fail
+				 return TSignalReg.SIG_END_BEGIN_DIRECT;
 			};
-			if (item instanceof SIG_END)
+			if (item instanceof SIG_END_BEGIN_AND_REGISTER)
 			{
-				 last_signal_name = null;
-				 return TSignal.SIG_END;
+				 SIG_END_BEGIN_AND_REGISTER sig = (SIG_END_BEGIN_AND_REGISTER)item; 
+				 String n = sig.name;
+				 validateName(n);
+			     this.last_signal_reg_name = n; 
+			     this.last_signal_index = use_index_instead_of_order ? sig.index : sig.order;
+			     
+			     assert(sig.order == order_tracking);
+			     order_tracking++;
+			     
+				 return TSignalReg.SIG_END_BEGIN_AND_REGISTER;
+			};
+			if (item instanceof SIG_END_BEGIN_REGISTERED)
+			{
+				 SIG_END_BEGIN_REGISTERED sig = (SIG_END_BEGIN_REGISTERED)item; 
+				 this.last_signal_reg_name = null; 
+			     this.last_signal_index = use_index_instead_of_order ? sig.index : sig.order;
+				 return TSignalReg.SIG_END_BEGIN_REGISTERED;
 			};
 		};
 		throw new EUnexpectedEof();
 	};
-	@Override protected String pickLastSignalName()
+	@Override protected int pickLastSignalIndex()
 	{
-		final String n = last_signal_name;
-		last_signal_name = null;
+		return last_signal_index;
+	};
+	@Override protected String pickLastSignalRegName()
+	{
+		final String n = last_signal_reg_name;
+		last_signal_reg_name = null;
 		return n;
 	};
+	/* ***********************************************************************
+		
+				AStructReadFormatBase0
+				
+		
+	************************************************************************/
+	
 	/** Picks next {@link IObjStructFormat0Value} and returns it
 	or throws an apropriate exception. This is for elementary operations.
 	@return never null. 

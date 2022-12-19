@@ -5,50 +5,50 @@ import java.io.IOException;
 /**
 	A reading end for {@link ARegisteringStructWriteFormat}
 */
-abstract class ARegisteringStructReadFormat extends AStructReadFormatBase0
+public abstract class ARegisteringStructReadFormat extends AStructReadFormatBase0
 {
 		 private static final long TLEVEL = SLogging.getDebugLevelForClass(ARegisteringStructReadFormat.class);
          private static final boolean TRACE = (TLEVEL!=0);
          private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("ARegisteringStructReadFormat.",ARegisteringStructReadFormat.class) : null;
 
-            /** Signals returned by {@link #readExtSignal} */
-			protected static enum TSignalExt
+            /** Signals returned by {@link #readSignalReg} */
+			protected static enum TSignalReg
 			{
-				/** To be returned by {@link #readSignalExt} when 
+				/** To be returned by {@link #readSignalReg} when 
 				it reads what {@link ARegisteringStructWriteFormat#beginDirectImpl} wrote.
-				A a side effect the {@link #pickLastSignalExtName} should be set
+				A a side effect the {@link #pickLastSignalRegName} should be set
 				to a proper and <u>validated </u> signal name.
 				The effect on {@link #pickLastSignalIndex} is unspecified */
 				SIG_BEGIN_DIRECT,
-				/** To be returned by {@link #readSignalExt} when 
+				/** To be returned by {@link #readSignalReg} when 
 				it reads what {@link ARegisteringStructWriteFormat#beginAndRegisterImpl} wrote.
-				A a side effect the {@link #pickLastSignalExtName} should be set
+				A a side effect the {@link #pickLastSignalRegName} should be set
 				to a proper and <u>validated </u> signal name
 				and {@link #pickLastSignalIndex} should be set to index written to stream */
 				SIG_BEGIN_AND_REGISTER,
-				/** To be returned by {@link #readSignalExt} when 
+				/** To be returned by {@link #readSignalReg} when 
 				it reads what {@link ARegisteringStructWriteFormat#beginRegisteredImpl} wrote.
-				A a side effect the {@link #pickLastSignalExName} should be set
+				A a side effect the {@link #pickLastSignalRegName} should be set
 				to null and {@link #pickLastSignalIndex} should be set to index written to stream */
 				SIG_BEGIN_REGISTERED,
 				/** Alike {@link TSignal#SIG_END} */
 				SIG_END,
-				/** To be returned by {@link #readSignalExt} when 
+				/** To be returned by {@link #readSignalReg} when 
 				it reads what {@link ARegisteringStructWriteFormat#endBeginDirectImpl} wrote.
-				A a side effect the {@link #pickLastSignalExtName} should be set
+				A a side effect the {@link #pickLastSignalRegName} should be set
 				to a proper and <u>validated </u> signal name.
 				The effect on {@link #pickLastSignalIndex} is unspecified
 				*/
 				SIG_END_BEGIN_DIRECT,
-				/** To be returned by {@link #readSignalExt} when 
+				/** To be returned by {@link #readSignalReg} when 
 				it reads what {@link ARegisteringStructWriteFormat#endBeginAndRegisterImpl} wrote.
-				A a side effect the {@link #pickLastSignalExtName} should be set
+				A a side effect the {@link #pickLastSignalRegName} should be set
 				to a proper and <u>validated </u> signal name
 				and {@link #pickLastSignalIndex} should be set to index written to stream */
 				SIG_END_BEGIN_AND_REGISTER,
-				/** To be returned by {@link #readSignalExt} when 
+				/** To be returned by {@link #readSignalReg} when 
 				it reads what {@link ARegisteringStructWriteFormat#endBeginRegisteredImpl} wrote.
-				A a side effect the {@link #pickLastSignalExName} should be set
+				A a side effect the {@link #pickLastSignalRegName} should be set
 				to null and {@link #pickLastSignalIndex} should be set to index written to stream */
 				SIG_END_BEGIN_REGISTERED;
 			};
@@ -84,29 +84,29 @@ abstract class ARegisteringStructReadFormat extends AStructReadFormatBase0
 		@return signal, non null.
 		@throws IOException if fialed.
 		@throws EFormatBoundaryExceeded if name length is exceeded. */
-		protected abstract TSignalExt readSignalExt()throws IOException;
+		protected abstract TSignalReg readSignalReg()throws IOException;
 		
-		/** Set by {@link #readSignalExt} when a signal carying index 
+		/** Set by {@link #readSignalReg} when a signal carying index 
 		of name was encountered or the order of signal, depending on
 		if stream implements direct indexing or indexing by order
 		of registration.
 		<p>
 		If order based indexing is used the order should be bumped
-		up each time {@link #readSignalExt} reads the {@link TSignalExt#SIG_BEGIN_AND_REGISTER}
-		or {@link TSignalExt#SIG_END_BEGIN_AND_REGISTER}.
+		up after each time {@link #readSignalReg} reads the {@link TSignalReg#SIG_BEGIN_AND_REGISTER}
+		or {@link TSignalReg#SIG_END_BEGIN_AND_REGISTER}.
 		<p>		
 		@return index, non-negative.
 		@see ARegisteringStructWriteFormat#beginAndRegisterImpl
 		*/
 		protected abstract int pickLastSignalIndex();
-		/** Set by {@link #readSignalExt} when a validated name of 
+		/** Set by {@link #readSignalReg} when a validated name of 
 		begin signal is read. Subsequent calls of this method
 		do return <code>null</code>
 		<p>
-		@return name, null for {@link TSignalExt#SIG_END}
+		@return name, null for {@link TSignalReg#SIG_END}
 				or when name was already read.
 		*/
-		protected abstract String pickLastSignalExtName();
+		protected abstract String pickLastSignalRegName();
 		
 		
 		/* *******************************************************
@@ -121,15 +121,15 @@ abstract class ARegisteringStructReadFormat extends AStructReadFormatBase0
 		{
 			if (registry==null) throw new EBrokenFormat("Signal names optimization is not supported by this format.");
 		};
-		/** Piece of code shared by {@link TSignalExt#SIG_END_BEGIN_AND_REGISTER}
-		and {@link TSignalExt#SIG_BEGIN_AND_REGISTER} in {@link #readSignal}
+		/** Piece of code shared by {@link TSignalReg#SIG_END_BEGIN_AND_REGISTER}
+		and {@link TSignalReg#SIG_BEGIN_AND_REGISTER} in {@link #readSignal}
 		@throws IOException .
 		*/
 		private void handleRegistration()throws IOException
 		{
 			validateRegistryIsSupported();
 			final int idx = pickLastSignalIndex();
-			final String name = pickLastSignalExtName();
+			final String name = pickLastSignalRegName();
 			assert(idx>=0);
 			assert(name!=null);
 			assert(name.length()<=getMaxSignalNameLength());
@@ -138,8 +138,8 @@ abstract class ARegisteringStructReadFormat extends AStructReadFormatBase0
 			//Now pass to superclass contract
 			this.last_name_to_be_reported = name;
 		};
-		/** Piece of code shared by {@link TSignalExt#SIG_END_BEGIN_REGISTERED}
-		and {@link TSignalExt#SIG_BEGIN_REGISTERED} in {@link #readSignal}
+		/** Piece of code shared by {@link TSignalReg#SIG_END_BEGIN_REGISTERED}
+		and {@link TSignalReg#SIG_BEGIN_REGISTERED} in {@link #readSignal}
 		@throws IOException .
 		*/
 		private void handleRegistered()throws IOException
@@ -149,16 +149,16 @@ abstract class ARegisteringStructReadFormat extends AStructReadFormatBase0
 			assert(idx>=0);
 			this.last_name_to_be_reported = registry.getOptimizedName(idx);
 		};
-		/** Implemented to use {@link #readSignalExt} */
+		/** Implemented to use {@link #readSignalReg} */
 		@Override protected final TSignal readSignal()throws IOException
 		{
-				TSignalExt signal = readSignalExt();
+				TSignalReg signal = readSignalReg();
 				switch(signal)
 				{
 						case SIG_BEGIN_DIRECT:
 						//Nothing special. Just copy to proper variables.
 						{
-							this.last_name_to_be_reported = pickLastSignalExtName();
+							this.last_name_to_be_reported = pickLastSignalRegName();
 							return TSignal.SIG_BEGIN;
 						}
 						case SIG_BEGIN_AND_REGISTER:						
@@ -182,7 +182,7 @@ abstract class ARegisteringStructReadFormat extends AStructReadFormatBase0
 						case SIG_END_BEGIN_DIRECT:
 						//Nothing special to do
 						{
-							this.last_name_to_be_reported = pickLastSignalExtName();
+							this.last_name_to_be_reported = pickLastSignalRegName();
 							return TSignal.SIG_END_BEGIN;
 						}
 						case SIG_END_BEGIN_AND_REGISTER:
@@ -199,7 +199,7 @@ abstract class ARegisteringStructReadFormat extends AStructReadFormatBase0
 						default: throw new AssertionError(); 	
 				}
 		};
-		/** Implemented to use {@link #readSignalExt} */
+		/** Implemented to use {@link #readSignalReg} */
 		@Override protected final String pickLastSignalName()
 		{
 			String n = last_name_to_be_reported;
