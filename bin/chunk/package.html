@@ -1,0 +1,302 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>sztejkat.abstractfmt.bin.chunk</title>
+      
+  <meta http-equiv="content-type"
+ content="text/html; charset=UTF-8">
+</head>
+<body>
+      This package contains a binary, chunk based stream format.
+
+      <h1>Introduction</h1>
+      As mentioned elswere in a generic descirption of signal based
+      format the basic requirement of any format is an ability to
+      clearly identify where is next signal.
+      <p>
+      This can be, in generic achived by following ways:
+      <ul>
+          <li>by having a known reserved sequence of characters or bytes
+          used to indicate the signal, conceptualy close to <code>&lt;</code> in XML;</li>
+          <li>to have a syntax we need track precisely, as in JSON or XML formats;</li>
+          <li>to know exactly how far from "here" the signal resides in stream.</li>
+      </ul>
+      This package uses the last method.
+
+     <h2>What is chunk based format?</h2>
+     The chunk format is "binary", that is it works on <code>bytes</code>
+     as the <code>InputStream/OutputStream</code> and looks for signals by exactly
+     knowing where they are next in stream.
+     <p>
+     This knowledge is achived by dividing stream into sequence of "chunks" of
+     know size, where some chunks do indicate that there are signals and some are
+     used just for stream management.
+
+     <h2>How chunk is made?</h2>
+     A chunk is basically made of a "header" and a "payload" which follows it.
+
+     <h2>What is header for?</h2>
+     Header do carry information about if or what signal is encoded by it and
+     how large the payload is. Efficiently knowing a header we know a playload
+     size and we can skip it, thous find a header of a next chunk.
+
+     <h2>What is payload?</h2>
+     Everything what is written by primitive writing API (user payload)
+     or used to store signal  names is an direct, variable length form (system payload)
+     <p>
+     There is however no
+     requirement that each written primitive must be fully contained in one chunk.
+     They can cross chunk boundary, providing some conditions specified later are met.
+
+     <h1>Binary chunk format</h1>
+     In this chapter I will present how exactly this format is encoded.
+     <p><i>
+     Notice however, that the implementing code is somewhat more open and more layered
+     and can be used to implement other encodings than this presented here. I do like it
+     best and find it to be almost optimal so I will stick with it.</i>
+
+     <h2>Header types</h2>
+     The binary format always starts from a "header", because it is essential to know
+     what we are having in stream next.
+     <p>
+     We have following types of headers:
+     <table border="1">
+     <tr>
+     <td><b>type</b></td><td>meaning</td>
+     </tr>
+     <tr>
+     <td><code>register</code></td><td>used to provide signal name registration information. This
+     allows us to replace most frequently used names with numbers instead of long strings of characters.</td>
+     </tr>
+     <tr>
+     <td><code>begin_direct</code></td><td>used to provide begin signal with signal name present directly in stream</td>
+     </tr>
+     <tr>
+     <td><code>end_begin_direct</code></td><td>used to provide end signal, followed by begin signal with signal name present directly in stream</td>
+     </tr>
+     <tr>
+     <td><code>begin_registered</code></td><td>used to provide begin signal with signal name registered previously under a specific number</td>
+     </tr>
+     <tr>
+     <td><code>end_begin_registered</code></td><td>used to provide end signal, followed by begin signal with signal name registered previously under a specific number</td>
+     </tr>
+     <tr>
+     <td><code>end/end_name</code></td><td>used to provide end signal or to terminate a directly encoded name</td>
+     </tr>
+     <tr>
+     <td><code>continue</code></td><td>used to indicate, that next chunk is just a payload of known size without any signal.
+     It is transparent to any payload write/read operation and is just adding a size to previous payload.</td>
+     </tr>
+     <tr>
+     <td><code>extented_registered</code></td><td>used to encode <code>end_begin_registered/begin_registered</code>
+     headers using longer, less efficient but more flexible form</td>
+     </tr>
+     </table>
+     <i>Notice, we have exactly eight types of headers used to formulate 11 logic types. This complexity is intentional
+     as it allows to pack most frequently used scenarios optimally into a smallest number of bytes.</i>
+
+     <h2>Header encoding</h2>
+     Each of above headers always starts from a byte which is interpreted like below:
+     <pre>
+        bit 7        0
+             xxxx xHHH
+     </pre>
+     where <code>HHH</code> indicates type of header:
+     <pre>
+          HHH
+           000 - register
+           001 - begin_direct
+           010 - end_begin_direct
+           011 - begin_registered
+           100 - end_begin_registered
+           101 - end/end_name
+           110 - continue
+           111 - extented_registered
+     </pre>
+     The meaning of <code>xxx</code> depends on header type.
+
+     <h3>register</h3>
+     A header used to form "name registration". This header can have two forms:
+     <p>
+     It can either directly carry the index under which register a name:
+     <pre>
+          ???? 1000
+          ?iii iiii
+     </pre>
+     or indirectly, by order of appearance:
+     <pre>
+          ???? 0000
+     </pre>
+     Both forms <u>cannot be mixed</u> in one stream.
+     <p>
+     The <code>?</code> are ignored and <code>iii iiii</code> is the index (0...127) under which
+     a name following it should be put into a name registry.
+     <p>
+     The <code>register</code> header is always followed by either <code>begin_direct</code> or <code>end_begin_direct</code>
+     header which is assumed to both carry a signal and a name which needs to be registered under and index/order specified
+     by <code>register</code> header.
+     <p>
+     <i>Note: This is allowed to extend this pool, assuming <code>extented_registered</code> header is also modified.
+     Personally I think that the number of 128 compact names is a good trade-off between size of an index and
+     a need of optimization of most frequently used names.</i>
+
+     <h3>begin_direct</h3>
+     This header is indicating that a begin signal is present and do carry a signal name encoded directly using
+     an encoding which is specified in <a href="#STRING_ENCODING">that chapter</a>.
+     <p>
+     This header looks like:
+     <pre>
+          ssss s001
+     </pre>
+     where <code>ssss_s</code> is system payload size, 0...31 bytes.
+     <p>
+     The system payload do carry the name encoded as specified above. The name is terminated by <code>end/end_name</code>
+     header and may spread across many <code>continue</code> chunks.
+     <p>
+     If this header is preceeded by <code>register</code> it means "and once name is read, put it into a name registry".
+
+     <h3>end_begin_direct</h3>
+     This header is indicating that an end signal is present, followed right in place by a begin signal and
+     carry a signal name encoded directly encoded exactly as in <code>begin_direct</code> signal.
+     <p>
+     This header looks like:
+     <pre>
+          ssss s010
+     </pre>
+     <p>
+     If this header is preceeded by <code>register</code> it means "and once name is read, put it into a name registry".
+
+
+     <h3>begin_registered</h3>
+     This header is indicating that a begin signal is present and do carry a signal name encoded by a short-form
+     index.
+     <p>
+     This header looks like:
+     <pre>
+          SSii i011
+     </pre>
+     where:
+     <pre>
+          iii - index of name in a registry, short 0...7 (as registered by <code>register</code>)
+          SS - size of payload encodes as follows:
+            00 - 1 byte  <i>(good for boolean and byte elementary primitive)</i>
+            01 - 2 bytes <i>(good for char and short elementary primitive)</i>
+            10 - 4 bytes <i>(good for int and float elementary primitive)</i>
+            11 - 8 bytes <i>(good for long and double elementary primitive)</i>
+     </pre>
+     <i>Note: This form of header was chosen due to the fact, that the most needed cause of using names registry
+     is to provide a type information during implementation of <code>ITypedStructWriteFormat</code>.
+     Since we have eight (<code>boolean,byte,char,short,int,long,float,double</code>) elementary types which
+     needs to be encoded in a shortest possible way this header allows to name them using only one byte.
+     <br>
+     Notice that a very compact type information in case of arrays or strings is not critical, as they will usually be
+     long enough so that two bytes won't do many harm.</i>
+
+     <h3>end_begin_registered</h3>
+      This header is indicating that an end signal is present followed right in place by a begin signal and do carry a signal name encoded by a short-form
+     index.
+     <p>
+     This header looks like:
+     <pre>
+          SSii i100
+     </pre>
+     All other properties are the same as in <code>begin_registered</code> header.
+
+     <h3>end/end_name</h3>
+     This is a dual purpose header:
+     <ul>
+         <li>first use after <code>begin_direct</code> or <code>end_begin_direct</code> indicates that name
+         is finished and a user payload follows.
+         <p>
+         <i>Note: Even if there is no actual payload (ie. <code>begin_direct;end</code> sequence without
+         any user data) both end headers must be present:
+         <pre>
+              begin_direct
+              <i>name</i>
+              <i>possibly some continue chunks</i>
+              end with zero payload size
+              end  &larr; <i>this can't be ommited.</i>
+         </pre>
+         </i>
+
+         </li>
+         <li>all other uses do indicate that an end signal is present;</li>
+     </ul>
+      This header looks like:
+     <pre>
+          ssss s101
+     </pre>
+      where <code>ssss s</code> is a size of payload, 0...31 bytes.
+
+
+     <h3>continue</h3>
+     This header does not carry any signal and is just used to add additional payload to a payload present
+     in previous chunk.
+     <p>
+     This header has forms:
+     <pre>
+          form 1:
+               ssss 0110
+          form 2:
+               ssss 1110
+               SSSS SSSS
+     </pre>
+     where <code>ssss</code> are four less significant bits of size of payload (user or system, depending on context)
+      and <code>SSSS SSSS</code> are eigth more significant.
+     <p>
+     Form 1 allows chunk size of 0...15 bytes, form 2 of 0...4095 bytes.
+     <p>
+     This chunk is <u>fully transparent</u> for names and primitive reading/writing API.
+     <p>
+     <i>Note: This is possible to variant this format to have longer chunks but it will require larger buffers
+     on both sides. Notice this size of chunk produces about 0.05% of size cost what is fairly acceptable.</i>
+
+
+     <h3>extented_registered</h3>
+     This header is used used to implement longer, more flexible form of <code>begin_registered</code>
+     or <code>end_begin_registered</code> and has following forms:
+     <pre>
+          extended_begin_registered:
+
+             ssss s111
+             0iii iiii
+
+          extended_end_begin_registered:
+
+             ssss s111
+             1iii iiii
+     </pre>
+     where <code>ssss s</code> is a size of payload, 0...31 bytes and <code>iii</code> is an index
+     of a name of a signal in a name registry, 0...127 (as registered by <code>register</code>).
+     <p>
+     <i>Note: This form allows use of the entire range of names and a complete set of sizes,
+     including missing in short forms 0,3,5,6,7.</i>
+
+
+     <h1>Primitive data encoding</h1>
+     TODO
+     <h2>Elementatry primitives</h2>
+     TODO
+
+     <h2>Block primitives</h2>
+     TODO
+     <h3 id="STRING_ENCODING">String encoding</h3>
+     Strings (both for names and primitive block API) are encoded in a packed, UTF-8 alike form using following rule:
+     <pre>
+          x - 16 bit java unicode character
+
+               character code          byte sequence
+          0000_0000--0AAA_AAAA &rarr;  0AAA_AAAA
+          00BB_BBBB--BAAA_AAAA &rarr;  1AAA_AAAA 0BBB_BBBB
+          CCBB_BBBB--BAAA_AAAA &rarr;  1AAA_AAAA 1BBB_BBBB 0000_00CC
+
+          where 0 means: "this bit must be zero" and letters do describe any bits.
+     </pre>
+     thous allows packing all ASCII chars (most frequent in western languages) into 1 byte,
+     and all others into up to 3 bytes. This is not an UTF-8 encoding, but is simpler and
+     a tiny bit more dense.
+
+
+
+</body>
+</html>
