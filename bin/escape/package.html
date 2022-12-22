@@ -1,0 +1,204 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>sztejkat.abstractfmt.bin.escape</title>
+      
+  <meta http-equiv="content-type"
+ content="text/html; charset=UTF-8">
+</head>
+<body>
+      This package contains a binary, escaped based stream format.
+
+      <h1>Introduction</h1>
+      As mentioned elswere in a generic descirption of signal based
+      format the basic requirement of any format is an ability to
+      clearly identify where is next signal.
+      <p>
+      This can be, in generic, achived by following means:
+      <ul>
+          <li>by having a known reserved sequence of characters or bytes
+          used to indicate the signal, conceptualy close to <code>&lt;</code> in XML;</li>
+          <li>to have a syntax we need track precisely, as in JSON or XML formats;</li>
+          <li>to know exactly how far from "here" the signal resides in stream.</li>
+      </ul>
+      This package uses the first method.
+
+      <h1>What is an "escaped format"?</h1>
+      An escaped format is using certain, reserved sequence to indicate the presence
+      of a signal.
+      <p>
+      Of course such a seqence has a certain chance to appear in regular data too.
+      If it happens, it must be "escaped" to avoid missinterpretation.
+      <p>
+      For an example if byte 0x33 is an escape then we may assume, that
+      if 0x33 appears in a regular data it must be replaced with 0x33 0x33.
+      <p>
+      A reader works opposite: it reads a byte, and if it is the escape byte then it reads next
+      one byte too.
+      <p>
+      If both are 0x33 then it returns just one 0x33 as a data and
+      skips the second. If second byte is not 0x33, it detects a signal
+      and that second byte controls what kind of signal it is.
+
+      <h1>Escape byte selection</h1>
+      One may easily notice that if, by chance, we would have to write
+      a data block: <code>0x33,0x33,0x33...</code> then all the bytes would have
+      to be escaped and the size of block would double. This is not nice.
+      <p>
+      This means, that the efficiency of a format for certain data may be very, very poor
+      and that this is very hard to predict what escape will be the best.
+
+      <h2>Adaptive escape</h2>
+      To overcome above limitiations this format is using "adaptive escape"
+      algorithm which is presented below.
+      <p>
+      Let us assume, that we have a data struct:
+      <pre>
+           byte escapes_count [256]; //bytes used as unsigned numbers
+           byte escape;  //initially at known number.
+      </pre>
+      where <code>escape</code> is a current escape byte.
+      <p>
+      Each time we either needed (past intentional) to escape written data or we detected escaped data
+      we do:
+      <pre>
+           int i = 0xff & escape;
+           //increment escape, detect binary roll-over
+           //or use other known way of detecting it
+           int c = (++escapes_count[ i ]);
+           if ( c == 0xFF) //a top limit
+           {
+
+                      //find which of escapes had to be escaped smaller number of times
+                      //Do it in predictable way even if many do have same count.
+                      int min = Byte.MAX_VALUE+1;
+                       int j = -1;
+                       for(int i=255; --i>=0; )
+                       {
+                        int v = escapes_count[i] & 0xff;
+                        if (v &lt min)
+                        {
+                         min = v; j = i;
+                         }
+                       }
+                       //use found less times escaped escape and use as next escape.
+                       escape = (byte)j;
+
+                      //scale the balance down to make some room till next computatin
+                      //needs to take place
+                      for( i=255; --i>=0; )
+                      {
+                              escapes_count[i] >>> 1; //unsigned shift
+                      }
+            }
+      </pre>
+      Since the algorithm is triggered by the same action and data
+      on both ends of a stream both ends will be deducing same escape byte
+      to be used next.
+      <p>
+      This method should select best, less expensive escape regardless of
+      what data are written to a stream.
+      <p>
+      This method changes the scape character one it was detected 255 times in
+      a data for the first time, and 127 times for subsequent uses.
+      This dynamics may be adjusted by modifying top limit, but care must be
+      taken that both ends do use the same top limit or otherwise reader
+      will get totally lost.
+
+      <h2>Set-adaptive escapes</h2>
+      Having just one escape byte is both good and bad.
+      <p>
+      It is good, because it affects data in a less possible way and it is bad
+      because shorest signal will need two bytes at least. This is two times
+      more than in a chunk format.
+      <p>
+      Considering example stream of infinite number of random ints (4 bytes)
+      enclosed in <code>end-begin("int")</code> signals using name registry
+      the chunk format will use 5 bytes for each int resulting in a constant 80%
+      efficiency.
+      <p>
+      The efficiency of escape stream will depend on a data.
+      <p>
+      For single escape character the chance of hitting it in random byte is 1:256.
+      A chance of hitting it in a sequence of N bytes is <code>1-((1-1:256)^N)</code> which
+      is 1.5% per 4-byte integer.
+      <p>
+      Considering the fact, that we need one escape byte, one signal byte and four
+      data bytes we have a total load:
+      <pre>
+           6 + 0.015 bytes
+      </pre>
+      what gives us 66% efficiency.
+      <p>
+      If we would however reserve 17 bytes for escapes, of which 8 would describe
+      "begin-registered-x" and 8 "end-begin-registered-x" and last will open
+      "long signal" the situation would change.
+      <p>
+      Now the chance of hitting escape in N byte long sequence would be:
+      <code>1-((1-17:256)^N)=24%</code>
+      The overhead is however just one byte so total is:
+      <pre>
+           5 + 0.24
+      </pre>
+      what gives 76% efficiency which is not significantly worse than in chunk system.
+      <p>
+      For alike stream carying random bytes the efficiency of chunk stream is 50%
+      and the efficiency of single escape stream is about 33%.
+      <p>
+      The efficiency of 17 escapes stream would be
+      <pre>
+           2 + 0.06 &rarr; 48%
+      </pre>
+      which is again a fair result.
+
+
+      <h1>Format definition</h1>
+      <h2>Initial escape byte</h2>
+       Initial escape byte is 0x80.
+       <p>
+       This was chosen such, since it has
+       a good chance to be a best guess if plenty of data are <code>Strig</code>
+       encoded as specified <a href="#STRING_ENCODING">there</a>. And this chance
+       is not small since <code>String</code> will be used for encoding signal
+       names.
+
+      <h2>Signal types and encoding</h2>
+      We should take care to encode registered signals in a very compact form
+      since
+
+
+
+      <h3 id="STRING_ENCODING">String encoding</h3>
+     Strings (both for names and primitive block API) are encoded in a packed, UTF-8 alike form using following rule:
+     <pre>
+          x - 16 bit java unicode character
+
+               character code          byte sequence
+          0000_0000--0AAA_AAAA &rarr;  0AAA_AAAA
+          00BB_BBBB--BAAA_AAAA &rarr;  1AAA_AAAA 0BBB_BBBB
+          CCBB_BBBB--BAAA_AAAA &rarr;  1AAA_AAAA 1BBB_BBBB 0000_00CC
+
+          where 0 means: "this bit must be zero" and letters do describe any bits.
+     </pre>
+     thous allows packing all ASCII chars (most frequent in western languages) into 1 byte,
+     and all others into up to 3 bytes. This is not an UTF-8 encoding, but is simpler and
+     a tiny bit more dense.
+
+     <h1>Comparison to chunk format</h1>
+     When compared to chunk format escape format does:
+     <ul>
+          <li>it does not need to have large buffers on write side due to the fact, that
+          only <code>boolean[]</code> needs some buffering;</li>
+          <li>the logic is simpler;</li>
+          <li>registered signals are encoded in a twice longer form than in case of
+          chunk based format, so streams using them to provide type information
+          are significantly less efficient;</li>
+          <li>the relationship between stream size and actual stored data size is less
+          predictable in escape format than in chunk format;</li>
+     </ul>
+     As You can see there is absolutely no benefits in using escape based format over chunk based
+     format unless You need to step down to a microcontrollers where simpler, less layered
+     logic of algorithms can result in significantly smaller code footprint.
+
+</body>
+</html>
