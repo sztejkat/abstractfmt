@@ -53,6 +53,9 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	This operation by itself must not create any I/O operation and
 	any information stored to stream must be delayed till this name
 	is actually used for a first time.
+	<p>
+	Subsequent calls with the same parameter should be silently ignored
+	and return the same value as when they were done for the first time.
 	@param name name to optimize, non null.
 	@return true if could optimize name or there is no need to do it at all
 		(ie. stream does not support any optimization). 

@@ -80,6 +80,16 @@ public class CNameRegistrySupport_Write
 					 	};
 					 	return false;
 					}; 
+					public String toString()
+					{
+						return super.toString()+"{name=\""+name+"\" index="+index+
+								(has_been_written
+									?
+									(" written with order="+order)
+									:
+									" not written yet"
+									)+"}";
+					};
 			};
 				/** A map */
 				private final TreeMap<String,Name> map;

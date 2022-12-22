@@ -5,6 +5,7 @@ import sztejkat.abstractfmt.ARegisteringStructReadFormat;
 import sztejkat.abstractfmt.ARegisteringStructWriteFormat;
 import sztejkat.abstractfmt.EUnexpectedEof;
 import sztejkat.abstractfmt.ENoMoreData;
+import sztejkat.abstractfmt.EBrokenFormat;
 import sztejkat.abstractfmt.EFormatBoundaryExceeded;
 import sztejkat.abstractfmt.IFormatLimits;
 import sztejkat.abstractfmt.logging.SLogging;
@@ -180,7 +181,7 @@ public class CObjStructReadFormat1 extends ARegisteringStructReadFormat
 			     this.last_signal_reg_name = n; 
 			     this.last_signal_index = use_index_instead_of_order ? sig.index : sig.order;
 			     
-			     assert(sig.order == order_tracking);
+			     if(sig.order != order_tracking) throw new EBrokenFormat();
 			     order_tracking++;
 			     
 				 return TSignalReg.SIG_END_BEGIN_AND_REGISTER;

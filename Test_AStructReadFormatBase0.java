@@ -10,7 +10,7 @@ import java.util.Iterator;
 	A test bed for {@link AStructReadFormatBase0}, stand alone junit tests.
 	<p>
 	Note: Those tests are based on {@link CObjStructReadFormat0} implementation
-	since this is an easiest way to check how exactly the write format do behave
+	since this is an easiest way to check how exactly the read format do behave
 	in its implementation-specific aspects
 */
 public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest

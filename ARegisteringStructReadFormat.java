@@ -127,16 +127,19 @@ public abstract class ARegisteringStructReadFormat extends AStructReadFormatBase
 		*/
 		private void handleRegistration()throws IOException
 		{
+			if (TRACE) TOUT.println("handleRegistration() ENTER");
 			validateRegistryIsSupported();
 			final int idx = pickLastSignalIndex();
 			final String name = pickLastSignalRegName();
 			assert(idx>=0);
 			assert(name!=null);
-			assert(name.length()<=getMaxSignalNameLength());
+			assert(name.length()<=getMaxSignalNameLength());			
+			if (TRACE) TOUT.println("handleRegistration() picked idx="+idx+",picked name=last_name_to_be_reported=\""+name+"\"");			
 			//Note: registry is correctly handling all boundary check
 			registry.registerBeginName(name, idx);
 			//Now pass to superclass contract
 			this.last_name_to_be_reported = name;
+			if (TRACE) TOUT.println("handleRegistration() LEAVE");
 		};
 		/** Piece of code shared by {@link TSignalReg#SIG_END_BEGIN_REGISTERED}
 		and {@link TSignalReg#SIG_BEGIN_REGISTERED} in {@link #readSignal}
@@ -144,56 +147,69 @@ public abstract class ARegisteringStructReadFormat extends AStructReadFormatBase
 		*/
 		private void handleRegistered()throws IOException
 		{
+			if (TRACE) TOUT.println("handleRegistered() ENTER");
 			validateRegistryIsSupported();
 			final int idx =  pickLastSignalIndex();
+			if (TRACE) TOUT.println("handleRegistered() picked idx="+idx);
 			assert(idx>=0);
 			this.last_name_to_be_reported = registry.getOptimizedName(idx);
+			if (TRACE) TOUT.println("handleRegistered() from registry last_name_to_be_reported =\""+last_name_to_be_reported+"\"");
+			if (TRACE) TOUT.println("handleRegistered() LEAVE");
 		};
 		/** Implemented to use {@link #readSignalReg} */
 		@Override protected final TSignal readSignal()throws IOException
 		{
+				if (TRACE) TOUT.println("readSignal() ENTER");
 				TSignalReg signal = readSignalReg();
+				if (TRACE) TOUT.println("signal="+signal);
 				switch(signal)
 				{
 						case SIG_BEGIN_DIRECT:
 						//Nothing special. Just copy to proper variables.
 						{
 							this.last_name_to_be_reported = pickLastSignalRegName();
+							if (TRACE) TOUT.println("readSignal()=SIG_BEGIN, last_name_to_be_reported=\""+last_name_to_be_reported+"\" LEAVE");
 							return TSignal.SIG_BEGIN;
 						}
 						case SIG_BEGIN_AND_REGISTER:						
 						//handle registration
 						{
 							handleRegistration();
+							if (TRACE) TOUT.println("readSignal()=SIG_BEGIN, LEAVE");
 							return TSignal.SIG_BEGIN;
 						}
 						case SIG_BEGIN_REGISTERED:
 						//handle pick-up from registry
 						{
 							handleRegistered();
+							if (TRACE) TOUT.println("readSignal()=SIG_BEGIN, LEAVE");
 							return TSignal.SIG_BEGIN;
 						}
 						case SIG_END:							
 						//Nothing special to do
 						{
 							this.last_name_to_be_reported = null;
+							if (TRACE) TOUT.println("readSignal()=SIG_END, LEAVE");
 							return TSignal.SIG_END;
 						}
 						case SIG_END_BEGIN_DIRECT:
 						//Nothing special to do
 						{
 							this.last_name_to_be_reported = pickLastSignalRegName();
+							if (TRACE) TOUT.println("readSignal()=SIG_END_BEGIN, last_name_to_be_reported=\""+last_name_to_be_reported+"\" LEAVE");
 							return TSignal.SIG_END_BEGIN;
 						}
 						case SIG_END_BEGIN_AND_REGISTER:
 						//handle registration
 						{
 							handleRegistration();
+							if (TRACE) TOUT.println("readSignal()=SIG_END_BEGIN LEAVE");
 							return TSignal.SIG_END_BEGIN;
 						}
 						case SIG_END_BEGIN_REGISTERED:
 						{
 							handleRegistered();
+							if (TRACE) TOUT.println("readSignal()=SIG_END_BEGIN LEAVE");
 							return TSignal.SIG_END_BEGIN;
 						}
 						default: throw new AssertionError(); 	
@@ -202,8 +218,10 @@ public abstract class ARegisteringStructReadFormat extends AStructReadFormatBase
 		/** Implemented to use {@link #readSignalReg} */
 		@Override protected final String pickLastSignalName()
 		{
+			if (TRACE) TOUT.println("pickLastSignalName() ENTER");
 			String n = last_name_to_be_reported;
 			last_name_to_be_reported = null;
-			return last_name_to_be_reported;
+			if (TRACE) TOUT.println("pickLastSignalName()="+(n==null ? "null" : ("\""+n+"\""))+" LEAVE");
+			return n;
 		};
 };

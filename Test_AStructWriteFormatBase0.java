@@ -44,7 +44,7 @@ public class Test_AStructWriteFormatBase0 extends sztejkat.abstractfmt.test.ATes
 						};
 					};
 					
-	private static void printStream(Collection<IObjStructFormat0> s)
+	static void printStream(Collection<IObjStructFormat0> s)
 	{
 		System.out.println("Stream length:"+s.size());
 		int i=0;

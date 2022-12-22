@@ -274,12 +274,89 @@
 
 
      <h1>Primitive data encoding</h1>
-     TODO
+     This chapter will explain how primitives are encoded.
+     
      <h2>Elementatry primitives</h2>
-     TODO
+     <h3>boolean</h3>
+     A single, elementary boolean is encoded as a single byte, zero for false
+     and 1 for true. Other values are the reason to throw <code>EBrokenFormat</code>
+     
+     <h3>byte</h3>
+     As a byte.
+     
+     <h3>short &amp; char</h3>
+     As two bytes, less significant byte first:
+     <pre>
+                       bits
+     	   byte 0 : 7....0
+     	   byte 1 : 15...8
+     </pre>
+     
+     <h3>int</h3>
+     As four bytes, less significant bytes first.
+     <pre>
+                       bits
+     	   byte 0 : 7....0
+     	   byte 1 : 15...8
+     	   byte 2 : ......
+     	   byte 3 : 31....
+     </pre>
+     
+     <h3>long</h3>
+     As eight bytes, less significant bytes first.
+     <pre>
+                       bits
+     	   byte 0 : 7....0
+     	   byte 1 : 15...8
+     	   ....
+     	   byte 7 : 63....
+     </pre>
+     
+     <h3>float</h3>
+     As an <code>int</code> after conversion with <code>Float.floatToIntBits</code>.
+     
+     <h3>double</h3>
+     As an <code>long</code> after conversion with <code>Double.doubleToLongBits</code>.
+     
 
      <h2>Block primitives</h2>
-     TODO
+     <h3>byte[],char[],short[],int[],long[],float[],double[]</h3>
+     Those blocks of primitives are encoded by directly writing their elements
+     as if they were elementary primitives. No length information is stored
+     and a block is terminated by any header except <code>continue</code>.
+     
+     <h3>String</h3>
+     String is encoded in a form of bytes, character after character,
+     where is character is stored using the encoding
+     specified in <a href="#STRING_ENCODING">this chapter</a>.
+     
+     <h3>boolean[]</h3>
+     Boolean arrays are encoded as a sequence of packed bit-streams:
+     <pre>
+     		bbbb  bbbb
+     		7...  ...0
+     		15... ...8
+     		....
+     		255....
+     </pre>
+     where:
+     <ul>
+     	<li><code>bbbb bbbb</code> number of bits in a bit-stream minus one.
+     	There is no zero size bit-streams and the size of bit stream 
+     	is 1...256 bits;</li>
+     	<li>the number of bytes following the <code>bbbb bbbb</code> is
+     	rounded up to the number of bytes necessary to hold specified number
+     	of bits, 1...32 bytes;</li>
+     	<li>up to 7 bits may be un-used in a last byte and those bits must be zero;</li>
+     </ul>
+     Packed bit-streams do appear one after another, until the terminating
+     header (any other than <code>continue</code>) is written. There is neither a requirement
+     that packed bit-streams do fit in chunk nor that there has to be any rule
+     about their size. A sequence of 1 bit sized streams is a fully correct one
+     and <u>may</u> actually appear in stream if stream is flushed frequently.
+     
+     
+     
      <h3 id="STRING_ENCODING">String encoding</h3>
      Strings (both for names and primitive block API) are encoded in a packed, UTF-8 alike form using following rule:
      <pre>
@@ -297,6 +374,40 @@
      a tiny bit more dense.
 
 
+     <h1>Impact of <code>flush()</code> operation</h1>
+     A <code>flush()</code> must ensure that all data passed through the API
+     must actually get into an underlying low level stream. Since chunk and packed bit-stream 
+     composition do require buffering (we need to know which size to write in 
+     a header) this operation must empty those buffers.
+     <p>
+     Whenever format is flushed following actions do take place:
+     <ul>
+     	<li>if bit-packed <code>boolean []</code> stream is beeing collected due to
+     	boolean block in progress this stream is terminated. If it is non-zero size
+     	its header is updated and the stream is flushed to chunk buffer. If it is zero
+     	size nothing is done.
+     	<p>
+     	The process of flushing it to chunk buffer may result in flushing the chunk,
+     	starting the <code>continue</code> chunk, flushing it and so on until the entire
+     	bit-packed stream is flushed.
+     	</li>
+     	<li>the chunk in progress is flushed to an underlying stream. 
+     	This process involves selection of a proper header, writing it to a stream
+     	and writing necessary user and system payloads;</li>
+     </ul>
+     The side effect of flush is such that both bit-packed <code>boolean []</code> streams and
+     chunks are terminated pre-maturely and the additional fragmentation do appear in
+     a low level binary stream.
+     <p>
+     Simply speaking, the format which wrote the same data and flushed
+     frequently will produce a file which is <u>larger</u> than a file for
+     the same data made with no additional flushing.
+     <p>Except of that there should be no implact whatsoever on how reading 
+     end is processing it.
+     <p>
+     Formats which are not intended to support any "end-of-file" modes different
+     than "none" are recommended to silently ignore user flush requests and rely 
+     on auto-flushing only.
 
 </body>
 </html>

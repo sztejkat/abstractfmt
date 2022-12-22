@@ -285,7 +285,8 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 			if (begin_pending)
 			{
 					 begin_pending = false;
-					 final String signame = pickLastSignalName(); 
+					 final String signame = pickLastSignalName();
+					 assert(signame!=null):"null name for begin signal is not allowed";
 					 if (TRACE) TOUT.println("nextImpl(), picking pednging begin \""+signame+" LEAVE");
 					 return signame;
 			}else
@@ -296,6 +297,7 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 						case SIG_BEGIN:
 								{
 									final String signame = pickLastSignalName();
+									assert(signame!=null):"null name for begin signal is not allowed";
 									if (TRACE) TOUT.println("nextImpl(), SIG_BEGIN \""+signame+" LEAVE");
 									return signame;
 								}

@@ -77,7 +77,7 @@ public class SLogging
  //
 	 private SLogging(){};//prevent creation
 
-         /** Returns debug level for class.
+         /** Returns debug level for a class.
          @param _class for which class
          @return zero - no debugging, otherwise some level
          */
@@ -90,11 +90,11 @@ public class SLogging
               //      This implementation is oversimplfied and just
               //      returns a constant. This means, that enabling/disabling
               //      logs requires re-compilation of this class.
-              return 0;
+              return 1;
          };
 
 
-         /** Returns debug level for class
+         /** Returns debug output for a class
          @param prefix optional prefix to prepend to messages printed by <code>println(...)</code>
          @param _class for which class
          @return never null, a stream which can be used for logging debug messages. This stream may be shared

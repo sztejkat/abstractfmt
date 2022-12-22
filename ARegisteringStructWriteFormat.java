@@ -26,6 +26,11 @@ import java.io.IOException;
 */
 public abstract class ARegisteringStructWriteFormat extends AStructWriteFormatBase0
 {
+		 private static final long TLEVEL = SLogging.getDebugLevelForClass(ARegisteringStructWriteFormat.class);
+         private static final boolean TRACE = (TLEVEL!=0);
+         private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("ARegisteringStructWriteFormat.",ARegisteringStructWriteFormat.class) : null;
+  
+
 				/** Signal names registry. Null if registry is disabled */
 				private final CNameRegistrySupport_Write registry;
 				
@@ -111,8 +116,10 @@ public abstract class ARegisteringStructWriteFormat extends AStructWriteFormatBa
 		*/
 		protected void endBeginAndRegisterImpl(String name, int index, int order)throws IOException
 		{
+			if (TRACE) TOUT.println("endBeginAndRegisterImpl(name=\""+name+"\",index="+index+",order="+order+") ENTER");
 			endImpl();
 			beginAndRegisterImpl(name,index,order);
+			if (TRACE) TOUT.println("endBeginAndRegisterImpl() LEAVE");
 		};
 		
 		
@@ -136,8 +143,10 @@ public abstract class ARegisteringStructWriteFormat extends AStructWriteFormatBa
 		*/
 		protected void endBeginRegisteredImpl(int index, int order)throws IOException
 		{
+			if (TRACE) TOUT.println("endBeginRegisteredImpl(index="+index+",order="+order+") ENTER");
 			endImpl();
 			beginRegisteredImpl(index,order);
+			if (TRACE) TOUT.println("endBeginRegisteredImpl() LEAVE");
 		};
 		
 		
@@ -158,8 +167,10 @@ public abstract class ARegisteringStructWriteFormat extends AStructWriteFormatBa
 		*/ 
 		protected void endBeginDirectImpl(String name)throws IOException
 		{
+			if (TRACE) TOUT.println("endBeginDirectImpl(\""+name+"\") ENTER");			
 			endImpl();
 			beginDirectImpl(name);
+			if (TRACE) TOUT.println("endBeginDirectImpl() LEAVE");
 		};
 		/* ***********************************************************************
 		
@@ -171,39 +182,48 @@ public abstract class ARegisteringStructWriteFormat extends AStructWriteFormatBa
 		{@link #beginRegisteredImpl} */
 		@Override protected final void beginImpl(String name)throws IOException
 		{
+			if (TRACE) TOUT.println("beginImpl(\""+name+"\") ENTER");
 		 	if (registry==null)
 		 	{
+		 		if (TRACE) TOUT.println("beginImpl, registry disabled");
 		 		//no optimization support.
 		 		beginDirectImpl(name);
 		 	}else
 		 	{
 		 		//optimization is supported.
-		 		CNameRegistrySupport_Write.Name n = registry.getOptmizedName(name);
+		 		CNameRegistrySupport_Write.Name n = registry.getOptmizedName(name);		 		
 		 		if (n==null)
 		 		{
+		 			if (TRACE) TOUT.println("beginImpl, could not register, going direct");
 		 			//not in registry
 		 			beginDirectImpl(name);
 		 		}else
 		 		{
+		 			if (TRACE) TOUT.println("beginImpl, n="+n);
 		 			//possibly needs registering
 		 			if (n.needsStreamRegistartion())
 		 			{
+		 				if (TRACE) TOUT.println("beginImpl, registering");
 		 				beginAndRegisterImpl(name,n.getIndex(), n.getOrder());
 		 			}else
 		 			{
+		 				if (TRACE) TOUT.println("beginImpl, already registered");
 		 				beginRegisteredImpl(n.getIndex(),n.getOrder());
 		 			};
 		 		};
 		 	};
+		 	if (TRACE) TOUT.println("beginImpl() LEAVE");
 		};
 		/** Dispatches to {@link #endBeginDirectImpl},{@link #endBeginAndRegisterImpl} or 
 		{@link #endBeginRegisteredImpl} 
 		*/
 		@Override protected final void endBeginImpl(String name)throws IOException
 		{
+			if (TRACE) TOUT.println("endBeginImpl(\""+name+"\") ENTER");
 			//Note: same logic as beginImpl, just calls different methods.
 		 	if (registry==null)
 		 	{
+		 		if (TRACE) TOUT.println("endBeginImpl, registry disabled");
 		 		//no optimization support.
 		 		endBeginDirectImpl(name);
 		 	}else
@@ -212,20 +232,25 @@ public abstract class ARegisteringStructWriteFormat extends AStructWriteFormatBa
 		 		CNameRegistrySupport_Write.Name n = registry.getOptmizedName(name);
 		 		if (n==null)
 		 		{
+		 			if (TRACE) TOUT.println("endBeginImpl, could not register, going direct");
 		 			//not in registry
 		 			endBeginDirectImpl(name);
 		 		}else
 		 		{
+		 			if (TRACE) TOUT.println("endBeginImpl, n="+n);
 		 			//possibly needs registering
 		 			if (n.needsStreamRegistartion())
 		 			{
+		 				if (TRACE) TOUT.println("endBeginImpl, registering");
 		 				endBeginAndRegisterImpl(name,n.getIndex(), n.getOrder());
 		 			}else
 		 			{
+		 				if (TRACE) TOUT.println("endBeginImpl, already registered");
 		 				endBeginRegisteredImpl(n.getIndex(),n.getOrder());
 		 			};
 		 		};
 		 	};
+		 	if (TRACE) TOUT.println("beginImpl() LEAVE");
 		};
 		
 		/* ***********************************************************************
@@ -251,8 +276,15 @@ public abstract class ARegisteringStructWriteFormat extends AStructWriteFormatBa
 		*/
 		@Override public boolean optimizeBeginName(String name)
 		{
-			 if (registry==null) return true; //we don't support optimization.
+			if (TRACE) TOUT.println("optimizeBeginName(\""+name+"\" ENTER");
+			 if (registry==null)
+			 {
+			 	 if (TRACE) TOUT.println("optimizeBeginName()=true disabled, LEAVE");
+			 	 return true; //we don't support optimization.
+			 };
 			 //ok, pass to registery
-			 return registry.optimizeBeginName(name);  
+			 final boolean r = registry.optimizeBeginName(name);  
+			 if (TRACE) TOUT.println("optimizeBeginName()="+r+", LEAVE");
+			 return r;
 	    };
 };
