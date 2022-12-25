@@ -11,7 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 /**
-		A test suite checking if {@link CObjStructWriteFormat0}/{@link CObjStructReadFormat0}
+		A test suite checking if {@link CObjStructWriteFormat1}/{@link CObjStructReadFormat1}
 		do obey base contract.
 		<p>
 		This test is running the implementation with
@@ -19,6 +19,8 @@ import java.io.PrintStream;
 		end_begin_enabled = true;
 		max_supported_recursion_depth = -1;
 		max_supported_name_length = 1024*1024;
+		name_registry_capacity = 32;
+		use_index_instead_of_order = true;
 		</pre>
 		<p>
 		This test suite dumps test files content to text files on writer close
@@ -30,11 +32,11 @@ import java.io.PrintStream;
 					ATestCase_SignalOperationsSafety.class,
 					ATestCase_BooleanElementaryPrimitive.class,
 					ATestCase_BooleanBlockPrimitive.class,
-					ATestCase_ByteElementaryPrimitive.class,
 					ATestCase_ByteBlockPrimitive.class,
+					ATestCase_ByteElementaryPrimitive.class,
 					ATestCase_OptimizedSignalOperations.class
 					})
-public class TestSuite_ObjFormat0 extends ATest
+public class TestSuite_ObjFormat1_index extends ATest
 {
 	
 	@BeforeClass public static void armImplementation()
@@ -75,10 +77,11 @@ public class TestSuite_ObjFormat0 extends ATest
 						};
 					};
 					//Content.
-					CObjStructWriteFormat0 writer = new CObjStructWriteFormat0(
+					CObjStructWriteFormat1 writer = new CObjStructWriteFormat1(
 								  true,//boolean end_begin_enabled,
 								  -1,//int max_supported_recursion_depth,
 								  1024*1024, //int max_supported_name_length,
+								  32,// int name_registry_capacity,
 								  content // IAddable<IObjStructFormat0> stream
 								  )
 					{
@@ -89,10 +92,12 @@ public class TestSuite_ObjFormat0 extends ATest
 							ps.close();
 						};
 					};
-					CObjStructReadFormat0 reader = new CObjStructReadFormat0(
+					CObjStructReadFormat1 reader = new CObjStructReadFormat1(
 								  content,//IPollable<IObjStructFormat0> stream,
 								  -1,//int max_supported_recursion_depth,
-								  1024*1024 //int max_supported_name_length
+								  1024*1024, //int max_supported_name_length
+								  true,//use_index_instead_of_order
+								  32   //name_registry_capacity
 								  );
 					return new CPair<R,W>( (R)reader, (W)writer, file); 
 			};

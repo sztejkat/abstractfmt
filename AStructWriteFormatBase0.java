@@ -46,6 +46,19 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 		/* ------------------------------------------------------------------
 				Signal related
 		------------------------------------------------------------------*/
+		/** Invoked in {@link #optimizeBeginName}
+		@param name --//--
+		@return --//--. This implementation returns true to indicate that no optimization
+			is necessary.
+		@throws IOException if any other format error that not-opened, closed or name too long
+			happens.
+		*/
+		protected boolean optimizeBeginNameImpl(String name)throws IOException
+		{
+			assert(name!=null); 
+			assert(name.length()<=getMaxSignalNameLength());
+			return true; 
+		};
 		/** Should write "end" signal, exactly as {@link #end} specifies.
 		Will be called after <code>end-begin</code> optimization decides, that
 		single "end" signal should be written.
@@ -363,6 +376,23 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 				pending_end = false;
 				endBeginImpl(name);
 			};
+		};
+		
+		/** {@inheritDoc}	
+		Calls {@link #optimizeBeginNameImpl}.
+		*/		
+		@Override public boolean optimizeBeginName(String name)throws IOException
+		{
+			//Sanitize arguments
+		    assert(name!=null):"null name";
+		    if (TRACE) TOUT.println("optimizeBeginName(\""+name+"\") ENTER");
+		    if (name.length()>getMaxSignalNameLength()) throw new EFormatBoundaryExceeded("begin signal name of "+name.length()+" chars is longer than set limit "+getMaxSignalNameLength());
+		    
+		    validateUsable();
+		    
+		    final boolean r = optimizeBeginNameImpl(name);
+		    if (TRACE) TOUT.println("optimizeBeginName()="+r+" LEAVE");
+		    return r;
 		};
 		/* -----------------------------------------------------------------------------
 		

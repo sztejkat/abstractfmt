@@ -360,8 +360,6 @@
      <h3 id="STRING_ENCODING">String encoding</h3>
      Strings (both for names and primitive block API) are encoded in a packed, UTF-8 alike form using following rule:
      <pre>
-          x - 16 bit java unicode character
-
                character code          byte sequence
           0000_0000--0AAA_AAAA &rarr;  0AAA_AAAA
           00BB_BBBB--BAAA_AAAA &rarr;  1AAA_AAAA 0BBB_BBBB

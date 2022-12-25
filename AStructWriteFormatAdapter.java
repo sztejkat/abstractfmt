@@ -23,7 +23,7 @@ public class AStructWriteFormatAdapter extends AStructFormatAdapterBase<IStructW
 	****************************************************************/
 	@Override public void begin(String name)throws IOException{ engine.begin(name); }; 
 	@Override public void end()throws IOException{ engine.end(); };
-	@Override public boolean optimizeBeginName(String name){ return engine.optimizeBeginName(name); };
+	@Override public boolean optimizeBeginName(String name)throws IOException{ return engine.optimizeBeginName(name); };
 	@Override public void writeBoolean(boolean v)throws IOException{ engine.writeBoolean(v); };
 	@Override public void writeByte(byte v)throws IOException{ engine.writeByte(v); };
 	@Override public void writeChar(char v)throws IOException{ engine.writeChar(v); };

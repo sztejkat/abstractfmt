@@ -23,7 +23,7 @@
       </ul>
       This package uses the first method.
 
-      <h1>What is an "escaped format"?</h1>
+      <h1 id="PROCESS">What is an "escaped format"?</h1>
       An escaped format is using certain, reserved sequence to indicate the presence
       of a signal.
       <p>
@@ -48,8 +48,8 @@
       This means, that the efficiency of a format for certain data may be very, very poor
       and that this is very hard to predict what escape will be the best.
 
-      <h2>Adaptive escape</h2>
-      To overcome above limitiations this format is using "adaptive escape"
+      <h2 id="ADAPTIVE">Adaptive escape</h2>
+      To overcome above limitiations one may think about using "adaptive escape"
       algorithm which is presented below.
       <p>
       Let us assume, that we have a data struct:
@@ -104,6 +104,71 @@
       This dynamics may be adjusted by modifying top limit, but care must be
       taken that both ends do use the same top limit or otherwise reader
       will get totally lost.
+      <p>
+      Notice however, that this kind of adaptive escape has one huge disadvantage:
+      the signal is recognized by a sequence:
+      <pre>
+           escape
+           signal_code
+      </pre>
+      and escaping payload is using:
+      <pre>
+           escape
+           escape
+      </pre>
+      This means, that to be able to correctly detect signal the
+      <code>escape</code> must be always different from all possible <code>signal_code</code>.
+      <p>
+      In practice it would either strongly harm the adaptivity or we would have to use:
+      <pre>
+           escape
+           ~escape    <i>; or otherwise altered escape</i>
+           signal_code
+      </pre>
+      what would harm the efficiency of a stream.
+
+      <h2>Efficiency</h2>
+      Now we should consider an efficincy of such an encoding.
+      What is visible at first glance it is the fact, that escape
+      encoding requires <u>more</u> bytes to encode a small registered
+      sub-set of signals than chunk based encoding.
+      <p>
+      Let us compute it.
+      <p>
+      Considering example stream of infinite number of random ints (4 bytes)
+      enclosed in <code>end-begin("int")</code> signals using short, directly encoded
+      name registry the chunk format will use 5 bytes for each int resulting in
+      a constant 80% efficiency.
+       <p>
+      The efficiency of escape stream will depend on a data.
+      <p>
+      For single escape character the chance of hitting it in random byte is 1:256,
+      and if we hit it, we need to pay a price of one additional byte with that
+      probability.
+      This means that we can add an average 1:256 of byte cost per each byte in
+      N-byte long sequence.
+      <p>
+      Considering the fact, that we need one escape byte, one signal byte and four
+      data bytes we have a total load per end-begin wrapped integer:
+      <pre>
+           2+ 4 * (1+1:256) = 6.015
+      </pre>
+      what gives us 66% efficiency.
+      <p>
+      For alike stream carying random bytes the efficiency of chunk stream is 50%
+      and the efficiency of single escape stream is about:
+      <pre>
+           2+1*(1+1:256) = 3.004 = 33% efficiency
+      </pre>
+       <p>
+      If however we consider longer sequences, knowing that "continue" chunk can
+      carry 4095 bytes at additional cost of 2 bytes we have chunk stream efficiency
+      of 99.95% while the escape stream of that size would have:
+      <pre>
+      4095*(1+1:256) = 4111 = 99.6%
+      </pre>
+      Once can see that at no condition the escape stream will be more efficient
+      than chunk based stream.
 
       <h2>Set-adaptive escapes</h2>
       Having just one escape byte is both good and bad.
@@ -112,67 +177,222 @@
       because shorest signal will need two bytes at least. This is two times
       more than in a chunk format.
       <p>
-      Considering example stream of infinite number of random ints (4 bytes)
-      enclosed in <code>end-begin("int")</code> signals using name registry
-      the chunk format will use 5 bytes for each int resulting in a constant 80%
-      efficiency.
-      <p>
-      The efficiency of escape stream will depend on a data.
-      <p>
-      For single escape character the chance of hitting it in random byte is 1:256.
-      A chance of hitting it in a sequence of N bytes is <code>1-((1-1:256)^N)</code> which
-      is 1.5% per 4-byte integer.
-      <p>
-      Considering the fact, that we need one escape byte, one signal byte and four
-      data bytes we have a total load:
-      <pre>
-           6 + 0.015 bytes
-      </pre>
-      what gives us 66% efficiency.
-      <p>
       If we would however reserve 17 bytes for escapes, of which 8 would describe
       "begin-registered-x" and 8 "end-begin-registered-x" and last will open
       "long signal" the situation would change.
       <p>
-      Now the chance of hitting escape in N byte long sequence would be:
-      <code>1-((1-17:256)^N)=24%</code>
-      The overhead is however just one byte so total is:
-      <pre>
-           5 + 0.24
-      </pre>
-      what gives 76% efficiency which is not significantly worse than in chunk system.
+      The overhead for a small subset of registered signals is now just one byte,
+      exactly as in chunk format.
       <p>
-      For alike stream carying random bytes the efficiency of chunk stream is 50%
-      and the efficiency of single escape stream is about 33%.
-      <p>
-      The efficiency of 17 escapes stream would be
+      Considering again the 4-byte integer we can compute:
       <pre>
-           2 + 0.06 &rarr; 48%
+           1+4*(1+17/256) = 5.26
       </pre>
-      which is again a fair result.
+      what gives 76% efficiency which is very much worse than in chunk system.
+      <p>
+      The efficiency of 17 escapes stream for signle bytes wrapped alike manner will be:
+      <pre>
+           1 + 1*(1+17/256) = 2.066  = 48%
+      </pre>
+      which is again a fair result compared with 50% of chunk stream.
+      <p>
+      The 4095 long sequence efficiency will be:
+      <pre>
+      4095*(1+17:256) = 4367 = 94%
+      </pre>
+      which is significantly worse. Chunk stream would have alike efficiency if
+      the longest chunk would be 31 bytes.
+      <p>
+      As one can see this again <u>cannot compete</u> with chunk based stream.
+
+
+
+      <h2>Advantages? Any?</h2>
+      Basically two:
+      <ol>
+          <li>No need of 4k buffer on writing side, just 32 bytes for boolean packed sequence is enough
+          and even that can be reduced if we will skip <coce>boolean []</code> packing;</li>
+          <li>An ability to restore synchronisation after some data loss. I will discuss it below.</li>
+      </ol>
+      <h3>Restoring synchronisation</h3>
+      If You will loose any byte in chunk format You are doomed. There is absolutely no way to guess were
+      next signal will be in stream.
+      <p>
+      In escape based stream it is enough to await for either of two:
+      <ul>
+          <li>EOF followed by escape followed by non-escape or;</li>
+          <li>non escape followed by escape followed by non-escape;</li>
+      </ul>
+      Fist condition will matter only in systems which do use EOF to insert a time-space between zero level
+      structures, second can catch up to signal at any level. Having signal found and having known set of
+      zero-level signals one can re-synchronize with data stream again.
+
+
+      <h2>Recomendations</h2>
+      Use escape stream only when either of two happens:
+      <ul>
+          <li>Your system is very constrained in terms of memory or;</li>
+          <li>You don't have any robust low level transport layer and predict some data loss;</li>
+      </ul>
+      Notice, in second case You will still need some transport layer to provide check-sums and etc,
+      so Your profits are still almost none.
+
 
 
       <h1>Format definition</h1>
+      This format is using single escape byte.
       <h2>Initial escape byte</h2>
-       Initial escape byte is 0x80.
+       Initial escape byte is 0x80 (1000_0000) and cannot be parameterized.
        <p>
        This was chosen such, since it has
-       a good chance to be a best guess if plenty of data are <code>Strig</code>
+       a good chance to be a best guess if plenty of data are <code>String</code>
        encoded as specified <a href="#STRING_ENCODING">there</a>. And this chance
        is not small since <code>String</code> will be used for encoding signal
        names.
+      <h2>Adaptivity</h2>
+      This format is <u>not adaptive</u>.
 
       <h2>Signal types and encoding</h2>
       We should take care to encode registered signals in a very compact form
-      since
+      we do encode following set of signals:
+      <table border="1">
+      <tr>
+          <td>begin-direct</td><td>used to provide begin signal followed by directly encoded signal name;</td>
+      </tr>
+      <tr>
+          <td>end-begin-direct</td><td>used to provide end signal followed by begin signal followed by directly encoded signal name;</td>
+      </tr>
+      <tr>
+          <td>begin-register</td><td>used to provide begin signal followed by optional index and directly encoded signal name;</td>
+            </tr>
+      <tr>
+          <td>end-begin-register</td><td>used to provide end signal followed begin signal followed by optional index and directly encoded signal name;</td>
+            </tr>
+      <tr>
+          <td>begin-registered</td><td>used to provide begin signal followed by signal index;</td>
+            </tr>
+      <tr>
+          <td>end-begin-register</td><td>used to provide end signal followed begin signal followed by signal index;</td>
+            </tr>
+      <tr>
+          <td>end/end-name</td><td>used to provide end signal or end of directly encoded name;</li>
+      </tr>
+      </table>
 
+      <h2>Signals</h2>
+        Each signal is formed by a <code>header</code> followed by a <code>payload</code>.
+        <p>
+        Payload is passed through the escaping process described <a href="#PROCESS">there</a>
+        so that no <code>escape</code> followed by <code>non-escape</code> is present inside a
+        payload.
+        <p>
+        A header is always formed by:
+        <pre>
+          1000 0000  <i>; escape</i>
+          0sss_ssss
+        </pre>
+        where no <code>sss_ssss</code> is <code>signal code</code>.
 
+      <h3>begin-direct</h3>
+        This signal is encoded as:
+        <pre>
+             1000 0000 <i>; escape</i>
+             0000 0000
+        </pre>
+        After this signal we have a name first encoded as <a href="#STRING_ENCODING">specified there</a>
+        then passes through payload escape process and terminated with <code>end/end-name</code> signal.
+
+      <h3>end-begin-direct</h3>
+       This signal is encoded as:
+        <pre>
+             1000 0000 <i>; escape</i>
+             0000 0001
+        </pre>
+        and followed by the same data as in <code>begin-direct</code>.
+
+      <h3>begin-register</h3>
+       This signal is encoded in two forms:
+        <pre>
+             1000 0000 <i>; escape</i>
+             0000 0010
+             iiii iiii
+        </pre>
+        where <code>i</code> is a directly encoded index of a signal or:
+        <pre>
+             1000 0000 <i>; escape</i>
+             0000 0011
+        </pre>
+        where index is deduced from an order of appearance.
+        <p>
+        In both cases this sequence is followed by an escaped encoded signal name terminated by <code>end/end-signal</code>
+        exactly as in <code>begin-direct</code>
+        <p>
+        The name is to be registered under a specified or deduced index.
+        <p>
+        Both forms cannot be mixed in one stream.
+
+      <h3>end-begin-register</h3>
+       This signal is encoded in two forms:
+        <pre>
+             1000 0000 <i>; escape</i>
+             0000 0100
+             iiii iiii
+        </pre>
+        where <code>i</code> is a directly encoded index of a signal or:
+        <pre>
+             1000 0000 <i>; escape</i>
+             0000 0101
+        </pre>
+         where index is deduced from an order of appearance.
+         <p>
+         It is used in a way and followed by the same data as <code>begin-register</code>
+
+       <h3>begin-registered</h3>
+       This signal is encoded in two forms:
+       <pre>
+            1000 0000 <i>; escape</i>
+            0iii 0110 <i> idx= 0000 0iii</i>
+       </pre>
+       or
+       <pre>
+            1000 0000 <i>; escape</i>
+            0000 0111
+            iiii iiii <i> idx=iiii iiii</i>
+       </pre>
+       where in both cases <code>idx</code> is the index of signal name in signal name registry.
+       <p>
+       <i>Note: The eight quickly encoded names can be used to efficiently implement the
+       type-stream and can be used to denote eight elementary Java types. This is the same
+       trick as in chunk-stream.</i>
+
+       <h3>end-begin-registered</h3>
+       This signal is encoded in two forms:
+       <pre>
+            1000 0000 <i>; escape</i>
+            0iii 1000 <i> idx= 0000 0iii</i>
+       </pre>
+       or
+       <pre>
+            1000 0000 <i>; escape</i>
+            0000 1001
+            iiii iiii <i> idx=iiii iiii</i>
+       </pre>
+       where in both cases <code>idx</code> is the index of signal name in signal name registry.
+
+       <h3>end/end-name</h3>
+       This signal is encoded as:
+       <pre>
+            1000 0000 <i>; escape</i>
+            0000 1010
+       </pre>
+       and either indicates the stand-alone <code>end</code> signal or the end of directly encoded name.
+
+       <h3>Prohibitted headers</h3>
+       Any other header indicates an error and should result in <code>EBrokenFormat</code>.
 
       <h3 id="STRING_ENCODING">String encoding</h3>
      Strings (both for names and primitive block API) are encoded in a packed, UTF-8 alike form using following rule:
      <pre>
-          x - 16 bit java unicode character
-
                character code          byte sequence
           0000_0000--0AAA_AAAA &rarr;  0AAA_AAAA
           00BB_BBBB--BAAA_AAAA &rarr;  1AAA_AAAA 0BBB_BBBB
@@ -183,22 +403,11 @@
      thous allows packing all ASCII chars (most frequent in western languages) into 1 byte,
      and all others into up to 3 bytes. This is not an UTF-8 encoding, but is simpler and
      a tiny bit more dense.
+     <p>
+     <i>
+     Note: This is the same encoding as in a chunk format.</i>
 
-     <h1>Comparison to chunk format</h1>
-     When compared to chunk format escape format does:
-     <ul>
-          <li>it does not need to have large buffers on write side due to the fact, that
-          only <code>boolean[]</code> needs some buffering;</li>
-          <li>the logic is simpler;</li>
-          <li>registered signals are encoded in a twice longer form than in case of
-          chunk based format, so streams using them to provide type information
-          are significantly less efficient;</li>
-          <li>the relationship between stream size and actual stored data size is less
-          predictable in escape format than in chunk format;</li>
-     </ul>
-     As You can see there is absolutely no benefits in using escape based format over chunk based
-     format unless You need to step down to a microcontrollers where simpler, less layered
-     logic of algorithms can result in significantly smaller code footprint.
+
 
 </body>
 </html>

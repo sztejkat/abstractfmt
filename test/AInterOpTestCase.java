@@ -175,7 +175,31 @@ public class AInterOpTestCase<R extends IStructReadFormat,
 			    W extends IStructWriteFormat>
 			    CPair<R,W> createTestDevice()throws IOException
 		{
-				String base = this.getClass().getSimpleName()+"-temp/";
+				String base = this.getClass().getSimpleName();
+				//This base do provide information about a test case, but not about
+				//in what test suite it is used.	
+				//The TestWatcher and Rules do not provide information about test suite either.
+				//In most cases however the information will be hidden in factory because it
+				//will be most probably declared in a test suite class.
+				IInteropTestDeviceFactory f = getFactory();
+				if (f!=null)
+				{
+					//Now figure out either class of factory or in which class it is an inner class?
+					Class<?> p = f.getClass();
+					{
+						Class<?> c = p;
+						do
+						{
+							p = c;
+							c = p.getEnclosingClass(); //Note: getDeclaringClass works only for non-anonymous classes.							
+						}while(c!=null);
+					};
+					base = p.getSimpleName()+"-temp/"+base+"/";
+				}else
+				{
+					System.out.println("could not figure out factory class, test data of different suites may be mixed");
+					base = base+"-temp/";
+				};
 				String tail;
 				{
 					StackTraceElement [] stack = Thread.currentThread().getStackTrace();

@@ -32,14 +32,14 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 		See {@link IFormatLimits#getMaxSignalNameLength}
 	@throws EFormatBoundaryExceeded if structure recursion depth control is enabled
 		and this limit is exceeded. See {@link IFormatLimits#setMaxStructRecursionDepth}
-	@throws IOException if low level i/o fails.
+	@throws IOException if low level i/o fails or stream is closed/not opened
 	*/
 	public void begin(String name)throws IOException;
 	
 	/** Writes "end" signal, thous closing the structure.
 	
 	@throws EFormatBoundaryExceeded if there is no un-closed structure.
-	@throws IOException if low level i/o fails.
+	@throws IOException if low level i/o fails or stream is closed/not opened
 	*/
 	public void end()throws IOException;
 	
@@ -58,15 +58,18 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	and return the same value as when they were done for the first time.
 	@param name name to optimize, non null.
 	@return true if could optimize name or there is no need to do it at all
-		(ie. stream does not support any optimization). 
+		 (ie. stream does not support any optimization). 
 		 <br>
 		 Returns false if there is such a possiblity but resources are exceeded
 		 so it could not optimize that name. 
 		 <p>
 		 Returning false may not cause stream to fail but
 		 may negatively impact performance.			  
+	@throws EFormatBoundaryExceeded if name is too long
+		See {@link IFormatLimits#getMaxSignalNameLength}
+	@throws IOException if stream is closed/not opened.
 	*/
-	public default boolean optimizeBeginName(String name){ return true; };
+	public boolean optimizeBeginName(String name)throws IOException;
 	
 	
 	

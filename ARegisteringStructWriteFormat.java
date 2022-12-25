@@ -255,7 +255,7 @@ public abstract class ARegisteringStructWriteFormat extends AStructWriteFormatBa
 		
 		/* ***********************************************************************
 		
-				IStructWriteFormat
+				AStructWriteFormatBase0
 		
 		
 		************************************************************************/
@@ -266,17 +266,10 @@ public abstract class ARegisteringStructWriteFormat extends AStructWriteFormatBa
 		<p>
 		The actual registration of a name by writing data to the stream will happen at first use
 		in call to {@link #begin(String)}.
-		@return true if either registry optimization is disabled or  it is enabled
-			and name was registered for optimization.
-			<p>
-			False if the whole capacity of registry
-			is already consumed and this name cannot be turned from string form to numeric form.
-			<p>
-			Returning false has no other impact on functionality except the lack of optimalization. 
 		*/
-		@Override public boolean optimizeBeginName(String name)
+		@Override protected boolean optimizeBeginNameImpl(String name)
 		{
-			if (TRACE) TOUT.println("optimizeBeginName(\""+name+"\" ENTER");
+			 if (TRACE) TOUT.println("optimizeBeginName(\""+name+"\" ENTER");
 			 if (registry==null)
 			 {
 			 	 if (TRACE) TOUT.println("optimizeBeginName()=true disabled, LEAVE");
