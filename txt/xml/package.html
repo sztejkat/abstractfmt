@@ -1,0 +1,174 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>sztejkat.abstractfmt.txt.xml</title>
+      
+  <meta http-equiv="content-type"
+ content="text/html; charset=UTF-8">
+</head>
+<body>
+      This package defines how signal format is projected on XML file.
+
+      <h1>Use of XML standard</h1>
+      This format do produce "well formed XML", but cannot parse all
+      "well formed" XMLs.
+
+      <h2>XML schema</h2>
+      The format is schema-less since there is no way to define schema
+      for unknown data structures.
+
+      <h2>XML body</h2>
+      Opening stream opens XML body, closing stream closes it.
+
+      <h2>Invalid characters</h2>
+      XML defines following classes off "cannot encode" characters:
+      <ul>
+          <li>characters which are proper XML characters, but cannot be
+          encoded using current low level character encoding;</li>
+          <li>characters which cannot be used in XML regardless of how they are
+          presented;</li>
+          <li>characters which are valid but cannot be used for tag names, attribute names and etc;</li>
+      </ul>
+      First type of characters can be encoded using known set of entities in style
+      <pre>
+            &amp;<i>entity mnemonic</i>;
+            &amp;#<i>unicode</i>;
+      </pre>
+      The set of supported mnemonics will be defined in implementing class.
+      <p>
+      Second type of characters cannot be present in XML file. Our abstract
+      format do require however, that the entire 0...0xFFFF space of unicode
+      characters can be used for names, elementary characters
+      and strings.
+      <p>
+      The un-allowed XML characters cannot be encoded using <code>&amp;</code>
+      convention because regular XML parsers will refuse to process them.
+      <p>
+      Unfortunately the set of characters which can begin a tag name is even
+      more restrictive and we have to be able to use the whole set of characters
+      in tag names. Thanks to some idiot who designed XML the first character of tag
+      must be the "base char" what excludes any reasonable selection past true
+      letters usable or _ or :. Where in fact : is also excluded due to later use
+      for "namespace" handling. This means, that _ (U+005F, 95 decimal)
+      is the only reasonable escape character we can actually use.
+      <p>
+      So this format is using:
+      <pre>
+           _                             &rarr; __
+           <i>not allowed character U+xxxx</i>  &rarr; _xxxx
+      </pre>
+      that is the '_' is encoded as either <code>_005F</code>
+      or <code>__</code> (double _). Any not allowed character is encoded
+      using <code>_xxxx</code> syntax, where x are always four upper case hexadecimal
+      digits.
+      <p>
+      The exact set of characters which are escaped vary depending on where they
+      are used in XML. The smallest allowed set is used to start tag name, slightly
+      larger in the remaning part of the name and largerst inside XML element body.
+
+      <h2>Included XML, xlink and other extensions</h2>
+      Not supported. A plain, single continous data character stream is to be used.
+
+      <h2>XML comments</h2>
+      Supported. May appear anywhere inside a tag body, including inside
+      a primitive element, and may not appear inside a tag name itself.
+
+      <h1>Adaptation of XML to signal format</h1>
+      <h2>Begin signal</h2>
+      Begin signal is always encoded directly, without any names registry
+      and is represented as an opening XML tag:
+      <pre>
+            &lt;<i>nnnn</i>&gt;
+      </pre>
+      where <code>nnnn</code> is a signal name, with not allowed characters correctly escaped.
+
+      <h2>End signal</h2>
+      End signal in XML cannot be anonymous and must be encoded alike <code>begin</code> signal:
+      <pre>
+            &lt;/<i>nnnn</i>&gt;
+      </pre>
+      <p>
+      <i>Note: The inablity to use "anonymous closing tag" <code> &lt;/&gt;</code>
+      enforces stream writer to keep track of opened signals on a stack what may
+      cause excesive memory consumption. Thous XML format do have some natural limit
+      of recursion depth.</i>
+
+      <h2>Tag body</h2>
+      Inside a tag body elementary primitives are stored one by one, separated by <code>,</code> and optional
+      ignorable white spaces.
+
+      <h2>Elementary primitives</h2>
+      Following encoding is used for elementary primitives:
+      <table border="1">
+      <tr>
+          <th>Java type</th><th>encoded in tag body</th>
+      </tr>
+      <tr>
+         <td>boolean</td><td>0,1</td>
+      </tr>
+      <tr>
+          <td>byte,short,int,long</td><td>in one of two forms:
+          <ul>
+              <li>hexadecimal number, starting with "x" with leading zeroes skipped,  using always upper case characters to represent hex digits;</li>
+              <li>decimal digit with optional leading + or - sign;</li>
+          </ul>
+          </td>
+      </tr>
+      <tr>
+          <td>float,double</td>
+          <td>
+              in one of two forms:
+              <ul>
+                  <li>a hexadecimal int or long, after conversion from float to bits or;</li>
+                  <li>as a floating point decimal number, with optional leading + or -, "." as decimal separator and E as exponent separator
+                  with optional + or - exponent sign;</li>
+              </ul>
+          </td>
+      </tr>
+      <tr>
+          <td>char</td><td>as " enclosed string, made of one or more characters, where not allowed characters and " are escaped.
+                              Multiple chars can be stuck together in one string or written separately.
+                              End of lines and whitespaces are encoded directly without any escaping</td>
+      </tr>
+      </table>
+
+      <h2>Elementary sequences</h2>
+      No special syntax. Just a plain sequence of elementary primitives without any indicator telling if to interprete them
+      as a squence or single elements. The <code>String</code> and <code>char[]</code> are encoded excatly the same way
+      and there are no means to tell them apart.
+
+
+      <h2>Parsing</h2>
+      The parser do make an attempt to parse next elementary element as it finds it and interprete it as requested.
+      Following generic rules do apply:
+      <ul>
+          <li>for hexa-decimal number any of <code>boolean, byte,short,int,long, float, double</code> read can be used;</li>
+          <li>for decimal integers any of <code>boolean, byte,short,int,long, float, double</code> read can be used;</li>
+          <li>this is an error to read decimal floating point by <code>boolean, byte,short,int,long</code>;</li>
+          <li>inside a " enclosed string only <code>char</code> or <code>String</code> can be read;</li>
+      </ul>
+      After sequence read is initialized the type of initialized sequence dictates what can be read and what can be not.
+      <p>
+      The <code>char[]</code> or <code>String</code> write can be split across multiple " enclosed strings, that  is:
+      <pre>
+           &lt;struct&gt;
+                         "super",
+                         "mario"
+           &lt;/struct&gt;
+      </pre>
+      can be processes with a single <code>readString</code> returning <code>"supermario"</code> as read data.
+
+
+
+     <h1>Additional information</h1>
+     XML stream is by definition not typed and process of reading it may differ from
+     the process of writing it. For an example a sequence of numbers may be read
+     both with elementary primitives and with elementary sequence operation.
+     <p>
+     This is intentional since it simplifies the processing a lot.
+     <p>
+     This format is <u>not compact</u> and puts readability in front of compactness.
+     This is also intentional since for a really compact storage we do have binary formats.
+
+</body>
+</html>
