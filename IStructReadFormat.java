@@ -99,8 +99,26 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
 		@throws EFormatBoundaryExceeded if either name is longer than
 			{@link IFormatLimits#getMaxSignalNameLength} or 
 			recursion is too deep (see {@link IFormatLimits#setMaxStructRecursionDepth})
+		@see #hasElementaryData
 		*/
 		public String next()throws IOException;
+		
+		/** Tests if {@link #next} will skip any elementary data before moving to
+		the signal. May result in some I/O operation if determining if there
+		are any primitive data do require that. Must have no visible effect on
+		any other format operation and can be invoked at any moment.
+		<p>
+		The fact that this method returns true means that an <i>apropriate</i>
+		elementary read, including block should not fail and return with non
+		zero amount of data. Which read is <i>apropriate</i> is not the subject
+		of this contract.
+		
+		@return true if {@link #next} will have to skip some primitive 
+			data, false if there is nothing what can be read before reaching
+			either signal or end of file.
+		@throws IOException if failed, including stream closed or not opened.
+	    */
+		public boolean hasElementaryData()throws IOException;
 		
 		
 		/** Skips all remaining primitives and all nested structures until

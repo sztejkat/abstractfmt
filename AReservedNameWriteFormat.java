@@ -14,6 +14,9 @@ import java.util.TreeMap;
 	<p>
 	If name is not reserved, but starts with escape char,
 	and additional escape char is added in front of it.
+	This avoids name clash if an attempt to write an 
+	escaped form of reserved name is made, what is fully legal
+	thing to do.
 	<p>
 	At last, if it is neither reserved nor starts with escape
 	it is written as supplied.
@@ -28,6 +31,14 @@ import java.util.TreeMap;
 		if n starts with escape char, this character is removed
 			and modified name is returned from an API. 
 	</pre>
+	
+	<h1>Name length limit</h1>
+	The fact that some names are escaped do mean, that the real logic name 
+	limit set on stream may be one character lower than the limit set on the underlying
+	stream.
+	<p>
+	Since this condition do vary depending on the use of format and selected
+	set of reserved names it is up to user of this format to ensure, that limit is large enough.
 	
 */
 public class AReservedNameWriteFormat extends AStructWriteFormatAdapter
@@ -52,24 +63,31 @@ public class AReservedNameWriteFormat extends AStructWriteFormatAdapter
 	};
 	/* *********************************************************
 	
-			Services required from subclasses
+			Services provided for subclasses
 	
 	**********************************************************/
 	/** Reserves name 
 	@param name name to reserve. If reserved more than once nothing happens.
 			It cannot start with {@link #escape} and can't be null.
+	@throws IllegalArgumentException if either name of signal or its escaped
+			form is longer than the current {@link #getMaxSignalNameLength}.
 	*/
 	protected void reserveName(String name)
 	{
 		assert(name!=null);
+		final int nl = name.length();
 		assert(
-				(name.length()==0)
+				(nl==0)
 				||
 				(
-					(name.length()!=0)
+					(nl!=0)
 					&&
 					(name.charAt(0)!=escape)
 				)):"name "+name+" starts with escape. It can't be";
+		int max = getMaxSignalNameLength();
+		
+		if (nl>max) throw new IllegalArgumentException("reserved name \""+name+"\" is longer than set limit");
+		if (nl+1>max) throw new IllegalArgumentException("reserved name \""+name+"\" escaped form is longer than set limit");
 		reserved.put(name, escape+name);
 	};
 	/** Checks if name is reserved
@@ -77,11 +95,7 @@ public class AReservedNameWriteFormat extends AStructWriteFormatAdapter
 	@return true if it is
 	*/
 	protected final boolean isReservedName(String name){ return reserved.containsKey(name); };
-	/* *********************************************************
 	
-			Services for subclasses.	
-	
-	**********************************************************/
 	/** Writes "begin" signal using specified reserved name directly, without any escaping.
 	@param name a reserved name.
 	@throws AssertionError if <code>name</code> is null.

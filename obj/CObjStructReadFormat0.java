@@ -88,6 +88,26 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 		//		or during fetching. We can do it afterwards.
 		if (n.length()>getMaxSignalNameLength()) throw new EFormatBoundaryExceeded("name too long");
 	};
+	@Override protected boolean hasElementaryDataImpl()throws IOException
+	{
+		if (TRACE) TOUT.println("hasElementaryDataImpl() ENTER");
+		IObjStructFormat0 item = stream.peek();
+		if (item==null)
+		{
+			//if there is nothing we do not have anything to skip.
+			if (TRACE) TOUT.println("hasElementaryDataImpl()=false, eof LEAVE");
+			return false;
+		};
+		if (item.isSignal())
+		{
+			if (TRACE) TOUT.println("hasElementaryDataImpl()=false, LEAVE");
+			return false;
+		}else
+		{
+			if (TRACE) TOUT.println("hasElementaryDataImpl()=true, LEAVE");
+			return true;
+		}
+	};
 	@Override protected TSignal readSignal()throws IOException
 	{
 		if (TRACE) TOUT.println("readSignal() ENTER");

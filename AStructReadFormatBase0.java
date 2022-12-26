@@ -64,6 +64,11 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 		@throws IOException if fialed.
 		@throws EFormatBoundaryExceeded if name length is exceeded. */
 		protected abstract TSignal readSignal()throws IOException;
+		/** Invoked by {@link #hasElementaryData} after checking basic
+		conditions 
+		@return as in {@link #hasElementaryData}
+		@throws IOException if failed at low level */
+		protected abstract boolean hasElementaryDataImpl()throws IOException;
 		/** Set by {@link #readSignal} when a validated name of 
 		begin signal is read. Subsequent calls of this method
 		do return <code>null</code>
@@ -341,6 +346,15 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 			};
 			if (TRACE) TOUT.println("next()="+(signal==null ? "null" : ("\""+signal+"\""))+" LEAVE");
 			return signal;
+		};
+		@Override public boolean hasElementaryData()throws IOException
+		{
+			if (TRACE) TOUT.println("hasElementaryData() ENTER");
+			//basic state
+			validateUsable();
+			final boolean r= hasElementaryDataImpl();
+			if (TRACE) TOUT.println("hasElementaryData()="+r+" LEAVE");
+			return r;
 		};
 		/* ----------------------------------------------------------
 				Elementary primitives
