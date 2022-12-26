@@ -16,12 +16,9 @@ import java.io.IOException;
 		<li><i>{@link #open},{@link #close}</i> - unaffected;</li>
 		<li><i>elementary primitive reads {@link #readBoolean} and etc.
 		and block reads {@link #readBooleanBlock} and etc.</i> -
-		do throw {@link ETypeMissmatch} if used when:
-		<ul>
-			<li>there is no block read operation in progress and;</li>
-			<li>a element at cursor is {@link TElement#is_primitive} and;</li>
-			<li>it is of another type than the method expects;</li>
-		</ul> 
+		do throw {@link ETypeMissmatch} if when element under
+		cursor is not of an apropriate type to either initiate or continue operation
+		<p>
 		After throwing an exception the stream must behave as specified in {@link ETypeMissmatch}.
 		</li>
 		<li>the behavior of block end elementary primitive reads if 

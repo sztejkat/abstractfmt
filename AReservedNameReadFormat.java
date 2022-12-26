@@ -76,7 +76,7 @@ public abstract class AReservedNameReadFormat extends AStructReadFormatAdapter
 			Services provided for subclasses
 	
 	**********************************************************/
-	/** Reserves name 
+	/** Reserves name. Can be used on closed stream.
 	@param name name to reserve. If reserved more than once nothing happens.
 			It cannot start with {@link #escape} and can't be null.
 	@throws IllegalArgumentException if either name of signal or its escaped

@@ -66,7 +66,7 @@ public class AReservedNameWriteFormat extends AStructWriteFormatAdapter
 			Services provided for subclasses
 	
 	**********************************************************/
-	/** Reserves name 
+	/** Reserves name. Can be invoked on closed stream. 
 	@param name name to reserve. If reserved more than once nothing happens.
 			It cannot start with {@link #escape} and can't be null.
 	@throws IllegalArgumentException if either name of signal or its escaped
