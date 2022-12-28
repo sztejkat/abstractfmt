@@ -322,6 +322,9 @@ public class CTypedStructWriteFormat extends AReservedNameWriteFormat implements
 				if (TRACE) TOUT.println("closePendingTypeInfo(), closing pending type info.");
 				current_type=-1;
 				super.end();
+			}else
+			{
+				if (TRACE) TOUT.println("closePendingTypeInfo(), no pending type info.");
 			};
 		};
 		/** Overriden to manage type info */ 
