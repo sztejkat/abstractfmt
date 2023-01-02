@@ -7,6 +7,10 @@ import java.io.IOException;
 */
 public class CTypedStructReadFormat extends AReservedNameReadFormat implements ITypedStructReadFormat
 {
+		 private static final long TLEVEL = SLogging.getDebugLevelForClass(CTypedStructReadFormat.class);
+         private static final boolean TRACE = (TLEVEL!=0);
+         private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("CTypedStructReadFormat.",CTypedStructReadFormat.class) : null;
+
 				/** Current element in stream.
 				Null if undetermined and needs to be fetched.
 				If this element is {@link TElement#SIG}
@@ -73,11 +77,13 @@ public class CTypedStructReadFormat extends AReservedNameReadFormat implements I
 							)
 		{
 			super(engine, escape);
+			if (TRACE) TOUT.println("new CTypedStructReadFormat( escape="+escape+") ENTER");
 			assert(assertTypeNames(type_names));
 			this.type_names = type_names;
 			//reserve them, order doesn't matter.
 			for(int i = type_names.length; --i>=0;)
 				reserveName(type_names[i]);
+			if (TRACE) TOUT.println("new CTypedStructReadFormat() LEAVE");
 		};
 		/* ***********************************************************************
 		
@@ -110,10 +116,16 @@ public class CTypedStructReadFormat extends AReservedNameReadFormat implements I
 		*/
 		private TElement typeFromName(String name)
 		{
+			
 			for(int i=type_names.length; --i>=0;)
 			{
-				if (type_names[i].equals(name)) return NAME_TO_TYPE_MAP[i];
+				if (type_names[i].equals(name))
+				{
+						if (TRACE) TOUT.println("typeFromName("+name+")="+NAME_TO_TYPE_MAP[i]);
+						return NAME_TO_TYPE_MAP[i];
+				};
 			};
+			if (TRACE) TOUT.println("typeFromName("+name+")=null");
 			return null;
 		};
 		
@@ -131,8 +143,9 @@ public class CTypedStructReadFormat extends AReservedNameReadFormat implements I
 		----------------------------------------------------------------------*/	
 		@Override public String next()throws IOException
 		{
+			if (TRACE) TOUT.println("next() ENTER");
 			//In loop go through all possible type information skipping it.
-			peek();	//arm type information. This is necessary if this is firt
+			peek();	//arm type information. This is necessary if this is first
 					//call in stream, and stream lacks type information.
 					//Without a peek() next would not barf about missing type info.
 					
@@ -140,12 +153,14 @@ public class CTypedStructReadFormat extends AReservedNameReadFormat implements I
 			loop:
 			for(;;)
 			{			
+				if (TRACE) TOUT.println("next(), looping");
 				//check if we have pending signal to report?
 				//This may be a side-effect of peek()
 				if (this.current_element==TElement.SIG)
 				{
+					if (TRACE) TOUT.println("next(), detected pending SIG "+this.pending_signal);
 					this.current_element = null;
-					final String s = pending_signal;
+					final String s = this.pending_signal;
 					this.pending_signal = null;
 					return s;
 				};
@@ -157,6 +172,7 @@ public class CTypedStructReadFormat extends AReservedNameReadFormat implements I
 				//	- type info
 				//	- user end signal
 				//	- user begin signal.
+				if (TRACE) TOUT.println("next(), super.next()="+signal);
 				if (current_element!=null)
 				{
 					//we do expect end of type.
@@ -170,6 +186,7 @@ public class CTypedStructReadFormat extends AReservedNameReadFormat implements I
 					//Now we have possible type info user end and user begin.
 					if (signal==null)
 					{
+						if (TRACE) TOUT.println("next(), detected user end");
 						//this is user end. Consume it and return.
 						this.current_element = null;	
 						this.pending_signal = null;
@@ -179,10 +196,12 @@ public class CTypedStructReadFormat extends AReservedNameReadFormat implements I
 						//Now we have possible user begin or type info.
 						if (isReservedName(signal))
 						{
+							if (TRACE) TOUT.println("next(), detected reserved name");
 							//All type names are reserved, but more could have been reserved.
 							TElement type_info = typeFromName(signal);
 							if (type_info!=null)
 							{
+								if (TRACE) TOUT.println("next(), captured type info "+type_info);
 								//store it and continue
 								this.current_element = type_info;
 								this.pending_signal = null;
@@ -194,11 +213,13 @@ public class CTypedStructReadFormat extends AReservedNameReadFormat implements I
 							//this is user begin, may be escaped.
 							//unescape
 							signal = unescape(signal);
+							if (TRACE) TOUT.println("next(), unescaped="+signal);
 						};
 						//now process it as a user begin
 						//Basically consume signal information and return.
 						this.current_element = null;	
 						this.pending_signal = null;
+						if (TRACE) TOUT.println("next()="+signal+" LEAVE");
 						return signal;
 					}
 				}
@@ -207,13 +228,19 @@ public class CTypedStructReadFormat extends AReservedNameReadFormat implements I
 		 
 		@Override public boolean hasElementaryData()throws IOException
 		{
+			if (TRACE) TOUT.println("hasElementaryData ENTER");
 			//This must hide end of data due to end of type information.
 			//We do basically peek for TElement.SIG which indicates
 			//true end of data, except if we are during a block operation
 			//where condition is a bit more complex
+			
+			//However we should also be aware, that peeking may touch end-of-file.
+			//what should not cause us to throw in here.			
 			TElement e = peek();
+			if (e==TElement.EOF) return false;
 			if (e==TElement.SIG)
 			{
+				if (TRACE) TOUT.println("hasElementaryData=false, due to signal LEAVE");
 				return false;
 			}else
 			{
@@ -223,9 +250,14 @@ public class CTypedStructReadFormat extends AReservedNameReadFormat implements I
 					//if we touched trailing type end() since
 					//peek do return block even if we are touching
 					//type information end followed by user end().
-					return super.hasElementaryData();
+					final boolean r = super.hasElementaryData();
+					if (TRACE) TOUT.println("hasElementaryData="+r+", processing inside a block, LEAVE");
+					return r;
 				}else
+				{
+					if (TRACE) TOUT.println("hasElementaryData=true LEAVE");
 					return true;
+				}
 			}
 		};
 		/* ----------------------------------------------------------------------
@@ -239,6 +271,7 @@ public class CTypedStructReadFormat extends AReservedNameReadFormat implements I
 			//will be validated by our call to peek()
 			assert(expected_type!=null);
 			assert(!expected_type.is_block);
+			if (TRACE) TOUT.println("validateElementary("+expected_type+") ENTER");
 			TElement e = peek();
 			//Now e can point to signal, which should trigger ENoMoreData
 			//or incorrect type, which should trigger ETypeMissmatch
@@ -255,10 +288,12 @@ public class CTypedStructReadFormat extends AReservedNameReadFormat implements I
 			if (block_in_progress) throw new IllegalStateException("block operation "+e+" in progress");
 			if (e!=expected_type)
 			{
+				if (e==TElement.EOF) throw new EEof();
 				if (e==TElement.SIG) throw new ENoMoreData(); 
 				else
 				throw new ETypeMissmatch("Found "+e+" expected "+expected_type);
 			};
+			if (TRACE) TOUT.println("validateElementary("+expected_type+") LEAVE");
 		};
 		@Override public boolean readBoolean()throws IOException
 		{
@@ -311,6 +346,7 @@ public class CTypedStructReadFormat extends AReservedNameReadFormat implements I
 		----------------------------------------------------------------------*/
 		private void validateBlock(TElement expected_type)throws IOException
 		{
+			if (TRACE) TOUT.println("validateBlock("+expected_type+") ENTER");
 			//validate type information. Notice the open()/close() state
 			//and all others will be validated by our call to peek()
 			assert(expected_type!=null);
@@ -326,6 +362,7 @@ public class CTypedStructReadFormat extends AReservedNameReadFormat implements I
 			//We still may however receive it during the initial phase.
 			if (e!=expected_type)
 			{
+				if (e==TElement.EOF) throw new EEof();
 				if (!block_in_progress)
 				{
 					//If we do recive SIG in initial phase we basically are
@@ -346,6 +383,7 @@ public class CTypedStructReadFormat extends AReservedNameReadFormat implements I
 				}
 			}
 			block_in_progress = true;
+			if (TRACE) TOUT.println("validateBlock("+expected_type+") LEAVE");
 		};
 		@Override public int readBooleanBlock(boolean [] buffer, int offset, int length)throws IOException
 		{
@@ -494,20 +532,27 @@ public class CTypedStructReadFormat extends AReservedNameReadFormat implements I
 		**************************************************************************/
 		@Override public TElement peek()throws IOException
 		{
+			if (TRACE) TOUT.println("peek() ENTER");
 			//Peek needs to check what can be next in stream and will be
 			//intensively used to check if primitive operations are allowed or not.
 			
 			//First handle pending unconsumed user signal.
 			//This must be consumed to move forwards.
-			if (current_element == TElement.SIG) return TElement.SIG; 
+			if (current_element == TElement.SIG)
+			{
+				if (TRACE) TOUT.println("peek()="+current_element+" , unconsumed signal LEAVE");
+				return TElement.SIG;
+			};
 			
 			//If we have type information we may need to check if it 
 			//terminates.		
 			if (current_element!=null)
 			{
+				if (TRACE) TOUT.println("peek() knows "+current_element);
 				assert(this.current_element!=TElement.SIG);
 				if (!super.hasElementaryData())
 				{
+					if (TRACE) TOUT.println("peek(), are elementary data");
 					//Now let us think about block operations. If block operation
 					//touches this condition block operation still must be allowed
 					//and still must be correctly listed as current element by peek()
@@ -516,9 +561,13 @@ public class CTypedStructReadFormat extends AReservedNameReadFormat implements I
 					//the fact that we peek() at block does NOT mean we did initialize
 					//the block operation.
 					if (this.current_element.is_block)	
+					{
+							if (TRACE) TOUT.println("peek()="+current_element+" since we are in block operation LEAVE");
 							return this.current_element;
+					};
 					//not a block operation, so we must terminate it and move to next type info or user signal.
 					String s = super.next();
+					if (TRACE) TOUT.println("peek(), super.next()="+s);
 					if (s!=null) 
 						throw new EBrokenFormat("Expected type information end signal but found \""+s+"\"");
 					//So it is now terminated
@@ -528,12 +577,31 @@ public class CTypedStructReadFormat extends AReservedNameReadFormat implements I
 					//in this condition we just continue with current type.
 					assert(this.current_element!=TElement.SIG);
 					assert(this.current_element!=null);
+					if (TRACE) TOUT.println("peek()="+this.current_element+" LEAVE"); 
 					return this.current_element;
 				};
+			}else
+			{
+				//This can be initial operation
+				if (super.hasElementaryData())
+					throw new EBrokenFormat("Missing type information?");
 			};
 			//We either terminated the data or we lack information about data we need.
 			//Either way we need to pick it up.
-			String signal = super.next();
+			//Notice however, that we can end-up in the end-of-file condition 
+			//when there are no more data at all at zero recursion level.
+			String signal;
+			try{
+				 signal = super.next();
+			}catch(EEof eof)
+			{
+				if (TRACE) TOUT.println("peek(), super.next() did eof, returning it");
+				//wipe memory, because EOF may be temporary
+				this.current_element = null;	
+				this.pending_signal = null;
+				return TElement.EOF;
+			};
+			if (TRACE) TOUT.println("peek(), super.next()="+signal);
 			//We can possibly have either:
 			//	- type info
 			//	- user end signal
@@ -544,12 +612,14 @@ public class CTypedStructReadFormat extends AReservedNameReadFormat implements I
 				//this is user end. Make it pending for next() and return;
 				this.current_element = TElement.SIG;	
 				this.pending_signal = null;
+				if (TRACE) TOUT.println("peek(), tracking pending user end signal LEAVE");
 				return TElement.SIG;
 			}else
 			{
 				//Now we have possible user begin or type info.
 				if (isReservedName(signal))
 				{
+					if (TRACE) TOUT.println("peek(), detected reserved name");
 					//All type names are reserved, but more could have been reserved.
 					TElement type_info = typeFromName(signal);
 					if (type_info!=null)
@@ -558,6 +628,7 @@ public class CTypedStructReadFormat extends AReservedNameReadFormat implements I
 						//Note: type for empty block is fine, tough empty elementary primitive is a factual bug 
 						this.current_element = type_info;
 						this.pending_signal = null;
+						if (TRACE) TOUT.println("peek()="+type_info+" LEAVE");
 						return type_info;
 					};
 					//this is user begin.
@@ -570,6 +641,7 @@ public class CTypedStructReadFormat extends AReservedNameReadFormat implements I
 				//Make it pending for next() and return;
 				this.current_element = TElement.SIG;	
 				this.pending_signal = signal;
+				if (TRACE) TOUT.println("peek()=TElement.SIG, pending_signal="+pending_signal+" LEAVE");
 				return TElement.SIG;
 			}
 		};

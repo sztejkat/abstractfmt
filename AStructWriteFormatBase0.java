@@ -386,7 +386,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 			//Sanitize arguments
 		    assert(name!=null):"null name";
 		    if (TRACE) TOUT.println("optimizeBeginName(\""+name+"\") ENTER");
-		    if (name.length()>getMaxSignalNameLength()) throw new EFormatBoundaryExceeded("begin signal name of "+name.length()+" chars is longer than set limit "+getMaxSignalNameLength());
+		    if (name.length()>getMaxSignalNameLength()) throw new EFormatBoundaryExceeded("begin signal name \""+name+"\" of "+name.length()+" chars is longer than set limit "+getMaxSignalNameLength());
 		    
 		    validateUsable();
 		    

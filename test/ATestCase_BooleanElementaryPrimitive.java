@@ -97,7 +97,7 @@ public class ATestCase_BooleanElementaryPrimitive extends AInterOpTestCase<IStru
 					try{
 						r.readBoolean();
 						Assert.fail();
-					}catch(ENoMoreData ex){System.out.println(ex); };
+					}catch(ENoMoreData ex){System.out.println("caught expected "+ex); };
 				};
 			Assert.assertTrue(null==r.next());
 			//if condition was reset by signal.

@@ -352,6 +352,14 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 			if (TRACE) TOUT.println("hasElementaryData() ENTER");
 			//basic state
 			validateUsable();
+			//Note: Avoid if we have begin_pending
+			//		because in such case downstream did already
+			//		moved past a signal
+			if (begin_pending)
+			{
+				if (TRACE) TOUT.println("hasElementaryData()=false, begin pending LEAVE");
+				return false;
+			};
 			final boolean r= hasElementaryDataImpl();
 			if (TRACE) TOUT.println("hasElementaryData()="+r+" LEAVE");
 			return r;

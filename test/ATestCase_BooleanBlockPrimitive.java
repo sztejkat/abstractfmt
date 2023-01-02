@@ -1,11 +1,14 @@
 package sztejkat.abstractfmt.test;
 import sztejkat.abstractfmt.IStructReadFormat;
 import sztejkat.abstractfmt.IStructWriteFormat;
+import sztejkat.abstractfmt.ITypedStructReadFormat;
+import sztejkat.abstractfmt.ITypedStructWriteFormat;
 import sztejkat.abstractfmt.EEof;
 import sztejkat.abstractfmt.ENoMoreData;
 import java.io.IOException;
 import org.junit.Test;
 import org.junit.Assert;
+import org.junit.Assume;
 /**
 	A test case running tests for boolean block primitives.
 	<p>
@@ -46,15 +49,17 @@ public class ATestCase_BooleanBlockPrimitive extends AInterOpTestCase<IStructRea
 							
 	/**
 		Test if boolean block can be written and read without 
-		an enclosing structure.
+		an enclosing structure, variant for un-typed stream.
 	@throws IOException .
 	*/
-	@Test public void testWriteFlat()throws IOException
+	@Test public void testWriteFlat_untyped()throws IOException
 	{
 			enter();
 			CPair<?,?> p = createTestDevice();
 			final IStructWriteFormat w= p.writer;
 			final IStructReadFormat  r= p.reader;
+			
+			Assume.assumeFalse( r instanceof ITypedStructReadFormat);
 			
 			w.open();
 			boolean [] written = newBlock(1024);
@@ -78,7 +83,42 @@ public class ATestCase_BooleanBlockPrimitive extends AInterOpTestCase<IStructRea
 			leave();
 	};
 	
-	
+	/**
+		Test if boolean block can be written and read without 
+		an enclosing structure, variant for typed stream.
+	@throws IOException .
+	*/
+	@Test public void testWriteFlat_typed()throws IOException
+	{
+			enter();
+			CPair<?,?> p = createTestDevice();
+			final IStructWriteFormat w= p.writer;
+			final IStructReadFormat  r= p.reader;
+			
+			Assume.assumeTrue( r instanceof ITypedStructReadFormat);
+			
+			w.open();
+			boolean [] written = newBlock(1024);
+			w.writeBooleanBlock(written,7,900);
+			w.close();
+			
+			
+			r.open();
+			boolean [] readen = new boolean[1001];
+			int x = r.readBooleanBlock(readen,1,1000);
+			//API says that block read will throw EOF if could not
+			//read ANY data.
+			Assert.assertTrue(x==900);
+			try{
+				r.readBooleanBlock();
+				Assert.fail();
+			}catch(EEof ex){ System.out.println(ex); }
+			catch(ENoMoreData ex){ System.out.println(ex); };
+			r.close();			
+			assertArraysEqual(written,7,900,readen,1);
+			
+			leave();
+	};
 	
 	/**
 		Test if boolean block can be written and read with

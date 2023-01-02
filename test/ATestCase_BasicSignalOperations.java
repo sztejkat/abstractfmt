@@ -145,6 +145,69 @@ public class ATestCase_BasicSignalOperations extends AInterOpTestCase<IStructRea
 			}catch(EEof ex){ System.out.println(ex);};
 	};
 	
+	
+	/**
+		Tests {@link IStructReadFormat#hasElementaryData}
+		against end-begin condition
+	@throws IOException .
+	*/
+	@Test public void testHasElementaryData_end_begin()throws IOException
+	{
+			enter();
+			CPair<?,?> p = createTestDevice();
+			final IStructWriteFormat w= p.writer;
+			final IStructReadFormat  r= p.reader;
+			//This test is a bug expose for streams
+			//which do optimize end-begin and possibly
+			//might forget that begin is pending
+			w.open();
+			w.begin("larkis");
+			w.end();
+			w.begin("lora");
+			w.writeBoolean(false);
+			w.end();
+			w.close();
+			
+			r.open();
+			Assert.assertTrue("larkis".equals(r.next()));
+			Assert.assertTrue(!r.hasElementaryData());
+			Assert.assertTrue(null==r.next());
+			Assert.assertTrue(!r.hasElementaryData());//cause there is nothing between end and begin
+			Assert.assertTrue("lora".equals(r.next()));
+			Assert.assertTrue(r.hasElementaryData());
+	};
+	/**
+		Tests {@link IStructReadFormat#hasElementaryData}
+		against end-begin condition
+	@throws IOException .
+	*/
+	@Test public void testHasElementaryData_end_begin_with_data()throws IOException
+	{
+			enter();
+			CPair<?,?> p = createTestDevice();
+			final IStructWriteFormat w= p.writer;
+			final IStructReadFormat  r= p.reader;
+			//This test is a bug expose for streams
+			//which do optimize end-begin and possibly
+			//might forget that begin is pending
+			w.open();
+			w.begin("larkis");
+			w.end();
+			w.writeBoolean(false);
+			w.begin("lora");
+			w.writeBoolean(false);
+			w.end();
+			w.close();
+			
+			r.open();
+			Assert.assertTrue("larkis".equals(r.next()));
+			Assert.assertTrue(!r.hasElementaryData());
+			Assert.assertTrue(null==r.next());
+			Assert.assertTrue(r.hasElementaryData());//cause there is boolean between end and begin
+			Assert.assertTrue("lora".equals(r.next()));
+			Assert.assertTrue(r.hasElementaryData());
+	};
+	
 	/**
 		Tests {@link IStructReadFormat#hasElementaryData}
 		against totally empty file

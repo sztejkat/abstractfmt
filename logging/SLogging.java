@@ -90,6 +90,7 @@ public class SLogging
               //      This implementation is oversimplfied and just
               //      returns a constant. This means, that enabling/disabling
               //      logs requires re-compilation of this class.
+              if (_class == sztejkat.abstractfmt.CTypedStructReadFormat.class) return 1;
               return 0;
          };
 

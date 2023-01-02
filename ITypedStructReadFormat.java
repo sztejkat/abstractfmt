@@ -145,7 +145,10 @@ public interface ITypedStructReadFormat extends IStructReadFormat
 			A proper method to use is {@link IStructReadFormat#readString}
 			<p>
 			Carried class: <code>String.class</code>*/
-			STRING_BLK(String.class, true);
+			STRING_BLK(String.class, true),
+			/** When {@link #peek()} touched end-of file in a place
+			in which it was allowed */
+			EOF(null,false);
 			
 				/** Optional class representing Java class of that element.
 				Null for {@link #SIG}*/
@@ -182,7 +185,8 @@ public interface ITypedStructReadFormat extends IStructReadFormat
 		</pre>
 		must not throw ever.
 		@return what kind of operation on a stream is allowed. Non null.
-		@throws IOException if failed. Includes all {@link Eof}, limits and broken
+		@throws IOException if failed. Includes all {@link Eof}, but only
+				when encountered where it should not be expected , limits and broken
 				format exceptions.
 	*/
 	public TElement peek()throws IOException;

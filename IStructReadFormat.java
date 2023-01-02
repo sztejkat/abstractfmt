@@ -114,7 +114,8 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
 		of this contract.
 		
 		@return true if {@link #next} will have to skip some primitive 
-			data, false if there is nothing what can be read before reaching
+			data OR will reach the end-of-file (effect: {@link #next} throws {@link EEof}),
+			false if there is nothing what can be read before reaching
 			either signal or end of file.
 		@throws IOException if failed, including stream closed or not opened.
 	    */

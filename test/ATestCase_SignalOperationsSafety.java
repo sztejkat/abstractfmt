@@ -22,13 +22,17 @@ public class ATestCase_SignalOperationsSafety extends AInterOpTestCase<IStructRe
 			CPair<?,?> p = createTestDevice();
 			final IStructWriteFormat w= p.writer;
 			final IStructReadFormat  r= p.reader;
-			w.setMaxSignalNameLength(4);
+			//Test notes: Typed streams may use internally longer
+			//names so trimming it too much here will be a problem
+			//and will cause false fails because they do register
+			//them as optimized during open().
+			w.setMaxSignalNameLength(16);
 			
 			w.open();
-			w.begin("lark");
+			w.begin("1234567890123456");
 			w.end();
 			try{
-				w.begin("karki");
+				w.begin("12345678901234567");
 				Assert.fail("Should have thrown");
 			}catch(EFormatBoundaryExceeded ex){ System.out.println(ex);};
 			w.close();
@@ -45,12 +49,15 @@ public class ATestCase_SignalOperationsSafety extends AInterOpTestCase<IStructRe
 			CPair<?,?> p = createTestDevice();
 			final IStructWriteFormat w= p.writer;
 			final IStructReadFormat  r= p.reader;
-			r.setMaxSignalNameLength(4);
+			//Test notes: Typed streams may use internally longer
+			//names so trimming it too much here will be a problem
+			//and will cause false fails.
+			r.setMaxSignalNameLength(16);
 			
 			w.open();
-			w.begin("lark");
+			w.begin("1234567890123456");
 			w.end();
-			w.begin("karki");
+			w.begin("12345678901234567");
 			w.close();
 			
 			r.open();

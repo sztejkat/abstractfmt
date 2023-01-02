@@ -395,7 +395,7 @@ public class CTypedStructWriteFormat extends AReservedNameWriteFormat implements
 		*/
 		private void validateBlockTypeInfo(int XXX_idx)throws IOException
 		{
-			assert(XXX_idx>=BOOLEAN_blk_idx);
+			assert(XXX_idx>=STRING_blk_idx);
 			assert(XXX_idx<=DOUBLE_blk_idx);
 			int ct = current_type;
 			if ((ct>=STRING_blk_idx)&&(ct!=XXX_idx)) //this simple check is enough to reject non-matching blocks.
