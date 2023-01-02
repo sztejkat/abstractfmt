@@ -12,24 +12,33 @@ import java.io.PrintStream;
 /**
 		A test suite checking if 
 		{@link CTypedStructReadFormat}/
-		{@link CTypedStructWriteFormat}.
-		do not corrupt the base contract of a back-end engine.
+		{@link CTypedStructWriteFormat}
+		neither do corrupt base contracts
+		nor incorrectly implement the typed constracts
 		<p>
 		This test is run using a {@link CObjStructWriteFormat1} back-end
-		with name indexing enabled and basically runs all test cases
-		for un-typed streams. 
+		with name indexing enabled.
 		<p>
-		There is a separate test suite for typed tests.
+		For testing if base contract is not broken
+		it runs test cases for plane {@link IStructReadFormat}
+		and {@link IStructWriteFormat}, that is tests if type information
+		is transparent to those contracts.
+		<p>
+		For typed tests it runs own test cases.
 */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
+					//untyped test cases
 					ATestCase_BasicSignalOperations.class,
 					ATestCase_SignalOperationsSafety.class,
 					ATestCase_BooleanElementaryPrimitive.class,
 					ATestCase_BooleanBlockPrimitive.class,
 					ATestCase_ByteBlockPrimitive.class,
 					ATestCase_ByteElementaryPrimitive.class,
-					ATestCase_OptimizedSignalOperations.class
+					ATestCase_OptimizedSignalOperations.class,
+					//Typed test cases
+					ATestCase_PeekOperations.class,
+					ATestCase_TypeDefence.class
 					})
 public class TestSuite_CTypedFormat_overObjFormat1 extends ATest
 {

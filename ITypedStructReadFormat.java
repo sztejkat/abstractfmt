@@ -94,60 +94,85 @@ public interface ITypedStructReadFormat extends IStructReadFormat
 			DOUBLE(Double.TYPE),
 			/** A primitive block of boolean type.
 			<p>
-			A proper method to use is {@link IStructReadFormat#readBooleanBlock}
+			A proper method to use is {@link IStructReadFormat#readBooleanBlock}.
+			Also returned if there are no more data in block, since block read
+			is allowed in that condition.
 			<p>
 			Carried class: <code>boolean[].class</code>*/
 			BOOLEAN_BLK(boolean[].class, true),
 			/** A primitive block of byte type.
 			<p>
-			A proper method to use is {@link IStructReadFormat#readByteBlock}
+			A proper method to use is {@link IStructReadFormat#readByteBlock}.
+			Also returned if there are no more data in block, since block read
+			is allowed in that condition.
 			<p>
 			Carried class: <code>byte[].class</code>*/
 			BYTE_BLK(byte[].class, true),
 			/** A primitive block of char type.
 			<p>
-			A proper method to use is {@link IStructReadFormat#readCharBlock}
+			A proper method to use is {@link IStructReadFormat#readCharBlock}.
+			Also returned if there are no more data in block, since block read
+			is allowed in that condition.
 			<p>
 			Carried class: <code>char[].class</code>*/
 			CHAR_BLK(char[].class, true),
 			/** A primitive block of short type.
 			<p>
-			A proper method to use is {@link IStructReadFormat#readShortBlock}
+			A proper method to use is {@link IStructReadFormat#readShortBlock}.
+			Also returned if there are no more data in block, since block read
+			is allowed in that condition.
 			<p>
 			Carried class: <code>short[].class</code>*/
 			SHORT_BLK(short[].class, true),
 			/** A primitive block of int type.
 			<p>
-			A proper method to use is {@link IStructReadFormat#readIntBlock}
+			A proper method to use is {@link IStructReadFormat#readIntBlock}.
+			Also returned if there are no more data in block, since block read
+			is allowed in that condition.
 			<p>
 			Carried class: <code>int[].class</code>*/
 			INT_BLK(int[].class, true),
 			/** A primitive block of long type.
 			<p>
-			A proper method to use is {@link IStructReadFormat#readLongBlock}
+			A proper method to use is {@link IStructReadFormat#readLongBlock}.
+			Also returned if there are no more data in block, since block read
+			is allowed in that condition.
 			<p>
 			Carried class: <code>long[].class</code>*/
 			LONG_BLK(long[].class, true),
 			/** A primitive block of float type.
 			<p>
-			A proper method to use is {@link IStructReadFormat#readFloatBlock}
+			A proper method to use is {@link IStructReadFormat#readFloatBlock}.
+			Also returned if there are no more data in block, since block read
+			is allowed in that condition.
 			<p>
 			Carried class: <code>float[].class</code>*/
 			FLOAT_BLK(float[].class, true),
 			/** A primitive block of double type.
 			<p>
-			A proper method to use is {@link IStructReadFormat#readDoubleBlock}
+			A proper method to use is {@link IStructReadFormat#readDoubleBlock}.
+			Also returned if there are no more data in block, since block read
+			is allowed in that condition.
 			<p>
 			Carried class: <code>double[].class</code>*/
 			DOUBLE_BLK(double[].class, true),
 			/** A primitive block of String type.
 			<p> 
-			A proper method to use is {@link IStructReadFormat#readString}
+			A proper method to use is {@link IStructReadFormat#readString}.
+			Also returned if there are no more data in block, since block read
+			is allowed in that condition.
 			<p>
 			Carried class: <code>String.class</code>*/
 			STRING_BLK(String.class, true),
 			/** When {@link #peek()} touched end-of file in a place
-			in which it was allowed */
+			in which it was allowed. This value is <u>not</u> returned
+			and an exception is thrown instead if end-of-file happens
+			inside some type information control data.
+			<p>
+			As a rule of thumb it is allowed to be returned 
+			if there are no data in block or elementary element but there
+			is no "end" signal or if <code>next()</code> called in that 
+			context would have thrown an {@link EEof}.*/
 			EOF(null,false);
 			
 				/** Optional class representing Java class of that element.
@@ -185,7 +210,7 @@ public interface ITypedStructReadFormat extends IStructReadFormat
 		</pre>
 		must not throw ever.
 		@return what kind of operation on a stream is allowed. Non null.
-		@throws IOException if failed. Includes all {@link Eof}, but only
+		@throws IOException if failed. Includes all {@link EEof}, but only
 				when encountered where it should not be expected , limits and broken
 				format exceptions.
 	*/

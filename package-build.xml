@@ -23,7 +23,11 @@
 					sztejkat.abstractfmt.logging,
 					sztejkat.abstractfmt.test,
                                         sztejkat.abstractfmt.obj,
-                                        sztejkat.abstractfmt.utils
+                                        sztejkat.abstractfmt.utils,
+                                        sztejkat.abstractfmt.bin.chunk,
+                                        sztejkat.abstractfmt.bin.escape,
+                                        sztejkat.abstractfmt.txt.xml,
+                                        sztejkat.abstractfmt.txt.json
                                         "/>
 
 	<!-- deduces source root from package name -->
