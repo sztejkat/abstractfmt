@@ -35,7 +35,8 @@
          <td>boolean</td><td>JSON true or false</td>
       </tr>
       <tr>
-          <td>byte,short,int,long,float,double</td><td>JSON number</td>
+          <td>byte,short,int,long,float,double</td><td>JSON number, except if float or double
+          is infinity or NaN when "+Infinity" "-Infinity" or "NaN" JSON strings are used</td>
       </tr>
       <tr>
           <td>char</td><td>a JSON string. This is allowed to stitch together char operations into one String
@@ -55,7 +56,8 @@
          <td>boolean [] </td><td>sequence (not JSON array) of JSON true or false</td>
       </tr>
       <tr>
-          <td>byte[],short[],int[],long[],float[],double[]</td><td>sequence (not array) of JSON numbers</td>
+          <td>byte[],short[],int[],long[],float[],double[]</td><td>sequence (not array) of JSON numbers,
+          with exception as in elementary primitives</td>
       </tr>
       <tr>
           <td>char [], String</td><td>JSON String or sequence of strings</td>

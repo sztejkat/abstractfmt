@@ -120,12 +120,14 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	@throws IOException --//--
 	*/
 	public void writeLong(long v)throws IOException;
-	/** See {@link #writeBoolean(boolean)}
+	/** See {@link #writeBoolean(boolean)}.
+	Must preserve NaN and +/-Infinity correctly.
 	@param v --//--
 	@throws IOException --//--
 	*/
 	public void writeFloat(float v)throws IOException;
 	/** See {@link #writeBoolean(boolean)}
+	Must preserve NaN and +/-Infinity correctly.
 	@param v --//--
 	@throws IOException --//--
 	*/
@@ -244,7 +246,7 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 			writeCharBlock(buffer,0,buffer.length);
 	}
 	/** See {@link #writeBooleanBlock(boolean[],int,int)}
-	@param data single byte to write
+	@param data single element to write
 	@throws IOException --//--
 	*/
 	public void writeCharBlock(char data)throws IOException;
@@ -269,7 +271,7 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 			writeShortBlock(buffer,0,buffer.length);
 	}
 	/** See {@link #writeBooleanBlock(boolean[],int,int)}
-	@param data single byte to write
+	@param data single element to write
 	@throws IOException --//--
 	*/
 	public void writeShortBlock(short data)throws IOException;
@@ -293,7 +295,7 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 			writeIntBlock(buffer,0,buffer.length);
 	}
 	/** See {@link #writeBooleanBlock(boolean[],int,int)}
-	@param data single byte to write
+	@param data single element to write
 	@throws IOException --//--
 	*/
 	public void writeIntBlock(int data)throws IOException;
@@ -317,7 +319,7 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 			writeLongBlock(buffer,0,buffer.length);
 	}
 	/** See {@link #writeBooleanBlock(boolean[],int,int)}
-	@param data single byte to write
+	@param data single element to write
 	@throws IOException --//--
 	*/
 	public void writeLongBlock(long data)throws IOException;
@@ -326,6 +328,7 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	
 	
 	/**  See {@link #writeBooleanBlock(boolean[],int,int)}
+	Must preserve NaN and +/-Infinity correctly.
 	@param buffer --//--
 	@param offset --//--
 	@param length --//--
@@ -333,6 +336,7 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	*/
 	public void writeFloatBlock(float [] buffer, int offset, int length)throws IOException;
 	/** See {@link #writeBooleanBlock(boolean[],int,int)}
+	Must preserve NaN and +/-Infinity correctly.
 	@param buffer --//--
 	@throws IOException --//--
 	*/
@@ -342,21 +346,24 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 			writeFloatBlock(buffer,0,buffer.length);
 	}
 	/** See {@link #writeBooleanBlock(boolean[],int,int)}
-	@param data single byte to write
+	Must preserve NaN and +/-Infinity correctly.
+	@param data single element to write
 	@throws IOException --//--
 	*/
 	public void writeFloatBlock(float data)throws IOException;
 	
 	
 	
-	/**  See {@link #writeBooleanBlock(boolean[],int,int)}
+	/**  See {@link #writeBooleanBlock(boolean[],int,int)}.
+	Must preserve NaN and +/-Infinity correctly.
 	@param buffer --//--
 	@param offset --//--
 	@param length --//--
 	@throws IOException --//--
 	*/
 	public void writeDoubleBlock(double [] buffer, int offset, int length)throws IOException;
-	/** See {@link #writeBooleanBlock(boolean[],int,int)}
+	/** See {@link #writeBooleanBlock(boolean[],int,int)}.
+	Must preserve NaN and +/-Infinity correctly.
 	@param buffer --//--
 	@throws IOException --//--
 	*/
@@ -365,8 +372,9 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 			assert(buffer!=null);
 			writeDoubleBlock(buffer,0,buffer.length);
 	}
-	/** See {@link #writeBooleanBlock(boolean[],int,int)}
-	@param data single byte to write
+	/** See {@link #writeBooleanBlock(boolean[],int,int)}.
+	Must preserve NaN and +/-Infinity correctly.
+	@param data single element to write
 	@throws IOException --//--
 	*/
 	public void writeDoubleBlock(double data)throws IOException;
