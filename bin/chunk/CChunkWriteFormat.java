@@ -1,5 +1,6 @@
 package sztejkat.abstractfmt.bin.chunk;
 import  sztejkat.abstractfmt.*;
+import  sztejkat.abstractfmt.logging.SLogging;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -11,6 +12,10 @@ import java.io.OutputStream;
 */
 public class CChunkWriteFormat extends AChunkWriteFormat0
 {
+		 private static final long TLEVEL = SLogging.getDebugLevelForClass(CChunkWriteFormat.class);
+         private static final boolean TRACE = (TLEVEL!=0);
+         private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("CChunkWriteFormat.",CChunkWriteFormat.class) : null;
+
 	/* *****************************************************************************
 	
 	
@@ -21,7 +26,7 @@ public class CChunkWriteFormat extends AChunkWriteFormat0
 	* *****************************************************************************/
 	/** Creates
 	@param name_registry_capacity {@link ARegisteringStructWriteFormat#ARegisteringStructWriteFormat(int)}
-			This value cannot be larger than 127. Recommended value is 127, minimum resonable is 8.	
+			This value cannot be larger than 128. Recommended value is 128, minimum resonable is 8.	
 	@param raw raw binary stream to write to. Will be closed on {@link #close}.
 	@param indexed_registration if true names are registered directly, by index.
 			If false names are registered indirectly, by order of appearance.
@@ -36,6 +41,7 @@ public class CChunkWriteFormat extends AChunkWriteFormat0
 					   )
 	{
 		super(name_registry_capacity,raw, indexed_registration);
+		if (TRACE) TOUT.println("new CChunkWriteFormat(...)");
 	};
 	
 	/* *****************************************************************************
@@ -51,11 +57,13 @@ public class CChunkWriteFormat extends AChunkWriteFormat0
 	/** Overriden to eventually flush boolean block in progress */
 	@Override protected void flushImpl()throws IOException
 	{
+		if (TRACE) TOUT.println("flushImpl ENTER");
 		if (bitpos_in_boolean_block!=0)
 		{
 			flushBooleanBlockBuffer();
 		};
 		super.flushImpl();
+		if (TRACE) TOUT.println("flushImpl LEAVE");
 	};
 	/* ------------------------------------------------------------------
 				Primitive related, elementary
@@ -118,13 +126,16 @@ public class CChunkWriteFormat extends AChunkWriteFormat0
 	/** Overriden to initiate boolean block buffer */
 	@Override protected void startBooleanBlock()throws IOException
 	{
+		if (TRACE) TOUT.println("startBooleanBlock ENTER");
 		super.startBooleanBlock();
 		if (boolean_block_buffer==null)
 				 boolean_block_buffer = new byte[BIT_BLOCK_SIZE_BITS/8];
 		bitpos_in_boolean_block = 0;
+		if (TRACE) TOUT.println("startBooleanBlock LEAVE");
 	};
 	@Override protected void writeBooleanBlockImpl(boolean v)throws IOException
 	{		
+		if (TRACE) TOUT.println("writeBooleanBlockImpl("+v+") ENTER");
 		if (bitpos_in_boolean_block==BIT_BLOCK_SIZE_BITS)
 		{
 			flushBooleanBlockBuffer();
@@ -143,11 +154,14 @@ public class CChunkWriteFormat extends AChunkWriteFormat0
 			boolean_block_buffer[ba] &= ~(1<<(bi));
 		}
 		bitpos_in_boolean_block++;
+		if (TRACE) TOUT.println("writeBooleanBlockImpl("+v+") LEAVE");
 	};
 	private void flushBooleanBlockBuffer()throws IOException
 	{
+		if (TRACE) TOUT.println("flushBooleanBlockBuffer ENTER");
 		if (bitpos_in_boolean_block!=0)
 		{
+			if (TRACE) TOUT.println("flushBooleanBlockBuffer, flushing bitpos_in_boolean_block="+bitpos_in_boolean_block);
 			//empty blocks are NOT written.
 			assert(bitpos_in_boolean_block<=256);
 			out((byte)(bitpos_in_boolean_block-1));//number of bits - 1
@@ -158,12 +172,15 @@ public class CChunkWriteFormat extends AChunkWriteFormat0
 			//and reset
 			bitpos_in_boolean_block = 0;
 		};
+		if (TRACE) TOUT.println("flushBooleanBlockBuffer LEAVE");
 	};
 	/** Overriden to flush boolean block buffer */
 	@Override protected void endBooleanBlock()throws IOException
 	{
+		if (TRACE) TOUT.println("endBooleanBlock() ENTER");
 		flushBooleanBlockBuffer();
 		super.endBooleanBlock();
+		if (TRACE) TOUT.println("endBooleanBlock() LEAVE");
 	};
 	/* .............................................................
 				String

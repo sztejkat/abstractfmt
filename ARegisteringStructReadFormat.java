@@ -95,7 +95,8 @@ public abstract class ARegisteringStructReadFormat extends AStructReadFormatBase
 		up after each time {@link #readSignalReg} reads the {@link TSignalReg#SIG_BEGIN_AND_REGISTER}
 		or {@link TSignalReg#SIG_END_BEGIN_AND_REGISTER}.
 		<p>		
-		@return index, non-negative.
+		@return index, non-negative. Valid only during first call,
+			subsequent calls are allowed to return -1.
 		@see ARegisteringStructWriteFormat#beginAndRegisterImpl
 		*/
 		protected abstract int pickLastSignalIndex();
@@ -215,7 +216,7 @@ public abstract class ARegisteringStructReadFormat extends AStructReadFormatBase
 						default: throw new AssertionError(); 	
 				}
 		};
-		/** Implemented to use {@link #readSignalReg} */
+		/** Implemented to use what {@link #readSignalReg} collected */
 		@Override protected final String pickLastSignalName()
 		{
 			if (TRACE) TOUT.println("pickLastSignalName() ENTER");

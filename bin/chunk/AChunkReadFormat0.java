@@ -1,5 +1,6 @@
 package sztejkat.abstractfmt.bin.chunk;
 import  sztejkat.abstractfmt.*;
+import  sztejkat.abstractfmt.logging.SLogging;
 import java.io.IOException;
 import java.io.InputStream;
 /**
@@ -12,6 +13,11 @@ import java.io.InputStream;
 */
 abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 {
+		 private static final long TLEVEL = SLogging.getDebugLevelForClass(AChunkReadFormat0.class);
+         private static final boolean TRACE = (TLEVEL!=0);
+         private static final boolean DUMP = (TLEVEL>=2);
+         private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("AChunkReadFormat0.",AChunkReadFormat0.class) : null;
+
 					/** A down-stream of chunk format, raw binary stream */
 					private final InputStream raw;
 					/** A current chunk payload buffer.
@@ -73,7 +79,7 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	*****************************************************************************/
 	/** Creates
 	@param name_registry_capacity {@link ARegisteringStructWriteFormat#ARegisteringStructWriteFormat(int)}
-			This value cannot be larger than 127. Recommended value is 127, minimum resonable is 8.
+			This value cannot be larger than 128. Recommended value is 128, minimum resonable is 8.
 	@param raw raw input stream, non null. Will be closed.
 			<p>
 			This stream <u>must</u> be such, that it returns
@@ -86,7 +92,8 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	AChunkReadFormat0(int name_registry_capacity, InputStream raw)
 	{
 		super(name_registry_capacity);
-		assert(name_registry_capacity<=127):"name registry too large";
+		if (TRACE) TOUT.println("new AChunkReadFormat0(name_registry_capacity="+name_registry_capacity+")");
+		assert(name_registry_capacity<=128):"name registry too large";
 		assert(raw!=null);
 		this.raw = raw;
 	};
@@ -102,68 +109,111 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 		Assuming all the data in chunk are currently read will try
 		to test if next chunk in stream is "continue" and arms chunk buffer
 		if it is.
+		@param throw_on_eof if true will throw on eof
+				when attempts to pick next header. If false will return false.
 		@return false if it is not.
 		@see #pending_header
 		@throws IOException if raw stream failed 
 		@throws EUnexpectedEof if raw stream failed to provide a header.
 	*/
-	private boolean tryContinueChunk()throws IOException
+	private boolean tryContinueChunk(boolean throw_on_eof)throws IOException
 	{
-		if (pending_header!=-1) return false; //we already tested it and should be stuck at it.
+		if (TRACE) TOUT.println("tryContinueChunk ENTER");
+		if (pending_header!=-1)
+		{
+			if (TRACE) TOUT.println("tryContinueChunk=false, has pending chunk header "+Integer.toHexString(pending_header)+", LEAVE ");
+			return false; //we already tested it and should be stuck at it.
+		};
 		int r = raw.read();
 		assert(r>=-1);
 		assert(r<=0xFF);
-		if (r==-1) throw new EUnexpectedEof();
+		if (r==-1)
+		{
+			if (throw_on_eof)
+				throw new EUnexpectedEof();
+			else
+				return false;
+		};
 		if (((byte)(r & 0b111))==AChunkWriteFormat0.HEADER_CONTINUE)
 		{
+			if (TRACE) TOUT.println("tryContinueChunk, found CONTINUE");
 			assert(pending_header == -1); 
 			handle_HEADER_CONTINUE(r);
 			//No need to pre-load it.
+			if (TRACE) TOUT.println("tryContinueChunk=true, LEAVE");
 			return true;
 		}else
 		{
 			//save it for later.
+			if (TRACE) TOUT.println("tryContinueChunk, found header "+Integer.toHexString(r));
 			pending_header = r;
+			if (TRACE) TOUT.println("tryContinueChunk=false, LEAVE");
 			return false;
 		}
 	};
-	/** Assuming that not all chunk payload data are yet loaded into chunk 
-	buffer attempts to read <u>at least one byte</u> and update the payload buffer.
-	@throws IOException if low level failed
-	@throws EUnexpectedEof if low level failed to provide at least one byte in a single
-			operation.
-	*/
-	private void fillInChunk()throws IOException
-	{
-		assert(buffer_size!=declared_chunk_size); //everything is read, you must not call it.
-		int r = raw.read(buffer,buffer_size, declared_chunk_size - buffer_size);
-		if (r<1) throw new EUnexpectedEof("Failed to read at least one byte of chunk payload");
-		buffer_size+=r;
-		assert(buffer_size<=declared_chunk_size); //post condition. 
-	};
+	
 	/** Reads data from chunk payload buffer. Will fill-in a buffer or move
-	to "continue" chunk if necessary 
-	@return -1 if reached chunk indicating a header other than "continue".
+	to "continue" chunk if necessary
+	@return -1 if reached chunk indicating a header other than "continue" .
 		Otherwise 0...0xff representing a byte from chunk payload.
+		
+	@throws IOException if low level failed
+	@throws EUnexpectedEof if encountered end of file. 
 	*/
 	protected int in()throws IOException
 	{
-		//try from current buffer?
-		if ((declared_chunk_size==-1)||(buffer_at==declared_chunk_size))
+		if (DUMP) TOUT.println("in() buffer_at="+buffer_at+" buffer_size="+buffer_size+" ENTER");
+		//Try from current buffer. Notice chunks may have zero
+		//size, so we need to loop.
+		while ((declared_chunk_size<=0)||(buffer_at==declared_chunk_size))
 		{
-			if (!tryContinueChunk()) return -1;
+			if (TRACE) TOUT.println("in(), moving to next chunk");
+			if (!tryContinueChunk(true))
+			{
+				if (TRACE) TOUT.println("in()=-1, no next chunk, LEAVE");
+				return -1;
+			};
 			assert(declared_chunk_size!=-1);
 		};
 		//now check if there is a byte?
 		if (buffer_at==buffer_size)
 		{
-			assert(buffer_size!=declared_chunk_size); //this should be captured above.
-			fillInChunk();
-			//the above must not fail in any different way that providing at last
-			//one byte.
-			assert(buffer_at<buffer_size);
+			if (TRACE) TOUT.println("in() loading "+(declared_chunk_size - buffer_size)+" data to buffer");
+			int r = raw.read(buffer,buffer_size, declared_chunk_size - buffer_size);
+			if (r<1) throw new EUnexpectedEof("Failed to read at least one byte of chunk payload");
+			buffer_size+=r;
+			if (TRACE) TOUT.println("in() new buffer size = "+buffer_size);
 		};
-		return buffer[buffer_at++] & 0xFF;
+		final int v = buffer[buffer_at++] & 0xFF;
+		if (DUMP) TOUT.println("in()=0x"+Integer.toHexString(v)+" LEAVE");
+		return v;
+	};
+	/* *******************************************************
+		
+			AStructReadFormatBase0
+		
+	* ******************************************************/
+	@Override protected boolean hasElementaryDataImpl()throws IOException
+	{
+		if (TRACE) TOUT.println("hasElementaryDataImpl() buffer_at="+buffer_at+" buffer_size="+buffer_size+" ENTER");
+		//Now this is very alike in() but we have to react diffently on EOFs
+		//Try from current buffer. Notice chunks may have zero
+		//size, so we need to loop.
+		while ((declared_chunk_size<=0)||(buffer_at==declared_chunk_size))
+		{
+			if (TRACE) TOUT.println("hasElementaryDataImpl(), moving to next chunk");
+			//We can't throw on EOF
+			if (!tryContinueChunk(false))
+			{
+				if (TRACE) TOUT.println("hasElementaryDataImpl()=false, no more chunks, LEAVE");
+				return false;
+			};
+			assert(declared_chunk_size!=-1);
+		};
+		//and no need to preload anything.
+		final boolean v= buffer_at<declared_chunk_size;
+		if (TRACE) TOUT.println("hasElementaryDataImpl()="+v+", LEAVE");
+		return v;
 	};
 	/* *******************************************************
 			
@@ -178,6 +228,7 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	*/
 	private void handle_HEADER_CONTINUE(int h)throws IOException
 	{
+		if (TRACE) TOUT.println("handle_HEADER_CONTINUE() ENTER");
 		assert(((byte)(h & 0b111))==AChunkWriteFormat0.HEADER_CONTINUE);
 		//now detect long versus short form                               
 		int s  = h >>>4;
@@ -194,6 +245,7 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 		declared_chunk_size = s;
 		buffer_size = 0;
 		buffer_at = 0;
+		if (TRACE) TOUT.println("handle_HEADER_CONTINUE() declared_chunk_size="+declared_chunk_size+" LEAVE");
 	};
 	/** Invoked when needs to process "register" header
 	@param h HEADER_REGISTER
@@ -201,11 +253,13 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	*/
 	private TSignalReg handle_HEADER_REGISTER(int h)throws IOException
 	{
+		if (TRACE) TOUT.println("handle_HEADER_REGISTER() ENTER");
 		//indexed or ordered?
 		assert(((byte)(h & 0b111))==AChunkWriteFormat0.HEADER_REGISTER);
 		int pending_index; //preserve index in here since we will call some handler which may override it.
 		if ((h & 0b1000)!=0)
 		{
+			if (TRACE) TOUT.println("handle_HEADER_REGISTER(), indexed mode");
 			//indexed mode 
 			if (last_ordered_signal!=-1) throw new EBrokenFormat("Mixed ordered and indexed registration");
 			int r = raw.read();
@@ -217,11 +271,13 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 			this.detected_indexed_mode = true;
 		}else
 		{
+			if (TRACE) TOUT.println("handle_HEADER_REGISTER(), ordered mode");
 			//ordered mode.
 			//We skip mess-up detection here?
 			if (detected_indexed_mode) throw new EBrokenFormat("Mixed ordered and indexed registration");
 			pending_index = ++this.last_ordered_signal;
 		};
+		if (TRACE) TOUT.println("handle_HEADER_REGISTER(), pending_index="+pending_index);
 		//Now we need to load the header which must be HEADER_BEGIN_DIRECT
 		//or HEADER_END_BEGIN_DIRECT
 		h = raw.read();
@@ -234,12 +290,14 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 					handle_HEADER_BEGIN_DIRECT(h);
 					//above arms pickLastSignalRegName
 					this.pending_last_signal_index  = pending_index; //re-arm index.
+					if (TRACE) TOUT.println("handle_HEADER_REGISTER()=SIG_BEGIN_AND_REGISTER LEAVE");
 					return TSignalReg.SIG_BEGIN_AND_REGISTER;
 					
 			case AChunkWriteFormat0.HEADER_END_BEGIN_DIRECT:
 					handle_HEADER_END_BEGIN_DIRECT(h);
 					//above arms pickLastSignalRegName
 					this.pending_last_signal_index  = pending_index; //re-arm index.
+					if (TRACE) TOUT.println("handle_HEADER_REGISTER()=SIG_END_BEGIN_AND_REGISTER LEAVE");
 					return TSignalReg.SIG_END_BEGIN_AND_REGISTER;
 			default:
 					throw new EBrokenFormat("unexpected header "+Integer.toHexString(h & 0b111));
@@ -252,6 +310,7 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	*/
 	private void handle_HEADER_BEGIN_DIRECT(int h)throws IOException
 	{
+		if (TRACE) TOUT.println("handle_HEADER_BEGIN_DIRECT()");
 		assert(((byte)(h & 0b111))==AChunkWriteFormat0.HEADER_BEGIN_DIRECT);
 		handle_HEADER_xx_BEGIN_DIRECT(h);
 	};
@@ -262,6 +321,7 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	*/
 	private void handle_HEADER_END_BEGIN_DIRECT(int h)throws IOException
 	{
+		if (TRACE) TOUT.println("handle_HEADER_END_BEGIN_DIRECT()");
 		assert(((byte)(h & 0b111))==AChunkWriteFormat0.HEADER_END_BEGIN_DIRECT);
 		handle_HEADER_xx_BEGIN_DIRECT(h);
 	};
@@ -271,12 +331,14 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	*/
 	private void handle_HEADER_xx_BEGIN_DIRECT(int h)throws IOException
 	{
+		if (TRACE) TOUT.println("handle_HEADER_xx_BEGIN_DIRECT() ENTER");
 		//arm payload size.
 		int s = h >>>3;
 		//arm chunk buffer.
 		this.declared_chunk_size = s;
 		this.buffer_size =0;
 		this.buffer_at=0;
+		if (TRACE) TOUT.println("handle_HEADER_xx_BEGIN_DIRECT() declared_chunk_size="+declared_chunk_size);
 		//reset name buffer and load name
 		name_building_buffer.setLength(0);
 		loadSignalNameTo(name_building_buffer);
@@ -286,12 +348,13 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 		this.pending_header = -1;
 		//validate format 
 		if ( ((byte)(h & 0b111))!=AChunkWriteFormat0.HEADER_END)
-				throw new EBrokenFormat("END chunk is required after signal name");	
+				throw new EBrokenFormat("END chunk is required after signal name, found "+Integer.toHexString(h & 0b111));	
 		handle_HEADER_END(h);
 		//override what handle_HEADER_END did.
 		pending_name = name_building_buffer.toString();
 		//drop buffer.
 		name_building_buffer.setLength(0);
+		if (TRACE) TOUT.println("handle_HEADER_xx_BEGIN_DIRECT() pending_name=\""+pending_name+"\" LEAVE");
 	};
 	/** Invoked when needs to process "begin-registered" header
 	@param h  HEADER_END_BEGIN_DIRECT
@@ -299,6 +362,7 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	*/
 	private void handle_HEADER_BEGIN_REGISTERED(int h)throws IOException
 	{
+		if (TRACE) TOUT.println("handle_HEADER_BEGIN_REGISTERED");
 		assert(((byte)(h & 0b111))==AChunkWriteFormat0.HEADER_BEGIN_REGISTERED);
 		handle_HEADER_xx_BEGIN_REGISTERED(h);
 	};
@@ -308,6 +372,7 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	*/
 	private void handle_HEADER_END_BEGIN_REGISTERED(int h)throws IOException
 	{
+		if (TRACE) TOUT.println("handle_HEADER_END_BEGIN_REGISTERED");
 		assert(((byte)(h & 0b111))==AChunkWriteFormat0.HEADER_END_BEGIN_REGISTERED);
 		handle_HEADER_xx_BEGIN_REGISTERED(h);
 	};		
@@ -317,6 +382,7 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	*/
 	private void handle_HEADER_xx_BEGIN_REGISTERED(int h)throws IOException
 	{
+		if (TRACE) TOUT.println("handle_HEADER_xx_BEGIN_REGISTERED() ENTER");
 		//arm index
 		int i = (h >>>3) & 0x7;
 		//arm size
@@ -328,6 +394,7 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 		//arm info
 		this.pending_last_signal_index = i;
 		this.pending_name = null;
+		if (TRACE) TOUT.println("handle_HEADER_xx_BEGIN_REGISTERED() pending_last_signal_index="+pending_last_signal_index+" declared_chunk_size="+declared_chunk_size+",  LEAVE");
 	};
 	/** Invoked when needs to process "end-begin-registered" header,
 	either during name processing or during stand alone processing.
@@ -336,6 +403,7 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	*/
 	private void handle_HEADER_END(int h)throws IOException
 	{
+		if (TRACE) TOUT.println("handle_HEADER_END() ENTER");
 		assert(((byte)(h & 0b111))==AChunkWriteFormat0.HEADER_END);
 		int s = h >>>3; 
 		//arm chunk buffer.
@@ -344,6 +412,7 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 		this.buffer_at=0;
 		//arm info
 		this.pending_name = null;
+		if (TRACE) TOUT.println("handle_HEADER_END() declared_chunk_size="+declared_chunk_size+" LEAVE");
 	};
 	
 	/** Invoked when needs to process "extended registered" header,
@@ -353,6 +422,7 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	*/
 	private TSignalReg handle_HEADER_EXTENDED_REGISTERED(int h)throws IOException
 	{
+		if (TRACE) TOUT.println("handle_HEADER_EXTENDED_REGISTERED()");
 		assert(((byte)(h & 0b111))==AChunkWriteFormat0.HEADER_EXTENDED_REGISTERED);
 		//load extension index
 		int r = raw.read();
@@ -367,11 +437,15 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 		//arm info
 		this.pending_last_signal_index =  r & 0x7F;
 		this.pending_name = null;
-		return ((r & 0x80)!=0)
-				?
-				TSignalReg.SIG_END_BEGIN_REGISTERED
-				:
-				TSignalReg.SIG_BEGIN_REGISTERED;
+		if ((r & 0x80)!=0)
+		{
+				if (TRACE) TOUT.println("handle_HEADER_EXTENDED_REGISTERED()=SIG_END_BEGIN_REGISTERED declared_chunk_size="+declared_chunk_size+" LEAVE");
+				return TSignalReg.SIG_END_BEGIN_REGISTERED;
+		}else
+		{		
+				if (TRACE) TOUT.println("handle_HEADER_EXTENDED_REGISTERED()=SIG_BEGIN_REGISTERED declared_chunk_size="+declared_chunk_size+" LEAVE");
+				return TSignalReg.SIG_BEGIN_REGISTERED;
+		}
 	};
 	
 	/** Loads signal name, avoiding limitless loading 
@@ -381,20 +455,25 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	*/
 	private void loadSignalNameTo(Appendable b)throws IOException
 	{
+		if (TRACE) TOUT.println("loadSignalNameTo ENTER");
 		int size = 0;
 		for(;;)
-		{
+		{			
 			if (size>getMaxSignalNameLength()) throw new EFormatBoundaryExceeded("Signal name too long");
 			int c = decodeStringChar();
-			if (c==-1) return;
+			if (c==-1)
+			{
+				if (TRACE) TOUT.println("loadSignalNameTo=\""+b+"\", LEAVE");
+				return;
+			};
 			b.append((char)c);
 			size++;
 		}
 	};
 	/** Loads next string char from chunk, decoding it as specified in specs.
-	@return -1 if reached end of payload ("continue" is handled transparently)
+	@return 0..0xffff representing decoded character or -1 if reached end of payload ("continue" is handled transparently)
 	*/
-	private int decodeStringChar()throws IOException
+	protected int decodeStringChar()throws IOException
 	{
 		int n = in();
 		if (n==-1) return -1;
@@ -412,21 +491,24 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 			 	 c |= (char)(( n & 0x3) << (7+7));
 			 };
 		};
+		if (DUMP) TOUT.println("decodeStringChar()=0x"+Integer.toHexString(c)+" (\'"+c+"\') LEAVE");
 		return c;
 	};
 	@Override protected TSignalReg readSignalReg()throws IOException
 	{
+		if (TRACE) TOUT.println("readSignalReg() ENTER");
 		for(;;)//loop to skip all "continue" chunks.
 		{
 			//check if we already touched the chunk?		
 			int h = pending_header;		//pick and forget.
 			this.pending_header = -1;
 			if (h == -1)
-			{
+			{				
 				//no, we need to touch it.
 				//Check if we have chunk buffer?
 				if (declared_chunk_size!=-1)
 				{
+					if (TRACE) TOUT.println("readSignalReg() skipping content");
 					//check if we have something not loaded to chunk buffer?
 					if (declared_chunk_size!=buffer_size)
 					{
@@ -437,6 +519,7 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 						if (skipped!=to_skip) throw new EUnexpectedEof();
 					};
 				};
+				if (TRACE) TOUT.println("readSignalReg() pre-fetching next header");
 				//pre-fetch header.
 				int r = raw.read();
 				assert(r>=-1);
@@ -445,6 +528,7 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 				h = r;	
 			};
 			//Now we are sure we have a header. What is it?
+			if (TRACE) TOUT.println("readSignalReg() switching to header->");
 			switch((byte)(h & 0b111))
 			{
 				case AChunkWriteFormat0.HEADER_REGISTER:
@@ -466,6 +550,7 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 						return TSignalReg.SIG_END;
 				case AChunkWriteFormat0.HEADER_CONTINUE:
 						handle_HEADER_CONTINUE(h);
+						if (TRACE) TOUT.println("readSignalReg(), looping on CONTINUE");
 						break;
 				case AChunkWriteFormat0.HEADER_EXTENDED_REGISTERED:
 						return handle_HEADER_EXTENDED_REGISTERED(h);
@@ -491,7 +576,7 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	*********************************************************************/
 	/** Overriden to close low level I/O */
 	@Override protected void closeImpl()throws IOException
-	{
+	{		
 		raw.close();
 	};
 };

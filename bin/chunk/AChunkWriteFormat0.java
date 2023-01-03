@@ -1,7 +1,9 @@
 package sztejkat.abstractfmt.bin.chunk;
+import  sztejkat.abstractfmt.logging.SLogging;
 import  sztejkat.abstractfmt.*;
 import java.io.IOException;
 import java.io.OutputStream;
+
 /**
 	A base chunk implementation.
 	<p>
@@ -12,6 +14,11 @@ import java.io.OutputStream;
 */
 abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 {
+		 private static final long TLEVEL = SLogging.getDebugLevelForClass(AChunkWriteFormat0.class);
+         private static final boolean TRACE = (TLEVEL!=0);
+         private static final boolean DUMP = (TLEVEL>=2);
+         private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("AChunkWriteFormat0.",AChunkWriteFormat0.class) : null;
+
 				/** Header HHH bits (see package description) */
 				static final byte HEADER_REGISTER = (byte)0b00;
 				static final byte HEADER_BEGIN_DIRECT = (byte)0b001;
@@ -38,6 +45,7 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 					resets it to null handler, empty*/
 					void terminate()throws IOException
 					{
+						if (TRACE) TOUT.println("ABufferHandler.terminate()");
 						current_at=0;
 						current_buffer_handler=null;
 					};
@@ -49,6 +57,7 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 						int index = -1;
 					void initialize(int index)
 					{
+						if (TRACE) TOUT.println("CRegister_Indexed.initialize("+index+")");
 						assert(index<=127);
 						assert(index>=0);
 						this.index = index; 
@@ -56,6 +65,7 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 					boolean canWrite(){ return false; };
 					void terminate()throws IOException
 					{
+						if (TRACE) TOUT.println("CRegister_Indexed.terminate()");
 						assert(index>=0):"not initialized";
 						raw.write(0b1000 | HEADER_REGISTER);
 						raw.write(index);
@@ -65,40 +75,34 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 				};
 				private final class CRegister_Ordered extends ABufferHandler
 				{						
-					void initialize()
-					{ 
-					};
 					boolean canWrite(){ return false; };
 					void terminate()throws IOException
 					{
+						if (TRACE) TOUT.println("CRegister_Ordered.terminate()");
 						raw.write(HEADER_REGISTER);
 						super.terminate();
 					};
 				};
 				private final class CBeginDirect extends ABufferHandler
 				{						
-					void initialize()
-					{ 
-					};
 					boolean canWrite(){ return current_at<31; };
 					void terminate()throws IOException
 					{
+						if (TRACE) TOUT.println("CBeginDirect.terminate()");
 						//Note: This header must be written even if it has zero size.
-						raw.write(HEADER_BEGIN_DIRECT);
+						raw.write(HEADER_BEGIN_DIRECT | (current_at<<3));
 						raw.write(buffer,0,current_at);
 						super.terminate();
 					};
 				};
 				private final class CEndBeginDirect extends ABufferHandler
 				{						
-					void initialize()
-					{ 
-					};
 					boolean canWrite(){ return current_at<31; };
 					void terminate()throws IOException
 					{
+						if (TRACE) TOUT.println("CEndBeginDirect.terminate()");
 						//Note: This header must be written even if it has zero size.
-						raw.write(HEADER_END_BEGIN_DIRECT);
+						raw.write(HEADER_END_BEGIN_DIRECT | (current_at<<3));
 						raw.write(buffer,0,current_at);
 						super.terminate();
 					};
@@ -114,6 +118,7 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 					AxBeginRegistered(byte header, byte ex_mask){ this.header = header; this.ex_mask= ex_mask;};
 					void initialize(int register_index)
 					{ 
+						if (TRACE) TOUT.println("AxBeginRegistered.initialize("+register_index+")");
 						assert(register_index>=0);
 						assert(register_index<=127);
 						this.register_index = register_index;
@@ -125,6 +130,7 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 					};
 					void terminate()throws IOException
 					{
+						if (TRACE) TOUT.println("AxBeginRegistered.terminate() "+Integer.toHexString(header)+" "+Integer.toHexString(ex_mask)+" register_index="+register_index+" ENTER");
 						//Note: This header must be written even if it has zero size.
 						//Now figure out optimized header
 						final int s = current_at;  
@@ -142,6 +148,7 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 												(register_index<<3)
 												|
 												header);
+										if (TRACE) TOUT.println("AxBeginRegistered.terminate(), optimized to 1");
 										break;
 								case 2:
 										raw.write(
@@ -150,6 +157,7 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 												(register_index<<3)
 												|
 												header);
+										if (TRACE) TOUT.println("AxBeginRegistered.terminate(), optimized to 2");
 										break;
 								case 4:
 										raw.write(
@@ -158,6 +166,7 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 												(register_index<<3)
 												|
 												header);
+										if (TRACE) TOUT.println("AxBeginRegistered.terminate(), optimized to 4");
 										break;
 								case 8:
 										raw.write(
@@ -166,6 +175,7 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 												(register_index<<3)
 												|
 												header);
+										if (TRACE) TOUT.println("AxBeginRegistered.terminate(), optimized to 8");
 										break;
 								default:
 										raw.write(
@@ -177,11 +187,13 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 													|
 													register_index
 													);
+										if (TRACE) TOUT.println("AxBeginRegistered.terminate(), not optimized ");
 										break;
 							}
 							raw.write(buffer,0,s);
 						}else
 						{
+							if (TRACE) TOUT.println("AxBeginRegistered.terminate(), no optimization possible ");
 							//optimization is impossible, use long form.
 							raw.write(
 												(s<<3)
@@ -195,6 +207,7 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 							raw.write(buffer,0,current_at);
 						};
 						super.terminate();
+						if (TRACE) TOUT.println("AxBeginRegistered.terminate() LEAVE");
 					};
 				};
 				
@@ -214,27 +227,23 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 				};
 				private final class CEnd extends ABufferHandler
 				{						
-					void initialize()
-					{ 
-					};
 					boolean canWrite(){ return current_at<31; };
 					void terminate()throws IOException
 					{
+						if (TRACE) TOUT.println("CEnd.terminate()");
 						//Note: This header must be written even if it has zero size.
-						raw.write(HEADER_END);
+						raw.write(HEADER_END | (current_at<<3));
 						raw.write(buffer,0,current_at);
 						super.terminate();
 					};
 				};
 				private final class CContinue extends ABufferHandler
 				{						
-					void initialize()
-					{ 
-					};
 					boolean canWrite(){ return current_at<4095; };
 					void terminate()throws IOException
 					{
 						//This header may be skipped if it is empty
+						if (TRACE) TOUT.println("CContinue.terminate() ENTER");
 						final int s = current_at;
 						assert( (s & ~0xFFF)==0);
 						if (s!=0)
@@ -243,14 +252,17 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 							if (s<=15)
 							{
 								raw.write((s<<4) | HEADER_CONTINUE);
+								if (TRACE) TOUT.println("CContinue.terminate() short form, s ="+s);
 							}else
 							{
 								raw.write((s<<4) | 0b1000 | HEADER_CONTINUE);
 								raw.write(s >>> 4 );
+								if (TRACE) TOUT.println("CContinue.terminate() long form form s="+s);
 							};
 							raw.write(buffer,0,s);
 						};
 						super.terminate();
+						if (TRACE) TOUT.println("CContinue.terminate() LEAVE");
 					};
 				};
 				/** Raw binary input stream */
@@ -295,7 +307,7 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 	* *****************************************************************************/
 	/** Creates
 	@param name_registry_capacity {@link ARegisteringStructWriteFormat#ARegisteringStructWriteFormat(int)}
-			This value cannot be larger than 127. Recommended value is 127, minimum resonable is 8.
+			This value cannot be larger than 128. Recommended value is 128, minimum resonable is 8.
 	@param raw raw binary stream to write to. Will be closed on {@link #close}.
 	@param indexed_registration if true names are registered directly, by index.
 			If false names are registered indirectly, by order of appearance.
@@ -309,8 +321,9 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 					   )
 	{
 		super(name_registry_capacity);
+		if (TRACE) TOUT.println("new AChunkWriteFormat0(name_registry_capacity="+name_registry_capacity+",indexed_registration="+indexed_registration+")"); 
 		assert(raw!=null);
-		assert(name_registry_capacity<=127):"name_registry_capacity="+name_registry_capacity+" too large, up to 127 is supported";
+		assert(name_registry_capacity<=128):"name_registry_capacity="+name_registry_capacity+" too large, up to 127 is supported";
 		this.raw = raw;
 		this.indexed_registration = indexed_registration;
 	};
@@ -330,6 +343,7 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 	*/
 	private void openContinueChunk()
 	{
+		if (TRACE) TOUT.println("openContinueChunk()");
 		assert(current_buffer_handler==null);
 		assert(current_at == 0);
 		current_buffer_handler = Continue;
@@ -339,6 +353,7 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 	*/
 	private void terminateChunk()throws IOException
 	{
+		if (TRACE) TOUT.println("terminateChunk()");
 		if (current_buffer_handler!=null)
 		{
 			current_buffer_handler.terminate();
@@ -350,6 +365,7 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 	@param new_handler new chunk, can be null */
 	private void openChunk(ABufferHandler new_handler)throws IOException
 	{
+		if (TRACE) TOUT.println("openChunk("+new_handler+")");
 		terminateChunk();
 		current_buffer_handler = new_handler;
 	};
@@ -360,16 +376,19 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 	@throws IOException if failed */
 	protected final void out(byte b)throws IOException
 	{
+		if (DUMP) TOUT.println("out("+Integer.toHexString(b)+") ENTER");
 		//Check if we do have a free space?
 		//Free space depends on chunk used
 		if (current_buffer_handler==null)	openContinueChunk();
 		if (!current_buffer_handler.canWrite())
 		{
+			if (TRACE) TOUT.println("out() needs to open next chunk");
 			current_buffer_handler.terminate();
 			openContinueChunk();
 		};
 		assert(current_buffer_handler!=null);
 		buffer[current_at++]=b;
+		if (DUMP) TOUT.println("out() LEAVE");
 	};
 	/* *****************************************************************************
 	
@@ -387,10 +406,12 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 	*/
 	protected void encodeString(CharSequence s, int at, int length)throws IOException
 	{
+		if (TRACE) TOUT.println("encodeString("+s+",at="+at+",length="+length+") ENTER");
 		for(int i=at;i<length;i++)
 		{
 			encodeStringCharacter(s.charAt(i));
 		};
+		if (TRACE) TOUT.println("encodeString() LEAVE");
 	};
 	/**
 		Encodes string character, as specs are saying.
@@ -399,7 +420,8 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 		@see #out
 	*/
 	protected void encodeStringCharacter(char c)throws IOException
-	{
+	{		
+		if (DUMP) TOUT.println("encodeStringCharacter("+Integer.toHexString(c)+") ENTER");
 		char z = (char)(c>>>7);
 		if (z==0)
 		{
@@ -419,6 +441,7 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 				out((byte)c);
 			};
 		};
+		if (DUMP) TOUT.println("encodeStringCharacter("+Integer.toHexString(c)+") LEAVE");
 	}
 	
 	/* *****************************************************************************
@@ -437,10 +460,12 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 	*/
 	protected void encodeSignalName(String name)throws IOException
 	{
+		if (TRACE) TOUT.println("encodeSignalName()->");
 		encodeString(name,0,name.length());
 	};
 	private void commonRegisterImpl(int index)throws IOException
 	{
+		if (TRACE) TOUT.println("commonRegisterImpl("+index+") ENTER");
 		terminateChunk();
 		if (indexed_registration)
 		{
@@ -450,9 +475,11 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 		{
 			current_buffer_handler = Register_Ordered;
 		};
+		if (TRACE) TOUT.println("commonRegisterImpl() LEAVE");
 	};
 	@Override protected void beginAndRegisterImpl(String name, int index, int order)throws IOException
 	{
+		if (TRACE) TOUT.println("beginAndRegisterImpl ENTER");
 		commonRegisterImpl(index);
 		//now all is left is to terminate above
 		openChunk(BeginDirect);
@@ -460,9 +487,11 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 		encodeSignalName(name);
 		//terminate it with end signal
 		openChunk(End);
+		if (TRACE) TOUT.println("beginAndRegisterImpl LEAVE");
 	};
 	@Override protected void endBeginAndRegisterImpl(String name, int index, int order)throws IOException
 	{
+		if (TRACE) TOUT.println("endBeginAndRegisterImpl ENTER");
 		commonRegisterImpl(index);
 		//now all is left is to terminate above
 		openChunk(EndBeginDirect);
@@ -470,10 +499,12 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 		encodeSignalName(name);
 		//terminate it with end signal
 		openChunk(End);
+		if (TRACE) TOUT.println("endBeginAndRegisterImpl LEAVE");
 	};
 	
 	@Override protected void beginRegisteredImpl(int index, int order)throws IOException
 	{
+		if (TRACE) TOUT.println("beginRegisteredImpl ENTER");
 		openChunk(BeginRegistered);
 		if (indexed_registration)
 		{
@@ -482,9 +513,11 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 		{
 			BeginRegistered.initialize(order);
 		};
+		if (TRACE) TOUT.println("beginRegisteredImpl LEAVE");
 	};
 	@Override protected void endBeginRegisteredImpl(int index, int order)throws IOException
 	{
+		if (TRACE) TOUT.println("endBeginRegisteredImpl ENTER");
 		openChunk(EndBeginRegistered);
 		if (indexed_registration)
 		{
@@ -493,27 +526,34 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 		{
 			EndBeginRegistered.initialize(order);
 		};
+		if (TRACE) TOUT.println("endBeginRegisteredImpl LEAVE");
 	};
 	
 	@Override protected void beginDirectImpl(String name)throws IOException
 	{
+		if (TRACE) TOUT.println("beginDirectImpl ENTER"); 
 		openChunk(BeginDirect);
 		encodeSignalName(name);
 		//terminate it with end signal
 		openChunk(End);
+		if (TRACE) TOUT.println("beginDirectImpl LEAVE");
 	};
 	@Override protected void endBeginDirectImpl(String name)throws IOException
 	{
+		if (TRACE) TOUT.println("endBeginDirectImpl ENTER");
 		openChunk(EndBeginDirect);
 		encodeSignalName(name);
 		//terminate it with end signal
 		openChunk(End);
+		if (TRACE) TOUT.println("endBeginDirectImpl LEAVE");
 	};	
 	
 	@Override protected void endImpl()throws IOException
 	{
+		if (TRACE) TOUT.println("endImpl ENTER");
 		//terminate current if any and open end chunk
 		openChunk(End);
+		if (TRACE) TOUT.println("endImpl LEAVE");
 	};
 	/* *****************************************************************************
 	
@@ -528,15 +568,19 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 	------------------------------------------------------------------*/
 	@Override protected void flushImpl()throws IOException
 	{
+		if (TRACE) TOUT.println("flushImpl ENTER");
 		//just terminate chunk and flush down-stream
 		terminateChunk();
 		raw.flush();
+		if (TRACE) TOUT.println("flushImpl LEAVE");
 	};
 	
 	@Override protected void closeImpl()throws IOException
 	{
+		if (TRACE) TOUT.println("closeImpl ENTER");
 		assert(current_buffer_handler==null);
 		raw.close();
+		if (TRACE) TOUT.println("closeImpl LEAVE");
 	};
 	
 };
