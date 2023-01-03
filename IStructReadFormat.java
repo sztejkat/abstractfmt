@@ -315,6 +315,11 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
 		@throws ESequenceEof accordingly, to indiate a problem.
 		@throws EEof of specific subclass depending on <a href="#TEMPEOF">eof handling type</a>
 			if could not read <u>any data</u> due to low level end of file.
+                        <br>
+                        Notice this may not always hold since some implementations will always guard
+                        blocks in such way, that even without explict {@link #end} signal the
+                        -1 return value will be more appropriate unless the stream is actually physically
+                        broken.
 		@throws IllegalStateException if a sequence of incompatible type is in progress.
 		@see IStructWriteFormat#writeBooleanBlock(boolean[],int,int)
 		*/

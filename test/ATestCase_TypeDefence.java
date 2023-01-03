@@ -12,7 +12,7 @@ import static sztejkat.abstractfmt.ITypedStructReadFormat.TElement;
 /**
 	Test if  
 	{@link ITypedStructReadFormat}/{@link ITypedStructWriteFormat}
-	do correctly defend about type abuse.
+	do correctly defend against type abuse.
 */
 public class ATestCase_TypeDefence extends AInterOpTestCase<ITypedStructReadFormat,ITypedStructWriteFormat>
 {
