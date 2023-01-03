@@ -6,8 +6,10 @@ import java.io.InputStream;
 
 
 /**
-	A base chunk implementation.
-	
+	A chunk read format, as described in <a href="package-summary.html">package description</a>
+	<p>
+	This class adds actuall encoding of elementary primitives and blocks,
+	except strings which are defined in superclass.
 */
 public class CChunkReadFormat extends AChunkReadFormat0
 {
@@ -205,7 +207,12 @@ public class CChunkReadFormat extends AChunkReadFormat0
 	/** Arms next packed boolean block if possible
 	@param throw_on_eof if true will throw EEof to tell apart
 		if returns -1 due to eof or signal.
-	@return true if there is next block, false if there isn't */
+	@return true if there is next block, false if there isn't 
+	@throws IOException if failed
+	@throws EUnexpectedEof if throw_on_eof==true and {@link #in()} had thrown it.
+	@see #in
+	@see #inOpt
+	*/
 	private boolean armNextBooleanBlock(boolean throw_on_eof)throws IOException
 	{
 		int r = throw_on_eof ?  in() : inOpt();
@@ -228,6 +235,8 @@ public class CChunkReadFormat extends AChunkReadFormat0
 	@param throw_on_eof if true will throw EEof to tell apart
 		if returns -1 due to eof or signal.
 	@return -1 if there is no more data, 1 for true, 0 for false.
+	@throws IOException if downstream failed
+	@throws EUnexpectedEof if throw_on_eof==true and {@link #armNextBooleanBlock} had thrown it.	
 	*/
 	private int readBooleanBlockBit(boolean throw_on_eof)throws IOException
 	{

@@ -317,7 +317,7 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
 			if could not read <u>any data</u> due to low level end of file.
                         <br>
                         Notice this may not always hold since some implementations will always guard
-                        blocks in such way, that even without explict {@link #end} signal the
+                        blocks in such way, that even without explict {@link IStructWriteFormat#end} signal the
                         -1 return value will be more appropriate unless the stream is actually physically
                         broken.
 		@throws IllegalStateException if a sequence of incompatible type is in progress.

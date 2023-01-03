@@ -8,7 +8,7 @@ import java.io.OutputStream;
 	A chunk write format, as described in <a href="package-summary.html">package description</a>
 	<p>
 	This class adds actuall encoding of elementary primitives and blocks,
-	except strings which are defined in subclass.
+	except strings which are defined in superclass.
 */
 public class CChunkWriteFormat extends AChunkWriteFormat0
 {

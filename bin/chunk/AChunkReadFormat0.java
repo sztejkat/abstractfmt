@@ -250,6 +250,9 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	/** Invoked when needs to process "register" header
 	@param h HEADER_REGISTER
 	@return what to return from readSignalReg
+	@throws IOException if down-stream failed
+	@throws EUnexpectedEof if detected end-of-file inside a header
+	@throws EBrokenFormat if detected unallowed combination of data.
 	*/
 	private TSignalReg handle_HEADER_REGISTER(int h)throws IOException
 	{
@@ -306,7 +309,9 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	/** Invoked when needs to process "begin-direct" header,
 	either as a stand alone header or a part of registration
 	@param h  HEADER_BEGIN_DIRECT
-	@return 
+	@throws IOException if down-stream failed
+	@throws EUnexpectedEof if detected end-of-file inside a header
+	@throws EBrokenFormat if detected unallowed combination of data.
 	*/
 	private void handle_HEADER_BEGIN_DIRECT(int h)throws IOException
 	{
@@ -317,7 +322,9 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	/** Invoked when needs to process "end-begin-direct" header,
 	either as a stand alone header or a part of registration
 	@param h  HEADER_END_BEGIN_DIRECT
-	@return 
+	@throws IOException if down-stream failed
+	@throws EUnexpectedEof if detected end-of-file inside a header
+	@throws EBrokenFormat if detected unallowed combination of data.
 	*/
 	private void handle_HEADER_END_BEGIN_DIRECT(int h)throws IOException
 	{
@@ -328,6 +335,9 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	/** Common for both {@link #handle_HEADER_BEGIN_DIRECT}
 	and {@link #handle_HEADER_END_BEGIN_DIRECT} 
 	@param h header
+	@throws IOException if down-stream failed
+	@throws EUnexpectedEof if detected end-of-file inside a header
+	@throws EBrokenFormat if detected unallowed combination of data.
 	*/
 	private void handle_HEADER_xx_BEGIN_DIRECT(int h)throws IOException
 	{
@@ -358,9 +368,8 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	};
 	/** Invoked when needs to process "begin-registered" header
 	@param h  HEADER_END_BEGIN_DIRECT
-	@return 
 	*/
-	private void handle_HEADER_BEGIN_REGISTERED(int h)throws IOException
+	private void handle_HEADER_BEGIN_REGISTERED(int h)
 	{
 		if (TRACE) TOUT.println("handle_HEADER_BEGIN_REGISTERED");
 		assert(((byte)(h & 0b111))==AChunkWriteFormat0.HEADER_BEGIN_REGISTERED);
@@ -368,9 +377,8 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	};
 	/** Invoked when needs to process "end-begin-registered" header
 	@param h  HEADER_END_BEGIN_DIRECT
-	@return 
 	*/
-	private void handle_HEADER_END_BEGIN_REGISTERED(int h)throws IOException
+	private void handle_HEADER_END_BEGIN_REGISTERED(int h)
 	{
 		if (TRACE) TOUT.println("handle_HEADER_END_BEGIN_REGISTERED");
 		assert(((byte)(h & 0b111))==AChunkWriteFormat0.HEADER_END_BEGIN_REGISTERED);
@@ -380,7 +388,7 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	and {@link #handle_HEADER_END_BEGIN_REGISTERED} 
 	@param h header
 	*/
-	private void handle_HEADER_xx_BEGIN_REGISTERED(int h)throws IOException
+	private void handle_HEADER_xx_BEGIN_REGISTERED(int h)
 	{
 		if (TRACE) TOUT.println("handle_HEADER_xx_BEGIN_REGISTERED() ENTER");
 		//arm index
@@ -399,9 +407,8 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	/** Invoked when needs to process "end-begin-registered" header,
 	either during name processing or during stand alone processing.
 	@param h  HEADER_END
-	@return 
 	*/
-	private void handle_HEADER_END(int h)throws IOException
+	private void handle_HEADER_END(int h)
 	{
 		if (TRACE) TOUT.println("handle_HEADER_END() ENTER");
 		assert(((byte)(h & 0b111))==AChunkWriteFormat0.HEADER_END);
@@ -419,6 +426,8 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	either during name processing or during stand alone processing.
 	@param h  HEADER_END
 	@return either SIG_BEGIN_REGISTERED or SIG_END_BEGIN_REGISTERED
+	@throws IOException if down-stream failed
+	@throws EUnexpectedEof if encountered end of file in header
 	*/
 	private TSignalReg handle_HEADER_EXTENDED_REGISTERED(int h)throws IOException
 	{
@@ -472,6 +481,9 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	};
 	/** Loads next string char from chunk, decoding it as specified in specs.
 	@return 0..0xffff representing decoded character or -1 if reached end of payload ("continue" is handled transparently)
+	@throws IOException if downstream failed
+	@throws EUnexpectedEof if encountered end of file 
+	@throws EBrokenFormat if detected incorrectly encoded character.
 	*/
 	protected int decodeStringChar()throws IOException
 	{
@@ -494,6 +506,7 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 		if (DUMP) TOUT.println("decodeStringChar()=0x"+Integer.toHexString(c)+" (\'"+c+"\') LEAVE");
 		return c;
 	};
+	
 	@Override protected TSignalReg readSignalReg()throws IOException
 	{
 		if (TRACE) TOUT.println("readSignalReg() ENTER");

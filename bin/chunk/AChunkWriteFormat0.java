@@ -33,16 +33,20 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 				are set of semi-static methods handling buffers depending
 				on their type.
 				They do share the
-				{@link ARegisteringStructWriteFormat#at},
-				{@link ARegisteringStructWriteFormat#buffer},
-				{@link ARegisteringStructWriteFormat#raw}.
+				{@link AChunkWriteFormat0#current_at},
+				{@link AChunkWriteFormat0#buffer},
+				{@link AChunkWriteFormat0#raw}.
 				*/
 				private abstract class ABufferHandler
 				{
-					/** True if buffer can be written */
+					/** @return true if buffer can be written, false if there is no more space in it
+					@see AChunkWriteFormat0#current_at
+					*/
 					abstract boolean canWrite();
 					/** Flushes buffer,
-					resets it to null handler, empty*/
+					resets it to null handler, buffer to empty
+					@throws IOException if failed.
+					*/
 					void terminate()throws IOException
 					{
 						if (TRACE) TOUT.println("ABufferHandler.terminate()");
@@ -349,7 +353,7 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 		current_buffer_handler = Continue;
 	};
 	/** Tells current chunk  to terminate, if any 
-	@throws IOException .
+	@throws IOException if failed.
 	*/
 	private void terminateChunk()throws IOException
 	{
@@ -362,7 +366,9 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 		};
 	};
 	/** Terminates chunk and starts new one 
-	@param new_handler new chunk, can be null */
+	@param new_handler new chunk, can be null 
+	@throws IOException if failed.
+	*/
 	private void openChunk(ABufferHandler new_handler)throws IOException
 	{
 		if (TRACE) TOUT.println("openChunk("+new_handler+")");
@@ -463,6 +469,10 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 		if (TRACE) TOUT.println("encodeSignalName()->");
 		encodeString(name,0,name.length());
 	};
+	/** Common code for {@link #beginAndRegisterImpl} and {@link #endBeginAndRegisterImpl}
+	@param index index passed to above methods.
+	@throws IOException if failed 
+	*/
 	private void commonRegisterImpl(int index)throws IOException
 	{
 		if (TRACE) TOUT.println("commonRegisterImpl("+index+") ENTER");
@@ -477,6 +487,7 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 		};
 		if (TRACE) TOUT.println("commonRegisterImpl() LEAVE");
 	};
+	/** Note: order parameter is ignored as it is deduced automatically */
 	@Override protected void beginAndRegisterImpl(String name, int index, int order)throws IOException
 	{
 		if (TRACE) TOUT.println("beginAndRegisterImpl ENTER");
@@ -489,6 +500,7 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 		openChunk(End);
 		if (TRACE) TOUT.println("beginAndRegisterImpl LEAVE");
 	};
+	/** Note: order parameter is ignored as it is deduced automatically */
 	@Override protected void endBeginAndRegisterImpl(String name, int index, int order)throws IOException
 	{
 		if (TRACE) TOUT.println("endBeginAndRegisterImpl ENTER");
