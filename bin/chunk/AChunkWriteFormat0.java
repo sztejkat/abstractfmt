@@ -267,6 +267,8 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 				{@link #HEADER_END_BEGIN_REGISTERED}
 				which may, during flushing, transform to 
 				{@link #HEADER_EXTENDED_REGISTERED}
+				<p>
+				Pre-allocated to max chunk size.
 				*/
 				private byte [] buffer = new byte[4095];
 			
