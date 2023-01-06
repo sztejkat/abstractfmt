@@ -271,18 +271,18 @@ public class CChunkReadFormat extends AChunkReadFormat0
 	};
 	@Override protected int readBooleanBlockImpl(boolean [] buffer, int offset, int length)throws IOException
 	{
-		int cnt = 0;
+		int cnt = 0;		
 		while(length-->0)
 		{
 			switch(readBooleanBlockBit(false))
 			{
 				case 0: cnt++; buffer[offset++]=false; break;
 				case 1: cnt++; buffer[offset++]=true; break;
-				case -1: break;
+				case -1: return cnt==0 ? -1 : cnt;
 				default: throw new AssertionError();
 			}
 		};
-		return cnt==0 ? -1 : cnt;
+		return cnt;
 	};
 	/* .............................................................
 				other blocks.
@@ -294,11 +294,11 @@ public class CChunkReadFormat extends AChunkReadFormat0
 		while(length-->0)
 		{
 			int r = inOpt();
-			if (r==-1) break;
+			if (r==-1)return cnt==0 ? -1 : cnt;
 			cnt++;
 			buffer[offset++]=(byte)r;
 		};
-		return cnt==0 ? -1 : cnt;
+		return cnt;
 	};
 	@Override protected byte readByteBlockImpl()throws IOException,ENoMoreData
 	{
@@ -311,12 +311,12 @@ public class CChunkReadFormat extends AChunkReadFormat0
 		while(length-->0)
 		{
 			int r = inOpt();
-			if (r==-1) break;
+			if (r==-1) return cnt==0 ? -1 : cnt;
 			r  |= (inNext()<<8);
 			cnt++;
 			buffer[offset++]=(char)r;
 		};
-		return cnt==0 ? -1 : cnt;
+		return cnt;
 	}
 	@Override protected char readCharBlockImpl()throws IOException,ENoMoreData
 	{
@@ -329,12 +329,12 @@ public class CChunkReadFormat extends AChunkReadFormat0
 		while(length-->0)
 		{
 			int r = inOpt();
-			if (r==-1) break;
+			if (r==-1) return cnt==0 ? -1 : cnt;
 			r  |= (inNext()<<8);
 			cnt++;
 			buffer[offset++]=(short)r;
 		};
-		return cnt==0 ? -1 : cnt;
+		return cnt;
 	}
 	@Override protected short readShortBlockImpl()throws IOException,ENoMoreData
 	{
@@ -347,7 +347,7 @@ public class CChunkReadFormat extends AChunkReadFormat0
 		while(length-->0)
 		{
 			int r = inOpt();
-			if (r==-1) break;
+			if (r==-1) return cnt==0 ? -1 : cnt;
 			r  |= (inNext()<<8)
 					|
 					(inNext()<<(2*8))
@@ -356,7 +356,7 @@ public class CChunkReadFormat extends AChunkReadFormat0
 			cnt++;
 			buffer[offset++]=r;
 		};
-		return cnt==0 ? -1 : cnt;
+		return cnt;
 	}
 	@Override protected int readIntBlockImpl()throws IOException,ENoMoreData
 	{
@@ -369,7 +369,7 @@ public class CChunkReadFormat extends AChunkReadFormat0
 		while(length-->0)
 		{
 			int r = inOpt();
-			if (r==-1) break;
+			if (r==-1) return cnt==0 ? -1 : cnt;
 			long v =(long)(
 							r
 							|
@@ -392,7 +392,7 @@ public class CChunkReadFormat extends AChunkReadFormat0
 			cnt++;
 			buffer[offset++]=v;
 		};
-		return cnt==0 ? -1 : cnt;
+		return cnt;
 	}
 	@Override protected long readLongBlockImpl()throws IOException,ENoMoreData
 	{
@@ -405,7 +405,7 @@ public class CChunkReadFormat extends AChunkReadFormat0
 		while(length-->0)
 		{
 			int r = inOpt();
-			if (r==-1) break;
+			if (r==-1) return cnt==0 ? -1 : cnt;
 			r  |= (inNext()<<8)
 					|
 					(inNext()<<(2*8))
@@ -414,7 +414,7 @@ public class CChunkReadFormat extends AChunkReadFormat0
 			cnt++;
 			buffer[offset++]=Float.intBitsToFloat(r);
 		};
-		return cnt==0 ? -1 : cnt;
+		return cnt;
 	};
 	@Override protected float readFloatBlockImpl()throws IOException,ENoMoreData
 	{
@@ -427,7 +427,7 @@ public class CChunkReadFormat extends AChunkReadFormat0
 		while(length-->0)
 		{
 			int r = inOpt();
-			if (r==-1) break;
+			if (r==-1) return cnt==0 ? -1 : cnt;
 			long v =(long)(
 							r
 							|
@@ -450,7 +450,7 @@ public class CChunkReadFormat extends AChunkReadFormat0
 			cnt++;
 			buffer[offset++]=Double.longBitsToDouble(v);
 		};
-		return cnt==0 ? -1 : cnt;
+		return cnt;
 	};
 	@Override protected double readDoubleBlockImpl()throws IOException,ENoMoreData
 	{
@@ -464,11 +464,11 @@ public class CChunkReadFormat extends AChunkReadFormat0
 		{
 			if (!super.hasElementaryDataImpl()) break; //to prevent EEof from being thrown.
 			int r = decodeStringChar();
-			if (r==-1) break;
+			if (r==-1) return cnt==0 ? -1 : cnt;
 			cnt++;
 			characters.append((char)r);
 		};
-		return cnt==0 ? -1 : cnt;
+		return cnt;
 	};
 		
 	@Override protected char readStringImpl()throws IOException,ENoMoreData
