@@ -303,7 +303,7 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
 					data in sequence or not is not specified;</li>
 					<li><code>n&lt;length &amp;&amp; n&gt;0</code> buffer is partially filled with
 					data. If due to end-of-file or a signal it is not specified;</li>
-					<li><code>n==0</code>, possible only only when <code>length==0</code>;</li>
+					<li><code>n==0</code> returned only only when <code>length==0</code>;</li>
 					<li><code>n==-1</code> nothing is read and signal is reached. All subsequent
 					calls will return -1 till signal will be read;</li>					
 				</ul>

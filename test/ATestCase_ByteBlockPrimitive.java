@@ -85,6 +85,33 @@ public class ATestCase_ByteBlockPrimitive extends AInterOpTestCase<IStructReadFo
 	};
 	
 	/**
+		Test if zero size read returns 0 instead of -1.
+	@throws IOException .
+	*/
+	@Test public void testZeroSizeReadGivesZero()throws IOException
+	{
+			enter();
+			CPair<?,?> p = createTestDevice();
+			final IStructWriteFormat w= p.writer;
+			final IStructReadFormat  r= p.reader;
+			
+			
+			w.open();
+			byte [] written = newBlock(5);
+			w.writeByteBlock(written,0,5);
+			w.close();
+			
+			
+			r.open();
+			byte [] readen = new byte[10];
+			int x = r.readByteBlock(readen,0,0);
+			Assert.assertTrue(x==0);
+			r.close();			
+			
+			leave();
+	};
+	
+	/**
 		Test if byte block can be written and read without 
 		an enclosing structure, variant for typed stream.
 	@throws IOException .

@@ -142,25 +142,21 @@ public class CChunkReadFormat extends AChunkReadFormat0
 	};
 	@Override protected long readLongImpl()throws IOException
 	{
-		return (long)(
-				inFirst()
+		return  ((long)inFirst())
 				|
-				(inNext()<<8)
+				(((long)inNext())<<(8))
 				|
-				(inNext()<<(2*8))
+				(((long)inNext())<<(2*8))
 				|
-				(inNext()<<(3*8))
-				)
+				(((long)inNext())<<(3*8))
 				|
-				((long)(
-				inNext()
+				(((long)inNext())<<(4*8))
 				|
-				(inNext()<<8)
+				(((long)inNext())<<(5*8))
 				|
-				(inNext()<<(2*8))
+				(((long)inNext())<<(6*8))
 				|
-				(inNext()<<(3*8))
-				)<<32);
+				(((long)inNext())<<(7*8));
 	};
 	@Override protected float readFloatImpl()throws IOException
 	{
@@ -370,25 +366,22 @@ public class CChunkReadFormat extends AChunkReadFormat0
 		{
 			int r = inOpt();
 			if (r==-1) return cnt==0 ? -1 : cnt;
-			long v =(long)(
-							r
+			long v =		(long)(r)
 							|
-							(inNext()<<8)
+							(((long)inNext())<<(8))
 							|
-							(inNext()<<(2*8))
+							(((long)inNext())<<(2*8))
 							|
-							(inNext()<<(3*8))
-							)
+							(((long)inNext())<<(3*8))
 							|
-							((long)(
-							inNext()
+							(((long)inNext())<<(4*8))
 							|
-							(inNext()<<8)
+							(((long)inNext())<<(5*8))
 							|
-							(inNext()<<(2*8))
+							(((long)inNext())<<(6*8))
 							|
-							(inNext()<<(3*8))
-							)<<32);
+							(((long)inNext())<<(7*8));
+							
 			cnt++;
 			buffer[offset++]=v;
 		};

@@ -27,12 +27,17 @@ import java.io.PrintStream;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
 					ATestCase_BasicSignalOperations.class,
+					ATestCase_OptimizedSignalOperations.class,
 					ATestCase_SignalOperationsSafety.class,
+					ATestCase_ComplexSignalName.class,
 					ATestCase_BooleanElementaryPrimitive.class,
 					ATestCase_BooleanBlockPrimitive.class,
 					ATestCase_ByteElementaryPrimitive.class,
 					ATestCase_ByteBlockPrimitive.class,
-					ATestCase_OptimizedSignalOperations.class
+					ATestCase_ShortElementaryPrimitive.class,
+					ATestCase_CharElementaryPrimitive.class,
+					ATestCase_IntElementaryPrimitive.class,
+					ATestCase_LongElementaryPrimitive.class
 					})
 public class TestSuite_ObjFormat0 extends ATest
 {

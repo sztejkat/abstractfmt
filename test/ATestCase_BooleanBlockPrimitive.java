@@ -81,6 +81,33 @@ public class ATestCase_BooleanBlockPrimitive extends AInterOpTestCase<IStructRea
 			assertArraysEqual(written,7,900,readen,1);
 			
 			leave();
+	};      
+	
+	/**
+		Test if zero size read returns 0 instead of -1.
+	@throws IOException .
+	*/
+	@Test public void testZeroSizeReadGivesZero()throws IOException
+	{
+			enter();
+			CPair<?,?> p = createTestDevice();
+			final IStructWriteFormat w= p.writer;
+			final IStructReadFormat  r= p.reader;
+			
+			
+			w.open();
+			boolean [] written = newBlock(5);
+			w.writeBooleanBlock(written,0,5);
+			w.close();
+			
+			
+			r.open();
+			boolean [] readen = new boolean[10];
+			int x = r.readBooleanBlock(readen,0,0);
+			Assert.assertTrue(x==0);
+			r.close();			
+			
+			leave();
 	};
 	
 	/**
@@ -162,6 +189,58 @@ public class ATestCase_BooleanBlockPrimitive extends AInterOpTestCase<IStructRea
 			leave();
 	};   
 	
+	
+	/**
+		Test if boolean block can be written and read with
+		an enclosing structure, using varying size parameters.
+		<p>
+		Note: Boolean blocks and Strings are expected to use
+		more sophisticated encodings than other blocks, so they
+		have to be more detailed tested.
+		<p>
+		Boolean blocks will be usually "bit-packed" so
+		we need to test different pack sizes.
+	@param pack_size non zero positive.
+	@throws IOException .
+	*/
+	private void testWriteEnclosed_VariedSize(int pack_size)throws IOException
+	{
+			enter();
+			assert(pack_size>0);
+			
+			CPair<?,?> p = createTestDevice();
+			final IStructWriteFormat w= p.writer;
+			final IStructReadFormat  r= p.reader;
+			
+			w.open();
+			w.begin("aka");
+			boolean [] written = newBlock(pack_size);
+			w.writeBooleanBlock(written,0,pack_size);
+			w.end();
+			w.close();
+			
+			r.open();
+			Assert.assertTrue("aka".equals(r.next()));
+			boolean [] readen = new boolean[pack_size];
+			{
+				int x = r.readBooleanBlock(readen,0,pack_size);
+				System.out.println("x="+x);
+				Assert.assertTrue(x==pack_size);
+				assertArraysEqual(written,0,pack_size,readen,0);
+			}
+			//pool for eof?
+			{
+				int x = r.readBooleanBlock(readen,0,pack_size);
+				Assert.assertTrue(x==-1);
+			};
+			Assert.assertTrue(null==r.next());//consume end signal
+			r.close();
+			leave();
+	};   
+	@Test public void testWriteEnclosed_1()throws IOException{ enter(); testWriteEnclosed_VariedSize(1); leave();};	
+	@Test public void testWriteEnclosed_5()throws IOException{ enter(); testWriteEnclosed_VariedSize(5); leave();};
+	@Test public void testWriteEnclosed_256()throws IOException{ enter(); testWriteEnclosed_VariedSize(256); leave();};
+	@Test public void testWriteEnclosed_301()throws IOException{ enter(); testWriteEnclosed_VariedSize(301); leave();};
 	
 	/**
 		Test if boolean block can be written and read with

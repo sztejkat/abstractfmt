@@ -30,11 +30,17 @@ import java.io.PrintStream;
 @Suite.SuiteClasses({
 					ATestCase_BasicSignalOperations.class,
 					ATestCase_SignalOperationsSafety.class,
+					ATestCase_OptimizedSignalOperations.class,
+					ATestCase_ComplexSignalName.class,
 					ATestCase_BooleanElementaryPrimitive.class,
 					ATestCase_BooleanBlockPrimitive.class,
 					ATestCase_ByteBlockPrimitive.class,
 					ATestCase_ByteElementaryPrimitive.class,
-					ATestCase_OptimizedSignalOperations.class
+					ATestCase_ShortElementaryPrimitive.class,
+					ATestCase_CharElementaryPrimitive.class,
+					ATestCase_IntElementaryPrimitive.class,
+					ATestCase_LongElementaryPrimitive.class
+					
 					})
 public class TestSuite_ObjFormat1_index extends ATest
 {

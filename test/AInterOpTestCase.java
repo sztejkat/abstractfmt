@@ -3,6 +3,7 @@ import sztejkat.abstractfmt.IStructReadFormat;
 import sztejkat.abstractfmt.IStructWriteFormat;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.*;
 /**
 	A contract for an inter-operational <u>contract</u> test case
 	for reader-writer pair.
@@ -163,7 +164,7 @@ public class AInterOpTestCase<R extends IStructReadFormat,
 					private static int name_generator;
 		/** Calls <code>getFactory().createTestDevice(temp_folder)</code>.
 		It is deducing a temp folder from current class simple name followed
-		by "-temp" postfix and a sub-folder made of a caller method name.
+		by "-temp" postfix and a sub-folder made of a caller test method name.
 		<p>
 		Will print on <code>System.out</code> the message indicating what file it is using.
 		@param <R> see {@link IInteropTestDeviceFactory#createTestDevice}
@@ -200,17 +201,53 @@ public class AInterOpTestCase<R extends IStructReadFormat,
 					System.out.println("could not figure out factory class, test data of different suites may be mixed");
 					base = base+"-temp/";
 				};
-				String tail;
+				String tail = null;
 				{
 					StackTraceElement [] stack = Thread.currentThread().getStackTrace();
-					if ((stack==null)||(stack.length<3))
+					if (stack!=null)
+					{
+						//look for first annotated with org.junit.Test
+						loop:
+						for(StackTraceElement e : stack)
+						{
+							if (!e.isNativeMethod())
+							{
+								String _c_name = e.getClassName();
+								String _m_name = e.getMethodName();
+								
+								try{
+									Class<?> _cc = Class.forName(_c_name);
+									Method [] ms = _cc.getDeclaredMethods();
+									Method identified_method = null;
+									for(Method m : ms)
+									{
+										if (_m_name.equals(m.getName()))
+										{
+											identified_method = m;
+											break;
+										};
+									};
+									if (identified_method!=null)
+									{
+										if (identified_method.getDeclaredAnnotation(org.junit.Test.class)!=null)
+										{
+											tail = _m_name;
+											break loop;
+										};
+									};
+
+								}catch(Exception ex)
+								{
+										//ignore it silently,
+								};
+							};
+						};
+					};
+					if (tail==null)
 					{
 						System.out.println("some stack info missing, generating random name");
 						tail = Integer.toString(name_generator++);
-					}else
-					{
-						tail = stack[2].getMethodName();
-					}
+					};
 				}
 				final File temp_folder = new File(base+tail);
 				System.out.println("test is using temp_folder \""+temp_folder.getCanonicalPath()+"\"");

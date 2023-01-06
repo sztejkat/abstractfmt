@@ -90,10 +90,10 @@ public class SLogging
               //      This implementation is oversimplfied and just
               //      returns a constant. This means, that enabling/disabling
               //      logs requires re-compilation of this class.
-              if (_class.getName().equals("sztejkat.abstractfmt.bin.chunk.AChunkWriteFormat0")) return 1;
-              if (_class.getName().equals("sztejkat.abstractfmt.bin.chunk.AChunkReadFormat0")) return 1;
-              if (_class == sztejkat.abstractfmt.bin.chunk.CChunkWriteFormat.class) return 1;
-              if (_class == sztejkat.abstractfmt.bin.chunk.CChunkReadFormat.class) return 1;
+              //  if (_class.getName().equals("sztejkat.abstractfmt.bin.chunk.AChunkWriteFormat0")) return 1;
+              // if (_class.getName().equals("sztejkat.abstractfmt.bin.chunk.AChunkReadFormat0")) return 1;
+              // if (_class == sztejkat.abstractfmt.bin.chunk.CChunkWriteFormat.class) return 1;
+              // if (_class == sztejkat.abstractfmt.bin.chunk.CChunkReadFormat.class) return 1;
               
               return 0;
          };
