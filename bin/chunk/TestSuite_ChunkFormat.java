@@ -37,7 +37,8 @@ import java.io.IOException;
 					ATestCase_FloatBlockPrimitive.class,
 					ATestCase_DoubleElementaryPrimitive.class,
 					ATestCase_DoubleBlockPrimitive.class,
-					ATestCase_StringBlockPrimitive.class
+					ATestCase_StringBlockPrimitive.class,
+					ATestCase_AbuseOfReads_IntNumeric.class
 					})
 public class TestSuite_ChunkFormat extends ATest
 {
