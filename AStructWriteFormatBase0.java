@@ -712,7 +712,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 			assert(characters!=null):"null buffer";
 			assert(offset>=0):"offset="+offset;
 			assert(length>=0):"length="+length;
-			assert(characters.length()<=offset+length):"Out of buffer operation: characters.length="+characters.length()+", offset="+offset+", length="+length;
+			assert(characters.length()>=offset+length):"Out of buffer operation: characters.length="+characters.length()+", offset="+offset+", length="+length;
 			if (TRACE) TOUT.println("writeString(...,"+offset+","+length+") ENTER");
 			flushPendingEnd();
 			validateStringBlock();

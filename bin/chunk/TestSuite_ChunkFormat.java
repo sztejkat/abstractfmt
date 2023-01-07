@@ -26,9 +26,18 @@ import java.io.IOException;
 					ATestCase_ByteElementaryPrimitive.class,
 					ATestCase_ByteBlockPrimitive.class,
 					ATestCase_ShortElementaryPrimitive.class,
+					ATestCase_ShortBlockPrimitive.class,
 					ATestCase_CharElementaryPrimitive.class,
+					ATestCase_CharBlockPrimitive.class,
 					ATestCase_IntElementaryPrimitive.class,
-					ATestCase_LongElementaryPrimitive.class
+					ATestCase_IntBlockPrimitive.class,
+					ATestCase_LongElementaryPrimitive.class,
+					ATestCase_LongBlockPrimitive.class,
+					ATestCase_FloatElementaryPrimitive.class,
+					ATestCase_FloatBlockPrimitive.class,
+					ATestCase_DoubleElementaryPrimitive.class,
+					ATestCase_DoubleBlockPrimitive.class,
+					ATestCase_StringBlockPrimitive.class
 					})
 public class TestSuite_ChunkFormat extends ATest
 {

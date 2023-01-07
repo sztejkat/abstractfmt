@@ -68,6 +68,34 @@ public class ATestCase_ComplexSignalName extends AInterOpTestCase<IStructReadFor
 			testSignalName("double[]");
 		leave();
 	};
+	
+	@Test public void test_xml_unfriendly()throws IOException
+	{
+		enter();
+		//Note: dump files for all those test will be the same.
+			testSignalName("<event");
+			testSignalName("<!--event-->");
+			testSignalName("&amp;event");
+			testSignalName("\"rookie\"");
+			testSignalName("\tmarkiz");
+			testSignalName("\nmarkiz");
+			testSignalName("\rmarkiz");
+		leave();
+	};
+	
+	@Test public void test_json_unfriendly()throws IOException
+	{
+		enter();
+		//Note: dump files for all those test will be the same.
+			testSignalName("{event:");
+			testSignalName(" markiz");
+			testSignalName("\tmarkiz");
+			testSignalName("\nmarkiz");
+			testSignalName("\rmarkiz");
+			testSignalName("\"rookie\"");			
+		leave();
+	};
+	
 	@Test public void testZeroInName()throws IOException{ testSignalName("Ba\u0000ca"); };
 	/** Tests name built of characters in specified unicode range
 	@param from lower boundary, inclusive

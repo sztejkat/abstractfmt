@@ -395,6 +395,18 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
  		@throws ENoMoreData --//-
 		*/
 		public char readString()throws IOException,ENoMoreData;
+		/** Allocates string buffer and reads into it up to specified number
+		of characters.
+		@param length size limit
+		@return read buffer, up to <code>length</code> long.
+		@throws IOException if failed, see {@link #readString(Appendable,int)}.
+		*/
+		default public String readString(int length)throws IOException
+		{
+			StringBuilder sb = new StringBuilder(length); 
+			readString(sb, length);
+			return sb.toString();
+		};
 		
 		
 		

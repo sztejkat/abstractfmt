@@ -51,6 +51,20 @@ public class CChunkReadFormat extends AChunkReadFormat0
 			AStructReadFormatBase0
 		
 	* ******************************************************/
+	/** Loads next string char from chunk, decoding it as specified in specs.
+	@return 0..0xffff representing decoded character or -1 if reached end of payload ("continue" is handled transparently)
+			or end of file.
+	@throws IOException if downstream failed
+	@throws EBrokenFormat if detected incorrectly encoded character
+			or missing necessary data.
+	
+	@see #decodeStringChar
+	*/
+	private int decodeStringCharOpt()throws IOException
+	{
+		if (!super.hasElementaryDataImpl()) return -1;
+		return decodeStringChar();
+	};
 	/** Reads first byte of primitive element, returns -1
 	if there are no data either due to signal or physical eof.
 	@return 0...0xFF or -1
@@ -270,7 +284,7 @@ public class CChunkReadFormat extends AChunkReadFormat0
 		int cnt = 0;		
 		while(length-->0)
 		{
-			switch(readBooleanBlockBit(false))
+			switch(readBooleanBlockBit(cnt==0))
 			{
 				case 0: cnt++; buffer[offset++]=false; break;
 				case 1: cnt++; buffer[offset++]=true; break;
@@ -289,7 +303,7 @@ public class CChunkReadFormat extends AChunkReadFormat0
 		int cnt = 0;
 		while(length-->0)
 		{
-			int r = inOpt();
+			int r = (cnt==0 ? in() : inOpt()); //first EOF should be thrown.
 			if (r==-1)return cnt==0 ? -1 : cnt;
 			cnt++;
 			buffer[offset++]=(byte)r;
@@ -306,7 +320,7 @@ public class CChunkReadFormat extends AChunkReadFormat0
 		int cnt = 0;
 		while(length-->0)
 		{
-			int r = inOpt();
+			int r = (cnt==0 ? in() : inOpt()); //first EOF should be thrown.
 			if (r==-1) return cnt==0 ? -1 : cnt;
 			r  |= (inNext()<<8);
 			cnt++;
@@ -324,7 +338,7 @@ public class CChunkReadFormat extends AChunkReadFormat0
 		int cnt = 0;
 		while(length-->0)
 		{
-			int r = inOpt();
+			int r = (cnt==0 ? in() : inOpt()); //first EOF should be thrown.
 			if (r==-1) return cnt==0 ? -1 : cnt;
 			r  |= (inNext()<<8);
 			cnt++;
@@ -342,7 +356,7 @@ public class CChunkReadFormat extends AChunkReadFormat0
 		int cnt = 0;
 		while(length-->0)
 		{
-			int r = inOpt();
+			int r = (cnt==0 ? in() : inOpt()); //first EOF should be thrown.
 			if (r==-1) return cnt==0 ? -1 : cnt;
 			r  |= (inNext()<<8)
 					|
@@ -364,7 +378,7 @@ public class CChunkReadFormat extends AChunkReadFormat0
 		int cnt = 0;
 		while(length-->0)
 		{
-			int r = inOpt();
+			int r = (cnt==0 ? in() : inOpt()); //first EOF should be thrown.
 			if (r==-1) return cnt==0 ? -1 : cnt;
 			long v =		(long)(r)
 							|
@@ -397,7 +411,7 @@ public class CChunkReadFormat extends AChunkReadFormat0
 		int cnt = 0;
 		while(length-->0)
 		{
-			int r = inOpt();
+			int r = (cnt==0 ? in() : inOpt()); //first EOF should be thrown.
 			if (r==-1) return cnt==0 ? -1 : cnt;
 			r  |= (inNext()<<8)
 					|
@@ -419,27 +433,23 @@ public class CChunkReadFormat extends AChunkReadFormat0
 		int cnt = 0;
 		while(length-->0)
 		{
-			int r = inOpt();
+			int r = (cnt==0 ? in() : inOpt()); //first EOF should be thrown.
 			if (r==-1) return cnt==0 ? -1 : cnt;
-			long v =(long)(
-							r
+			long v =		(long)(r)
 							|
-							(inNext()<<8)
+							(((long)inNext())<<(8))
 							|
-							(inNext()<<(2*8))
+							(((long)inNext())<<(2*8))
 							|
-							(inNext()<<(3*8))
-							)
+							(((long)inNext())<<(3*8))
 							|
-							((long)(
-							inNext()
+							(((long)inNext())<<(4*8))
 							|
-							(inNext()<<8)
+							(((long)inNext())<<(5*8))
 							|
-							(inNext()<<(2*8))
+							(((long)inNext())<<(6*8))
 							|
-							(inNext()<<(3*8))
-							)<<32);
+							(((long)inNext())<<(7*8));
 			cnt++;
 			buffer[offset++]=Double.longBitsToDouble(v);
 		};
@@ -455,8 +465,9 @@ public class CChunkReadFormat extends AChunkReadFormat0
 		int cnt = 0;
 		while(length-->0)
 		{
-			if (!super.hasElementaryDataImpl()) break; //to prevent EEof from being thrown.
-			int r = decodeStringChar();
+			//Now the requested behavior is to throw EOF if failed to fetch anything
+			//and not throw if otheriwse
+			int r = (cnt==0 ? decodeStringChar() : decodeStringCharOpt());
 			if (r==-1) return cnt==0 ? -1 : cnt;
 			cnt++;
 			characters.append((char)r);
@@ -466,7 +477,7 @@ public class CChunkReadFormat extends AChunkReadFormat0
 		
 	@Override protected char readStringImpl()throws IOException,ENoMoreData
 	{
-		int r = decodeStringChar();
+		int r = decodeStringChar(); //with EOF throwing!
 		if (r==-1) throw new ENoMoreData();
 		return (char)r;
 	};

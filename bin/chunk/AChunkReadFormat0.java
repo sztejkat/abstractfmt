@@ -483,7 +483,8 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	@return 0..0xffff representing decoded character or -1 if reached end of payload ("continue" is handled transparently)
 	@throws IOException if downstream failed
 	@throws EUnexpectedEof if encountered end of file 
-	@throws EBrokenFormat if detected incorrectly encoded character.
+	@throws EBrokenFormat if detected incorrectly encoded character
+			or missing necessary data.
 	*/
 	protected int decodeStringChar()throws IOException
 	{
@@ -493,12 +494,12 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 		if ((n & 0x80)!=0)
 		{
 			 n = in();
-			 if (n==-1) throw new EUnexpectedEof();
+			 if (n==-1) throw new EBrokenFormat();
 			 c |= (char)((( n & 0x7F)<<7));
 			 if ((n & 0x80)!=0)
 			 {
 			 	 n = in();
-			 	 if (n==-1) throw new EUnexpectedEof();
+			 	 if (n==-1) throw new EBrokenFormat();
 			 	 if ((n & 0b1111_1100)!=0) throw new EBrokenFormat("Invalid string character");
 			 	 c |= (char)(( n & 0x3) << (7+7));
 			 };
