@@ -35,10 +35,14 @@
 	</ul>
 	The stream format carries <u>no information</u> about what type of
 	primitive is stored where. 
+	<p>
+	<i>Note: This is a minimum requirement. It is <u>allowed</u> to provide type information
+	and in fact this package <u>does</u>  define <a href="#typed_wrapper">means of doing that</a>.</i>
 	<p id="MISSERABLE_FAULT">
 	It is allowed however to <u>fail misserably</u>	if type of primitive which is found in stream is different from the type 
 	expected by the reading code. This failure is allowed to be delayed	and corrupt reading of all other primitive 
-	data <u>up to the nearest <a href="#SIGNAL">signal</a></u>. Reaching the signal <u>must be correct</u> and
+	data <u>up to the nearest <a href="#SIGNAL">signal</a></u>. 
+	The request to reach/detection of the signal <u>must be executed correct</u> and
 	<u>must correct</u>	that faulty condition. Reading of the data after the signal must be unaffected by a previous mistake.
 	<p>
 	This correction must take place always and unconditionally,
@@ -51,7 +55,7 @@
 	
 	 
 	<h2 id="SIGNAL">Signal</h2>
-	A unique sequence of bits (or other entities) in stream which can
+	An unique sequence of bits (or other entities) in stream which can
 	be always correctly idenitified regardless of the position of a cursor
 	inside any portion of primitive data.
 	<p>
@@ -61,8 +65,8 @@
 		another signal;</li>
 		<li>it must be always possible to move cursor from inside of primitive
 		data to next signal regardless if cursor is at logically correct location or not.
-		<p>
-		This is explicite reuqired that this operation must be possible 
+		<br>
+		This is explicite required that this operation must be possible 
 		even if primitive data were interpreted incorrectly and read with
 		incorrect functions or if some primitive data were left not processed yet;</li>		
 	</ul>
@@ -81,7 +85,7 @@
 	The begin signal starts the <a href="#STRUCT">structure</a>.
 	<p>
 	The implementations are strongly recommended to somehow optimize the storage
-	and avoid storing frequently used signal names in full textual. A kind of
+	and avoid storing frequently used signal names in full text form. A kind of
 	frequently used names registry is recommended.
 	
 	
@@ -114,7 +118,8 @@
 	<pre>
 	boolean[],byte[],char[],short[],int[],long[],float[],double[],String
 	</pre>
-	Sequences are stored in stream in a compact form and are always terminated by <a href="#SIGNAL">signal</a>.
+	Sequences are stored in stream in a compact form and are always terminated by a <a href="#SIGNAL">signal</a>
+	or the end-of-file.
 	<p>
 	This format:
 	<ul>
@@ -418,7 +423,7 @@
 	A wrapper which catches any EBrokenFormat exception and makes sure to throw
         it at each attempt to call any operation.
 
-	<h2>Typed stream wrapper</h2>
+	<h2 id="typed_wrapper">Typed stream wrapper</h2>
 	The stream which:
         <ul>
             <li>prevents <a href="#MISSERABLE_FAULT">faults on type-missmatch</a> by transparently wrapping each primitive
@@ -564,7 +569,8 @@
             </li>
             <li>code should be compiled with pedantic compilation warnings and no warnings should be generated;</li>
             <li>javadoc should be generated with pedantic compilation warnings and no warnings or errors should be generated;</li>
-            <li>every class, field and non-private method must have a complete javadoc;</li>
+            <li>every class, field and non-private method must have a complete javadoc, excluding junit-tests
+            which may be less carefully documented;</li>
             <li>javadoc must explain what commented piece of code is <u>expected to do</u>. What is done is visible in code,
             however if a bug happens, what is done is <u>not</u> what was ment to be done;</li>
             <li>if any parameter, field or return value does not accept entire possible spectrum of values for its type the javadoc must specifiy

@@ -134,11 +134,13 @@
     LINE <i>x0,y0,x1,y1</i>                    \
     POLYGON <i>x0,y0,segments count</i>        |+ those are possible shapes.
     SEGMENT <i>dx,dy</i>                       /
+    ....
     ATTRIBUTE <i>name</i>,<i>value</i>             \
     MULTILINE_ATTRIBUTE <i>name</i>,<i>lines</i>   |+ those are possible atrribute formats.
     <i>text</i>                             /
+    ....
     </pre>
-    to just extract a <u>single attribute</u> from each of shapes.
+    to just man a specific <u>single attribute</u> to each of ELEMENTs.
     <p>
     Can You do it without parsing the shape definitions?
 
@@ -148,8 +150,8 @@
     block, writing past the buffer and etc. I don't like it.
     <p>
     And again, having named (or un-named, it doesn't matter) blocks of data allows You to implement them in such a way, that they will simply complain
-    if You read past the end of it. You can read whatever is <u>inside a block</u>, but reading across the block
-    boundary may be detected and an exception may be thrown.
+    if You read past the end of it. You can read whatever is <u>inside a block</u> (or even - missread it if there is no type
+    information), but reading across the block boundary may be detected and an exception may be thrown.
 
 
     <h2>Dumb transcoding</h2>
