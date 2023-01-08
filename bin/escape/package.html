@@ -39,6 +39,21 @@
       If both are 0x33 then it returns just one 0x33 as a data and
       skips the second. If second byte is not 0x33, it detects a signal
       and that second byte controls what kind of signal it is.
+      <p>
+      Notice however, that there is a trick hidden in that above sequence: what
+      if control code is also 0x33? We will incorrectly recognize it as escaped data
+      instead of as a signal!
+      <p>
+      To overcome this problem the algorithm must be a bit more complex:
+      <ul>
+      	<li>if 0x33 is found in data, it is escaped by adding 0x33;</li>
+      	<li>if we are to code signal X we do:
+      		<ul>
+      			<li>if X is neither 0x33 nor ~0x33, we write: <code>0x33 X;</code> 
+      			<li>else we write <code>0x33 ~0x33 X</code>;</li>
+      		</ul>
+      	</li>
+      </ul>
 
       <h1>Escape byte selection</h1>
       One may easily notice that if, by chance, we would have to write
@@ -62,7 +77,7 @@
       Each time we either needed (past intentional) to escape written data or we detected escaped data
       we do:
       <pre>
-           int i = 0xff & escape;
+           int i = 0xff &amp; escape;
            //increment escape, detect binary roll-over
            //or use other known way of detecting it
            int c = (++escapes_count[ i ]);
@@ -75,8 +90,8 @@
                        int j = -1;
                        for(int i=255; --i>=0; )
                        {
-                        int v = escapes_count[i] & 0xff;
-                        if (v &lt min)
+                        int v = escapes_count[i] &amp; 0xff;
+                        if (v &lt; min)
                         {
                          min = v; j = i;
                          }
@@ -103,29 +118,7 @@
       a data for the first time, and 127 times for subsequent uses.
       This dynamics may be adjusted by modifying top limit, but care must be
       taken that both ends do use the same top limit or otherwise reader
-      will get totally lost.
-      <p>
-      Notice however, that this kind of adaptive escape has one huge disadvantage:
-      the signal is recognized by a sequence:
-      <pre>
-           escape
-           signal_code
-      </pre>
-      and escaping payload is using:
-      <pre>
-           escape
-           escape
-      </pre>
-      This means, that to be able to correctly detect signal the
-      <code>escape</code> must be always different from all possible <code>signal_code</code>.
-      <p>
-      In practice it would either strongly harm the adaptivity or we would have to use:
-      <pre>
-           escape
-           ~escape    <i>; or otherwise altered escape</i>
-           signal_code
-      </pre>
-      what would harm the efficiency of a stream.
+      will get totally lost.     
 
       <h2>Efficiency</h2>
       Now we should consider an efficincy of such an encoding.
@@ -241,16 +234,20 @@
 
       <h1>Format definition</h1>
       This format is using single escape byte.
-      <h2>Initial escape byte</h2>
-       Initial escape byte is 0x80 (1000_0000) and cannot be parameterized.
+      <h2>Escape byte</h2>
+       Escape byte is 0x80 (1000_0000) and <u>cannot</u> be parameterized.
        <p>
        This was chosen such, since it has
        a good chance to be a best guess if plenty of data are <code>String</code>
        encoded as specified <a href="#STRING_ENCODING">there</a>. And this chance
        is not small since <code>String</code> will be used for encoding signal
        names.
+       
       <h2>Adaptivity</h2>
       This format is <u>not adaptive</u>.
+      <p>
+      <i>Note: There is no point in adaptivity since it adds complexity and
+      even adaptive stream cannot compete with chunk stream.</i>
 
       <h2>Signal types and encoding</h2>
       We should take care to encode registered signals in a very compact form
@@ -289,9 +286,10 @@
         A header is always formed by:
         <pre>
           1000 0000  <i>; escape</i>
-          0sss_ssss
+          0xxx ssss
         </pre>
-        where no <code>sss_ssss</code> is <code>signal code</code>.
+        where <code>ssss</code> is <code>signal code</code>
+        and <code>xxx</code> are reserved for short parameters.
 
       <h3>begin-direct</h3>
         This signal is encoded as:
