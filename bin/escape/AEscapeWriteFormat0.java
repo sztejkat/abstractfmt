@@ -10,12 +10,12 @@ import java.io.OutputStream;
 	<p>
 	This class provides signal encoding and payload escaping.
 */
-abstract class AEscapeStructWriteFormat0 extends ABinWriteFormat
+abstract class AEscapeWriteFormat0 extends ABinWriteFormat
 {
-	     private static final long TLEVEL = SLogging.getDebugLevelForClass(AEscapeStructWriteFormat0.class);
+	     private static final long TLEVEL = SLogging.getDebugLevelForClass(AEscapeWriteFormat0.class);
          private static final boolean TRACE = (TLEVEL!=0);
          private static final boolean DUMP = (TLEVEL>=2);
-         private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("AEscapeStructWriteFormat0.",AEscapeStructWriteFormat0.class) : null;
+         private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("AEscapeWriteFormat0.",AEscapeWriteFormat0.class) : null;
 
 			/** An escape byte ecoded as <code>int</code> for convinience */
 			static final int ESCAPE = 0x80;
@@ -53,13 +53,13 @@ abstract class AEscapeStructWriteFormat0 extends ABinWriteFormat
 			If false names are registered indirectly, by order of appearance.
 			For typed streams it is recommended to use "by index" registration.
 	*/
-	AEscapeStructWriteFormat0(int name_registry_capacity, 
+	AEscapeWriteFormat0(int name_registry_capacity, 
 							  OutputStream raw,
 							  boolean indexed_registration
 							  )
 	{
 		super(name_registry_capacity);
-		if (TRACE) TOUT.println("new AEscapeStructWriteFormat0(name_registry_capacity="+name_registry_capacity+",indexed_registration="+indexed_registration+")");
+		if (TRACE) TOUT.println("new AEscapeWriteFormat0(name_registry_capacity="+name_registry_capacity+",indexed_registration="+indexed_registration+")");
 		assert(name_registry_capacity<=256);
 		this.raw = raw;
 		this.indexed_registration=indexed_registration;

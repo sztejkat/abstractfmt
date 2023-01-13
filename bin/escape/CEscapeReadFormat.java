@@ -2,19 +2,19 @@ package sztejkat.abstractfmt.bin.escape;
 import sztejkat.abstractfmt.*;
 import sztejkat.abstractfmt.logging.SLogging;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.InputStream;
 
 /**
 	An escape based format, as described in <a href="package-summary.html">package description</a>
 	<p>
 	This class completes the implementation by providing some necessary methods.
 */
-public class CEscapeStructWriteFormat extends AEscapeStructWriteFormat0
+public class CEscapeReadFormat extends AEscapeReadFormat0
 {
-		 private static final long TLEVEL = SLogging.getDebugLevelForClass(CEscapeStructWriteFormat.class);
+		 private static final long TLEVEL = SLogging.getDebugLevelForClass(CEscapeReadFormat.class);
          private static final boolean TRACE = (TLEVEL!=0);
          private static final boolean DUMP = (TLEVEL>=2);
-         private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("CEscapeStructWriteFormat.",CEscapeStructWriteFormat.class) : null;
+         private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("CEscapeReadFormat.",CEscapeReadFormat.class) : null;
 
          
       			
@@ -25,31 +25,36 @@ public class CEscapeStructWriteFormat extends AEscapeStructWriteFormat0
 	
 	***************************************************************/
 	/** Creates
-		@param name_registry_capacity {@link ARegisteringStructWriteFormat#ARegisteringStructWriteFormat(int)}
+		@param name_registry_capacity {@link ARegisteringStructReadFormat#ARegisteringStructReadFormat(int)}
 			This value cannot be larger than 256. Recommended value is 256, minimum resonable is 8.
-		@param raw raw binary stream to write to. Will be closed on {@link #close}.	
-		@param indexed_registration if true names are registered directly, by index.
-			If false names are registered indirectly, by order of appearance.
-			For typed streams it is recommended to use "by index" registration.
+		@param raw raw input stream, non null. Will be closed.
+			<p>
+			This stream <u>must</u> be such, that it returns
+			partial read/partial skip only if there is actually no data in stream, timeout happen, file
+			was fully read or connection is broken. If this stream will return partial reads
+			or partial skips just "because i like it" this format will report {@link EUnexpectedEof}.
 	*/
-	CEscapeStructWriteFormat(int name_registry_capacity, 
-							  OutputStream raw,
-							  boolean indexed_registration
+	public CEscapeReadFormat(int name_registry_capacity, 
+							  InputStream raw
 							  )
 	{
-		super(name_registry_capacity,raw, indexed_registration);
+		super(name_registry_capacity,raw);
+		if (TRACE) TOUT.println("new CEscapeReadFormat()");
 	}; 
 	
 	/* *****************************************************************************
 	
-			Services required by ARegisteringStructWriteFormat
+			Services required by ARegisteringStructReadFormat
 	
 	******************************************************************************/
 	/* ------------------------------------------------------------------
 				State related.
 	---------------------------------------------------------------------*/
 	/** Empty */
-	@Override protected void openImpl()throws IOException{};
+	@Override protected void openImpl()throws IOException
+	{
+		if (TRACE) TOUT.println("openImpl()");
+	};
 	/* *****************************************************************************
 	
 	

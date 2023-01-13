@@ -9,5 +9,6 @@ lib-doc
 TEST-sztejkat.abstractfmt.*.txt
 # Temporary rejected/removed data.
 .rejected/**
-# Test case dump files
+# Test case dump folders
+**/*-temp/**
 /*-temp/**

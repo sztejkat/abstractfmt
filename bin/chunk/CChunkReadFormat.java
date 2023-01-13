@@ -45,7 +45,10 @@ public class CChunkReadFormat extends AChunkReadFormat0
 		
 	* ******************************************************/
 	/** Empty */
-	@Override protected void openImpl()throws IOException{};
+	@Override protected void openImpl()throws IOException
+	{
+		if (TRACE) TOUT.println("openImpl()");
+	};
 	
 	/* *****************************************************************************
 	

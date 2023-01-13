@@ -288,6 +288,9 @@ abstract class AChunkReadFormat0 extends ABinReadFormat
 			//We skip mess-up detection here?
 			if (detected_indexed_mode) throw new EBrokenFormat("Mixed ordered and indexed registration");
 			pending_index = ++this.last_ordered_signal;
+			//Below condition won't ever trigger due to registrty limits.
+			//so assertion is enough.
+			assert(this.last_ordered_signal>=0);
 		};
 		if (TRACE) TOUT.println("handle_HEADER_REGISTER(), pending_index="+pending_index);
 		//Now we need to load the header which must be HEADER_BEGIN_DIRECT

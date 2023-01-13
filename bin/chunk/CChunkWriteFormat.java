@@ -52,8 +52,10 @@ public class CChunkWriteFormat extends AChunkWriteFormat0
 				State related.
 	---------------------------------------------------------------------*/
 	/** Empty */
-	@Override protected void openImpl()throws IOException{};
-	
+	@Override protected void openImpl()throws IOException
+	{
+		if (TRACE) TOUT.println("openImpl()");
+	};
 	
 	
 	/* *****************************************************************************

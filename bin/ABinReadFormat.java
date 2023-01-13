@@ -19,7 +19,7 @@ public abstract class ABinReadFormat extends ARegisteringStructReadFormat
          private static final boolean TRACE = (TLEVEL!=0);
          private static final boolean DUMP = (TLEVEL>=2);
          private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("ABinWriteFormat.",ABinWriteFormat.class) : null;
-	
+       			  
      /* ***************************************************************************
 	
 			Construction
@@ -52,7 +52,8 @@ public abstract class ABinReadFormat extends ARegisteringStructReadFormat
 	protected abstract int in()throws IOException;
 	/** A separated portion of {@link #hasElementaryDataImpl} which does 
 	check if there is something in payload to be read at byte level. 
-	@return true if there are some data, false if not.
+	@return true if there are some data, false if there is no more data 
+			in payload or end-of-file was reached.
 	@throws IOException if failed
 	*/
 	protected abstract boolean hasUnreadPayload()throws IOException;
