@@ -22,3 +22,9 @@ echo "Building utils subpackage"
 cd utils
 ./build-package.sh
 cd ..
+
+
+echo "Building bin subpackage"
+cd bin
+./build-package.sh
+cd ..

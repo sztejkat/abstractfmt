@@ -1,4 +1,5 @@
 package sztejkat.abstractfmt.bin.chunk;
+import  sztejkat.abstractfmt.bin.ABinWriteFormat;
 import  sztejkat.abstractfmt.logging.SLogging;
 import  sztejkat.abstractfmt.*;
 import java.io.IOException;
@@ -7,12 +8,9 @@ import java.io.OutputStream;
 /**
 	A base chunk implementation.
 	<p>
-	This implementation adds intermediate layer responsible for
-	raw byte access on chunk processing, some elementary state
-	management and signal processing what includes names encoding.
-	
+	This class provides signal encoding and payload escaping.
 */
-abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
+abstract class AChunkWriteFormat0 extends ABinWriteFormat
 {
 		 private static final long TLEVEL = SLogging.getDebugLevelForClass(AChunkWriteFormat0.class);
          private static final boolean TRACE = (TLEVEL!=0);
@@ -375,12 +373,17 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 		terminateChunk();
 		current_buffer_handler = new_handler;
 	};
+	/* ******************************************************************
 	
+		ABinWriteFormat
+	
+	
+	*******************************************************************/
 	/** Transparently writes raw byte to chunk payload, flushing 
 	and continuing if necessary
 	@param b what to write
 	@throws IOException if failed */
-	protected final void out(byte b)throws IOException
+	@Override protected final void out(byte b)throws IOException
 	{
 		if (DUMP) TOUT.println("out("+Integer.toHexString(b)+") ENTER");
 		//Check if we do have a free space?
@@ -396,59 +399,6 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 		buffer[current_at++]=b;
 		if (DUMP) TOUT.println("out() LEAVE");
 	};
-	/* *****************************************************************************
-	
-			Elementary encoding, common
-	
-    *******************************************************************************/
-	
-	/**
-		Encodes string, as specs are saying.
-		Uses {@link #encodeStringCharacter}
-		@param s text to encode
-		@param at from where
-		@param length how many
-		@throws IOException if failed.
-	*/
-	protected void encodeString(CharSequence s, int at, int length)throws IOException
-	{
-		if (TRACE) TOUT.println("encodeString("+s+",at="+at+",length="+length+") ENTER");
-		for(int i=at;i<length;i++)
-		{
-			encodeStringCharacter(s.charAt(i));
-		};
-		if (TRACE) TOUT.println("encodeString() LEAVE");
-	};
-	/**
-		Encodes string character, as specs are saying.
-		@param c text to encode
-		@throws IOException if failed.
-		@see #out
-	*/
-	protected void encodeStringCharacter(char c)throws IOException
-	{		
-		if (DUMP) TOUT.println("encodeStringCharacter("+Integer.toHexString(c)+") ENTER");
-		char z = (char)(c>>>7);
-		if (z==0)
-		{
-			out((byte)c);
-		}else
-		{ 
-			out((byte)((c & 0x7F) | 0x80));
-			c = (char)(c>>>7);
-			z = (char)(z>>>7);
-			if (z==0)
-			{
-				out((byte)c);
-			}else
-			{
-				out((byte)((c & 0x7F) | 0x80));
-				c = (char)(c>>>7);
-				out((byte)c);
-			};
-		};
-		if (DUMP) TOUT.println("encodeStringCharacter("+Integer.toHexString(c)+") LEAVE");
-	}
 	
 	/* *****************************************************************************
 	
@@ -581,7 +531,9 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 	@Override protected void flushImpl()throws IOException
 	{
 		if (TRACE) TOUT.println("flushImpl ENTER");
-		//just terminate chunk and flush down-stream
+		//make sure payload buffered data are flushed
+		super.flushImpl();
+		//then just force-terminate chunk and flush down-stream
 		terminateChunk();
 		raw.flush();
 		if (TRACE) TOUT.println("flushImpl LEAVE");
@@ -590,7 +542,7 @@ abstract class AChunkWriteFormat0 extends ARegisteringStructWriteFormat
 	@Override protected void closeImpl()throws IOException
 	{
 		if (TRACE) TOUT.println("closeImpl ENTER");
-		assert(current_buffer_handler==null);
+		assert(current_buffer_handler==null); //checks if flushed.
 		raw.close();
 		if (TRACE) TOUT.println("closeImpl LEAVE");
 	};
