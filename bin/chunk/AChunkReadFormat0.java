@@ -195,18 +195,13 @@ abstract class AChunkReadFormat0 extends ABinReadFormat
 		if (DUMP) TOUT.println("in()=0x"+Integer.toHexString(v)+" LEAVE");
 		return v;
 	};
-	/* *******************************************************
-		
-			AStructReadFormatBase0
-		
-	* ******************************************************/
 	/** A separated portion of {@link #hasElementaryDataImpl} which does 
 	not call <code>super.hasElementaryDataImpl</code> and just checks
 	if there is something in chunk payload (including transparent handling of "continue")
 	@return true if there are some data, false if not
 	@throws IOException if failed
 	*/
-	private boolean hasUnreadPayload()throws IOException
+	@Override protected boolean hasUnreadPayload()throws IOException
 	{
 		if (TRACE) TOUT.println("hasUnreadPayload() ENTER");
 		//Now this is very alike in() but we have to react diffently on EOFs
@@ -228,20 +223,7 @@ abstract class AChunkReadFormat0 extends ABinReadFormat
 		if (TRACE) TOUT.println("hasUnreadPayload()="+v+", LEAVE");
 		return v;
 	};
-	@Override protected boolean hasElementaryDataImpl()throws IOException
-	{
-		if (TRACE) TOUT.println("hasElementaryDataImpl() buffer_at="+buffer_at+" buffer_size="+buffer_size+" ENTER");
-		if (super.hasElementaryDataImpl())
-		{
-			if (TRACE) TOUT.println("hasElementaryDataImpl()=true, boolean block in progress LEAVE");
-			return true;
-		}else
-		{
-			final boolean v = hasUnreadPayload();
-			if (TRACE) TOUT.println("hasElementaryDataImpl()="+v+" LEAVE");
-			return v;
-		}
-	};
+	
 	/* *******************************************************
 			
 			ARegisteringStructReadFormat		

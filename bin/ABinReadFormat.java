@@ -50,6 +50,12 @@ public abstract class ABinReadFormat extends ARegisteringStructReadFormat
 	@throws EEof if encountered end of file. 
 	*/
 	protected abstract int in()throws IOException;
+	/** A separated portion of {@link #hasElementaryDataImpl} which does 
+	check if there is something in payload to be read at byte level. 
+	@return true if there are some data, false if not.
+	@throws IOException if failed
+	*/
+	protected abstract boolean hasUnreadPayload()throws IOException;
 	/* *****************************************************************************
 	
 			String decoding			
@@ -118,37 +124,27 @@ public abstract class ABinReadFormat extends ARegisteringStructReadFormat
 		
 	* ******************************************************/
 		
-	/** This method returns true if there is a some part of boolean 
-	block not read yet.
-	<p>
-	Should be always overriden by subclass in a form:
-	<pre>
-		&#64;Override protected boolean hasElementaryDataImpl()throws IOException
-		{
-			if (super.hasElementaryDataImpl()) return true;
-			else
-			{
-			    //perform own content check.
-				return...
-			}
-		}
-	</pre>
-	@return true if there is some part of binary block not read yet,
-			false if there is not. Notice, returning false does not 
-			mean there are no other elementary data.
+	/** This method tests if there is a buffered section of boolean block in progress
+	and if it is returns true. If it is not, calls {@link #hasUnreadPayload}
+	to test if there is anything at byte level.
 	*/
-	@Override protected boolean hasElementaryDataImpl()throws IOException
+	@Override protected final boolean hasElementaryDataImpl()throws IOException
 	{
-		if (TRACE) TOUT.println("hasElementaryDataImpl="+(boolean_block_bits_remaning>0)+" boolean_block_bits_remaning="+boolean_block_bits_remaning);
+		if (TRACE) TOUT.println("hasElementaryDataImpl() ENTER");
 		//The positive non zero in boolean_block_bits_remaning indicates,
 		//that for sure we have some boolean bits in packed stream to get.
 		//Negative means, no packed boolean op is in progress.
 		//And zero means, that packed op block is exhaused but we don't know
 		//if there is next block. Since those blocks are carying at least
 		//one bit, checking if there is a byte available will be sufficient,
-		//so we can return false and trigger call super-class to validate
-		//direct content in that case too.
-		return boolean_block_bits_remaning>0;
+		//so we can return false and trigger byte level validation
+		final boolean v =  boolean_block_bits_remaning>0
+							?
+							true
+							:
+							hasUnreadPayload();
+		if (TRACE) TOUT.println("hasElementaryDataImpl()="+v+" LEAVE");
+		return v;				
 	};
 	/* -----------------------------------------------------------------------------
 			
