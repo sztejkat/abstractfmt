@@ -1,5 +1,6 @@
 package sztejkat.abstractfmt.bin.chunk;
 import  sztejkat.abstractfmt.*;
+import  sztejkat.abstractfmt.bin.ABinReadFormat;
 import  sztejkat.abstractfmt.logging.SLogging;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,7 +12,7 @@ import java.io.InputStream;
 	management and signal processing what includes names encoding.
 	
 */
-abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
+abstract class AChunkReadFormat0 extends ABinReadFormat
 {
 		 private static final long TLEVEL = SLogging.getDebugLevelForClass(AChunkReadFormat0.class);
          private static final boolean TRACE = (TLEVEL!=0);
@@ -151,6 +152,12 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 			return false;
 		}
 	};
+	/* ***************************************************************************
+	
+			Servicec required by ABinReadFormat
+	
+	
+	*****************************************************************************/
 	
 	/** Reads data from chunk payload buffer. Will fill-in a buffer or move
 	to "continue" chunk if necessary
@@ -160,7 +167,7 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	@throws IOException if low level failed
 	@throws EUnexpectedEof if encountered end of file. 
 	*/
-	protected int in()throws IOException
+	@Override final protected int in()throws IOException
 	{
 		if (DUMP) TOUT.println("in() buffer_at="+buffer_at+" buffer_size="+buffer_size+" ENTER");
 		//Try from current buffer. Notice chunks may have zero
@@ -193,27 +200,47 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 			AStructReadFormatBase0
 		
 	* ******************************************************/
-	@Override protected boolean hasElementaryDataImpl()throws IOException
+	/** A separated portion of {@link #hasElementaryDataImpl} which does 
+	not call <code>super.hasElementaryDataImpl</code> and just checks
+	if there is something in chunk payload (including transparent handling of "continue")
+	@return true if there are some data, false if not
+	@throws IOException if failed
+	*/
+	private boolean hasUnreadPayload()throws IOException
 	{
-		if (TRACE) TOUT.println("hasElementaryDataImpl() buffer_at="+buffer_at+" buffer_size="+buffer_size+" ENTER");
+		if (TRACE) TOUT.println("hasUnreadPayload() ENTER");
 		//Now this is very alike in() but we have to react diffently on EOFs
 		//Try from current buffer. Notice chunks may have zero
 		//size, so we need to loop.
 		while ((declared_chunk_size<=0)||(buffer_at==declared_chunk_size))
 		{
-			if (TRACE) TOUT.println("hasElementaryDataImpl(), moving to next chunk");
+			if (TRACE) TOUT.println("hasUnreadPayload(), moving to next chunk");
 			//We can't throw on EOF
 			if (!tryContinueChunk(false))
 			{
-				if (TRACE) TOUT.println("hasElementaryDataImpl()=false, no more chunks, LEAVE");
+				if (TRACE) TOUT.println("hasUnreadPayload()=false, no more chunks, LEAVE");
 				return false;
 			};
 			assert(declared_chunk_size!=-1);
 		};
 		//and no need to preload anything.
 		final boolean v= buffer_at<declared_chunk_size;
-		if (TRACE) TOUT.println("hasElementaryDataImpl()="+v+", LEAVE");
+		if (TRACE) TOUT.println("hasUnreadPayload()="+v+", LEAVE");
 		return v;
+	};
+	@Override protected boolean hasElementaryDataImpl()throws IOException
+	{
+		if (TRACE) TOUT.println("hasElementaryDataImpl() buffer_at="+buffer_at+" buffer_size="+buffer_size+" ENTER");
+		if (super.hasElementaryDataImpl())
+		{
+			if (TRACE) TOUT.println("hasElementaryDataImpl()=true, boolean block in progress LEAVE");
+			return true;
+		}else
+		{
+			final boolean v = hasUnreadPayload();
+			if (TRACE) TOUT.println("hasElementaryDataImpl()="+v+" LEAVE");
+			return v;
+		}
 	};
 	/* *******************************************************
 			
@@ -349,8 +376,7 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 		this.buffer_size =0;
 		this.buffer_at=0;
 		if (TRACE) TOUT.println("handle_HEADER_xx_BEGIN_DIRECT() declared_chunk_size="+declared_chunk_size);
-		//reset name buffer and load name
-		name_building_buffer.setLength(0);
+		//reset name buffer and load name		
 		loadSignalNameTo(name_building_buffer);
 		//pending header MUST be set and MUST be HEADER_END
 		assert(pending_header!=-1);//this is state machine warranty
@@ -458,55 +484,26 @@ abstract class AChunkReadFormat0 extends ARegisteringStructReadFormat
 	};
 	
 	/** Loads signal name, avoiding limitless loading 
-	@param b where to load, must be cleared at input
+	@param b where to load, will be override existing content 
+			and clear it prior to loading anything. 
 	@throws IOException if failed
 	@throws EFormatBoundaryExceeded if name is too long.
 	*/
-	private void loadSignalNameTo(Appendable b)throws IOException
+	private void loadSignalNameTo(StringBuilder b)throws IOException
 	{
 		if (TRACE) TOUT.println("loadSignalNameTo ENTER");
-		int size = 0;
-		for(;;)
-		{			
-			if (size>getMaxSignalNameLength()) throw new EFormatBoundaryExceeded("Signal name too long");
-			int c = decodeStringChar();
-			if (c==-1)
-			{
-				if (TRACE) TOUT.println("loadSignalNameTo=\""+b+"\", LEAVE");
-				return;
-			};
-			b.append((char)c);
-			size++;
-		}
+		b.setLength(0);
+		final int max = getMaxSignalNameLength();
+		int s = decodeString(b,max);
+		//Now we need to check if some data are un-read.
+		//Notice calling hasElementaryData() may create a tricky situation
+		//due to opened way for overriding it and some logic cycle possible
+		//so we call directly chunk payload content test ignoring boolean
+		//content pending.
+		if ((s==max)&&(hasUnreadPayload())) throw new EFormatBoundaryExceeded("Signal name too long");
+		if (TRACE) TOUT.println("loadSignalNameTo=\""+b+"\", LEAVE");
 	};
-	/** Loads next string char from chunk, decoding it as specified in specs.
-	@return 0..0xffff representing decoded character or -1 if reached end of payload ("continue" is handled transparently)
-	@throws IOException if downstream failed
-	@throws EUnexpectedEof if encountered end of file 
-	@throws EBrokenFormat if detected incorrectly encoded character
-			or missing necessary data.
-	*/
-	protected int decodeStringChar()throws IOException
-	{
-		int n = in();
-		if (n==-1) return -1;
-		char c = (char)(n & 0x7F);
-		if ((n & 0x80)!=0)
-		{
-			 n = in();
-			 if (n==-1) throw new EBrokenFormat();
-			 c |= (char)((( n & 0x7F)<<7));
-			 if ((n & 0x80)!=0)
-			 {
-			 	 n = in();
-			 	 if (n==-1) throw new EBrokenFormat();
-			 	 if ((n & 0b1111_1100)!=0) throw new EBrokenFormat("Invalid string character");
-			 	 c |= (char)(( n & 0x3) << (7+7));
-			 };
-		};
-		if (DUMP) TOUT.println("decodeStringChar()=0x"+Integer.toHexString(c)+" (\'"+c+"\') LEAVE");
-		return c;
-	};
+	
 	
 	@Override protected TSignalReg readSignalReg()throws IOException
 	{
