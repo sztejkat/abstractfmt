@@ -82,7 +82,8 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 				Primitive related, elementary
 		------------------------------------------------------------------*/
 		/** Invoked by an elementary primitive read after ensuring that read
-		is allowed. This method is expected to check end-of-file, no
+		is allowed. This method is expected to distinguish end-of-file and end
+		of signal content boundary. No other state checks are necessary.
 		<p>
 		Note: all <code>readXXXImpl(v)</code> share the same contract.
 		@return value of an elementary primitive
@@ -134,6 +135,8 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 				Datablock related.				
 		------------------------------------------------------------------*/
 		/** Invoked by block operation {@link #readBooleanBlock(boolean[],int,int)} after managing state and validating arguments.
+		This method is expected to distinguish end-of-file and end
+		of signal content boundary. No other state checks are necessary.
 		@param buffer --//--
 		@param offset --//--
 		@param length --//--
