@@ -80,8 +80,21 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
          */
          protected static final int STARTING_STRING_TOKEN_BOUNDARY = -4;
          
-         protected static final boolean TOKEN_MODE_PLAIN = false;
-         protected static final boolean TOKEN_MODE_STRING = true;
+         /** Token collection mode, used to select
+         between.
+         {@link ATxtReadFormat#tokenLookupIn}
+         {@link ATxtReadFormat#tokenPlainIn}
+         {@link ATxtReadFormat#tokenStringIn}
+         */
+         protected static final enum TTokenMode
+         {
+         	 	/** A token lookup mode meaning: we are searching for next token. */     
+         	 	TOKEN_MODE_LOOKUP,
+         	 	/** A token lookup mode meaning: we are processing non-string token. */
+         	 	TOKEN_MODE_PLAIN,
+         	 	/** A token lookup mode meaning: we are processing string token. */
+         	 	TOKEN_MODE_STRING
+         };
          
          	/** A buffer, auto sized, used for processing the {@link #rawUnread}
          	capabilities. Non-null. This buffer only gorws and is grown in {@link #READ_BACK_BUFFER_SIZE_INCREMENT}
@@ -100,6 +113,9 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
          	private final StringBuilder token_completion_buffer;
          	/** A size limit for token completion */
          	private final int token_size_limit;
+         	/** Global tracking of token collection mode
+         	{@link #TOKEN_MODE_PLAIN} or {@link #TOKEN_MODE_STRING} */
+         	private int token_collection_mode;
 			  
     /* ***************************************************************************
 	
@@ -173,7 +189,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	@throws IOException if low level failed
 	@throws EBrokenFormat if found a structural problem.
 	*/
-	protected abstract int in()throws IOException;	
+	protected abstract int payloadIn()throws IOException;	
 	/** Tests what is next in stream available through {@link #in}
 	@return <ul>
 				<li>-1 ({@link #SIGNAL_BOUNDARY}) if {@link #in} will return it;</li>
@@ -185,31 +201,81 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	*/
 	protected abstract int hasUnreadPayload()throws IOException;
 	/* -------------------------------------------------------------------------
-					syntax level, token splitting
+					syntax level, token level
+					
+					
+			
 	------------------------------------------------------------------------- */
 	/** 
-		This method is expected to use {@link #in} to fetch next character
+		Invoked during token look-up.
+		This method is expected to use {@link #payloadIn} to fetch next character
 		and classify it according to its meaning.
-		@param token_mode {@link #TOKEN_MODE_PLAIN} or {@link #TOKEN_MODE_STRING}.
-				In string mode this method basically looks only for the end-of-string
-				indicator. In plain mode it looks for start of string indicator and
-				plain token separators.
 		@return <ul>
-				<li>-1 ({@link #SIGNAL_BOUNDARY}) if {@link #in} returned it;</li>
-				<li>-2 ({@link #EOF_BOUNDARY}) if {@link #in} returned it;</li>
-				<li>-3 ({@link #TOKEN_BOUNDARY}) if the token boundary character
-				was read. This character is consumed and no longer available;</li>
-				<li>-3 ({@link #STARTING_STRING_TOKEN_BOUNDARY}) if the token boundary character
-				was read and this boundary character indicates the start of string token.
-				This character is consumed and no longer available.
-				<br>
-				This value can be returned only if <code>token_mode=={@link #TOKEN_MODE_PLAIN}</code>;</li>
-				<li>0...0xFFFF if token body character is returned;</li>
-			</ul>
+					<li>-1 ({@link #SIGNAL_BOUNDARY}) if {@link #in} returned it;</li>
+					<li>-2 ({@link #EOF_BOUNDARY}) if {@link #in} returned it;</li>
+					<li>-3 ({@link #TOKEN_BOUNDARY}) if the token boundary character
+					was read. This character is consumed and no longer available;</li>
+					<li>-4 ({@link #STARTING_STRING_TOKEN_BOUNDARY}) 
+						character indicates the start of string token.
+						This character is consumed and no longer available.;</li>
+					<li>0...0xFFFF if token body character is found and returned;</li>
+				</ul>
+		@throws IOException if failed.
+		@throws EBrokenFormat if found a structural problem.
+	*/
+	protected abstract int tokenLookupIn()throws IOException;
+	/** 
+		Invoked during plain token collection, when {@link #tokenLookupIn} returned
+		{@link #TOKEN_BOUNDARY} followed by a regular character.
+		<p>
+		This method is expected to use {@link #payloadIn} to fetch next character
+		and classify it according to its meaning.
+		@return <ul>
+					<li>-1 ({@link #SIGNAL_BOUNDARY}) if {@link #in} returned it;</li>
+					<li>-2 ({@link #EOF_BOUNDARY}) if {@link #in} returned it;</li>
+					<li>-3 ({@link #TOKEN_BOUNDARY}) if the trailing token boundary character
+					was read. This character is consumed and no longer available;</li>
+					<li>0...0xFFFF if token body character is returned;</li>
+				</ul>
+		@throws IOException if failed.
+		@throws EBrokenFormat if found a structural problem.
+	*/
+	protected abstract int tokenPlainIn()throws IOException;
+	
+	/** 
+		This method is expected to use {@link #payloadIn} to fetch next character
+		and classify it according to its meaning. Thi
+		@param token_mode {@link #TOKEN_MODE_LOOKUP},{@link #TOKEN_MODE_PLAIN},{@link #TOKEN_MODE_STRING}.				
+		@return <ul>
+					<li>in all token modes:
+							<ul>
+								<li>-1 ({@link #SIGNAL_BOUNDARY}) if {@link #in} returned it;</li>
+								<li>-2 ({@link #EOF_BOUNDARY}) if {@link #in} returned it;</li>
+								<li>0...0xFFFF if token body character is returned;</li>
+							</ul>
+					</li>
+					<li>in {@link #TOKEN_MODE_LOOKUP}:
+							<ul>
+								
+							</ul>
+					</li>
+					<li>in {@link #TOKEN_MODE_PLAIN}:
+							<ul>
+								<li>-3 ({@link #TOKEN_BOUNDARY}) if the token boundary character terminating
+								the plain token was read. This character is consumed and no longer available;</li>
+							</ul>
+					</li>
+					<li>in {@link #TOKEN_MODE_STRING}:
+							<ul>
+								<li>-3 ({@link #TOKEN_BOUNDARY}) if the token boundary character terminating
+								the string token was read. This character is consumed and no longer available;</li>
+							</ul>
+					</li>
+			  </ul>
 		@throws IOException if failed
 		@throws EBrokenFormat if found a structural problem.
 	*/
-	protected abstract int tokenIn(boolean token_mode)throws IOException;
+	
 	
 	/* **************************************************************************
 	
@@ -262,7 +328,141 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 		rdbuff[p++]=c;
 		this.read_back_buffer_wr_ptr = p;
 	};
+	/* **************************************************************************
+						Tokenization
+	   ************************************************************************** */
+	/** Overriden to terminate string token mode, if any */
+    @Override protected void leaveStruct()
+    {
+    	super.leaveStruct();
+    	token_collection_mode = TOKEN_MODE_PLAIN;
+    };
+    /** Overriden to terminate string token mode, if any */
+    @Override protected void enterStruct()
+    {
+    	super.leaveStruct();
+    	token_collection_mode = TOKEN_MODE_PLAIN;
+    };
+    /** @return true if recently was collecting string token */ 
+    protected final boolean isCollectingStringToken(){ return this.token_collection_mode = TOKEN_MODE_STRING; };
+    /** @return true if recently was collecting plain token */
+    protected final boolean isCollectingPlainToken(){ return this.token_collection_mode = TOKEN_MODE_PLAIN; };
+	/** 
+	Collects single token character with {@link #tokenIn}, manages token collection mode toggling.
+	<p>
 	
+	@return <ul>
+				<li>{@link #SIGNAL_BOUNDARY} or;</li>
+				<li>{@link #EOF_BOUNDARY} or;</li>
+				<li>{@link #TOKEN_BOUNDARY}, also when encountered an end of string
+				token without reading any string character;</li>	
+				<li>0...0xFFFF representing next token character;</li>
+			</ul>
+	@throws IOException if low level failed.
+	@throws EEof if end-of-file was reached before collecting anything
+	*/
+	protected char in()throws IOException
+	{
+		boolean token_mode = this.token_collection_mode; //to avoid touching fields when not needed.
+		try{
+			collection_loop:
+			for(;;)
+			{
+				//Collect
+				int c = tokenIn(token_mode);
+				assert( (c>=TOKEN_BOUNDARY) && (c<=0xFFFF) );
+				switch(c)
+				{
+					case SIGNAL_BOUNDARY:
+								// return this information
+								return SIGNAL_BOUNDARY;
+					case EOF_BOUNDARY:
+								// return this information
+								return EOF_BOUNDARY;
+					case TOKEN_BOUNDARY:
+								//This may happen only in two cases:
+								//	- when we are skipping leading boundary chars or
+								//	   in plain mode.
+								//	- when we were in string mode and string was empty.
+								//	  Notice string mode may be inherited from previous call.
+								if (token_mode==TOKEN_MODE_STRING)
+								{
+									token_mode = TOKEN_MODE_PLAIN;	//switch to correct mode.
+									return TOKEN_BOUNDARY;
+								}else
+								{
+									//Nothing, we just skip it because if any char would have
+									//been collected we already had returned it.
+								}
+								break;
+					case STARTING_STRING_TOKEN_BOUNDARY:
+								//this switches collection mode.
+								assert( token_mode==TOKEN_MODE_PLAIN ); //<- can't be now.
+								token_mode = TOKEN_MODE_STRING;
+								break;
+					default:
+								//char, so just return it
+								return c;
+				}
+			};
+		}finally{ this.token_collection_mode = token_mode; };
+	};
+	/** Collects portion of current token into a specified buffer and returns it.
+	Collection stops on token boundary, signal or end-of-file.
+	<p>
+	
+	@param buffer where to collect, non null. Will <u>not</u> be wiped on collection;
+	@param limit up to how many characters collect;
+	@return <ul>
+				<li>{@link #SIGNAL_BOUNDARY} if did not collect anything due to signal;</li>
+				<li>{@link #EOF_BOUNDARY} if did not collect anything due to eof;</li>
+				<li>{@link #TOKEN_BOUNDARY} if did not collect anything due to end-of-token;</li>
+			</ul>
+	@throws IOException if low level failed.
+	@throws EEof if end-of-file was reached before collecting anything
+	*/
+	protected final int collectToken(Appendable buffer, int limit)throws IOException
+	{
+		//wipe token buffer.
+		token_completion_buffer.setLength(0);
+		//switch to plain collection
+		boolean token_mode = TOKEN_MODE_PLAIN;
+		boolean collected = false;	//to properly handle empty strings.
+		collection_loop:
+		for(;;)
+		{
+			//Collect
+			int c = tokenIn(token_mode);
+			assert( (c>=TOKEN_BOUNDARY) && (c<=0xFFFF) );
+					
+			switch(c)
+			{
+				case SIGNAL_BOUNDARY: break;
+				case EOF_BOUNDARY:
+							//test if throw or just terminate collection
+							if (token_completion_buffer.length()==0) throw new EUnexpectedEof();
+							break collection_loop;
+				case TOKEN_BOUNDARY:
+							//This either initializes collection or terminates.
+							if (token_completion_buffer.length()!=0) break collection_loop;
+							break;
+				case STARTING_STRING_TOKEN_BOUNDARY:
+							//this switches collection mode.
+							assert( token_mode==TOKEN_MODE_PLAIN ); //<- can't be now.
+							token_mode = TOKEN_MODE_STRING;
+							collected = true; 	//strings are always collected
+							break;
+				default:
+							//plain chars collection, bound
+							if (token_completion_buffer.length()>=token_size_limit)
+								throw new EFormatBoundaryExceeded("Token \""+token_completion_buffer+"...\" too long in current context processing");
+							token_completion_buffer.append((char) c);
+							collected = true;
+			}
+		};
+		//return it depending on collected length
+		return collected ? token_completion_buffer : null;
+	};
 	/* **********************************************************************************
 	
 			AStructReadFormatBase0
@@ -338,6 +538,8 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 		//return it depending on collected length
 		return collected ? token_completion_buffer : null;
 	};
+	
+	
 	/** Compares content of string buffer, case insensitive, with specified text. 
 	@param buffer non-null buffer to compare with <code>text</code>
 	@param text text to compare
@@ -387,7 +589,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 				Primitive related, elementary	
 	--------------------------------------------------------------------------------*/
 	/**  
-		Collects elementary token.
+		Processes elementary token as a boolean value.
 		@return	<ul>
 					<li>true if: 
 						<ul>
@@ -409,7 +611,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 				</ul>
 				The numeric conversion is done by {@link Double#parseDouble}.
 	*/
-	protected boolean readBooleanImpl()throws IOException
+	@Override protected boolean readBooleanImpl()throws IOException
 	{
 		StringBuilder b = collectElementaryToken(); //this will throw on Eof if nothing is collected.
 		if (b==null) throw new ENoMoreData();	
@@ -428,5 +630,100 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 			throw new EBrokenFormat("Cannot parse \""+b+"\" to numeric value", ex);
 		}
 	};
-		
+	/**  
+		Processes elementary token as a byte value.
+		<p>
+		This method peforms "trimming" down-conversion to byte value
+		which is in conformance with standard  saying it can fail misserably
+		and without detecting things. Use typed stream if You don't like it.
+		@return	<ul>
+					<li>zero if collected token is empty;</li>
+					<li>collected token is not empty and can be converted to byte number
+					by {@link Byte#decode};</li>
+					<li>collected token is not empty and can be converted to floating
+					point number by {@link Double#parseDouble};</li>
+				</ul>
+	*/
+	@Override protected byte readByteImpl()throws IOException
+	{
+		StringBuilder b = collectElementaryToken(); //this will throw on Eof if nothing is collected.
+		if (b==null) throw new ENoMoreData();	
+		//Detect special texts
+		if (b.length()==0) return (byte)0;
+		try{
+				//hande decoding
+				String sb = b.toString();
+				byte bv = Byte.decode(sb);	//this is sad that boxing has to take place due to lack of "byte decode()"
+				return bv;
+			}catch(NumberFormatException exb)
+			{
+				try{
+						double v = Double.parseDouble(b.toString());
+						return (byte)v;
+				}catch(NumberFormatException ex)
+				{
+					throw new EBrokenFormat("Cannot parse \""+b+"\" to numeric value", ex);
+				}
+		}
+	};
+	/**  
+		Processes elementary token as a short value.
+		<p>
+		See notes at {@link #readByteImpl}
+		@return	<ul>
+					<li>zero if collected token is empty;</li>
+					<li>collected token is not empty and can be converted to byte number
+					by {@link Short#decode};</li>
+					<li>collected token is not empty and can be converted to floating
+					point number by {@link Double#parseDouble};</li>
+				</ul>
+	*/	
+	@Override protected short readShortImpl()throws IOException;
+	{
+		StringBuilder b = collectElementaryToken(); //this will throw on Eof if nothing is collected.
+		if (b==null) throw new ENoMoreData();	
+		//Detect special texts
+		if (b.length()==0) return (byte)0;
+		try{
+				//hande decoding
+				String sb = b.toString();
+				short bv = Short.decode(sb);	//this is sad that boxing has to take place due to lack of "byte decode()"
+				return bv;
+			}catch(NumberFormatException exb)
+			{
+				try{
+						double v = Double.parseDouble(b.toString());
+						return (short)v;
+				}catch(NumberFormatException ex)
+				{
+					throw new EBrokenFormat("Cannot parse \""+b+"\" to numeric value", ex);
+				}
+		}
+	};	
+	
+	/**  
+		This method 
+	*/	
+	@Override protected short readCharImpl()throws IOException;
+	{
+		StringBuilder b = collectElementaryToken(); //this will throw on Eof if nothing is collected.
+		if (b==null) throw new ENoMoreData();	
+		//Detect special texts
+		if (b.length()==0) return (byte)0;
+		try{
+				//hande decoding
+				String sb = b.toString();
+				short bv = Short.decode(sb);	//this is sad that boxing has to take place due to lack of "byte decode()"
+				return bv;
+			}catch(NumberFormatException exb)
+			{
+				try{
+						double v = Double.parseDouble(b.toString());
+						return (short)v;
+				}catch(NumberFormatException ex)
+				{
+					throw new EBrokenFormat("Cannot parse \""+b+"\" to numeric value", ex);
+				}
+		}
+	};	
 };         	
