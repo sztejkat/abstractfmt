@@ -3,7 +3,7 @@ import sztejkat.abstractfmt.IStructReadFormat;
 import sztejkat.abstractfmt.IStructWriteFormat;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.*;
+
 /**
 	A contract for an inter-operational <u>contract</u> test case
 	for reader-writer pair.
@@ -160,8 +160,9 @@ public class AInterOpTestCase<R extends IStructReadFormat,
 				if (!temp_folder.exists()) temp_folder.mkdirs();
 				return getFactory().createTestDevice(temp_folder);
 		};
-					/** Used to generate per-test folder names if we have a problem with stack */
-					private static int name_generator;
+					
+		
+					
 		/** Calls <code>getFactory().createTestDevice(temp_folder)</code>.
 		It is deducing a temp folder from current class simple name followed
 		by "-temp" postfix and a sub-folder made of a caller test method name.
@@ -176,80 +177,8 @@ public class AInterOpTestCase<R extends IStructReadFormat,
 			    W extends IStructWriteFormat>
 			    CPair<R,W> createTestDevice()throws IOException
 		{
-				String base = this.getClass().getSimpleName();
-				//This base do provide information about a test case, but not about
-				//in what test suite it is used.	
-				//The TestWatcher and Rules do not provide information about test suite either.
-				//In most cases however the information will be hidden in factory because it
-				//will be most probably declared in a test suite class.
-				IInteropTestDeviceFactory f = getFactory();
-				if (f!=null)
-				{
-					//Now figure out either class of factory or in which class it is an inner class?
-					Class<?> p = f.getClass();
-					{
-						Class<?> c = p;
-						do
-						{
-							p = c;
-							c = p.getEnclosingClass(); //Note: getDeclaringClass works only for non-anonymous classes.							
-						}while(c!=null);
-					};
-					base = p.getSimpleName()+"-temp/"+base+"/";
-				}else
-				{
-					System.out.println("could not figure out factory class, test data of different suites may be mixed");
-					base = base+"-temp/";
-				};
-				String tail = null;
-				{
-					StackTraceElement [] stack = Thread.currentThread().getStackTrace();
-					if (stack!=null)
-					{
-						//look for first annotated with org.junit.Test
-						loop:
-						for(StackTraceElement e : stack)
-						{
-							if (!e.isNativeMethod())
-							{
-								String _c_name = e.getClassName();
-								String _m_name = e.getMethodName();
-								
-								try{
-									Class<?> _cc = Class.forName(_c_name);
-									Method [] ms = _cc.getDeclaredMethods();
-									Method identified_method = null;
-									for(Method m : ms)
-									{
-										if (_m_name.equals(m.getName()))
-										{
-											identified_method = m;
-											break;
-										};
-									};
-									if (identified_method!=null)
-									{
-										if (identified_method.getDeclaredAnnotation(org.junit.Test.class)!=null)
-										{
-											tail = _m_name;
-											break loop;
-										};
-									};
-
-								}catch(Exception ex)
-								{
-										//ignore it silently,
-								};
-							};
-						};
-					};
-					if (tail==null)
-					{
-						System.out.println("some stack info missing, generating random name");
-						tail = Integer.toString(name_generator++);
-					};
-				}
-				final File temp_folder = new File(base+tail);
+				final IInteropTestDeviceFactory f = getFactory();
+				final File temp_folder =  getTempFolder(this.getClass(), f);
 				System.out.println("test is using temp_folder \""+temp_folder.getCanonicalPath()+"\"");
 				return createTestDevice(temp_folder);
 		};

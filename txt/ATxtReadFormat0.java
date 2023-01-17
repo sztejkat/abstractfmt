@@ -85,6 +85,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	protected ATxtReadFormat0(int name_registry_capacity,int token_size_limit)
 	{
 		super(name_registry_capacity);
+		if (TRACE) TOUT.println("new ATxtReadFormat0(name_registry_capacity="+name_registry_capacity+",token_size_limit="+token_size_limit+")");
 		assert(token_size_limit>0);
 		this.token_size_limit= token_size_limit;
 		this.token_completion_buffer = new StringBuilder(token_size_limit);
@@ -199,6 +200,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	*/
 	protected final StringBuilder collectElementaryToken()throws IOException
 	{
+		if (TRACE) TOUT.println("collectElementaryToken() ENTER");
 		//wipe token buffer.
 		token_completion_buffer.setLength(0);
 		boolean collected = false;	//to properly handle empty strings.
@@ -212,14 +214,17 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 			switch(c)
 			{
 				case TOKEN_SIGNAL:
+							if (TRACE) TOUT.println("collectElementaryToken, got TOKEN_SIGNAL");
 							//test if throw or just terminate collection
 							if (token_completion_buffer.length()==0) throw new ENoMoreData();
 							break collection_loop;
 				case TOKEN_EOF:
+							if (TRACE) TOUT.println("collectElementaryToken, got TOKEN_EOF");
 							//test if throw or just terminate collection
 							if (token_completion_buffer.length()==0) throw new EUnexpectedEof();
 							break collection_loop;
 				case TOKEN_BOUNDARY:
+							if (TRACE) TOUT.println("collectElementaryToken, got TOKEN_BOUNDARY");
 							break collection_loop;
 				default:
 							//plain chars collection, bound
@@ -228,6 +233,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 							token_completion_buffer.append((char) c);
 			}
 		};
+		if (TRACE) TOUT.println("collectElementaryToken()=\""+token_completion_buffer+"\" LEAVE");
 		return token_completion_buffer;
 	};
 	/* --------------------------------------------------------------------------------

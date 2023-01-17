@@ -37,7 +37,9 @@
       <h3>Begin signal</h3>
       Begin signal is encoded as
       <pre>
-           begin_signal:=  empty_char* * signal_name;
+           begin_signal:=  empty_char+ * signal_name
+           					|
+           				  <i>start of file</i> * signal_name
            signal_name:=   string_token_body
            					|
            				   plain_token_body

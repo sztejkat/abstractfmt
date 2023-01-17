@@ -13,6 +13,10 @@ import java.io.IOException;
 */
 public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 {
+		 private static final long TLEVEL = SLogging.getDebugLevelForClass(ATxtWriteFormat0.class);
+         private static final boolean TRACE = (TLEVEL!=0);
+         private static final boolean DUMP = (TLEVEL>=2);
+         private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("ATxtWriteFormat0.",ATxtWriteFormat0.class) : null;
 					 
 	/* ****************************************************************
 	
@@ -27,6 +31,7 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	protected ATxtWriteFormat0(int name_registry_capacity)
 	{
 		super(name_registry_capacity);
+		if (TRACE) TOUT.println("new ATxtWriteFormat0(name_registry_capacity="+name_registry_capacity+")"); 
 	};
 	
 	/* *****************************************************************
@@ -85,10 +90,12 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	*/
 	private void outToken(String token)throws IOException
 	{
+		if (TRACE) TOUT.println("outToken(\""+token+"\") ENTER");
 		for(int i=0,n=token.length();i<n;i++)
 		{
 			outToken(token.charAt(i));
 		};
+		if (TRACE) TOUT.println("outToken() LEAVE");
 	};
 	/** Called by {@link #writeBooleanImpl} to produce boolean token.
 	<p>
