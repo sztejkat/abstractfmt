@@ -82,7 +82,7 @@ public abstract class ARegisteringStructReadFormat extends AStructReadFormatBase
 		state. This method is also responsible for checking if name
 		is too long and abort the reading process.
 		@return signal, non null.
-		@throws IOException if fialed.
+		@throws IOException if failed.
 		@throws EFormatBoundaryExceeded if name length is exceeded. */
 		protected abstract TSignalReg readSignalReg()throws IOException;
 		
