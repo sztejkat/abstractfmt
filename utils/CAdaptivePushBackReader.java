@@ -302,7 +302,30 @@ public class CAdaptivePushBackReader extends Reader
 	};
 	/** False, does not support it */
 	public boolean markSupported(){ return false; };
+	/* -------------------------------------------------------------------
 	
+		Specialty reading
+	
+	-------------------------------------------------------------------*/
+	/** Alike {@link #read(char[],int,int)} but into an appendable
+	@param cbuf non null, where to append
+	@param length up to how many chars
+	@return -1 if eof, otherwise number of chars
+	@throws IOException if failed
+	*/
+	public int read(Appendable cbuf, int length)throws IOException
+	{
+		int r = 0;
+		while(--length>0)
+		{
+			int c = read();
+			assert((c>=-1)&&(c<=0xFFFF));
+			if (c==-1) return r==0 ? -1 : r;
+			cbuf.append((char)c);
+			r++;
+		};	
+		return r;
+	}
 	
 	/* -------------------------------------------------------------------
 	

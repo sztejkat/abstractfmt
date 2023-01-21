@@ -80,13 +80,16 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	@param name_registry_capacity {@link ARegisteringStructWriteFormat#ARegisteringStructWriteFormat(int)}
 	@param token_size_limit non-zero positive, a maximum number of characters which constitutes 
 			a primitive element token, excluding string tokens. Basically a maximum
-			number of characters which do constitute a primitive numeric value.	
+			number of characters which do constitute a primitive numeric value.
+	@throws AssertionError if token_size_limit is less than 16+3 which is a minimum
+			number to hold hex encoded long value.
 	*/
 	protected ATxtReadFormat0(int name_registry_capacity,int token_size_limit)
 	{
 		super(name_registry_capacity);
 		if (TRACE) TOUT.println("new ATxtReadFormat0(name_registry_capacity="+name_registry_capacity+",token_size_limit="+token_size_limit+")");
 		assert(token_size_limit>0);
+		assert(token_size_limit>=16+3):"token_size_limit="+token_size_limit+" not enough for signed hex long int"; 
 		this.token_size_limit= token_size_limit;
 		this.token_completion_buffer = new StringBuilder(token_size_limit);
 	};    
@@ -132,6 +135,27 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	
 	
 	* ***************************************************************************/
+	/* ------------------------------------------------------------------
+					Signal related
+	------------------------------------------------------------------*/
+	@Override protected boolean hasElementaryDataImpl()throws IOException
+	{
+		switch(hasUnreadToken())
+		{
+			case 0:					return true;
+			case TOKEN_BOUNDARY:
+						//Boundary seems to a bit tricky.
+						//However the rest of class is defined in such a way
+						//that when boundary will be returned then for sure at least
+						//an empty token is present and such an empty
+						//token will be collected (see collectElementaryToken)
+						//An empty token is a parsable value, so we can say "true".
+									return true;
+			case TOKEN_SIGNAL:		
+			case TOKEN_EOF:			return false;
+			default: throw new AssertionError();
+		}
+	};
 	/* --------------------------------------------------------------------------
 				Token comparison
 	--------------------------------------------------------------------------*/
@@ -247,7 +271,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 							<li>collected token represents "true", case insensitive;</li>
 							<li>collected token represents "1";</li>
 							<li>collected token is not empty and can be converted to floating
-							point number which would not return true if compared with zero;</li>
+							point or integer number which would not return true if compared with zero;</li>
 						</ul>
 					</li>
 					<li>false if: 
@@ -256,7 +280,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 							<li>collected token represents "false", case insensitive;</li>
 							<li>collected token represents "0";</li>
 							<li>collected token is not empty and can be converted to floating
-							point number which would return true if compared with zero;</li>
+							point number or integer which would return true if compared with zero;</li>
 						</ul>
 					</li>
 				</ul>
@@ -271,13 +295,23 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 		if (equalsCaseInsensitive(b,"1")) return true;
 		if (equalsCaseInsensitive(b,"false")) return false;
 		if (equalsCaseInsensitive(b,"0")) return false;
+		String sb = b.toString();
 		try{
-				double v = Double.parseDouble(b.toString());
+				//Now Double parses hex string is a limitted manner.
+				//it understands only full form 0x00.00p0
+				//and refules others.
+				double v = Double.parseDouble(sb);
 				//Now below comparison is trickier than it looks, due to Inf/Nan
 				return v==0 ? false : true;
 		}catch(NumberFormatException ex)
 		{
-			throw new EBrokenFormat("Cannot parse \""+b+"\" to numeric value", ex);
+			try{
+					long v = Integer.decode(sb);
+					return v==0 ? false : true;
+			}catch(NumberFormatException ex2)
+			{
+				throw new EBrokenFormat("Cannot parse \""+b+"\" to numeric value\n"+ex+"\n"+ex2, ex2);
+			}
 		}
 	};
 	/**  
@@ -443,6 +477,8 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 					<li>zero if collected token is empty;</li>
 					<li>collected token is not empty and can be converted to floating
 					point number by {@link Float#parseFloat};</li>
+					<li>collected token is not empty and can be converted to integer
+					point number by {@link Integer#decode};</li>
 				</ul>
 	*/	
 	@Override protected float readFloatImpl()throws IOException
@@ -450,13 +486,20 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 		StringBuilder b = collectElementaryToken(); //this will throw on Eof if nothing is collected.
 		//Detect special texts
 		if (b.length()==0) return (byte)0;
-		final String sb = b.toString();				
+		final String sb = b.toString();
 		try{
 					float v = Float.parseFloat(sb);
-					return (long)v;
+					return v;
 			}catch(NumberFormatException ex)
 			{
-				throw new EBrokenFormat("Cannot parse \""+b+"\" to numeric value", ex);
+				//now try integer
+				try{
+					int v = Integer.decode(sb);
+					return v;
+				}catch(NumberFormatException ex2)
+				{
+					throw new EBrokenFormat("Cannot parse \""+b+"\" to numeric value\n"+ex+"\n"+ex2, ex);
+				}
 			}
 	};
 	
@@ -466,8 +509,10 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 		See notes at {@link #readByteImpl}
 		@return	<ul>
 					<li>zero if collected token is empty;</li>
-					<li>collected token is not empty and can be converted to doubleing
+					<li>collected token is not empty and can be converted to double floating
 					point number by {@link Double#parseDouble};</li>
+					<li>collected token is not empty and can be converted to integer
+					point number by {@link Integer#decode};</li>
 				</ul>
 	*/	
 	@Override protected double readDoubleImpl()throws IOException
@@ -478,10 +523,17 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 		final String sb = b.toString();				
 		try{
 					double v = Double.parseDouble(sb);
-					return (long)v;
+					return v;
 			}catch(NumberFormatException ex)
 			{
-				throw new EBrokenFormat("Cannot parse \""+b+"\" to numeric value", ex);
+				//now try integer
+				try{
+					int v = Integer.decode(sb);
+					return v;
+				}catch(NumberFormatException ex2)
+				{
+					throw new EBrokenFormat("Cannot parse \""+b+"\" to numeric value\n"+ex+"\n"+ex2, ex);
+				}
 			}
 	};
 	
@@ -503,9 +555,9 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 			{
 				case TOKEN_EOF:
 							if (cnt==0) throw new EUnexpectedEof();
-							return cnt==0 ? -1 : 0;
+							return cnt;
 				case TOKEN_SIGNAL:
-							return cnt==0 ? -1 : 0;
+							return cnt==0 ? -1 : cnt;
 				case TOKEN_BOUNDARY:
 							//boundary will be undestood as an "empty" and parsed correctly
 							//fallthrough.
@@ -536,9 +588,9 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 			{
 				case TOKEN_EOF:
 							if (cnt==0) throw new EUnexpectedEof();
-							return cnt==0 ? -1 : 0;
+							return cnt;
 				case TOKEN_SIGNAL:
-							return cnt==0 ? -1 : 0;
+							return cnt==0 ? -1 : cnt;
 				case TOKEN_BOUNDARY:
 							//boundary will be undestood as an "empty" and parsed correctly
 							//fallthrough.
@@ -573,9 +625,9 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 			{
 				case TOKEN_EOF:
 							if (cnt==0) throw new EUnexpectedEof();
-							return cnt==0 ? -1 : 0;
+							return cnt;
 				case TOKEN_SIGNAL:
-							return cnt==0 ? -1 : 0;
+							return cnt==0 ? -1 : cnt;
 				case TOKEN_BOUNDARY:
 							//boundary will be undestood as an "empty" and parsed correctly
 							//fallthrough.
@@ -611,9 +663,9 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 			{
 				case TOKEN_EOF:
 							if (cnt==0) throw new EUnexpectedEof();
-							return cnt==0 ? -1 : 0;
+							return cnt;
 				case TOKEN_SIGNAL:
-							return cnt==0 ? -1 : 0;
+							return cnt==0 ? -1 : cnt;
 				case TOKEN_BOUNDARY:
 							//boundary will be undestood as an "empty" and parsed correctly
 							//fallthrough.
@@ -649,9 +701,9 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 			{
 				case TOKEN_EOF:
 							if (cnt==0) throw new EUnexpectedEof();
-							return cnt==0 ? -1 : 0;
+							return cnt;
 				case TOKEN_SIGNAL:
-							return cnt==0 ? -1 : 0;
+							return cnt==0 ? -1 : cnt;
 				case TOKEN_BOUNDARY:
 							//boundary will be undestood as an "empty" and parsed correctly
 							//fallthrough.
@@ -684,9 +736,9 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 			{
 				case TOKEN_EOF:
 							if (cnt==0) throw new EUnexpectedEof();
-							return cnt==0 ? -1 : 0;
+							return cnt;
 				case TOKEN_SIGNAL:
-							return cnt==0 ? -1 : 0;
+							return cnt==0 ? -1 : cnt;
 				case TOKEN_BOUNDARY:
 							//boundary will be undestood as an "empty" and parsed correctly
 							//fallthrough.
@@ -719,9 +771,9 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 			{
 				case TOKEN_EOF:
 							if (cnt==0) throw new EUnexpectedEof();
-							return cnt==0 ? -1 : 0;
+							return cnt;
 				case TOKEN_SIGNAL:
-							return cnt==0 ? -1 : 0;
+							return cnt==0 ? -1 : cnt;
 				case TOKEN_BOUNDARY:
 							//boundary will be undestood as an "empty" and parsed correctly
 							//fallthrough.
@@ -754,12 +806,15 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 			{
 				case TOKEN_EOF:
 							if (cnt==0) throw new EUnexpectedEof();
-							return cnt==0 ? -1 : 0;
+							return cnt;
 				case TOKEN_SIGNAL:
-							return cnt==0 ? -1 : 0;
+							return cnt==0 ? -1 : cnt;
 				case TOKEN_BOUNDARY:
-							//boundary will be undestood as an "empty" and parsed correctly
-							//fallthrough.
+							//in case of char we need to process it by ourselves,
+							//because readCharImpl will crawl through all boundary
+							//and throw ENoMoreData.
+							tokenIn();	//consume it.
+							continue;
 				default:
 							//In both cases we do process the plain char value.	
 							buffer[offset++] = readCharImpl();	//now it must not throw since we handled it.
@@ -788,12 +843,15 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 			{
 				case TOKEN_EOF:
 							if (cnt==0) throw new EUnexpectedEof();
-							return cnt==0 ? -1 : 0;
+							return cnt;
 				case TOKEN_SIGNAL:
-							return cnt==0 ? -1 : 0;
+							return cnt==0 ? -1 : cnt;
 				case TOKEN_BOUNDARY:
-							//boundary will be undestood as an "empty" and parsed correctly
-							//fallthrough.
+							//in case of string we need to process it by ourselves,
+							//because readCharImpl will crawl through all boundary
+							//and throw ENoMoreData.
+							tokenIn();	//consume it.
+							continue;
 				default:
 							//In both cases we do process the plain char value.	
 							characters.append(readCharImpl());	//now it must not throw since we handled it.
@@ -806,4 +864,5 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	{
 		return readCharImpl();
 	};	
+	
 };		
