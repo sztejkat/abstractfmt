@@ -435,4 +435,56 @@ public class Test_ATxtReadFormat1 extends ATest
 			d.close();
 		leave();
 	};
+	
+	
+	@Test public void test_nameLimit()throws IOException
+	{
+		enter();
+			CStream input = new CStream();
+			
+			input.add('*',ATxtReadFormat1.TIntermediateSyntax.SIG_BEGIN);
+			input.add('x',ATxtReadFormat1.TIntermediateSyntax.SIG_NAME);
+			input.add('y',ATxtReadFormat1.TIntermediateSyntax.SIG_NAME);
+			input.add('z',ATxtReadFormat1.TIntermediateSyntax.SIG_NAME);
+			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+			input.add('4',ATxtReadFormat1.TIntermediateSyntax.TOKEN);
+			input.add('4',ATxtReadFormat1.TIntermediateSyntax.TOKEN);
+			input.add('.',ATxtReadFormat1.TIntermediateSyntax.SIG_END);
+			input.add('c',ATxtReadFormat1.TIntermediateSyntax.TOKEN);
+			
+			System.out.println(input);
+			DUT d = new DUT(input.iterator());
+			d.setMaxSignalNameLength(2);
+			d.open();
+			try{
+				d.next();
+				Assert.fail();
+			}catch(EFormatBoundaryExceeded ex){};
+			d.close();
+		leave();
+	};
+	
+	@Test public void test_nameLimitAccuracy()throws IOException
+	{
+		enter();
+			CStream input = new CStream();
+			
+			input.add('*',ATxtReadFormat1.TIntermediateSyntax.SIG_BEGIN);
+			input.add('x',ATxtReadFormat1.TIntermediateSyntax.SIG_NAME);
+			input.add('y',ATxtReadFormat1.TIntermediateSyntax.SIG_NAME);
+			input.add('z',ATxtReadFormat1.TIntermediateSyntax.SIG_NAME);
+			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+			input.add('4',ATxtReadFormat1.TIntermediateSyntax.TOKEN);
+			input.add('4',ATxtReadFormat1.TIntermediateSyntax.TOKEN);
+			input.add('.',ATxtReadFormat1.TIntermediateSyntax.SIG_END);
+			input.add('c',ATxtReadFormat1.TIntermediateSyntax.TOKEN);
+			
+			System.out.println(input);
+			DUT d = new DUT(input.iterator());
+			d.setMaxSignalNameLength(3);
+			d.open();
+			Assert.assertTrue("xyz".equals(d.next()));
+			d.close();
+		leave();
+	};
 };

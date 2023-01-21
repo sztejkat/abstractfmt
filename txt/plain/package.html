@@ -22,13 +22,15 @@
       A reg-ex like BNF:
       <pre>
            begin_signal:= empty_char* &lt;
-           noob:= empty_char+ *;
+           noob:= empty_char+ *
+           boop:= empty_char? x
            escaped_char:= x | y
            data:-  ^( x | y ) 
       </pre>
       means:
       <br><i>"The 'begin_signal' is encoded as any number of 'empty_char' followed by &lt;"</i>
       <br><i>"The 'noob' is encoded as at least one 'empty_char' followed by *"</i>
+      <br><i>"The 'boop' is encoded as one or zero 'empty_char' followed by x"</i>
       <br><i>"The 'escaped_char' is either x or y"</i>
       <br><i>"The 'data' is anything except x or y"</i>
 
@@ -37,7 +39,7 @@
       <h3>Begin signal</h3>
       Begin signal is encoded as
       <pre>
-           begin_signal:=  empty_char+ * signal_name
+           begin_signal:=  * signal_name
            					|
            				  <i>start of file</i> * signal_name
            signal_name:=   string_token_body
@@ -59,20 +61,32 @@
       <h3>Plain token</h3>
       Plain token is encoded as:
       <pre>
-           plain_token:= empty_char* token_separator empty_char* plain_token_body
-           token_separator:= ,
+           plain_token:=  plain_token_body
            plain_token_body:= (^( empty_char |  token_separator | " | * | ; ))*           
       </pre>
+      
 
       <h3>String token</h3>
       String token is encoded as:
       <pre>
-           plain_token:= empty_char* token_separator empty_char* string_token_body
+           string_token:= string_token_body
            string_token_body:= " escaped_char* "
            escaped_char:= ^" | ""
       </pre>
       <i>Inside a string token we escape the " by doubling it "". Anything else is allowed
       and stored without any escaping, including end of lines.</i>.
+      
+      <h3>Entire file</h3>
+      <pre>
+        file:= body? (struct body?)*
+        body:= empty_char* ((plain_token | string_token) ( empty_char * token_separator empty_char * (plain_token | string_token))*)?
+        struct:= empty_char* begin_signal 
+        			(
+        				( body? empty_char* )
+        				|
+        				( body? struct? body? )
+        			) empty_char* end_signal
+      </pre>
       
       <h2>Numbers and etc.</h2>
       Compatible with <code>sztejkat.abstractfmt.txt.ATxtReadFormat0</code>,

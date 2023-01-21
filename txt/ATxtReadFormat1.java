@@ -8,6 +8,109 @@ import java.io.Reader;
 	Uses low level text parsing over a known set of syntax
 	elements to process all necessary tokens.
 	
+	<h1>Text parsing</h1>
+	<h2>Required services</h2>
+	As You probably noticed the {@link ATxtReadFormat0}
+	turns around two methods:
+	<ul>
+		<li>{@link ATxtReadFormat0#tokenIn} and;</li>
+		<li>{@link ATxtReadFormat0#hasUnreadToken};</li>
+	</ul>
+	Both are practically the same and could be replaced with <code>peek()/drop()</code> model.
+	<p>
+	Those methods do work on "per-character" basis. The "per-character"
+	basis, instead of "per-word" or "per-token", is intentional since
+	it allows easy processing of inifnitely long tokens. If we would
+	not have an assumption about infinitely long strings we could do
+	it per-token way, but later You will see it would be useless.
+	<p>
+	They do however a bit more than character classification. In fact they
+	do skip some characters and interprete others or decode escape sequences.
+	<p>
+	The lower layer which is {@link ARegisteringStructReadFormat} is
+	designed around a single method:	
+	<ul>
+		<li>{@link ARegisteringStructReadFormat#readSignalReg()};</li>
+	</ul>
+	This method works on slightly higher abstraction level and does
+	a lot of decoding in a background.
+	
+	<h2>Parsing state machine</h2>
+	The most clean concept which can present a text parsing to a user
+	is to present him with following API (see {@link ATxtReadFormat1}:
+	<pre>
+		void toNextChar()
+		TSyntax getNextSyntaxElement()
+		int getNextChar()
+	</pre>
+	where:
+	<ul>
+		<li>the {@link ATxtReadFormat1#toNextChar} takes next character from a stream
+		and knowing the state of a stream deduces what does it mean;</li>
+		<li>the {@link ATxtReadFormat1#getNextSyntaxElement} returns a "syntax element" 
+		of a stream which corresponds to character to which {@link ATxtReadFormat1#toNextChar}
+		moved.
+		<p>
+		Note: <code>TSyntax</code> should be immutable. Best if it would be an <code>Enum</code>.</li>
+		
+		<li>and finally {@link ATxtReadFormat1#getNextChar} returns a character
+		collected by {@link ATxtReadFormat1#toNextChar};</li>
+	</ul>
+	For an example the XML:
+	<pre>
+		&lt;name style="full" &gt;
+	</pre>
+	will report:
+	<table border="1" >
+		<caption>XML states</caption>
+		<tr><td> &lt; </td><td>XML element start entry (<a href="#STAR1">*</a>)</td></tr>
+		<tr><td> n </td><td>XML element name</td></tr>
+		<tr><td> ... </td><td>-//-</td></tr>
+		<tr><td> </td><td>XML separator</td></tr>
+		<tr><td>s</td><td>XML attribute name</td></tr>
+		<tr><td> ... </td><td>-//-</td></tr>
+		<tr><td> = </td><td>XML attribute operator</td></tr>
+		<tr><td> &#22; </td><td>XML attribute value separator</td></tr>
+		<tr><td>f</td><td>XML attribute value</td></tr>
+		<tr><td> ... </td><td>-//-</td></tr>
+		<tr><td> &#22; </td><td>XML attribute value separator</td></tr>
+		<tr><td> </td><td>XML separator</td></tr>
+		<tr><td> &gt; </td><td>XML element start exit</td></tr>
+	</table>
+	<p id="STAR1">*)Notice that "XML element start entry" requires some  look forward to check
+	if it is not: <code>&lt;/</code> nor <code>&lt;!--</code><p>
+	<p>
+	This is a relatively simple and well isolated syntax processing machine You may provide
+	for Your format and encode in this class. I don't make any assumption if You provide it
+	by subclassing or by a separate engine object.
+	
+	<h2>Parsing support</h2>
+	The text parsing into characters and syntax elementd do requires, mostly, two kinds of services:
+	<ul>
+		<li>character stream related:
+			<ul>
+				<li>{@link CAdaptivePushBackReader}	which allows un-reading charactes if necessary;
+				</li>
+			</ul>			
+		</li>
+		<li>syntax state related:
+			<ul>
+				<li>{@link CBoundStack#push} - which pushes syntax element on syntax stack;</li>
+				<li>{@link CBoundStack#pop} - which pops from stack.
+				<p>
+				Both can be used for maintaining syntaxt recognition in case of formats
+				which are defined by state graphs with sub-graphs or recursive state graphs.
+				Notice however, that it is best to avoid state stack if possible (for an example 
+				use objects counter in JSON or nested elements counter in XML), since 
+				in case of heavily recusrive data structures the stack will consume significant
+				amount of memory and will be a limiting factor which may lead to <code>OutOfMemoryError</code>.
+				</li>
+				<li>{@link CBoundStack#setStackLimit}/{@link CBoundStack#getStackLimit} - which do allow to 
+				set up a barrier against <code>OutOfMemoryError</code>;</li>
+			</ul>
+		</li>
+	</ul>
+	
 	<h1>Syntax definition</h1>
 	The syntax is defined by {@link ATxtReadFormat1.ISyntax} 
 	which transforms Your specific syntax to syntax known

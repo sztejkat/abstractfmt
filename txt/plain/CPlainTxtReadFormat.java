@@ -1,7 +1,8 @@
 package sztejkat.abstractfmt.txt.plain;
-import sztejkat.abstractfmt.txt.ATxtReadFormat0;
+import sztejkat.abstractfmt.txt.ATxtReadFormatStateBase0;
+import sztejkat.abstractfmt.txt.ATxtReadFormat1;
 import sztejkat.abstractfmt.*;
-import sztejkat.abstractfmt.util.CAdaptivePushBackReader;
+import sztejkat.abstractfmt.utils.CAdaptivePushBackReader;
 import sztejkat.abstractfmt.logging.SLogging;
 import java.io.IOException;
 import java.io.Reader;
@@ -10,46 +11,322 @@ import java.io.Reader;
 	A reference plain text format implementation, reading side.
 	This is also a code template which shows the easiest and cleaniest 
 	path to parsing text files into format readers.
-	
-	<h1>Text parsing</h1>
-	As You probably noticed the {@link ATxtReadFormat0}
-	turns around two methods:
-	<ul>
-		<li>{@link ATxtReadFormat0#tokenIn} and;</li>
-		<li>{@link ATxtReadFormat0#hasUnreadToken};</li>
-	</ul>
-	Both are practically the same and could be replaced with
-	<pre>
-		peek
-		pop
-	</pre>
-	theorem.
-	<p>
-	The lower layer which is {@link ARegisteringStructReadFormat} is
-	designed around a single method:
-	<ul>
-		<li>{@link ARegisteringStructReadFormat#readSignalReg};</li>
-	</ul>
-	<p>
-	
 */
-public class CPlainTxtReadFormat extends ATxtReadFormat0
+public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat1.TIntermediateSyntax>
 {
-	-- re design to be a parsing pattern.
-				/** Tokenization state */
-				private final enum TTokenState
+			/** Used to  {@link CPlainTxtReadFormat#toNextChar} in a state dependent way,
+			using a separate class per state.
+			*/
+			private abstract class AStateHandler extends ATxtReadFormatStateBase0<ATxtReadFormat1.TIntermediateSyntax>.AStateHandler
+			{
+				/** Reads from {@link #in} semi transparently handles eof 
+				@return -1 or 0...0xFFFF. If -1 eof is already set to 
+				{@link #next_syntax_element}, {@link #next_char} */
+				protected int read()throws IOException
 				{
-					...todo
+					int c = in.read();
+					assert((c>=-1)&&(c<=0xFFFF));
+					if (c==-1)
+					{
+						setNextChar(-1,null);
+						return -1;
+					}else
+						return c;
 				};
-					/** Line counting and push-back capable input */
-					private final CAdaptivePushBackReader in;
-					/** Tokenization state machine */
-					private TTokenState token_state = TTokenState.NOTHING; 
-					/** Set by {@link #hasUnreadToken} to avoid multiple moves
-					across the stream */
-					private boolean has_unread_pending;
-					/** What {@link #hasUnreadToken} got from {@link #tokenIn} */
-					private int has_unread_collected_tokenIn;
+				/** Arms exception for invalid, unexpected character
+				@param c char to show
+				@return exception armed with line info.
+				*/
+				protected EBrokenFormat unexpectedCharException(char c)
+				{
+					return new EBrokenFormat("Unexpected character \'"+c+"\'(0x"+Integer.toHexString(c)+")"+getLineInfoMessage());
+				};
+			};
+			
+			/** Initial state, equal to TOKEN_BODY_LOOKUP */
+			private final class NOTHING_StateHandler extends TOKEN_LOOKUP_StateHandler
+			{
+			}
+			/**  We collected {@link CPlainTxtWriteFormat#TOKEN_SEPARATOR_CHAR}
+			     or we started the file, or we collected begin signal completely,
+			     or we collected end signal.
+			     <p>
+				 Now are actively looking for a token body.
+				 We expect {@link CPlainTxtWriteFormat#TOKEN_SEPARATOR_CHAR} 
+				 or {@link CPlainTxtWriteFormat#BEGIN_SIGNAL_CHAR} 
+				 or {@link CPlainTxtWriteFormat#END_SIGNAL_CHAR}
+				 or {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR}
+				 or {@link #isTokenBodyChar}
+				 or {@link #isEmptyChar}
+				 */
+			private class TOKEN_BODY_LOOKUP_StateHandler extends AStateHandler
+			{
+				@Override protected void toNextChar()throws IOException
+				{
+					final int i= read();
+					if (i==-1) return;
+					final char c=(char)i;
+					if (c==CPlainTxtWriteFormat.TOKEN_SEPARATOR_CHAR)
+					{
+						//We don't change state. We indicate to superclass
+						//we got next token.
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.NEXT_TOKEN);
+					}else
+					if (c==CPlainTxtWriteFormat.BEGIN_SIGNAL_CHAR)
+					{
+						setStateHandler(COLLECTED_BEGIN);
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_BEGIN);
+					}else
+					if (c==CPlainTxtWriteFormat.END_SIGNAL_CHAR)
+					{
+						//We don't change state, we indicate to superclass we got end.
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_END);
+					}else
+					if (c==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)
+					{
+						setStateHandler(STRING_TOKEN_BODY);
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
+					}else
+					if (isTokenBodyChar(c))
+					{
+						setStateHandler(PLAIN_TOKEN_BODY);
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.TOKEN);
+					}else
+					if (isEmptyChar(c))
+					{
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
+					}else
+						throw unexpectedCharException(c);
+				};
+			}
+			/**  We finished collecting token body, either string or plain.
+				 We are now on look-up for a token separator or signal.
+				 We do expect {@link #isEmptyChar} or {@link CPlainTxtWriteFormat#TOKEN_SEPARATOR_CHAR}
+				 or {@link CPlainTxtWriteFormat#BEGIN_SIGNAL_CHAR} or {@link CPlainTxtWriteFormat#END_SIGNAL_CHAR}
+		    */
+			private class TOKEN_LOOKUP_StateHandler extends AStateHandler
+			{
+				@Override protected void toNextChar()throws IOException
+				{
+					final int i= read();
+					if (i==-1) return;
+					final char c=(char)i;
+					if (c==CPlainTxtWriteFormat.TOKEN_SEPARATOR_CHAR)
+					{
+						setStateHandler(TOKEN_BODY_LOOKUP);
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.NEXT_TOKEN);
+					}else
+					if (c==CPlainTxtWriteFormat.END_SIGNAL_CHAR)
+					{
+						setStateHandler(TOKEN_BODY_LOOKUP);
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_END);
+					}else
+					if (c==CPlainTxtWriteFormat.BEGIN_SIGNAL_CHAR)
+					{
+						setStateHandler(COLLECTED_BEGIN);
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_BEGIN);
+					}else
+					if (isEmptyChar(c))
+					{
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
+					}else
+						throw unexpectedCharException(c);
+				};
+			};
+			 /** Collected the {@link CPlainTxtWriteFormat#BEGIN_SIGNAL_CHAR},
+				 now expecting either 
+				 {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR} for "" enclosed name,
+				 or {@link #isTokenBodyChar} for plain name or 
+				 or {@link #isEmptyChar} for non name signal. 
+				 */
+			private final class COLLECTED_BEGIN_StateHandler extends AStateHandler
+			{
+				@Override protected void toNextChar()throws IOException
+				{
+					final int i= read();
+					if (i==-1) return;
+					final char c=(char)i;
+					if (c==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)
+					{
+						setStateHandler(COLLECTING_STRING_BEGIN_NAME);
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_NAME_VOID);
+					}else
+					if (isTokenBodyChar(c))
+					{
+						setStateHandler(COLLECTING_BEGIN_NAME);
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_NAME);
+					}else
+					if (isEmptyChar(c))
+					{
+						setStateHandler(TOKEN_LOOKUP);
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_NAME_VOID);
+					}else
+						throw unexpectedCharException(c);
+				};
+			};
+			/** Collected first character of begin signal name, un-quoted. 
+				Expecting more {@link #isTokenBodyChar} or any character which is not 
+				a body char to terminate a name. 
+		    */
+			private final class COLLECTING_BEGIN_NAME_StateHandler extends AStateHandler
+			{
+				@Override protected void toNextChar()throws IOException
+				{
+					final int i= read();
+					if (i==-1) return;
+					final char c=(char)i;
+					if (isTokenBodyChar(c))
+					{
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_NAME);
+					}else
+					{
+						//Now basically we go to lookup. Easiest way is to un-read it, because
+						//it may be a signal.
+						in.unread(c);
+						setStateHandler(TOKEN_BODY_LOOKUP);
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+					}
+				}
+			};
+			/** A string body collector.
+				 <p>
+				 Collected {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR}
+				 opening string token. Now expecting either {@link #isStringTokenBodyChar}
+				 or {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR}
+				 or any other char terminating it. We will do a look-ahead for
+				 escapes applied to {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR} 
+		    */
+			private abstract class AStringBody_StateHandler extends AStateHandler
+			{
+						private final ATxtReadFormat1.TIntermediateSyntax body_syntax;
+						private final ATxtReadFormat1.TIntermediateSyntax terminator_syntax;
+				/** 
+				@param body_syntax a syntax element to set when encountering body character
+				@param terminator_syntax a syntax element to set when encountering string terminator 
+				*/
+				AStringBody_StateHandler(
+								ATxtReadFormat1.TIntermediateSyntax body_syntax,
+								ATxtReadFormat1.TIntermediateSyntax terminator_syntax
+								)
+				{
+					assert(body_syntax!=null);
+					assert(terminator_syntax!=null);
+					this.body_syntax=body_syntax;
+					this.terminator_syntax=terminator_syntax;
+				};
+				@Override protected void toNextChar()throws IOException
+				{
+					int i= read();
+					if (i==-1) return;
+					final char c=(char)i;
+					if (c==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)
+					{
+						//either escaped or end of body
+						final int j = read();
+						if (j==-1) return;
+						char ce = (char)j;
+						if (ce==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)
+						{
+							//escaped
+							setNextChar(c,body_syntax);
+						}else
+						{
+							//un-read for token lookup.
+							in.unread(ce);
+							setStateHandler(TOKEN_LOOKUP);
+							setNextChar(c,terminator_syntax);
+						}
+					}else
+					if (isStringTokenBodyChar(c))
+					{
+						setNextChar(c,body_syntax);
+					}else
+						throw unexpectedCharException(c);
+				}
+			};
+			 /** Collected {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR}
+				 opening string token. Now expecting either {@link #isStringTokenBodyChar}
+				 or {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR}
+				 or any other char terminating it. We will do a look-ahead for
+				 escapes applied to {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR} */
+			private final class STRING_TOKEN_BODY_StateHandler extends AStringBody_StateHandler
+			{
+					STRING_TOKEN_BODY_StateHandler()
+					{
+						super(
+									ATxtReadFormat1.TIntermediateSyntax.TOKEN,
+									ATxtReadFormat1.TIntermediateSyntax.SEPARATOR
+									);
+					};
+			};
+			/** Collected {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR}
+				 opening begin name. Now expecting either {@link #isStringTokenBodyChar}
+				 or {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR}
+				 or any other char terminating it. We will do a look-ahead for
+				 escapes applied to {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR} */
+			private final class COLLECTING_STRING_BEGIN_NAME_StateHandler extends AStringBody_StateHandler
+			{
+					COLLECTING_STRING_BEGIN_NAME_StateHandler()
+					{
+						super(
+									ATxtReadFormat1.TIntermediateSyntax.SIG_NAME,
+									ATxtReadFormat1.TIntermediateSyntax.SIG_NAME_VOID
+									);
+					};
+			};
+			/**
+			     We collected first {@link #isTokenBodyChar} and are on the look-up for
+				 subsequent {@link #isTokenBodyChar} or 
+				 or {@link CPlainTxtWriteFormat#BEGIN_SIGNAL_CHAR} 
+				 or {@link CPlainTxtWriteFormat#END_SIGNAL_CHAR}
+				 or {@link #isEmptyChar} 
+				 or {@link CPlainTxtWriteFormat#TOKEN_SEPARATOR_CHAR} */
+			private final class PLAIN_TOKEN_BODY_StateHandler extends AStateHandler
+			{
+				@Override protected void toNextChar()throws IOException
+				{
+					final int i= read();
+					if (i==-1) return;
+					final char c=(char)i;
+					if (c==CPlainTxtWriteFormat.BEGIN_SIGNAL_CHAR)
+					{
+						setStateHandler(COLLECTED_BEGIN);
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_BEGIN);
+					}else
+					if (c==CPlainTxtWriteFormat.END_SIGNAL_CHAR)
+					{
+						//We don't change state, we indicate to superclass we got end.
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_END);
+					}else
+					if (c==CPlainTxtWriteFormat.TOKEN_SEPARATOR_CHAR)
+					{
+						setStateHandler(TOKEN_BODY_LOOKUP);
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.NEXT_TOKEN);
+					}else
+					if (isTokenBodyChar(c))
+					{
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.TOKEN);
+					}else
+					if (isEmptyChar(c))
+					{
+						setStateHandler(TOKEN_LOOKUP);
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+					}else
+						throw unexpectedCharException(c);
+				}
+			};
+						
+				private final AStateHandler NOTHING = new NOTHING_StateHandler();
+				private final AStateHandler COLLECTED_BEGIN = new COLLECTED_BEGIN_StateHandler();
+				private final AStateHandler TOKEN_LOOKUP = new TOKEN_LOOKUP_StateHandler();
+				private final AStateHandler TOKEN_BODY_LOOKUP = new TOKEN_BODY_LOOKUP_StateHandler();
+				private final AStateHandler COLLECTING_BEGIN_NAME = new COLLECTING_BEGIN_NAME_StateHandler();
+				private final AStateHandler STRING_TOKEN_BODY = new  STRING_TOKEN_BODY_StateHandler();
+				private final AStateHandler PLAIN_TOKEN_BODY = new  PLAIN_TOKEN_BODY_StateHandler();
+				private final AStateHandler COLLECTING_STRING_BEGIN_NAME = new  COLLECTING_STRING_BEGIN_NAME_StateHandler();
+				/** Push-back input */
+				private final CAdaptivePushBackReader in;
+				
 					
 	/* *********************************************************
 	
@@ -65,201 +342,67 @@ public class CPlainTxtReadFormat extends ATxtReadFormat0
 			  );
 		assert(in!=null);
 		this.in = new CAdaptivePushBackReader(in,1,1);
+		setStateHandler(NOTHING);
 	}
-	private void String getLineInfoMessage()
+	private String getLineInfoMessage()
 	{
 		int c = in.getCharNumber();
 		return " at line "+(in.getLineNumber()+1)+" position "+c+ (c<=0 ? " from the end of line" : "");
 	};
-	/* *********************************************************
+	/* ********************************************************************
 	
-	
-			ATxtReadFormat0
-	
-	
-	**********************************************************/
-	
-	@Override protected int tokenIn()throws IOException
-	{
-		//Handle pending effects buffered by hasUnreadToken
-		if (has_unread_pending)
-		{
-			has_unread_pending = false;
-			return has_unread_collected_tokenIn;
-		};
-		//really move to next token element
-		loop:
-		for(;;)
-		{
-			switch(token_state)
-			{
-				case STATE_SEPARATOR_LOOKUP:
-							//We do look-up for a token separator
-							{
-								int r = in.read();
-								if (r==-1) return TOKEN_EOF;
-								char c= (char)r;
-								if (c==CPlainTxtWriter.BEGIN_SIGNAL_CHAR)
-								{
-									//we do not need to remember for the future, if we un-read it.
-									in.unread(r);
-									return TOKEN_SIGNAL;
-								}else
-								if (c==CPlainTxtWriter.END_SIGNAL_CHAR)
-								{
-									//alike
-									in.unread(r);
-									return TOKEN_SIGNAL;
-								}else
-								if (c==CPlainTxtWriter.TOKEN_SEPARATOR_CHAR)
-								{
-									token_state = STATE_TOKEN_START_LOOKUP;
-								}else
-								if (Character.isWhitespace(c))
-								{
-									//this should be skipped, so do continue
-								}else
-									//We do require separator before token!
-									throw new EBrokenFormat("Unexpected \'"+c+"\'(0x"+Integer.toHexString(c)+")"+getLineInfoMessage());
-							};
-							break;
-				case STATE_TOKEN_START_LOOKUP:
-							//We do look for a beginning of next token. Any eventuall separator is already consumed.
-							{
-								int r = in.read();
-								if (r==-1) return TOKEN_EOF;
-								char c= (char)r;
-								if (c==CPlainTxtWriter.BEGIN_SIGNAL_CHAR)
-								{
-									//we do not need to remember for the future, if we un-read it.
-									in.unread(r);
-									return TOKEN_SIGNAL;
-								}else
-								if (c==CPlainTxtWriter.END_SIGNAL_CHAR)
-								{
-									//alike
-									in.unread(r);
-									return TOKEN_SIGNAL;
-								}else
-								if (c==CPlainTxtWriter.TOKEN_SEPARATOR_CHAR)
-								{
-									//In this case we do return empty token
-									token_state = STATE_TOKEN_START_LOOKUP; //because we consumed the separator
-									return TOKEN_BOUNDARY;
-								}else
-								if (Character.isWhitespace(c))
-								{
-									//this should be skipped
-								}else
-								if (c==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)
-								{
-									//and we have a string token token
-									token_state = STATE_INSIDE_STRING_TOKEN;
-									//consume this and fetch next character.
-									//Easiest way is to continue.
-								}else
-								{
-									//we have a regular token
-									token_state = STATE_INSIDE_PLAIN_TOKEN;
-									return c;
-								};
-							};
-							break; 
-				case STATE_INSIDE_PLAIN_TOKEN:
-							//we do look for the end of token or signal
-							{
-								int r = in.read();
-								if (r==-1) return TOKEN_EOF;
-								char c= (char)r;
-								if (c==CPlainTxtWriter.BEGIN_SIGNAL_CHAR)
-								{
-									//we do not need to remember for the future, if we un-read it.
-									in.unread(r);
-									return TOKEN_SIGNAL;
-								}else
-								if (c==CPlainTxtWriter.END_SIGNAL_CHAR)
-								{
-									//alike
-									in.unread(r);
-									return TOKEN_SIGNAL;
-								}else
-								if (c==CPlainTxtWriter.TOKEN_SEPARATOR_CHAR)
-								{
-									//token is terminated, but we look for next token
-									token_state = STATE_TOKEN_START_LOOKUP; //because we consumed the separator
-									return TOKEN_BOUNDARY;
-								}else
-								if (c==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)
-								{
-									//This is a syntax error. " is the reason for beeing enclosed.
-									throw new EBrokenFormat("Unexpected string indicator in plain token: \'"+c+"\'(0x"+Integer.toHexString(c)+")"+getLineInfoMessage());
-								}else
-								{
-									//A normal, parsable text.
-									return c;
-								};
-							};
-							break; 
-				case STATE_INSIDE_STRING_TOKEN:
-							//we do look for the end of token or signal
-							{
-								int r = in.read();
-								if (r==-1) return TOKEN_EOF;
-								char c= (char)r;
-								if (c==CPlainTxtWriter.BEGIN_SIGNAL_CHAR)
-								{
-									//we do not need to remember for the future, if we un-read it.
-									in.unread(r);
-									return TOKEN_SIGNAL;
-								}else
-								if (c==CPlainTxtWriter.END_SIGNAL_CHAR)
-								{
-									//alike
-									in.unread(r);
-									return TOKEN_SIGNAL;
-								}else
-								if (c==CPlainTxtWriter.TOKEN_SEPARATOR_CHAR)
-								{
-									//token is terminated, but we look for next token
-									token_state = STATE_TOKEN_START_LOOKUP; //because we consumed the separator
-									return TOKEN_BOUNDARY;
-								}else
-								if (c==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)
-								{
-									//This may be escape or terminator?
-									r = in.read();
-									if (r==-1){ in.unread(c); return TOKEN_EOF; };
-									c= (char)r;
-									if (c==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)
-									{
-										//escape, just return it
-										return c;
-									}else
-									{
-										//was terminator, un-read it
-										in.unread(c);
-										token_state = STATE_SEPARATOR_LOOKUP; 
-									};
-								}else
-								{
-									//A normal, parsable text.
-									return c;
-								};
-							};
-							break;		
-			};
-	};
-	@Override protected int hasUnreadToken()throws IOException
-	{
-		//use pending state
-		if (!has_unread_pending)
-		{
-			//collect new state
-			has_unread_pending = true;	
-			has_unread_collected_tokenIn = tokenIn();
-		};
-		//return collected state.
-		return (has_unread_collected_tokenIn<0 ? has_unread_collected_tokenIn : 0);
 		
+			Syntax definitions
+	
+	
+	*********************************************************************/
+	private static boolean isEmptyChar(char c)
+	{
+		return Character.isWhitespace(c);
 	};
+	private static boolean isTokenBodyChar(char c)
+	{
+		return !(
+				isEmptyChar(c)
+				|| 
+				(c==CPlainTxtWriteFormat.TOKEN_SEPARATOR_CHAR)
+				||
+				(c==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)
+				||
+				(c==CPlainTxtWriteFormat.END_SIGNAL_CHAR)
+				||
+				(c==CPlainTxtWriteFormat.BEGIN_SIGNAL_CHAR)
+				);
+	};
+	private static boolean isStringTokenBodyChar(char c)
+	{
+		return c!=CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR;
+	};
+	
+	/* ********************************************************************
+	
+		
+			AStructReadFormatBase0
+	
+	
+	*********************************************************************/
+	/** Closes input */
+	@Override protected void closeImpl()throws IOException
+	{
+		in.close();
+	};
+	/** Empty */
+	@Override protected void openImpl()throws IOException{};
+	/* ********************************************************************
+	
+		
+			IFormatLimits
+	
+	
+	*********************************************************************/
+	/** Unbound*/
+	@Override public int getMaxSupportedStructRecursionDepth(){ return -1; };
+	/** Unbound*/
+	@Override public int getMaxSupportedSignalNameLength(){ return Integer.MAX_VALUE; };
+	
 };
