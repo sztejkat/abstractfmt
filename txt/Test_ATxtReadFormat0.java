@@ -546,6 +546,22 @@ public class Test_ATxtReadFormat0 extends ATest
 	}
 	
 	
+	@Test public void testBooleanBlock_zero_size_request()throws IOException
+	{
+		enter();
+		final int [] x = new int[]{  
+										'1',ATxtReadFormat0.TOKEN_BOUNDARY,
+										'0',ATxtReadFormat0.TOKEN_BOUNDARY,
+										'1',ATxtReadFormat0.TOKEN_BOUNDARY,
+										 ATxtReadFormat0.TOKEN_SIGNAL
+										};
+		DUT d= new DUT(x);
+		d.open();
+		Assert.assertTrue(true== d.readBooleanBlock());
+		boolean b[] = new boolean[100];
+		Assert.assertTrue(0== d.readBooleanBlock(b,1,0));
+		leave();
+	}
 	
 	
 	

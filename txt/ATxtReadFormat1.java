@@ -14,16 +14,27 @@ import java.io.Reader;
 	by this class which is {@link ATxtReadFormat1.TIntermediateSyntax}
 	
 */	
-public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
-									  TSyntaxState extends Object> 
+public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 									  extends ATxtReadFormat0
 {
+		 private static final long TLEVEL = SLogging.getDebugLevelForClass(ATxtReadFormat1.class);
+         private static final boolean TRACE = (TLEVEL!=0);
+         private static final boolean DUMP = (TLEVEL>=2);
+         private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("ATxtReadFormat1.",ATxtReadFormat1.class) : null;
+  
 			/** A contract which allows to provide a kind of "enum"
-			extension. */
+			extension.
+			<p>
+			If You don't need more syntax elements than 
+			{@link TIntermediateSyntax} You may just use that
+			enum since it implements {@link ISyntax}
+			*/
 			public interface ISyntax
 			{
 				/**	Returns {@link ATxtReadFormat1} syntax element 
 				which is represented by this syntax element.
+				Basically converts from Your enum type to enum
+				understood by this class.
 				@return never null, life-time constant.
 				*/
 				public ATxtReadFormat1.TIntermediateSyntax syntax();
@@ -45,8 +56,10 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
 				<ul>
 					<li>the name using a sequence {@link #SIG_NAME},{@link #SIG_NAME_VOID} characters;</li>
 					<li>the index using {@link #SIG_INDEX};</li>
+					<li>the index using {@link #SIG_ORDER};</li>
 				</ul>
-				The collection stops on any other non {@link #VOID} character.
+				The collection stops on any other non {@link #VOID} character or end-of-file which 
+				terminates signal definition.
 				<p>
 				This is an error if any of name or index was collected twice.
 				<p>
@@ -77,8 +90,12 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
 				/** Alike {@link SIG_NAME_VOID}, but is a part of signal name and should be collected. */ 
 				SIG_NAME,
 				/** A character making a part of decimal signal index. Up to 16 digits are allowed
-				and text will be parsed by <code>Integer.decode</code>. The index cannot be negative. */
+				and text will be parsed by <code>Integer.decode</code>. The index cannot be negative.				
+				*/
 				SIG_INDEX,
+				/** A character indicating that begin or end-begin signal is a signal registration
+				and that index of registration is order based */
+				SIG_ORDER,
 				/** Alike {@link #SIG_BEGIN} but causes {@link ARegisteringStructReadFormat#readSignalReg}
 				to return {@link ARegisteringStructReadFormat.TSignalReg#SIG_END_BEGIN_DIRECT},
 				{@link ARegisteringStructReadFormat.TSignalReg#SIG_END_BEGIN_DIRECT},
@@ -103,11 +120,11 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
 				</pre>
 				emits: 
 				<pre>
-	SIG_TOKEN(a),SIG_TOKEN(b),SIG_SEPARATOR( ),SIG_SEPARATOR( ),SIG_TOKEN(d), SIG_TOKEN(e)
+	TOKEN(a),TOKEN(b),SEPARATOR( ),SEPARATOR( ),TOKEN(d), TOKEN(e)
 				</pre>
 				or:
 				<pre>
-	SIG_TOKEN(a),SIG_TOKEN(b),SIG_SEPARATOR( ),SIG_VOID,SIG_TOKEN(d), SIG_TOKEN(e)
+	TOKEN(a),TOKEN(b),SEPARATOR( ),SIG_VOID,TOKEN(d), TOKEN(e)
 				</pre>
 				<p>
 				If we define that white-spaces are not parts of tokens and , is a delimiter
@@ -117,18 +134,18 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
 				</pre>
 				emits:
 				<pre>
-	SIG_TOKEN(a),SIG_TOKEN(b),SIG_VOID,SIG_NEXT_TOKEN,SIG_VOID,SIG_TOKEN(d),SIG_TOKEN(e)
+	TOKEN(a),TOKEN(b),SIG_VOID,NEXT_TOKEN,SIG_VOID,TOKEN(d),TOKEN(e)
 				</pre>			
 				*/
-				SIG_SEPARATOR,
+				SEPARATOR,
 				/** A token or signal terminator. This character do not belong to any
 				syntax element and do terminate a previous syntax element 
 				and starts new token. 
 				*/ 				
-				SIG_NEXT_TOKEN,
+				NEXT_TOKEN,
 				/** A token character. This character do belong to a token, and if
 				token was not started, starts it and becomes a part of it. */
-				SIG_TOKEN;
+				TOKEN;
 				@Override public ATxtReadFormat1.TIntermediateSyntax syntax(){ return this; };
 			};
 			/** Token parsing state machine */
@@ -155,7 +172,10 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
 			private String pick_last_signal_reg_name;
 			/** Support for {@link #pickLastSignalIndex} */
 			private int pick_last_signal_index=-1;
-			
+			/** An ordered registration counter */
+			private int ordered_registration_counter=-1;
+			/** A conflict preveter for registration modes */
+			private boolean was_index_based_registration;
 	/* *********************************************************************
 	
 		Construction
@@ -167,10 +187,13 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
 	@param token_size_limit non-zero positive, a maximum number of characters which constitutes 
 			a primitive element token, excluding string tokens. Basically a maximum
 			number of characters which do constitute a primitive numeric value.
+	@throws AssertionError if token_size_limit is less than 16+3 which is a minimum
+			number to hold hex encoded long value.
 	*/
 	protected ATxtReadFormat1(int name_registry_capacity,int token_size_limit)
 	{
 		super(name_registry_capacity,token_size_limit);
+		if (TRACE) TOUT.println("new ATxtReadFormat1()");
 		token_state = TTokenState.TOKEN_LOOKUP;
 		name_and_index_buffer = new StringBuilder();
 	};
@@ -213,6 +236,7 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
 	{
 		if (!this.peek_valid)
 		{
+			if (TRACE) TOUT.println("validatePeek->calling toNextChar");
 			toNextChar();
 			this.peek_valid=true;
 		};
@@ -225,16 +249,28 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
 		return getNextChar();
 	};
 	/** Calls {@link #validatePeek} and returns syntax at cursor
-	@return of {@link #getNextSyntaxElement} */
-	private ISyntax peekSyntax()throws IOException
+	@return take from {@link #getNextSyntaxElement}, can be null at eof
+	*/
+	private TIntermediateSyntax peekSyntax()throws IOException
 	{
 		validatePeek();
-		return getNextSyntaxElement();
+		final ISyntax stx = getNextSyntaxElement();
+		if (stx==null) 
+		{
+			if (TRACE) TOUT.println("peekSyntax()=null");
+			return null;
+		}else
+		{
+			assert(stx.syntax()!=null):stx+" breaks contract";
+			if (TRACE) TOUT.println("peekSyntax()="+stx.syntax());
+			return stx.syntax();
+		}
 	};
-	/** Consumes peeked character,
-	makes sure that nearest {@link #validatePeek} will call {@link #nextChar} */
+	/** Consumes peeked character, if any.
+	Makes sure that nearest {@link #validatePeek} will call {@link #nextChar} */
 	private void consume()
 	{
+		if (TRACE) TOUT.println("consume() "+(this.peek_valid  ? "consumed":"nothing to consume"));
 		this.peek_valid = false;
 	};
 	/* *********************************************************************
@@ -251,30 +287,41 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
 	*/
 	private boolean findNextToken()throws IOException
 	{
+		if (TRACE) TOUT.println("findNextToken() ENTER");
 		assert(token_state==TTokenState.TOKEN_LOOKUP);
 		for(;;)
 		{
-			final TIntermediateSyntax stx= peekSyntax().syntax();
-			if (stx==null) return false;
+			final TIntermediateSyntax stx= peekSyntax();
+			if (stx==null)
+			{
+				if (TRACE) TOUT.println("findNextToken()=false, eof LEAVE");
+				return false;
+			};
 			switch(stx)
 			{
-				case VOID: consume(); break;	//consume and move forwards
+				case VOID: if (TRACE) TOUT.println("findNextToken() consuming void"); 
+						   consume(); break;	//consume and move forwards
 				case SIG_BEGIN:
 				case SIG_END_BEGIN:
 				case SIG_END:
 						//place tokenizer at rest, do not consume the character
 						token_state = TTokenState.TOKEN_AT_SIGNAL;
+						if (TRACE) TOUT.println("findNextToken()=true, stx="+stx+" token_state="+token_state+" LEAVE");
 						return true;									
-				case SIG_SEPARATOR:	consume(); break; //as void				
-				case SIG_NEXT_TOKEN:
+				case SEPARATOR:
+						if (TRACE) TOUT.println("findNextToken() consuming separator");
+						consume(); break; //as void				
+				case NEXT_TOKEN:
 						//we have found a token, but char does not belong to
 						//it. Consume it and move to token collection.
 						consume();
 						token_state = TTokenState.TOKEN_BODY;
+						if (TRACE) TOUT.println("findNextToken()=true, stx="+stx+" token_state="+token_state+" LEAVE");
 						return true;
-				case SIG_TOKEN: 
+				case TOKEN: 
 						//we have found a token, do NOT consume it, move to token collection
 						token_state = TTokenState.TOKEN_BODY;
+						if (TRACE) TOUT.println("findNextToken()=true, stx="+stx+" token_state="+token_state+" LEAVE");
 						return true;
 				default:
 					// SIG_NAME_VOID, SIG_NAME, SIG_INDEX
@@ -288,11 +335,16 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
 	*/
 	private int nextTokenBody()throws IOException
 	{
+		if (TRACE) TOUT.println("nextTokenBody() ENTER");
 		assert(token_state==TTokenState.TOKEN_BODY);
 		for(;;)
 		{
-			final TIntermediateSyntax stx= peekSyntax().syntax();
-			if (stx==null) return TOKEN_EOF;
+			final TIntermediateSyntax stx= peekSyntax();
+			if (stx==null)
+			{
+				if (TRACE) TOUT.println("nextTokenBody()=TOKEN_EOF, stx="+stx+" token_state="+token_state+" LEAVE");
+				return TOKEN_EOF;
+			};
 			switch(stx)
 			{
 				case VOID: consume(); break;	//consume and move forwards
@@ -300,24 +352,28 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
 				case SIG_END_BEGIN:
 				case SIG_END:
 						//place tokenizer at rest, do not consume the character
-						token_state = TTokenState.TOKEN_AT_SIGNAL;						
+						token_state = TTokenState.TOKEN_AT_SIGNAL;
+						if (TRACE) TOUT.println("nextTokenBody()=TOKEN_SIGNAL, stx="+stx+" token_state="+token_state+" LEAVE");
 						return TOKEN_SIGNAL;									
-				case SIG_SEPARATOR:
+				case SEPARATOR:
 						//terminated a token. Do consume it and move at lookup. 
 						consume();
 						token_state = TTokenState.TOKEN_LOOKUP;
+						if (TRACE) TOUT.println("nextTokenBody()=TOKEN_BOUNDARY, stx="+stx+" token_state="+token_state+" LEAVE");
 						return TOKEN_BOUNDARY;
-				case SIG_NEXT_TOKEN:
+				case NEXT_TOKEN:
 						//terminated token, but also beginning of next token.
 						consume(); //must be consumed, so that we start serving next token.	
 						//Do NOT change token lookup.
+						if (TRACE) TOUT.println("nextTokenBody()=TOKEN_BOUNDARY, stx="+stx+" token_state="+token_state+" LEAVE");
 						return TOKEN_BOUNDARY;
-				case SIG_TOKEN: 
+				case TOKEN: 
 						//we have found a token char, consume it and return.
 						{
 							int c = peekChar();
 							assert((c>=0)&&(c<=0xFFFF));
 							consume();
+							if (DUMP) TOUT.println("nextTokenBody+=\'"+c+"'(0x"+Integer.toHexString(c)+") stx="+stx+" token_state="+token_state+" LEAVE");
 							return c;
 						}
 				default:
@@ -326,21 +382,34 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
 			}
 		}
 	};
-	@Override protected int tokenIn()throws IOException
+	@Override protected final int tokenIn()throws IOException
 	{
+		if (TRACE) TOUT.println("tokenIn() ENTER");
 		loop:
 		for(;;) //because token lookup may toggle states to signal or body.
 		{
 			switch(token_state)
 			{
-				case TOKEN_AT_SIGNAL: return TOKEN_SIGNAL;
+				case TOKEN_AT_SIGNAL:
+							if (TRACE) TOUT.println("tokenIn()=TOKEN_SIGNAL, stuck at signal, LEAVE");
+							return TOKEN_SIGNAL;
 				case TOKEN_LOOKUP:
-							if (!findNextToken()) return TOKEN_EOF;
+							if (!findNextToken())
+							{
+								if (TRACE) TOUT.println("tokenIn()=TOKEN_EOF, LEAVE");
+								return TOKEN_EOF;
+							};
 							//Note: TOKEN_LOOKUP may be only due to eof, so we should not get in here.
 							assert(token_state!=TTokenState.TOKEN_LOOKUP);
+							if (TRACE) TOUT.println("tokenIn(), looping after lookup");
 							continue loop;
 				case TOKEN_BODY:
-							return nextTokenBody();
+							{
+								if (TRACE) TOUT.println("tokenIn(), processing body");
+								final int r = nextTokenBody();
+								if (TRACE) TOUT.println("tokenIn()="+((r>=0)? ("\'"+(char)r+"'(0x"+Integer.toHexString(r)+")") : r)+" LEAVE");
+								return r;
+							}
 				default: throw new AssertionError();
 			}
 		}
@@ -355,11 +424,16 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
 	*/
 	private int hasNextTokenBody()throws IOException
 	{
+		if (TRACE) TOUT.println("hasNextTokenBody() ENTER");
 		assert(token_state==TTokenState.TOKEN_BODY);
 		for(;;)
 		{
-			final TIntermediateSyntax stx= peekSyntax().syntax();
-			if (stx==null) return TOKEN_EOF;
+			final TIntermediateSyntax stx= peekSyntax();
+			if (stx==null)
+			{
+				if (TRACE) TOUT.println("nextTokenBody()=TOKEN_EOF, stx="+stx+" token_state="+token_state+" LEAVE");
+				return TOKEN_EOF;
+			};
 			switch(stx)
 			{
 				case VOID: consume(); break;	//consume and move forwards
@@ -367,17 +441,21 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
 				case SIG_END_BEGIN:
 				case SIG_END:
 						//place tokenizer at rest, do not consume the character
-						token_state = TTokenState.TOKEN_AT_SIGNAL;						
+						token_state = TTokenState.TOKEN_AT_SIGNAL;		
+						if (TRACE) TOUT.println("nextTokenBody()=TOKEN_SIGNAL, stx="+stx+" token_state="+token_state+" LEAVE");
 						return TOKEN_SIGNAL;									
-				case SIG_SEPARATOR:
+				case SEPARATOR:
 						//terminated a token. Do not consume it
+						if (TRACE) TOUT.println("nextTokenBody()=TOKEN_BOUNDARY, separator, stx="+stx+" token_state="+token_state+" LEAVE");
 						return TOKEN_BOUNDARY;
-				case SIG_NEXT_TOKEN:
+				case NEXT_TOKEN:
 						//terminated token, but also beginning of next token.
 						//Oppositie to whend processing token, we do not consume it
+						if (TRACE) TOUT.println("nextTokenBody()=TOKEN_BOUNDARY, next token, stx="+stx+" token_state="+token_state+" LEAVE");
 						return TOKEN_BOUNDARY;
-				case SIG_TOKEN: 
+				case TOKEN: 
 						//we have found a token char, NOT consume it and return.
+						if (TRACE) TOUT.println("nextTokenBody()=0, token, stx="+stx+" token_state="+token_state+" LEAVE");
 						return 0;
 				default:
 					// SIG_NAME_VOID, SIG_NAME, SIG_INDEX
@@ -385,23 +463,35 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
 			}
 		}
 	};
-	@Override protected int hasUnreadToken()throws IOException
+	@Override protected final int hasUnreadToken()throws IOException
 	{
+		if (TRACE) TOUT.println("hasUnreadToken() ENTER");
 		loop:
 		for(;;) //because token lookup may toggle states to signal or body.
 		{
 			switch(token_state)
 			{
-				case TOKEN_AT_SIGNAL: return TOKEN_SIGNAL;
+				case TOKEN_AT_SIGNAL:
+							if (TRACE) TOUT.println("hasUnreadToken()=TOKEN_SIGNAL, stuck at signal, LEAVE");
+							return TOKEN_SIGNAL;
 				case TOKEN_LOOKUP:
 							//We moved to token boundary already. We need to check what would be next.
-							if (!findNextToken()) return TOKEN_EOF;
+							if (!findNextToken())
+							{
+								if (TRACE) TOUT.println("hasUnreadToken()=TOKEN_EOF LEAVE");
+								return TOKEN_EOF;
+							};
 							//Note: TOKEN_LOOKUP may be only due to eof, so we should not get in here.
 							assert(token_state!=TTokenState.TOKEN_LOOKUP);
+							if (TRACE) TOUT.println("hasUnreadToken(), looping");
 							continue loop;
 				case TOKEN_BODY:
 							//Now we are in a body. We need to look forward but not consume
-							return hasNextTokenBody();
+							{
+							final int r = hasNextTokenBody();
+							if (TRACE) TOUT.println("hasUnreadToken()="+r+" LEAVE");
+							return r;
+							}
 				default: throw new AssertionError();
 			}
 		}
@@ -420,10 +510,11 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
 	@throws IOException if failed */
 	private TSignalReg processSignal()throws IOException
 	{
+		if (TRACE) TOUT.println("processSignal->");
 		assert(token_state == TTokenState.TOKEN_AT_SIGNAL);
 		
 		//determine what kind of signal?
-		final TIntermediateSyntax stx= peekSyntax().syntax();
+		final TIntermediateSyntax stx= peekSyntax();
 		assert(stx!=null);
 		switch(stx)
 		{
@@ -438,10 +529,12 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
 	@throws IOException if failed */
 	private TSignalReg processEndSignal()throws IOException
 	{
+		if (TRACE) TOUT.println("processEndSignal ENTER");
 		assert(token_state == TTokenState.TOKEN_AT_SIGNAL);
 		assert(peekSyntax().syntax() == TIntermediateSyntax.SIG_END);
 		consume();
 		token_state = TTokenState.TOKEN_LOOKUP;
+		if (TRACE) TOUT.println("processEndSignal=TSignalReg.SIG_END, LEAVE");
 		return TSignalReg.SIG_END;
 	};
 	/** Invoked by {@link #processSignal} when cursor is at {@link TIntermediateSyntax.SIG_BEGIN} character.
@@ -449,6 +542,7 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
 	@throws IOException if failed */
 	private TSignalReg processBeginSignal()throws IOException
 	{
+		if (TRACE) TOUT.println("processBeginSignal->");
 		assert(token_state == TTokenState.TOKEN_AT_SIGNAL);
 		assert(peekSyntax().syntax() == TIntermediateSyntax.SIG_BEGIN);
 		return processXXXBeginSignal(
@@ -462,6 +556,7 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
 	@throws IOException if failed */
 	private TSignalReg processEndBeginSignal()throws IOException
 	{
+		if (TRACE) TOUT.println("processEndBeginSignal->");
 		assert(token_state == TTokenState.TOKEN_AT_SIGNAL);
 		assert(peekSyntax().syntax() == TIntermediateSyntax.SIG_END_BEGIN);
 		return processXXXBeginSignal(
@@ -481,6 +576,7 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
 	*/
 	private TSignalReg processXXXBeginSignal(TSignalReg direct, TSignalReg register, TSignalReg registered)throws IOException
 	{
+		if (TRACE) TOUT.println("processXXXBeginSignal() ENTER");
 		//wipe buffers
 		this.pick_last_signal_index=-1;
 		this.pick_last_signal_reg_name = null;
@@ -488,49 +584,89 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
 		//prepare variables
 		String collected_name = null;	//we will collect name here.
 		int collected_index = -1;		//we collect index here, non negative
+		boolean collected_index_directly=false;
 		//now process
 		consume();//consume leading character
+		loop:
 		for(;;)
 		{
-			final TIntermediateSyntax stx= peekSyntax().syntax();
-			if (stx==null) throw new EUnexpectedEof();
+			final TIntermediateSyntax stx= peekSyntax();
+			if (TRACE) TOUT.println("processXXXBeginSignal() stx="+stx);
+			if (stx==null)
+			{
+				break loop;
+			};
 			switch(stx)
 			{
-				case VOID: 	consume(); break;
+				case VOID:
+						if (TRACE) TOUT.println("processXXXBeginSignal(), dropping void");
+						consume(); break;
 				case SIG_NAME_VOID:
 				case SIG_NAME:
+						if (TRACE) TOUT.println("processXXXBeginSignal(), collecting name");
 						if (collected_name!=null) throw new EBrokenFormat("Signal name already collected");
 						collectSignalName(name_and_index_buffer);
 						collected_name = name_and_index_buffer.toString();
 						name_and_index_buffer.setLength(0);	//wipe.
 						break;
 				case SIG_INDEX:
+						if (TRACE) TOUT.println("processXXXBeginSignal(), collecting index");
 						if (collected_index!=-1) throw new EBrokenFormat("Signal index already collected");
+						collected_index_directly = true;
 						collected_index = collectSignalIndex(name_and_index_buffer);
 						name_and_index_buffer.setLength(0);	//wipe.
 						break;
+				case SIG_ORDER:
+						if (TRACE) TOUT.println("processXXXBeginSignal(), collecting ordered index mode");						
+						if (collected_index!=-1) throw new EBrokenFormat("Signal index already collected");
+						consume(); //consume that character.
+						collected_index = this.ordered_registration_counter+1;
+						collected_index_directly = false;
+						name_and_index_buffer.setLength(0);	//wipe.
+						break;
 				default:
-						//we are in token reset tokenizer (but not peeker!)
-						token_state = TTokenState.TOKEN_LOOKUP;
-						//now decide on what to do?
-						if (collected_index==-1)
-						{
-							this.pick_last_signal_index=-1;
-							this.pick_last_signal_reg_name= (collected_name==null) ? "" : collected_name;
-							return direct;
-						}else
-						if (collected_name==null)
-						{
-							this.pick_last_signal_index=collected_index;
-							this.pick_last_signal_reg_name=null;
-							return registered;
-						}else
-						{
-							this.pick_last_signal_index=collected_index;
-							this.pick_last_signal_reg_name=collected_name;
-							return register;
-						}
+						if (TRACE) TOUT.println("processXXXBeginSignal(), got "+stx);
+						break loop;
 			}
+		}
+		if (TRACE) TOUT.println("processXXXBeginSignal(), processing signal definition");
+		//we are in token reset tokenizer (but not peeker!)
+		token_state = TTokenState.TOKEN_LOOKUP;
+		//now decide on what to do?
+		if (collected_index==-1)
+		{
+			this.pick_last_signal_index=-1;
+			this.pick_last_signal_reg_name= (collected_name==null) ? "" : collected_name;
+			if (TRACE) TOUT.println("processXXXBeginSignal()="+direct+", LEAVE");
+			return direct;
+		}else
+		if (collected_name==null)
+		{
+			if (!collected_index_directly) throw new EBrokenFormat("Can't use SIG_ORDER for re-use of registered name"); 
+			this.pick_last_signal_index=collected_index;
+			this.pick_last_signal_reg_name=null;
+			if (TRACE) TOUT.println("processXXXBeginSignal()="+registered+", LEAVE");
+			return registered;
+		}else
+		{
+			if (!collected_index_directly)
+			{
+				//by order registration
+				if (was_index_based_registration)
+					throw new EBrokenFormat("order based registration after index based");
+				this.ordered_registration_counter++;
+				assert(this.ordered_registration_counter == collected_index);
+			}else
+			{
+				//by index.
+				if (this.ordered_registration_counter!=-1)
+					throw new EBrokenFormat("index based registration after order based");
+				this.was_index_based_registration=true;
+			};
+			this.pick_last_signal_index=collected_index;
+			this.pick_last_signal_reg_name=collected_name;
+			if (TRACE) TOUT.println("processXXXBeginSignal()="+register+", LEAVE");
+			return register;
 		}
 	};
 	/** Collects signal name to specified buffer
@@ -540,25 +676,34 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
 	*/
 	private void collectSignalName(StringBuilder where_to)throws IOException
 	{
+		if (TRACE) TOUT.println("collectSignalName() ENTER");
 		where_to.setLength(0);	//wipe for sure.
+		loop:
 		for(;;)
 		{
-			final TIntermediateSyntax stx= peekSyntax().syntax();
-			if (stx==null) throw new EUnexpectedEof();
+			final TIntermediateSyntax stx= peekSyntax();
+			if (stx==null)
+			{
+				if (where_to.length()==0)
+						throw new EUnexpectedEof();
+				if (TRACE) TOUT.println("collectSignalName(), eof, but got data");
+				break loop;
+			};
 			switch(stx)
 			{
 				case VOID: 	
 				case SIG_NAME_VOID: consume(); break;
 				case SIG_NAME:
 						if (where_to.length()>=getMaxSignalNameLength()) throw new EFormatBoundaryExceeded("Signal name \""+where_to.toString()+"\" too long");
-						where_to.append((char)peekChar());
+						where_to.append((char)peekChar());						
 						consume();
 						break;
 				default:
 						//not consume, terminate collection.
-						return;
+						break loop;						
 			}
 		}
+		if (TRACE) TOUT.println("collectSignalName()=\""+where_to.toString()+"\" LEAVE");
 	};
 	/** Collects signal index to specified buffer, parses it to int
 	@param where_to a buffer, will be wiped
@@ -569,33 +714,44 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
 	*/
 	private int collectSignalIndex(StringBuilder where_to)throws IOException
 	{
+		if (TRACE) TOUT.println("collectSignalIndex() ENTER");
 		where_to.setLength(0);	//wipe for sure.
+		loop:
 		for(;;)
 		{
-			final TIntermediateSyntax stx= peekSyntax().syntax();
-			if (stx==null) throw new EUnexpectedEof();
+			final TIntermediateSyntax stx= peekSyntax();
+			if (stx==null)
+			{
+				if (where_to.length()==0)
+						throw new EUnexpectedEof();
+				if (TRACE) TOUT.println("collectSignalIndex(), eof, but got data");
+				break loop;
+			};
 			switch(stx)
 			{
 				case VOID: 	
-				case SIG_NAME_VOID: consume(); break;
-				case SIG_NAME:
+				case SIG_INDEX:
 						if (where_to.length()>=16) throw new EFormatBoundaryExceeded("Signal index \""+where_to.toString()+"\" too long");
 						where_to.append((char)peekChar());
 						consume();
 						break;
 				default:
 						//not consume, terminate collection, parse
-						{
-							String s= where_to.toString();
-							try{
-								int v = Integer.decode(s);
-								if (v<0) throw new EBrokenFormat("The signal index "+v+" is negative");
-								return v;
-							}catch(NumberFormatException ex)
-							{
-								throw new EBrokenFormat("Could not parse \""+s+"\" to number", ex); 
-							}
-						}
+						break loop;						
+			}
+		}
+		//compute effect.
+		{
+			String s= where_to.toString();
+			if (TRACE) TOUT.println("collectSignalIndex(), decoding \""+s+"\"");
+			try{
+				int v = Integer.decode(s);
+				if (v<0) throw new EBrokenFormat("The signal index "+v+" is negative");
+				if (TRACE) TOUT.println("collectSignalIndex()="+v+" LEAVE");
+				return v;
+			}catch(NumberFormatException ex)
+			{
+				throw new EBrokenFormat("Could not parse \""+s+"\" to number", ex); 
 			}
 		}
 	};
@@ -604,18 +760,23 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax,
 	{
 		//Theoretically we just could do a dumb skip to SIG_BEGIN/SIG_END_BEGIN/SIG_END
 		//And we can do it safely, because the subclass syntax processor must validate
-		//if it's own syntax is correct.
-		//If we however skip the token processor the we may have problems with recovering
-		//from eof since token machine will be for sure broken.
+		//if it's own syntax is correct. Best is however to pass it through token processor
+		//what will keep it's state consistent.
+		if (TRACE) TOUT.println("readSignalReg() ENTER");
 		for(;;)
 		{
 			switch(tokenIn())
 			{
 				case TOKEN_SIGNAL:
-						return processSignal();
+						{
+							final TSignalReg r = processSignal();
+							if (TRACE) TOUT.println("readSignalReg()="+r+" LEAVE");
+							return r;
+						}
 				case TOKEN_EOF: throw new EUnexpectedEof();
 				default:
 						//just continue looping.
+						if (TRACE) TOUT.println("readSignalReg(), skipping");
 						;
 			}
 		}

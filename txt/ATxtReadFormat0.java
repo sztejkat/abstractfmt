@@ -140,9 +140,12 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	------------------------------------------------------------------*/
 	@Override protected boolean hasElementaryDataImpl()throws IOException
 	{
+		if (TRACE) TOUT.println("hasElementaryDataImpl ENTER");
 		switch(hasUnreadToken())
 		{
-			case 0:					return true;
+			case 0:
+							if (TRACE) TOUT.println("hasElementaryDataImpl=true, token LEAVE");
+							return true;
 			case TOKEN_BOUNDARY:
 						//Boundary seems to a bit tricky.
 						//However the rest of class is defined in such a way
@@ -150,9 +153,14 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 						//an empty token is present and such an empty
 						//token will be collected (see collectElementaryToken)
 						//An empty token is a parsable value, so we can say "true".
+						if (TRACE) TOUT.println("hasElementaryDataImpl=true, boundary LEAVE");
 									return true;
-			case TOKEN_SIGNAL:		
-			case TOKEN_EOF:			return false;
+			case TOKEN_SIGNAL:
+							if (TRACE) TOUT.println("hasElementaryDataImpl=false, signal LEAVE");
+							return false;
+			case TOKEN_EOF:			
+							if (TRACE) TOUT.println("hasElementaryDataImpl=false, eof LEAVE");
+							return false;
 			default: throw new AssertionError();
 		}
 	};
@@ -254,6 +262,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 							//plain chars collection, bound
 							if (token_completion_buffer.length()>=token_size_limit)
 								throw new EFormatBoundaryExceeded("Token \""+token_completion_buffer+"...\" too long in current context processing");
+							if (DUMP) TOUT.println("collectElementaryToken+=\'"+c+"'(0x"+Integer.toHexString(c)+")");
 							token_completion_buffer.append((char) c);
 			}
 		};
@@ -288,6 +297,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	*/
 	@Override protected boolean readBooleanImpl()throws IOException
 	{
+		if (TRACE) TOUT.println("readBooleanImpl->");
 		StringBuilder b = collectElementaryToken(); //this will throw on Eof/ENoMoreData if nothing is collected.
 		//Detect special texts
 		if (b.length()==0) return false;
@@ -305,6 +315,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 				return v==0 ? false : true;
 		}catch(NumberFormatException ex)
 		{
+			if (TRACE) TOUT.println("readBooleanImpl, failed double parse");
 			try{
 					long v = Integer.decode(sb);
 					return v==0 ? false : true;
@@ -330,6 +341,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	*/
 	@Override protected byte readByteImpl()throws IOException
 	{
+		if (TRACE) TOUT.println("readByteImpl->");
 		StringBuilder b = collectElementaryToken(); //this will throw on Eof if nothing is collected.
 		//Detect special texts
 		if (b.length()==0) return (byte)0;
@@ -340,6 +352,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 				return bv;
 			}catch(NumberFormatException exb)
 			{
+				if (TRACE) TOUT.println("readByteImpl, failed byte parse");
 				try{
 						double v = Double.parseDouble(sb);
 						return (byte)v;
@@ -363,6 +376,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	*/	
 	@Override protected short readShortImpl()throws IOException
 	{
+		if (TRACE) TOUT.println("readShortImpl->");
 		StringBuilder b = collectElementaryToken(); //this will throw on Eof if nothing is collected.
 		//Detect special texts
 		if (b.length()==0) return (byte)0;
@@ -373,6 +387,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 				return bv;
 			}catch(NumberFormatException exb)
 			{
+				if (TRACE) TOUT.println("readShortImp failed short parse");
 				try{
 						double v = Double.parseDouble(sb);
 						return (short)v;
@@ -387,6 +402,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	*/	
 	@Override protected char readCharImpl()throws IOException
 	{
+		if (TRACE) TOUT.println("readCharImpl ENTER");
 		for(;;)
 		{
 			int c= tokenIn();
@@ -395,8 +411,12 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 			{
 					case TOKEN_SIGNAL: throw new ENoMoreData();
 					case TOKEN_EOF: throw new EUnexpectedEof();
-					case TOKEN_BOUNDARY: continue;
-					default: return (char)c;
+					case TOKEN_BOUNDARY:
+							if (TRACE) TOUT.println("readCharImpl, stiching boundary"); 
+							continue;
+					default:
+							if (TRACE) TOUT.println("readCharImpl=\'"+(char)c+"\" LEAVE");
+							return (char)c;
 			}
 		}
 	};	
@@ -414,6 +434,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	*/	
 	@Override protected int readIntImpl()throws IOException
 	{
+		if (TRACE) TOUT.println("readIntImpl->");
 		StringBuilder b = collectElementaryToken(); //this will throw on Eof if nothing is collected.
 		//Detect special texts
 		if (b.length()==0) return (byte)0;
@@ -424,6 +445,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 				return bv;
 			}catch(NumberFormatException exb)
 			{
+				if (TRACE) TOUT.println("readIntImpl, failed int parse");
 				try{
 						double v = Double.parseDouble(sb);
 						return (int)v;
@@ -448,6 +470,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	*/	
 	@Override protected long readLongImpl()throws IOException
 	{
+		if (TRACE) TOUT.println("readLongImpl->");
 		StringBuilder b = collectElementaryToken(); //this will throw on Eof if nothing is collected.
 		//Detect special texts
 		if (b.length()==0) return (byte)0;
@@ -458,6 +481,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 				return bv;
 			}catch(NumberFormatException exb)
 			{
+				if (TRACE) TOUT.println("readLongImpl, failed long parse");
 				try{
 						double v = Double.parseDouble(sb);
 						return (long)v;
@@ -483,6 +507,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	*/	
 	@Override protected float readFloatImpl()throws IOException
 	{
+		if (TRACE) TOUT.println("readFloatImpl->");
 		StringBuilder b = collectElementaryToken(); //this will throw on Eof if nothing is collected.
 		//Detect special texts
 		if (b.length()==0) return (byte)0;
@@ -492,6 +517,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 					return v;
 			}catch(NumberFormatException ex)
 			{
+				if (TRACE) TOUT.println("readFloatImpl, failed float parse");
 				//now try integer
 				try{
 					int v = Integer.decode(sb);
@@ -517,6 +543,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	*/	
 	@Override protected double readDoubleImpl()throws IOException
 	{
+		if (TRACE) TOUT.println("readDoubleImpl->");
 		StringBuilder b = collectElementaryToken(); //this will throw on Eof if nothing is collected.
 		//Detect special texts
 		if (b.length()==0) return (byte)0;
@@ -526,6 +553,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 					return v;
 			}catch(NumberFormatException ex)
 			{
+				if (TRACE) TOUT.println("readDoubleImpl, failed double parse");
 				//now try integer
 				try{
 					int v = Integer.decode(sb);
@@ -546,7 +574,8 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	@SuppressWarnings("fallthrough")
 	@Override protected int readBooleanBlockImpl(boolean [] buffer, int offset, int length)throws IOException
 	{
-		//The block and elementary processing differs of 
+		if (TRACE) TOUT.println("readBooleanBlockImpl ENTER");
+		//The block and elementary processing differs at signal and eof treatment
 		int cnt = 0;
 		loop:
 		while(length-->0)
@@ -554,10 +583,16 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 			switch(hasUnreadToken())
 			{
 				case TOKEN_EOF:
+							if (TRACE) TOUT.println("readBooleanBlockImpl, eof");
 							if (cnt==0) throw new EUnexpectedEof();
+							if (TRACE) TOUT.println("readBooleanBlockImpl()="+cnt+", eof, LEAVE");
 							return cnt;
 				case TOKEN_SIGNAL:
-							return cnt==0 ? -1 : cnt;
+							{
+							final int r = cnt==0 ? -1 : cnt;
+							if (TRACE) TOUT.println("readBooleanBlockImpl()="+r+", signal LEAVE");
+							return r;
+							}
 				case TOKEN_BOUNDARY:
 							//boundary will be undestood as an "empty" and parsed correctly
 							//fallthrough.
@@ -567,6 +602,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 							cnt++;
 			}
 		};
+		if (TRACE) TOUT.println("readBooleanBlockImpl()="+cnt+" read all, LEAVE");
 		return cnt;
 	};
 		
@@ -579,7 +615,8 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	@SuppressWarnings("fallthrough")
 	@Override protected int readByteBlockImpl(byte [] buffer, int offset, int length)throws IOException
 	{
-		//The block and elementary processing differs of 
+		if (TRACE) TOUT.println("readByteBlockImpl ENTER");
+		//The block and elementary processing differs at signal and eof treatment
 		int cnt = 0;
 		loop:
 		while(length-->0)
@@ -587,10 +624,16 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 			switch(hasUnreadToken())
 			{
 				case TOKEN_EOF:
+							if (TRACE) TOUT.println("readByteBlockImpl, eof");
 							if (cnt==0) throw new EUnexpectedEof();
+							if (TRACE) TOUT.println("readByteBlockImpl()="+cnt+", eof, LEAVE");
 							return cnt;
 				case TOKEN_SIGNAL:
-							return cnt==0 ? -1 : cnt;
+							{
+							final int r = cnt==0 ? -1 : cnt;
+							if (TRACE) TOUT.println("readByteBlockImpl()="+r+", signal LEAVE");
+							return r;
+							}
 				case TOKEN_BOUNDARY:
 							//boundary will be undestood as an "empty" and parsed correctly
 							//fallthrough.
@@ -600,6 +643,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 							cnt++;
 			}
 		};
+		if (TRACE) TOUT.println("readByteBlockImpl()="+cnt+" read all, LEAVE");
 		return cnt;
 	};
 		
@@ -616,7 +660,8 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	@SuppressWarnings("fallthrough")
 	@Override protected int readShortBlockImpl(short [] buffer, int offset, int length)throws IOException
 	{
-		//The block and elementary processing differs of 
+		if (TRACE) TOUT.println("readShortBlockImpl ENTER");
+		//The block and elementary processing differs at signal and eof treatment
 		int cnt = 0;
 		loop:
 		while(length-->0)
@@ -624,10 +669,16 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 			switch(hasUnreadToken())
 			{
 				case TOKEN_EOF:
+							if (TRACE) TOUT.println("readShortBlockImpl, eof");
 							if (cnt==0) throw new EUnexpectedEof();
+							if (TRACE) TOUT.println("readShortBlockImpl()="+cnt+", eof, LEAVE");							
 							return cnt;
 				case TOKEN_SIGNAL:
-							return cnt==0 ? -1 : cnt;
+							{
+							final int r = cnt==0 ? -1 : cnt;
+							if (TRACE) TOUT.println("readShortBlockImpl()="+r+", signal LEAVE");
+							return r;
+							}
 				case TOKEN_BOUNDARY:
 							//boundary will be undestood as an "empty" and parsed correctly
 							//fallthrough.
@@ -637,6 +688,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 							cnt++;
 			}
 		};
+		if (TRACE) TOUT.println("readShortBlockImpl()="+cnt+" read all, LEAVE");		
 		return cnt;
 	};
 		
@@ -654,7 +706,8 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	@SuppressWarnings("fallthrough")
 	@Override protected int readIntBlockImpl(int [] buffer, int offset, int length)throws IOException
 	{
-		//The block and elementary processing differs of 
+		if (TRACE) TOUT.println("readIntBlockImpl ENTER");
+		//The block and elementary processing differs at signal and eof treatment
 		int cnt = 0;
 		loop:
 		while(length-->0)
@@ -662,10 +715,16 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 			switch(hasUnreadToken())
 			{
 				case TOKEN_EOF:
+							if (TRACE) TOUT.println("readIntBlockImpl, eof");
 							if (cnt==0) throw new EUnexpectedEof();
+							if (TRACE) TOUT.println("readIntBlockImpl()="+cnt+", eof, LEAVE");
 							return cnt;
 				case TOKEN_SIGNAL:
-							return cnt==0 ? -1 : cnt;
+							{
+							final int r = cnt==0 ? -1 : cnt;
+							if (TRACE) TOUT.println("readIntBlockImpl()="+r+", signal LEAVE");
+							return r;
+							}
 				case TOKEN_BOUNDARY:
 							//boundary will be undestood as an "empty" and parsed correctly
 							//fallthrough.
@@ -675,6 +734,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 							cnt++;
 			}
 		};
+		if (TRACE) TOUT.println("readIntBlockImpl()="+cnt+" read all, LEAVE");
 		return cnt;
 	};
 		
@@ -692,7 +752,8 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	@SuppressWarnings("fallthrough")
 	@Override protected int readLongBlockImpl(long [] buffer, int offset, int length)throws IOException
 	{
-		//The block and elementary processing differs of 
+		if (TRACE) TOUT.println("readLongBlockImpl ENTER");
+		//The block and elementary processing differs at signal and eof treatment
 		int cnt = 0;
 		loop:
 		while(length-->0)
@@ -700,10 +761,16 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 			switch(hasUnreadToken())
 			{
 				case TOKEN_EOF:
+							if (TRACE) TOUT.println("readLongBlockImpl, eof");
 							if (cnt==0) throw new EUnexpectedEof();
+							if (TRACE) TOUT.println("readLongBlockImpl()="+cnt+", eof, LEAVE");
 							return cnt;
 				case TOKEN_SIGNAL:
-							return cnt==0 ? -1 : cnt;
+							{
+							final int r = cnt==0 ? -1 : cnt;
+							if (TRACE) TOUT.println("readLongBlockImpl()="+r+", signal LEAVE");
+							return r;
+							}
 				case TOKEN_BOUNDARY:
 							//boundary will be undestood as an "empty" and parsed correctly
 							//fallthrough.
@@ -713,6 +780,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 							cnt++;
 			}
 		};
+		if (TRACE) TOUT.println("readLongBlockImpl()="+cnt+" read all, LEAVE");
 		return cnt;
 	};
 		
@@ -727,7 +795,8 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	@SuppressWarnings("fallthrough")
 	@Override protected int readFloatBlockImpl(float [] buffer, int offset, int length)throws IOException
 	{
-		//The block and elementary processing differs of 
+		if (TRACE) TOUT.println("readFloatBlockImpl ENTER");
+		//The block and elementary processing differs at signal and eof treatment
 		int cnt = 0;
 		loop:
 		while(length-->0)
@@ -735,10 +804,16 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 			switch(hasUnreadToken())
 			{
 				case TOKEN_EOF:
+							if (TRACE) TOUT.println("readFloatBlockImpl, eof");
 							if (cnt==0) throw new EUnexpectedEof();
+							if (TRACE) TOUT.println("readFloatBlockImpl()="+cnt+", eof, LEAVE");
 							return cnt;
 				case TOKEN_SIGNAL:
-							return cnt==0 ? -1 : cnt;
+							{
+							final int r = cnt==0 ? -1 : cnt;
+							if (TRACE) TOUT.println("readFloatBlockImpl()="+r+", signal LEAVE");
+							return r;
+							}
 				case TOKEN_BOUNDARY:
 							//boundary will be undestood as an "empty" and parsed correctly
 							//fallthrough.
@@ -748,6 +823,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 							cnt++;
 			}
 		};
+		if (TRACE) TOUT.println("readFloatBlockImpl()="+cnt+" read all, LEAVE");
 		return cnt;
 	};
 		
@@ -762,7 +838,8 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	@SuppressWarnings("fallthrough")
 	@Override protected int readDoubleBlockImpl(double [] buffer, int offset, int length)throws IOException
 	{
-		//The block and elementary processing differs of 
+		if (TRACE) TOUT.println("readDoubleBlockImpl ENTER");
+		//The block and elementary processing differs at signal and eof treatment
 		int cnt = 0;
 		loop:
 		while(length-->0)
@@ -770,10 +847,16 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 			switch(hasUnreadToken())
 			{
 				case TOKEN_EOF:
+							if (TRACE) TOUT.println("readDoubleBlockImpl, eof");
 							if (cnt==0) throw new EUnexpectedEof();
+							if (TRACE) TOUT.println("readDoubleBlockImpl()="+cnt+", eof, LEAVE");
 							return cnt;
 				case TOKEN_SIGNAL:
-							return cnt==0 ? -1 : cnt;
+							{
+							final int r = cnt==0 ? -1 : cnt;
+							if (TRACE) TOUT.println("readDoubleBlockImpl()="+r+", signal LEAVE");
+							return r;
+							}
 				case TOKEN_BOUNDARY:
 							//boundary will be undestood as an "empty" and parsed correctly
 							//fallthrough.
@@ -783,6 +866,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 							cnt++;
 			}
 		};
+		if (TRACE) TOUT.println("readDoubleBlockImpl()="+cnt+" read all, LEAVE");
 		return cnt;
 	};
 		
@@ -797,7 +881,8 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	@SuppressWarnings("fallthrough")
 	@Override protected int readCharBlockImpl(char [] buffer, int offset, int length)throws IOException
 	{
-		//The block and elementary processing differs of 
+		if (TRACE) TOUT.println("readCharBlockImpl ENTER");
+		//The block and elementary processing differs at signal and eof treatment
 		int cnt = 0;
 		loop:
 		while(length-->0)
@@ -805,14 +890,21 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 			switch(hasUnreadToken())
 			{
 				case TOKEN_EOF:
+							if (TRACE) TOUT.println("readCharBlockImpl, eof");
 							if (cnt==0) throw new EUnexpectedEof();
+							if (TRACE) TOUT.println("readCharBlockImpl()="+cnt+", eof, LEAVE");
 							return cnt;
 				case TOKEN_SIGNAL:
-							return cnt==0 ? -1 : cnt;
+							{
+							final int r = cnt==0 ? -1 : cnt;
+							if (TRACE) TOUT.println("readCharBlockImpl()="+r+", signal LEAVE");
+							return r;
+							}
 				case TOKEN_BOUNDARY:
 							//in case of char we need to process it by ourselves,
 							//because readCharImpl will crawl through all boundary
 							//and throw ENoMoreData.
+							if (TRACE) TOUT.println("readCharBlockImpl(), stitching tokens");
 							tokenIn();	//consume it.
 							continue;
 				default:
@@ -821,6 +913,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 							cnt++;
 			}
 		};
+		if (TRACE) TOUT.println("readCharBlockImpl()="+cnt+" read all, LEAVE");
 		return cnt;
 	};
 		
@@ -834,7 +927,8 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	@SuppressWarnings("fallthrough")
 	@Override protected int readStringImpl(Appendable characters, int length)throws IOException
 	{
-		//The block and elementary processing differs of 
+		if (TRACE) TOUT.println("readStringImpl ENTER");
+		//The block and elementary processing differs at signal and eof treatment
 		int cnt = 0;
 		loop:
 		while(length-->0)
@@ -842,14 +936,21 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 			switch(hasUnreadToken())
 			{
 				case TOKEN_EOF:
+							if (TRACE) TOUT.println("readStringImpl, eof");
 							if (cnt==0) throw new EUnexpectedEof();
+							if (TRACE) TOUT.println("readStringImpl()="+cnt+", eof, LEAVE");
 							return cnt;
 				case TOKEN_SIGNAL:
-							return cnt==0 ? -1 : cnt;
+							{
+							final int r = cnt==0 ? -1 : cnt;
+							if (TRACE) TOUT.println("readStringImpl()="+r+", signal LEAVE");
+							return r;
+							}
 				case TOKEN_BOUNDARY:
-							//in case of string we need to process it by ourselves,
+							//in case of char we need to process it by ourselves,
 							//because readCharImpl will crawl through all boundary
 							//and throw ENoMoreData.
+							if (TRACE) TOUT.println("readStringImpl(), stitching tokens");
 							tokenIn();	//consume it.
 							continue;
 				default:
@@ -858,6 +959,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 							cnt++;
 			}
 		};
+		if (TRACE) TOUT.println("readStringImpl()="+cnt+" read all, LEAVE");
 		return cnt;
 	};
 	@Override protected char readStringImpl()throws IOException,ENoMoreData
