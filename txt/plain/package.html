@@ -9,158 +9,93 @@
 <body>
       An oversimplified text format laid directly on
       <code>sztejkat.abstractfmt.txt</code> engines.
-      <p>
-      The main purpose of this format is to provide a test bed 
-      for text format engines, but it can be used for regular,
-      production purposes.
-
+      
       <h1>Format description</h1>
       A text format using UTF-8 encoding.
       All characters are allowed, BOM on the beginning of stream is not allowed.
-      
-      <h2>Notation</h2>
-      A reg-ex like BNF:
-      <pre>
-           begin_signal:= empty_char* &lt;
-           noob:= empty_char+ *
-           boop:= empty_char? x
-           escaped_char:= x | y
-           data:-  ^( x | y ) 
-      </pre>
-      means:
-      <br><i>"The 'begin_signal' is encoded as any number of 'empty_char' followed by &lt;"</i>
-      <br><i>"The 'noob' is encoded as at least one 'empty_char' followed by *"</i>
-      <br><i>"The 'boop' is encoded as one or zero 'empty_char' followed by x"</i>
-      <br><i>"The 'escaped_char' is either x or y"</i>
-      <br><i>"The 'data' is anything except x or y"</i>
-
-      <h2>Signal</h2>
-      This format does not support neither names registry nor end-begin optimization.
-      <h3>Begin signal</h3>
-      Begin signal is encoded as
-      <pre>
-           begin_signal:=  * signal_name
-           					|
-           				  <i>start of file</i> * signal_name
-           signal_name:=   string_token_body
-           					|
-           				   plain_token_body
-           empty_char:= any Java whitespace, including end-of-lines.
-      </pre>
-      The <code>string_token_body</code> form of signal name is chosen
-      when signal name does not fit the definition of <code>plain_token_body</code>. 
-
-      <h3>End signal</h3>
-      Begin signal is encoded as
-      <pre>
-            end_signal:= empty_char* ;
-      </pre>
-
-
-      <h2>Tokens</h2>
-      <h3>Plain token</h3>
-      Plain token is encoded as:
-      <pre>
-           plain_token:=  plain_token_body
-           plain_token_body:= (^( empty_char |  token_separator | " | * | ; ))*           
-      </pre>
-      
-
-      <h3>String token</h3>
-      String token is encoded as:
-      <pre>
-           string_token:= string_token_body
-           string_token_body:= " escaped_char* "
-           escaped_char:= ^" | ""
-      </pre>
-      <i>Inside a string token we escape the " by doubling it "". Anything else is allowed
-      and stored without any escaping, including end of lines.</i>.
-      
-      <h3>Entire file</h3>
-      <pre>
-        file:= body? (struct body?)*
-        body:= empty_char* ((plain_token | string_token) ( empty_char * token_separator empty_char * (plain_token | string_token))*)?
-        struct:= empty_char* begin_signal 
-        			(
-        				( body? empty_char* )
-        				|
-        				( body? struct? body? )
-        			) empty_char* end_signal
-      </pre>
-      
-      <h2>Numbers and etc.</h2>
-      Compatible with <code>sztejkat.abstractfmt.txt.ATxtReadFormat0</code>,
-      produced by <code>sztejkat.abstractfmt.txt.ATxtWriterFormat0</code>.
       <p>
-      Basically it means that any token, either plain or string can be parsed to
-      numbers and any number can be parsed as a sequence of characters. This allows
-      very flexible parsing, but may produce confusing results if intentionally
-      used to abuse data.
-      <p>
-      Notice we are using . as decimal separator.
-      <p>
-      For an example:
-      <pre>
-           123.4,3
-      </pre>
-      can be parsed as: <code>'1','2','3','.','3'</code> characters,
-      <code>"123.43"</code> string <code>123, 3</code> integers,
-      <code>true, true</code> boolean and etc. and etc.
-
-
-      <h1>Example</h1>
-      <h2>Simple example</h2>
-      A stream produced by <code>IStructWriteFormat</code> calls:
-      <pre>
-      	begin("int")
-      	writeInt(34458)
-      	end()
-      </pre>
-      looks like: 
-      <pre>
-      *int 34458;
-      </pre>
-      However following are also correct:
-      <pre>
-      *int
-         34458
-      ;
-      </pre>
-      and below also represents the same content:
-      <pre>
-      *"int" "34458" ;
-      </pre>
-      due to the fact, that "" are used only to enclose a token
-      without forcing it to actually be implemented as a text.
+      This format does not implement neither "end-begin" optimization nor name
+      registry.
       
-      <h2>Complex example</h2>
-      A stream produced by <code>IStructWriteFormat</code> calls:
+      
+      <h1>Sytax description</h1>
+      The syntax definiion is using a simplfied BNF notation
       <pre>
-      	begin("Joanna d'Arc")
-      	writeDouble(1.58)
-      	writeDouble(45.4)
-      		begin("city")
-      			writeString("bolongque")
-      			writeString(" western")
-      		end()
-      	end()
+           a:= expression &larr; syntax element defined by an "expression"
       </pre>
-      looks like: 
+      where expression is a either
       <pre>
-      *"Joanna d'Arc" 1.58, 45.4 *city "bolongque"," western";; 
+      		sytax_element <i>operator</i>
       </pre>
-      Notice, we do not require to stich separate string block writes to one string in a file,
-      but we do require that during read it <u>is</u> stitched to one continous block.
-
-      <h2>Other examples</h2>
-      An empty structure
+      or
       <pre>
-      *signal;
+      		character <i>operator</i>
       </pre>
-      A structure with an empty name
-      containg two other empty structures:
+      where operator is optional and can be:
       <pre>
-      **moe;*moe;;
+      	* - zero or more times
+      	| - or
+      	() - grouped expression
+      	+ - one or more time
+      	? - zero or one time.
       </pre>
+      and characters are:
+      <pre>
+      	class:<i>description of character class</i> - specific unicode class
+      	. - any character
+      	[a-z,0-9] - any character from within range
+      	^[a-z,0-9] - any character except those from within range
+      </pre>
+      
+      
+      <h1>Syntax definition</h1>
+      The whole stream is defined as:
+      <pre>
+      	stream:= stream_element *
+      </pre>
+      where
+      <pre>
+      	stream_element:=
+      					comment |
+      					empty_character |
+      					struct |
+      					content ( empty_character* , empty_character* content)*
+      	content:=
+      				plain_token  |
+      				quoted_token 
+      	
+      	comment:= # (^[newline_character])*
+      	empty_character:= class:unicode whitespace, including new-lines
+      	plain_token:= (^[empty_character , ; * # " ])*
+      	quoted_token:= " (^["] | ("") )* "
+      	struct:= begin stream_element* end 
+      	begin:= [*]plain_token |
+      			[*]quoted_token
+      	end:= ;
+      </pre>
+      what would be in a less formal terms:
+      <ul>
+      	<li>comment starts with # and lasts till end of line. Comments can happen anywhere, including
+      	inside plain tokens but exluding quoted tokens and do not affect syntax;</li>
+      	<li>plain tokens is made of non-white-spaces and excludes ,;*"#;</li>
+      	<li>quoted token is made of any characters enclosed in "" where " is escaped by doubling it;</li>
+      	<li>tokens are separated by any white-spaces and ,;</li>
+      	<li>struct starts with * followed by name of begin signal and terminates with ; </li>
+      	<li>You don't need , between structs;</li>
+      	<li>two consequenct , , with any spaces do indicate an empty token;</li>
+      </ul>
+      <h2>Examples</h2>
+      <pre>
+      # This is a file
+      *start; # this is an empty structure
+      123,
+      33,44,"55" #those are numbers
+      *"#complex name"33,"string of martini"; #and a structure with a content.
+      </pre>
+      
+      <h1>Parsing tokens</h1>
+      This format is using rules found in <code>sztejkat.abstractfmt.txt.ATxtReadFormat0</code>
+      and basically does everything possible to parse tokens or fragments of them into
+      what You do request.
 </body>
 </html>

@@ -7,46 +7,60 @@ import java.io.IOException;
 	A bottom most layer of text based formats providing transformation
 	of tokens into primitive data, reading end.
 	
-	<h1>Tokens</h1>
-	This class assumes, that the text between signals can be divided 
-	into characters and "tokens".
+	<h1>Parsing rules</h1>
+	This class is responsible only for parsing a content between signals.
+	This is done by using {@link #tokenIn} and {@link #hasUnreadToken}.
+	<p>
+	This class assumes that the content between signals can be split 
+	into "tokens".
 	
-	<h2>Elementary primitives except char</h2>
-	When this class is processing elementary primitives except character
-	it always buffers the entire "token" and makes an attempt to parse 
-	it the best way it can do it.
 	
-	<h2>Elementary char or block chars and strings</h2>
-	When this class is processing chars or strings it always requests
-	a single token character.
+	<h2>Tokens</h2>
+	The "token" is made of all characters returned by {@link #tokenIn}
+	which are regular characters (not <code>TOKEN_xxx</code>).
+	Especially encountering {@link #TOKEN_BOUNDARY} control character
+	always indicates termination of a token even if there was no regular
+	character and form a token of zero characters in length.
 	
-	<h1>Token classes</h1>
-	Altough this is not directly used in this class it assumes, that You 
-	may have two classes of tokens:
-	<ul>
-		<li>plain tokens, for numeric values;</li>
-		<li>string tokens for texts;</li>
-	</ul>
-	For an example two plain tokens followed by two string tokens may look like:
-	<pre>
-		1.234 3453 "mortimer" "backend"
-	</pre>
-	Even tough this class does not make any distinction between them one should 
-	consider following examples:
 	
-	<h2>Example 1</h2>
-	<pre>
-		"1.234 455.55"
-	</pre>
-	This is a single token and when requested to be processed by <code>readDouble</code>
-	the syntax error will be thrown.
+	<h2>Parsing tokens</h2>
+	Tokens may be either fully parsed or partially parsed. 
 	
-	<h2>Example 2</h2>
-	<pre>
-		3 " pieces of " "bread"
-	</pre>
-	These are three tokens, but when processed by block string or character routines
-	the produced string will be "3 pieces of bread".
+	<h2>Numeric and boolean parsing</h2>
+	Numeric and boolean parsing either parses all characters left in a partially
+	parsed token or fetches complete next token and parse it.
+	<p>
+	If the token is empty numeric parsing returns 0 and boolean parsing returns "false".
+	<p>
+	The maximum size of numeric tokens is limited and set in constructor.
+	
+	<h3>Boolean parsing</h3>
+	Boolean parsing recognizes either "false" or "true" (case insensitive) tokens,
+	"0" or "1" or any value which can be parsed to numeric floating point or numeric
+	integer and compared with zero. Zero numeric value gives "false", non zero gives "true".
+	
+	<h3>Numeric parsing</h3>
+	Integer numeric parsing makes an attempt to convert number to java Number instance of
+	apropriate type by the <code>XXX.decode</code> method and if it fails by
+	<code>Double.parseDouble</code> method.
+	<p>
+	Floating point numeric parsing uses <code>Integer.decode</code> as a fallback
+	if floating point parsing fails.
+	
+	
+	<h2>Character parsing</h2>
+	Character parsing is always processing tokens partially, character per-character.
+	If it encounters empty token, the character <code>(char)0</code> is returned.
+	<p>
+	If the token is fully consumed it reads next token and starts parsing it.
+	
+	
+	<h1>Sequences</h1>
+	Sequences are parsed as sequences of elementary values and are using exactly the
+	same rules as above.
+	<p>
+	There is no indicator which can be used to tell apart an element of sequence from
+	a single primitive element. 
 	
 */
 public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
@@ -64,13 +78,13 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
          protected static final int  TOKEN_BOUNDARY = -3;
          
          
-         	/** A buffer in which we do complete tokens */
+         	/** A buffer in which we do complete tokens
+         	during "token mode".
+         	*/
          	private final StringBuilder token_completion_buffer;
          	/** A size limit for token completion */
          	private final int token_size_limit;
-         	/** Set to true, to indicate that the fetching routine might
-         	not have consumed the token boundary.*/
-			private boolean token_boundary_not_consumed;
+         	
     /* ***************************************************************************
 	
 			Construction
@@ -113,8 +127,8 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 				calls to this method should make an attempt to read more data;</li>
 				<li>{@link #TOKEN_BOUNDARY} - when end of token is reached. Subsequent 
 				calls to this method should look for a start of next token
-				and return either return 0...0xFFFF or {@link #TOKEN_BOUNDARY} when found token is
-				empty (contains zero characters);
+				and return either return 0...0xFFFF or {@link #TOKEN_BOUNDARY} 
+				when found token is	empty (contains zero characters);
 				</li>
 			</ul>
 	@throws IOException if failed by any means.
@@ -142,20 +156,20 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	@Override protected boolean hasElementaryDataImpl()throws IOException
 	{
 		if (TRACE) TOUT.println("hasElementaryDataImpl ENTER");
+		
 		switch(hasUnreadToken())
 		{
 			case 0:
 							if (TRACE) TOUT.println("hasElementaryDataImpl=true, token LEAVE");
 							return true;
 			case TOKEN_BOUNDARY:
-						//Boundary seems to a bit tricky.
-						//However the rest of class is defined in such a way
-						//that when boundary will be returned then for sure at least
-						//an empty token is present and such an empty
-						//token will be collected (see collectElementaryToken)
-						//An empty token is a parsable value, so we can say "true".
-						if (TRACE) TOUT.println("hasElementaryDataImpl=true, boundary LEAVE");
-									return true;
+							//Boundary seems to a bit tricky.
+							//However the rest of class is defined in such a way
+							//that when boundary will be returned then for sure at least
+							//an empty token is present and such an empty token
+							//is a parasable value (0 char or 0 numeric).
+							if (TRACE) TOUT.println("hasElementaryDataImpl=true, boundary LEAVE");
+							return true;
 			case TOKEN_SIGNAL:
 							if (TRACE) TOUT.println("hasElementaryDataImpl=false, signal LEAVE");
 							return false;
@@ -165,6 +179,117 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 			default: throw new AssertionError();
 		}
 	};
+	/* ------------------------------------------------------------------------
+			Tokens collection mode.
+	------------------------------------------------------------------------*/
+	/** Collects character from an elementary toke using "character mode".
+	<p>
+	This method collects next token character till eof or signal or boundary is returned
+	from {@link #tokenIn}. 
+	<p>
+	If boundary is found it returns 0 what is consistent with {@link #collectToken}
+	behavior. Otherwise returns a character.
+	<p>
+	If the next character is boundary it is consumed, what is consistent with
+	{@link #collectToken} behaviour.
+	
+	@return collected character 0...0xFFFF or -1 if found end-of-file
+	@throws ENoMoreData if found a signal
+	@throws IOException if failed at low level.
+	*/
+	protected final int collectCharacter()throws IOException
+	{
+		if (TRACE) TOUT.println("collectCharacter ENTER");
+		for(;;)
+		{
+			int c= tokenIn();
+			assert( (c>=TOKEN_BOUNDARY) && (c<=0xFFFF) );
+			switch(c)
+			{
+					case TOKEN_SIGNAL: throw new ENoMoreData();
+					case TOKEN_EOF: return -1;
+					case TOKEN_BOUNDARY:
+							//Now we have a token boundary. collectCharacter always
+							//consumes tailing token boundary and collectToken also does it.
+							//So if we are finding it we have an empty token at hand.
+							if (TRACE) TOUT.println("collectCharacter=0 due to empty token, LEAVE");
+							return (char)0;
+					default:
+							//We got a character. This character may be followed by 
+							//token boundary. If we leave it like that the collectToken will
+							//assume, that the token is empty, while it is a fully legitimately
+							//consumed token.
+							//This will also nicely stitch tokens.
+							switch(hasUnreadToken())
+							{
+								case TOKEN_BOUNDARY:
+										if (TRACE) TOUT.println("collectCharacter, consuming trailing boundary");
+										tokenIn(); break;
+							};
+							if (TRACE) TOUT.println("collectCharacter=\'"+(char)c+"\" LEAVE");
+							return c;
+			}
+		}
+	};	
+	/** Collects elementary token into a shared {@link #token_completion_buffer}
+	and returns it. Collection is done using "token mode".
+	<p>
+	This method do collect all characters till eof, signal or token boundary
+	is returned from {@link #tokenIn}. This includes all characters which are not processed
+	by {@link #collectCharacter}.
+	<p>
+	The trailing boundary is always consumed.
+	<p>
+	The collection is limited in size to {@link #token_size_limit}.
+	
+	@return {@link #token_completion_buffer}.
+	@throws IOException if low level failed.
+	@throws EEof if end-of-file was reached before collecting anything
+	@throws ENoMoreData if signal was reached before collecting anything
+	@throws EFormatBoundaryExceeded if did not finish collecting token before the
+			size limit was reached.
+	*/
+	protected final StringBuilder collectToken()throws IOException
+	{
+		if (TRACE) TOUT.println("collectToken() ENTER");
+		//wipe token buffer.
+		token_completion_buffer.setLength(0);		
+		//Now we do completion.
+		boolean collected = false;	//to properly handle empty strings.
+		collection_loop:
+		for(;;)
+		{
+			//Collect
+			int c = tokenIn();
+			assert( (c>=TOKEN_BOUNDARY) && (c<=0xFFFF) );
+					
+			switch(c)
+			{
+				case TOKEN_SIGNAL:
+							if (TRACE) TOUT.println("collectToken, got TOKEN_SIGNAL");
+							//test if throw or just terminate collection
+							if (token_completion_buffer.length()==0) throw new ENoMoreData();
+							break collection_loop;
+				case TOKEN_EOF:
+							if (TRACE) TOUT.println("collectToken, got TOKEN_EOF");
+							//test if throw or just terminate collection
+							if (token_completion_buffer.length()==0) throw new EUnexpectedEof();
+							break collection_loop;
+				case TOKEN_BOUNDARY:
+							if (TRACE) TOUT.println("collectToken, got terminating TOKEN_BOUNDARY");
+							break collection_loop;
+				default:
+							//plain chars collection, bound
+							if (token_completion_buffer.length()>=token_size_limit)
+								throw new EFormatBoundaryExceeded("Token \""+token_completion_buffer+"...\" too long in current context processing");
+							if (DUMP) TOUT.println("collectToken+=\'"+c+"'(0x"+Integer.toHexString(c)+")");
+							token_completion_buffer.append((char) c);
+			}
+		};
+		if (TRACE) TOUT.println("collectToken()=\""+token_completion_buffer+"\" LEAVE");
+		return token_completion_buffer;
+	};
+	
 	/* --------------------------------------------------------------------------
 				Token comparison
 	--------------------------------------------------------------------------*/
@@ -213,81 +338,8 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 		};
 		return true;
 	};
-	/* --------------------------------------------------------------------------
-				Elementary primitive values.
-	--------------------------------------------------------------------------*/
-	/** Collects elementary token into a shared {@link #token_completion_buffer}
-	and returns it.
-	<p>
-	The collection is limited in size to {@link #token_size_limit}.
-	<p>
-	This method should be NOT used to collect string tokens, even tough it will
-	correctly collect string tokens shorter than token buffer length.
 	
-	@return {@link #token_completion_buffer}.
-	@throws IOException if low level failed.
-	@throws EEof if end-of-file was reached before collecting anything
-	@throws ENoMoreData if signal was reached before collecting anything
-	@throws EFormatBoundaryExceeded if did not finish collecting token before the
-			size limit was reached.
-	*/
-	protected final StringBuilder collectElementaryToken()throws IOException
-	{
-		if (TRACE) TOUT.println("collectElementaryToken() ENTER");
-		//wipe token buffer.
-		token_completion_buffer.setLength(0);
-		//Remember the state. We always consume it.
-		boolean token_boundary_not_consumed_at_entry = token_boundary_not_consumed;
-		this.token_boundary_not_consumed = false;
-		boolean collected = false;	//to properly handle empty strings.
-		collection_loop:
-		for(;;)
-		{
-			//Collect
-			int c = tokenIn();
-			assert( (c>=TOKEN_BOUNDARY) && (c<=0xFFFF) );
-					
-			switch(c)
-			{
-				case TOKEN_SIGNAL:
-							if (TRACE) TOUT.println("collectElementaryToken, got TOKEN_SIGNAL");
-							//test if throw or just terminate collection
-							if (token_completion_buffer.length()==0) throw new ENoMoreData();
-							break collection_loop;
-				case TOKEN_EOF:
-							if (TRACE) TOUT.println("collectElementaryToken, got TOKEN_EOF");
-							//test if throw or just terminate collection
-							if (token_completion_buffer.length()==0) throw new EUnexpectedEof();
-							break collection_loop;
-				case TOKEN_BOUNDARY:
-							//Now there is a tricky part.
-							//If we consume:  34,1234
-							//and we fetch 3 and 4 using readChar() and follow a readInt() call
-							//then boundary token is beeing left because readChar won't touch it.
-							//If however it would be read in sequence readInt() readInt()
-							//then the boundary would have been consumed.
-							//
-							//If however we run readChar(char[]) or string mode then it might
-							//be consumed. Gladly this case may be happily ignored, beacues block
-							//reads are always terminated with
-							if (token_boundary_not_consumed_at_entry)
-							{
-								if (TRACE) TOUT.println("collectElementaryToken, got TOKEN_BOUNDARY, but wasn't consumed");
-								continue collection_loop;
-							}
-							if (TRACE) TOUT.println("collectElementaryToken, got terminating TOKEN_BOUNDARY");
-							break collection_loop;
-				default:
-							//plain chars collection, bound
-							if (token_completion_buffer.length()>=token_size_limit)
-								throw new EFormatBoundaryExceeded("Token \""+token_completion_buffer+"...\" too long in current context processing");
-							if (DUMP) TOUT.println("collectElementaryToken+=\'"+c+"'(0x"+Integer.toHexString(c)+")");
-							token_completion_buffer.append((char) c);
-			}
-		};
-		if (TRACE) TOUT.println("collectElementaryToken()=\""+token_completion_buffer+"\" LEAVE");
-		return token_completion_buffer;
-	};
+	
 	/* --------------------------------------------------------------------------------
 				Primitive related, elementary	
 	--------------------------------------------------------------------------------*/	
@@ -317,7 +369,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	@Override protected boolean readBooleanImpl()throws IOException
 	{
 		if (TRACE) TOUT.println("readBooleanImpl->");
-		StringBuilder b = collectElementaryToken(); //this will throw on Eof/ENoMoreData if nothing is collected.
+		StringBuilder b = collectToken(); //this will throw on Eof/ENoMoreData if nothing is collected.
 		//Detect special texts
 		if (b.length()==0) return false;
 		if (equalsCaseInsensitive(b,"true")) return true;
@@ -361,7 +413,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	@Override protected byte readByteImpl()throws IOException
 	{
 		if (TRACE) TOUT.println("readByteImpl->");
-		StringBuilder b = collectElementaryToken(); //this will throw on Eof if nothing is collected.
+		StringBuilder b = collectToken(); //this will throw on Eof if nothing is collected.
 		//Detect special texts
 		if (b.length()==0) return (byte)0;
 		final String sb = b.toString();				
@@ -396,7 +448,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	@Override protected short readShortImpl()throws IOException
 	{
 		if (TRACE) TOUT.println("readShortImpl->");
-		StringBuilder b = collectElementaryToken(); //this will throw on Eof if nothing is collected.
+		StringBuilder b = collectToken(); //this will throw on Eof if nothing is collected.
 		//Detect special texts
 		if (b.length()==0) return (byte)0;
 		final String sb = b.toString();				
@@ -417,29 +469,17 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 		}
 	};
 	/**  
-		Returns next character in token. If token is terminated moves to next token.
+		Returns next character in token or zero if token is empty.
+		Silently moves across token boundaries.
 	*/	
 	@Override protected char readCharImpl()throws IOException
 	{
 		if (TRACE) TOUT.println("readCharImpl ENTER");
-		for(;;)
-		{
-			int c= tokenIn();
-			assert( (c>=TOKEN_BOUNDARY) && (c<=0xFFFF) );
-			switch(c)
-			{
-					case TOKEN_SIGNAL: throw new ENoMoreData();
-					case TOKEN_EOF: throw new EUnexpectedEof();
-					case TOKEN_BOUNDARY:
-							token_boundary_not_consumed = false;
-							if (TRACE) TOUT.println("readCharImpl, stiching boundary"); 
-							continue;
-					default:
-							if (TRACE) TOUT.println("readCharImpl=\'"+(char)c+"\" LEAVE");
-							token_boundary_not_consumed = true;
-							return (char)c;
-			}
-		}
+		int c= collectCharacter();
+		assert( (c>=-1) && (c<=0xFFFF) );
+		if (c==-1) throw new EUnexpectedEof();
+		if (TRACE) TOUT.println("readCharImpl=\'"+(char)c+"\" LEAVE");
+		return (char)c;
 	};	
 	/**  
 		Processes elementary token as a short value.
@@ -456,7 +496,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	@Override protected int readIntImpl()throws IOException
 	{
 		if (TRACE) TOUT.println("readIntImpl->");
-		StringBuilder b = collectElementaryToken(); //this will throw on Eof if nothing is collected.
+		StringBuilder b = collectToken(); //this will throw on Eof if nothing is collected.
 		//Detect special texts
 		if (b.length()==0) return (byte)0;
 		final String sb = b.toString();				
@@ -492,7 +532,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	@Override protected long readLongImpl()throws IOException
 	{
 		if (TRACE) TOUT.println("readLongImpl->");
-		StringBuilder b = collectElementaryToken(); //this will throw on Eof if nothing is collected.
+		StringBuilder b = collectToken(); //this will throw on Eof if nothing is collected.
 		//Detect special texts
 		if (b.length()==0) return (byte)0;
 		final String sb = b.toString();				
@@ -529,7 +569,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	@Override protected float readFloatImpl()throws IOException
 	{
 		if (TRACE) TOUT.println("readFloatImpl->");
-		StringBuilder b = collectElementaryToken(); //this will throw on Eof if nothing is collected.
+		StringBuilder b = collectToken(); //this will throw on Eof if nothing is collected.
 		//Detect special texts
 		if (b.length()==0) return (byte)0;
 		final String sb = b.toString();
@@ -565,7 +605,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	@Override protected double readDoubleImpl()throws IOException
 	{
 		if (TRACE) TOUT.println("readDoubleImpl->");
-		StringBuilder b = collectElementaryToken(); //this will throw on Eof if nothing is collected.
+		StringBuilder b = collectToken(); //this will throw on Eof if nothing is collected.
 		//Detect special texts
 		if (b.length()==0) return (byte)0;
 		final String sb = b.toString();				
@@ -930,7 +970,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 							continue;
 				default:
 							//In both cases we do process the plain char value.	
-							buffer[offset++] = readCharImpl();	//now it must not throw since we handled it.
+							buffer[offset++] = (char)collectCharacter();	//now it must not throw since we handled it.
 							cnt++;
 			}
 		};
@@ -976,7 +1016,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 							continue;
 				default:
 							//In both cases we do process the plain char value.	
-							characters.append(readCharImpl());	//now it must not throw since we handled it.
+							characters.append((char)collectCharacter());	//now it must not throw since we handled it.
 							cnt++;
 			}
 		};
@@ -988,15 +1028,5 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 		return readCharImpl();
 	};	
 	
-	/* ****************************************************************
 	
-			AStructReadFormatBase0
-	
-	*****************************************************************/
-	/** Overriden to reset {@link #token_boundary_not_consumed} */
-	@Override protected String nextImpl()throws IOException
-	{
-			token_boundary_not_consumed = false;
-			return super.nextImpl();
-	};
 };		

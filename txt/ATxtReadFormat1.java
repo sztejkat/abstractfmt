@@ -227,7 +227,7 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 				</pre>
 				or:
 				<pre>
-	TOKEN(a),TOKEN(b),SEPARATOR( ),SIG_VOID,TOKEN(d), TOKEN(e)
+	TOKEN(a),TOKEN(b),SEPARATOR( ),VOID,TOKEN(d), TOKEN(e)
 				</pre>
 				<p>
 				If we define that white-spaces are not parts of tokens and , is a delimiter
@@ -237,7 +237,7 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 				</pre>
 				emits:
 				<pre>
-	TOKEN(a),TOKEN(b),SIG_VOID,NEXT_TOKEN,SIG_VOID,TOKEN(d),TOKEN(e)
+	TOKEN(a),TOKEN(b),VOID,NEXT_TOKEN,VOID,TOKEN(d),TOKEN(e)
 				</pre>			
 				*/
 				SEPARATOR,

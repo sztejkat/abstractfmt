@@ -20,6 +20,8 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 			static final char END_SIGNAL_CHAR = ';';
 			/** A begin signal char */
 			static final char BEGIN_SIGNAL_CHAR = '*';
+			/** A comment start character */
+			static final char COMMENT_CHAR = '#';
 			
 				/** Where to write. Protected to allow some data injcection in superclasses modifications */
 				protected final Writer out;
@@ -148,6 +150,7 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 			case TOKEN_SEPARATOR_CHAR:
 			case STRING_TOKEN_SEPARATOR_CHAR:
 			case END_SIGNAL_CHAR:
+			case COMMENT_CHAR:  
 			case BEGIN_SIGNAL_CHAR:  return false;
 		};
 		return true;

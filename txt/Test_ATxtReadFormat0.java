@@ -261,7 +261,7 @@ public class Test_ATxtReadFormat0 extends ATest
 		enter();
 		final int [] x = new int[]{ 'c',ATxtReadFormat0.TOKEN_BOUNDARY,
 									'-','2', ATxtReadFormat0.TOKEN_BOUNDARY,
-									ATxtReadFormat0.TOKEN_BOUNDARY,
+									ATxtReadFormat0.TOKEN_BOUNDARY, //this is an empty token processed as zero
 									'a'
 									};
 		DUT d= new DUT(x);
@@ -270,6 +270,7 @@ public class Test_ATxtReadFormat0 extends ATest
 		Assert.assertTrue('c'==d.readChar());
 		Assert.assertTrue('-'==d.readChar());
 		Assert.assertTrue('2'==d.readChar());
+		Assert.assertTrue(0==d.readChar());
 		Assert.assertTrue('a'==d.readChar());
 		leave();
 	}
@@ -1170,6 +1171,141 @@ public class Test_ATxtReadFormat0 extends ATest
 			d.readString();
 			Assert.fail();
 		}catch(EEof ex){}
+		leave();
+	}
+	
+	
+	
+	@Test public void testCharacterModeThenNumber()throws IOException
+	{
+		enter();
+		/*
+			This is a test case in which we check how mixing character mode
+			with numeric mode do behave.
+		*/
+		
+		final int [] x = new int[]{  
+										'a','b',ATxtReadFormat0.TOKEN_BOUNDARY,
+										'3','3',ATxtReadFormat0.TOKEN_BOUNDARY
+										};
+		DUT d= new DUT(x);
+		d.open();
+		Assert.assertTrue(d.readChar()=='a');
+		Assert.assertTrue(d.readChar()=='b');
+		Assert.assertTrue(d.readInt()==33);
+		
+		leave();
+	}
+	
+	@Test public void testCharacterModeWithEmptyThenNumber()throws IOException
+	{
+		enter();
+		/*
+			This is a test case in which we check how mixing character mode
+			with numeric mode do behave.
+		*/
+		
+		final int [] x = new int[]{  
+										'a','b',ATxtReadFormat0.TOKEN_BOUNDARY,ATxtReadFormat0.TOKEN_BOUNDARY,
+										'3','3',ATxtReadFormat0.TOKEN_BOUNDARY
+										};
+		DUT d= new DUT(x);
+		d.open();
+		Assert.assertTrue(d.readChar()=='a');
+		Assert.assertTrue(d.readChar()=='b');
+		Assert.assertTrue(d.readChar()==0);
+		Assert.assertTrue(d.readInt()==33);
+		
+		leave();
+	}
+	
+	@Test public void testPartialCharToNumber()throws IOException
+	{
+		enter();
+		/*
+			This is a test case in which we check how mixing character mode
+			with numeric mode do behave when characters did process only a part of token.
+		*/
+		
+		final int [] x = new int[]{  
+										'1','2',ATxtReadFormat0.TOKEN_BOUNDARY,
+										'3','3',ATxtReadFormat0.TOKEN_BOUNDARY
+										};
+		DUT d= new DUT(x);
+		d.open();
+		Assert.assertTrue(d.readChar()=='1');
+		Assert.assertTrue(d.readInt()==2);
+		Assert.assertTrue(d.readInt()==33);
+		
+		leave();
+	}
+	
+	@Test public void testNumberThenChar()throws IOException
+	{
+		enter();
+		/*
+			This is a test case in which we check how mixing numeric mode
+			with character mode.
+		*/
+		
+		final int [] x = new int[]{  
+										'1','2',ATxtReadFormat0.TOKEN_BOUNDARY,
+										'3','4',ATxtReadFormat0.TOKEN_BOUNDARY
+										};
+		DUT d= new DUT(x);
+		d.open();
+		Assert.assertTrue(d.readInt()==12);
+		Assert.assertTrue(d.readChar()=='3');
+		Assert.assertTrue(d.readChar()=='4');
+		leave();
+	}
+	
+	@Test public void testCharacterWithBoundaryAtSignal()throws IOException
+	{
+		enter();
+		
+		final int [] x = new int[]{  
+										'1','2',ATxtReadFormat0.TOKEN_BOUNDARY,
+										'3','4',
+										//Whatever You think this line is NOT an empty
+										//token. Only two consequent token boundaries
+										//do form an empty token
+										ATxtReadFormat0.TOKEN_BOUNDARY,ATxtReadFormat0.TOKEN_SIGNAL
+										};
+		DUT d= new DUT(x);
+		d.open();
+		Assert.assertTrue(d.readChar()=='1');
+		Assert.assertTrue(d.readChar()=='2');
+		Assert.assertTrue(d.readChar()=='3');
+		Assert.assertTrue(d.readChar()=='4');
+		try{
+			d.readChar();
+			Assert.fail();
+		}catch(ENoMoreData ex){};
+		leave();
+	}
+	
+	@Test public void testhasElementaryDataWithChars()throws IOException
+	{
+		enter();
+		/*
+			This is a test case in which we check how mixing character mode
+			with numeric mode do behave when testing if there are data
+		*/
+		
+		final int [] x = new int[]{  
+										'1','2',ATxtReadFormat0.TOKEN_BOUNDARY,
+										'3','4',ATxtReadFormat0.TOKEN_SIGNAL
+										};
+		DUT d= new DUT(x);
+		d.open();
+		Assert.assertTrue(d.hasElementaryData());
+		Assert.assertTrue(d.readInt()==12);
+		Assert.assertTrue(d.hasElementaryData());
+		Assert.assertTrue(d.readChar()=='3');
+		Assert.assertTrue(d.hasElementaryData());
+		Assert.assertTrue(d.readChar()=='4');
+		Assert.assertTrue(!d.hasElementaryData());
 		leave();
 	}
 };

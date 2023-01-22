@@ -395,17 +395,40 @@ public class Test_CPlainTxtReadFormat extends ATest
 		leave();
 	};
 	
+	@Test public void testCharStitchingWithEmptyToken()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"14,\"\",m,   ,ar"));
+		d.open();
+		Assert.assertTrue(d.readChar()=='1');
+		Assert.assertTrue(d.readChar()=='4');
+		Assert.assertTrue(d.readChar()==0);	//empty ""
+		Assert.assertTrue(d.readChar()=='m');
+		Assert.assertTrue(d.readChar()==0);
+		Assert.assertTrue(d.readChar()=='a');
+		Assert.assertTrue(d.readChar()=='r');
+		Assert.assertTrue(!d.hasElementaryData());
+		leave();
+	};    
+	
 	@Test public void testCharStitching()throws IOException
 	{
 		enter();
 		CPlainTxtReadFormat d=
 				new CPlainTxtReadFormat(
 						new StringReader(
-							"14,\"\",m,,ar"));
+							"14,\"\",m,ar,\"kar\""));
 		d.open();
 		Assert.assertTrue(d.readChar()=='1');
 		Assert.assertTrue(d.readChar()=='4');
+		Assert.assertTrue(d.readChar()==0);	//empty ""
 		Assert.assertTrue(d.readChar()=='m');
+		Assert.assertTrue(d.readChar()=='a');
+		Assert.assertTrue(d.readChar()=='r');
+		Assert.assertTrue(d.readChar()=='k');
 		Assert.assertTrue(d.readChar()=='a');
 		Assert.assertTrue(d.readChar()=='r');
 		Assert.assertTrue(!d.hasElementaryData());
@@ -448,6 +471,56 @@ public class Test_CPlainTxtReadFormat extends ATest
 		Assert.assertTrue(d.readInt()==-77);
 		try{
 				d.readInt();
+				Assert.fail();
+		}catch(EEof ex){};
+		leave();
+	};
+	
+	@Test public void testCommentsWithEmptyStruct()throws IOException
+	{
+		/*
+			A rather brute test showing that comments can be injected
+			in a body of plain toke and outside it.
+			
+			Uses all eol sequences.
+		*/
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"#This is a comment \r"+
+							"*#This is an injected comment\n"+
+							"ma# Again injected comment\r\n"+
+							"mma #Comment\n\r"+
+							";"));
+		d.open();
+		Assert.assertTrue("mamma".equals(d.next()));
+		Assert.assertTrue(!d.hasElementaryData());
+		Assert.assertTrue(null==d.next());
+		Assert.assertTrue(!d.hasElementaryData());
+		try{
+				d.next();
+				Assert.fail();
+		}catch(EEof ex){};
+		leave();
+	};
+	@Test public void testCommentIgnoredInQuoted()throws IOException
+	{
+		/*
+			Check if comment does not influence quouted signal name
+		*/
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"*\"#mamba\" ;"));
+		d.open();
+		Assert.assertTrue("#mamba".equals(d.next()));
+		Assert.assertTrue(!d.hasElementaryData());
+		Assert.assertTrue(null==d.next());
+		Assert.assertTrue(!d.hasElementaryData());
+		try{
+				d.next();
 				Assert.fail();
 		}catch(EEof ex){};
 		leave();

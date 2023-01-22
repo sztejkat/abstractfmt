@@ -33,6 +33,7 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 					}else
 						return c;
 				};
+				
 				/** Arms exception for invalid, unexpected character
 				@param c char to show
 				@return exception armed with line info.
@@ -47,6 +48,56 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 			private final class NOTHING_StateHandler extends TOKEN_BODY_LOOKUP_StateHandler
 			{
 			}
+			
+			private final class COMMENT_StateHandler extends AStateHandler
+			{
+				/** Tests if we have double eol sequence
+				@param current_eol char to report, current recognized eol sequence start.
+				@param next_eol expected next part of eol sequence
+				@throws IOException if failed */
+				private void handlePossibleNextEol(char current_eol,char next_eol)throws IOException
+				{
+					 assert(current_eol!=next_eol);
+					 int j = in.read();
+					 if (j==-1)
+					 {
+						 //in this case this is just an end of a comment
+						 setNextChar(current_eol,ATxtReadFormat1.TIntermediateSyntax.VOID);
+						 popStateHandler();
+					 }else
+					 if (j==next_eol)
+					 {
+						 //this is a part of a a comment, eat it.
+						 setNextChar(current_eol,ATxtReadFormat1.TIntermediateSyntax.VOID);
+						 popStateHandler();
+					 }else
+					 {
+						 //this is not a part of a comment.
+						 in.unread((char)j);	//leave for future processing.
+						 setNextChar(current_eol,ATxtReadFormat1.TIntermediateSyntax.VOID);
+						 popStateHandler();
+					 };
+				};
+				@Override protected void toNextChar()throws IOException
+				{
+					final int i= in.read();
+					//Note: For comments to be fully transparent the EOL must
+					//belong to comment and reported as VOID. We need to handle
+					//all eols: \r \n \r\n \n\r
+					switch(i)
+					{	
+						case -1: popStateHandler();  //eof terminates comment.
+								 setNextChar(-1,null);
+								 break;
+						//handle possible double eol termination.
+						case '\r':handlePossibleNextEol((char)i,'\n'); break;
+						case '\n':handlePossibleNextEol((char)i,'\r'); break;
+						default:
+							//this is a comment, dump it to trash.
+							setNextChar(i,ATxtReadFormat1.TIntermediateSyntax.VOID);
+					}
+				};
+			};
 			/**  We collected {@link CPlainTxtWriteFormat#TOKEN_SEPARATOR_CHAR}
 			     or we started the file, or we collected begin signal completely,
 			     or we collected end signal.
@@ -66,6 +117,11 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 					final int i= read();
 					if (i==-1) return;
 					final char c=(char)i;
+					if (c==CPlainTxtWriteFormat.COMMENT_CHAR)
+					{
+						pushStateHandler(COMMENT);
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
+					}else
 					if (c==CPlainTxtWriteFormat.TOKEN_SEPARATOR_CHAR)
 					{
 						//We don't change state. We indicate to superclass
@@ -86,7 +142,7 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 					{
 						setStateHandler(STRING_TOKEN_BODY);
 						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
-					}else
+					}else					
 					if (isTokenBodyChar(c))
 					{
 						setStateHandler(PLAIN_TOKEN_BODY);
@@ -111,6 +167,11 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 					final int i= read();
 					if (i==-1) return;
 					final char c=(char)i;
+					if (c==CPlainTxtWriteFormat.COMMENT_CHAR)
+					{
+						pushStateHandler(COMMENT);
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
+					}else
 					if (c==CPlainTxtWriteFormat.TOKEN_SEPARATOR_CHAR)
 					{
 						setStateHandler(TOKEN_BODY_LOOKUP);
@@ -148,6 +209,11 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 					final int i= read();
 					if (i==-1) return;
 					final char c=(char)i;
+					if (c==CPlainTxtWriteFormat.COMMENT_CHAR)
+					{
+						pushStateHandler(COMMENT);
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
+					}else
 					if (c==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)
 					{
 						setStateHandler(COLLECTING_STRING_BEGIN_NAME);
@@ -187,6 +253,11 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 					final int i= read();
 					if (i==-1) return;
 					final char c=(char)i;
+					if (c==CPlainTxtWriteFormat.COMMENT_CHAR)
+					{
+						pushStateHandler(COMMENT);
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
+					}else
 					if (isTokenBodyChar(c))
 					{
 						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_NAME);
@@ -300,6 +371,11 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 					final int i= read();
 					if (i==-1) return;
 					final char c=(char)i;
+					if (c==CPlainTxtWriteFormat.COMMENT_CHAR)
+					{
+						pushStateHandler(COMMENT);
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
+					}else
 					if (c==CPlainTxtWriteFormat.BEGIN_SIGNAL_CHAR)
 					{
 						setStateHandler(COLLECTED_BEGIN);
@@ -336,6 +412,7 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 				private final AStateHandler STRING_TOKEN_BODY = new  STRING_TOKEN_BODY_StateHandler();
 				private final AStateHandler PLAIN_TOKEN_BODY = new  PLAIN_TOKEN_BODY_StateHandler();
 				private final AStateHandler COLLECTING_STRING_BEGIN_NAME = new  COLLECTING_STRING_BEGIN_NAME_StateHandler();
+				private final AStateHandler COMMENT = new  COMMENT_StateHandler();
 				/** Push-back input */
 				private final CAdaptivePushBackReader in;
 				

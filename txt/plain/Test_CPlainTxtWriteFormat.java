@@ -14,7 +14,7 @@ import org.junit.Assert;
 	<p>
 	The in-depth tests are left for interop-test cases. 
 */
-public class TestCPlainTxtWriteFormat extends ATest
+public class Test_CPlainTxtWriteFormat extends ATest
 {
 	
 	@Test public void testSingleBoolean()throws IOException
@@ -261,6 +261,27 @@ public class TestCPlainTxtWriteFormat extends ATest
 			
 		leave();
 	};
+	@Test public void testComplexBeginEndSignal_4()throws IOException
+	{
+		enter();
+			StringWriter ow = new StringWriter();
+			CPlainTxtWriteFormat w = new CPlainTxtWriteFormat(ow);
+		
+			w.open();
+			w.begin("#Duuup"); //this DOES require enclosing
+			w.writeChar('a');
+			w.end();
+			w.close();
+			
+			String o = ow.toString();
+			
+			System.out.println(o);
+			
+			Assert.assertTrue("*\"#Duuup\" \"a\";".equals(o));
+			
+		leave();
+	};
+	
 	@Test public void testComplexBeginEndSignal_Empty()throws IOException
 	{
 		enter();
