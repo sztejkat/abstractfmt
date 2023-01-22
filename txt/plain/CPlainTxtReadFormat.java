@@ -44,7 +44,7 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 			};
 			
 			/** Initial state, equal to TOKEN_BODY_LOOKUP */
-			private final class NOTHING_StateHandler extends TOKEN_LOOKUP_StateHandler
+			private final class NOTHING_StateHandler extends TOKEN_BODY_LOOKUP_StateHandler
 			{
 			}
 			/**  We collected {@link CPlainTxtWriteFormat#TOKEN_SEPARATOR_CHAR}
@@ -137,7 +137,9 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 				 now expecting either 
 				 {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR} for "" enclosed name,
 				 or {@link #isTokenBodyChar} for plain name or 
-				 or {@link #isEmptyChar} for non name signal. 
+				 or {@link #isEmptyChar},
+				  {@link CPlainTxtWriteFormat#END_SIGNAL_CHAR},
+				  {@link CPlainTxtWriteFormat#BEGIN_SIGNAL_CHAR} for empty non name signal.
 				 */
 			private final class COLLECTED_BEGIN_StateHandler extends AStateHandler
 			{
@@ -150,6 +152,16 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 					{
 						setStateHandler(COLLECTING_STRING_BEGIN_NAME);
 						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_NAME_VOID);
+					}else
+					if (c==CPlainTxtWriteFormat.END_SIGNAL_CHAR)
+					{
+						setStateHandler(TOKEN_LOOKUP);
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_END);
+					}else
+					if (c==CPlainTxtWriteFormat.BEGIN_SIGNAL_CHAR)
+					{
+						setStateHandler(TOKEN_LOOKUP);
+						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_BEGIN);
 					}else
 					if (isTokenBodyChar(c))
 					{

@@ -11,6 +11,65 @@
       which do share the same way of encoding strings and values into
       a "payload" of txt signals and some facilities necessary for an
       efficient text stream processing.
-
+      <p>
+      Even tough it doesn't look like that, the parsing of text formats
+      is much, much more complex than parsing binary formats.
+      Mostly because "tokens" in text formats are variable in size
+      and interleaved with variable size separators while in case
+      of binary formats tokens are of known size and stuffed one
+      after another. Binary formats rarely suffer from "syntax errors",
+      while invalid characters, unexpected separators and etc. are
+      common in text formats.
+      <p>
+      That's why text processing needs much, much more care than
+      binary processing and is at least three fold more complex.
+      <p>
+      This package do define some important services:
+      <ul>
+          <li><a href="ATxtWriteFormat0.html">ATxtWriteFormat0</a>
+                 class which performs a "standard" encoding of all
+                 primitive values and sequences and provide hooks
+                 for format customization if necessary;</li>
+          <li><a href="ATxtReadFormat0.html">ATxtReadFormat0</a>
+                 which provides reverse services based on simple
+                 character token-to-token iteration focused
+                 on recognizing when character belongs to a token
+                 and when not.
+                 <p>
+                 This class is generic and makes
+                 no assumption about how signals are recognized
+                 in stream - it is only focused on detecting
+                 tokens containing primitive elements;</li>
+          <li><a href="ATxtReadFormat1.html">ATxtReadFormat1</a>
+                 which extends capabilities of <code>ATxtReadFormat0</code>
+                 to additionally qualify characters belonging to
+                 other syntax elements, like signals, name, separators
+                 and etc. Based on that information it provides
+                 all necessary methods and requires from subclasses
+                 only to provide an apropriate character recognition
+                 and qualification.
+                 <p>
+                 This class makes some assumptions about how signals
+                 are arranged and represented in text, so it may be
+                 not feasible for every format.
+                 </li>
+          <li><a href="ATxtReadFormatStateBase0.html">ATxtReadFormatStateBase0</a>
+                 which extends  <code>ATxtReadFormat1</code> concept and
+                 defines an abstract <i>character parsing state machine</i> used
+                 to provide necessary syntax recognition.
+                 <p>
+                 This machine is based on a set of <i>state handlers</i>
+                 which are used to fetch characters, qualify them and
+                 perform state transition to an another state handler.
+                 <p>
+                 Most text processing can be implemented that way without
+                 any significant pondering. All You need it is to be able
+                 to draw a state transition graph for You format and figure out
+                 what character qualifiers to report in what state.
+                 <p>
+                 If Your format does not fit into <code>ATxtReadFormat1</code>
+                 realm You may still use this class as a pattern.
+                 </li>
+      </ul>
 </body>
 </html>

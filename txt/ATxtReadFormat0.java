@@ -68,8 +68,9 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
          	private final StringBuilder token_completion_buffer;
          	/** A size limit for token completion */
          	private final int token_size_limit;
-    
-			  
+         	/** Set to true, to indicate that the fetching routine might
+         	not have consumed the token boundary.*/
+			private boolean token_boundary_not_consumed;
     /* ***************************************************************************
 	
 			Construction
@@ -235,6 +236,9 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 		if (TRACE) TOUT.println("collectElementaryToken() ENTER");
 		//wipe token buffer.
 		token_completion_buffer.setLength(0);
+		//Remember the state. We always consume it.
+		boolean token_boundary_not_consumed_at_entry = token_boundary_not_consumed;
+		this.token_boundary_not_consumed = false;
 		boolean collected = false;	//to properly handle empty strings.
 		collection_loop:
 		for(;;)
@@ -256,7 +260,22 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 							if (token_completion_buffer.length()==0) throw new EUnexpectedEof();
 							break collection_loop;
 				case TOKEN_BOUNDARY:
-							if (TRACE) TOUT.println("collectElementaryToken, got TOKEN_BOUNDARY");
+							//Now there is a tricky part.
+							//If we consume:  34,1234
+							//and we fetch 3 and 4 using readChar() and follow a readInt() call
+							//then boundary token is beeing left because readChar won't touch it.
+							//If however it would be read in sequence readInt() readInt()
+							//then the boundary would have been consumed.
+							//
+							//If however we run readChar(char[]) or string mode then it might
+							//be consumed. Gladly this case may be happily ignored, beacues block
+							//reads are always terminated with
+							if (token_boundary_not_consumed_at_entry)
+							{
+								if (TRACE) TOUT.println("collectElementaryToken, got TOKEN_BOUNDARY, but wasn't consumed");
+								continue collection_loop;
+							}
+							if (TRACE) TOUT.println("collectElementaryToken, got terminating TOKEN_BOUNDARY");
 							break collection_loop;
 				default:
 							//plain chars collection, bound
@@ -412,10 +431,12 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 					case TOKEN_SIGNAL: throw new ENoMoreData();
 					case TOKEN_EOF: throw new EUnexpectedEof();
 					case TOKEN_BOUNDARY:
+							token_boundary_not_consumed = false;
 							if (TRACE) TOUT.println("readCharImpl, stiching boundary"); 
 							continue;
 					default:
 							if (TRACE) TOUT.println("readCharImpl=\'"+(char)c+"\" LEAVE");
+							token_boundary_not_consumed = true;
 							return (char)c;
 			}
 		}
@@ -967,4 +988,15 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 		return readCharImpl();
 	};	
 	
+	/* ****************************************************************
+	
+			AStructReadFormatBase0
+	
+	*****************************************************************/
+	/** Overriden to reset {@link #token_boundary_not_consumed} */
+	@Override protected String nextImpl()throws IOException
+	{
+			token_boundary_not_consumed = false;
+			return super.nextImpl();
+	};
 };		

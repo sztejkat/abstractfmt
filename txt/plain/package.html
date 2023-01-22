@@ -92,7 +92,21 @@
       Compatible with <code>sztejkat.abstractfmt.txt.ATxtReadFormat0</code>,
       produced by <code>sztejkat.abstractfmt.txt.ATxtWriterFormat0</code>.
       <p>
+      Basically it means that any token, either plain or string can be parsed to
+      numbers and any number can be parsed as a sequence of characters. This allows
+      very flexible parsing, but may produce confusing results if intentionally
+      used to abuse data.
+      <p>
       Notice we are using . as decimal separator.
+      <p>
+      For an example:
+      <pre>
+           123.4,3
+      </pre>
+      can be parsed as: <code>'1','2','3','.','3'</code> characters,
+      <code>"123.43"</code> string <code>123, 3</code> integers,
+      <code>true, true</code> boolean and etc. and etc.
+
 
       <h1>Example</h1>
       <h2>Simple example</h2>
@@ -116,6 +130,8 @@
       <pre>
       *"int" "34458" ;
       </pre>
+      due to the fact, that "" are used only to enclose a token
+      without forcing it to actually be implemented as a text.
       
       <h2>Complex example</h2>
       A stream produced by <code>IStructWriteFormat</code> calls:
@@ -133,7 +149,18 @@
       <pre>
       *"Joanna d'Arc" 1.58, 45.4 *city "bolongque"," western";; 
       </pre>
-      Notice, we do not stich separate string block writes to one string in a file,
-      however during read it <u>is</u> stitched to one continous block.
+      Notice, we do not require to stich separate string block writes to one string in a file,
+      but we do require that during read it <u>is</u> stitched to one continous block.
+
+      <h2>Other examples</h2>
+      An empty structure
+      <pre>
+      *signal;
+      </pre>
+      A structure with an empty name
+      containg two other empty structures:
+      <pre>
+      **moe;*moe;;
+      </pre>
 </body>
 </html>

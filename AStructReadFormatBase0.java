@@ -46,6 +46,7 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
          			/** Set to true if {@link TSignal#SIG_END_BEGIN}
          			is returned by {@link #readSignal} */
          			private boolean begin_pending;
+       
 		/* *******************************************************
 			
 			Services required from subclasses
