@@ -77,7 +77,10 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	/** Writes single character of token.
 	<p>
 	Invoked when token is open by {@link #openPlainToken} or {@link #openStringToken}
-	@param c char to write
+	<p>
+	This method assumes, that lower encoding is capable of handling any 
+	combination of <code>char</code> values, including unallowed surogate pairs. 
+	@param c char to write.
 	@throws IOException if failed
 	*/
 	protected abstract void outToken(char c)throws IOException;
@@ -125,14 +128,15 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 		closePlainToken();
 	};
 	
-	
 	/** Called by {@link #writeCharImpl} to produce char token.
-	<p>
-	Default implementation returns {@link Character#toString}
 	@param v value 
-	@return text representation of v. Yes, intentionally string.
+	@return text representation of v, {@link Character.toString}. 
 	*/
-	protected String formatChar(char v){ return Character.toString(v); };
+	protected String formatChar(char v)
+	{
+		return Character.toString(v);
+	};
+	/** Uses {@link #formatChar} */
 	@Override protected void writeCharImpl(char v)throws IOException
 	{
 		openStringToken();

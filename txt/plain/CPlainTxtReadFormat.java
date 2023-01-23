@@ -427,7 +427,7 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 	public CPlainTxtReadFormat(Reader in)
 	{
 		super(0,//int name_registry_capacity - disabled
-			  64//int token_size_limit - basically max integer representation
+			  64//int token_size_limit 
 			  );
 		assert(in!=null);
 		this.in = new CAdaptivePushBackReader(in,1,1);

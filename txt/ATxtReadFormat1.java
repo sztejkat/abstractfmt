@@ -785,6 +785,7 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 		for(;;)
 		{
 			final TIntermediateSyntax stx= peekSyntax();
+			if (DUMP) TOUT.println("collectSignalName() stx="+stx);
 			if (stx==null)
 			{
 				if (where_to.length()==0)
@@ -795,14 +796,21 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 			switch(stx)
 			{
 				case VOID: 	
-				case SIG_NAME_VOID: consume(); break;
+				case SIG_NAME_VOID:
+						if (DUMP) TOUT.println("collectSignalName(), void, doing nothing");
+						consume(); break;
 				case SIG_NAME:
+						{
+						char c = (char)peekChar();
+						if (DUMP) TOUT.println("collectSignalName(), appending \'"+c+"\'(0x"+Integer.toHexString(c)+")");
 						if (where_to.length()>=getMaxSignalNameLength()) throw new EFormatBoundaryExceeded("Signal name \""+where_to.toString()+"\" too long");
-						where_to.append((char)peekChar());						
+						where_to.append(c);						
 						consume();
+						}
 						break;
 				default:
 						//not consume, terminate collection.
+						if (DUMP) TOUT.println("collectSignalName(), non sig name, finishing collection");
 						break loop;						
 			}
 		}

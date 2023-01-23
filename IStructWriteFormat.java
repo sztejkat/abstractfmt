@@ -25,13 +25,19 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	/** <a name="BEGIN"></a>
 	Writes "begin" signal opening the structure.
 	
-	@param name non null name of a structure which now begins.
+	@param name non null name of a structure which now begins. A name 
+			should be a well formed unicode string, that is it <u>should not</u>
+			carry un-paired surogates as they do not represent a valid text.
+			How the class behaves if such an un-paired surogate is present
+			is implementation-dependent.
 			
 	@throws AssertionError if <code>name</code> is null.
 	@throws EFormatBoundaryExceeded if name of signal is too long.
 		See {@link IFormatLimits#getMaxSignalNameLength}
 	@throws EFormatBoundaryExceeded if structure recursion depth control is enabled
 		and this limit is exceeded. See {@link IFormatLimits#setMaxStructRecursionDepth}
+	@throws IllegalArgumentException if name contains invalid surogates combination
+		and format does not support such non-unicode characters.
 	@throws IOException if low level i/o fails or stream is closed/not opened
 	*/
 	public void begin(String name)throws IOException;
@@ -100,7 +106,11 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	@throws IOException --//--
 	*/
 	public void writeByte(byte v)throws IOException;
-	/** See {@link #writeBoolean(boolean)}
+	/** See {@link #writeBoolean(boolean)} and {@link #writeCharBlock(char[],int,int)}.
+	<p>
+	Alike <code>char[]</code> block write this method is explicite required to
+	be able to store the whole 0x0000...0xFFFF range regardless if the sequence
+	of characters to create a valid unicode code point.
 	@param v --//--
 	@throws IOException --//--
 	*/
@@ -203,10 +213,15 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	Note: sequence written with this method is <u>not</u> compatible with sequence 
 	written with {@link #writeCharBlock}.
 	</i>
-	@param characters --//--
+	<p>See also notes in {@link #writeCharBlock(char,int,int)}.
+	@param characters a character sequence. This sequence <i>should not</i> contain
+			un-paired surogate characters, but it is not required to be detected
+			since they are not allowed to appear in any unicode text.
 	@param offset --//--
 	@param length --//--
 	@throws IOException --//--
+	@throws IllegalArgumentException if implmentation will detect invalid surogate
+			pair.
 	*/
 	public void writeString(CharSequence characters, int offset, int length)throws IOException;		
 	/** See {@link #writeBooleanBlock(boolean[],int,int)}
@@ -226,10 +241,28 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	/**  See {@link #writeBooleanBlock(boolean[],int,int)}
 	This method write sequence of characters using fast, random access mode, ie. as a
 	sequence of 16 bit UTF-16 characters.
-	<p>		
-	<i>
-	See notes in {@link #writeString(CharSequence,int,int)}.
-	</i>
+	<p>
+	Difference between String and char [] arrays.
+	<p>
+	Since JDK8 char is no longer 1:1 mapped with "unicode code-point", as since that moment
+	unicode allowed more than 65536 different characters. To keep JAVA compatible with
+	previous versions the decision was made, that char is no longer a "unicode character"
+	and if a sequence of char[] is used to represent String it is assumed internally
+	using UTF-16 encoding:
+	<pre>
+	U - input character 0x1_0000...0x10_FFFF
+	U' = yyyy_yyyy_yyxx_xxxx_xxxx  // U - 0x10000
+	first char  = 1101_10yy_yyyy_yyyy      // 0xD800 + yyyyyyyyyy
+	second char = 1101_11xx_xxxx_xxxx      // 0xDC00 + xxxxxxxxxx
+	</pre>
+	The {@link ##writeString(CharSequence,int,int)} <u>is allowed</u> to barf or incorrectly
+	encode texts which do contain 0xD8xx followed by a character which does not belong to 
+	0xDCxx realm and thous do not form a valid "unicode code-point" since such characters
+	do not exist in unicode realm.
+	<p>
+	This method is however explicite <u>required</u> to allow <u>absolutely any</u>
+	combination of <code>char</code> primitives, regardless if they are valid code points or
+	not.
 	@param buffer --//--
 	@param offset --//--
 	@param length --//--

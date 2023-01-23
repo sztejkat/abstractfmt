@@ -10,6 +10,11 @@ import java.io.Writer;
 */
 public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 {
+		 private static final long TLEVEL = SLogging.getDebugLevelForClass(CPlainTxtWriteFormat.class);
+         private static final boolean TRACE = (TLEVEL!=0);
+         private static final boolean DUMP = (TLEVEL>=2);
+         private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("CPlainTxtWriteFormat.",CPlainTxtWriteFormat.class) : null;
+ 
 			/** A token separator character */
 			static final char TOKEN_SEPARATOR_CHAR = ',';
 			/** A default empty character to write*/
@@ -68,6 +73,7 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 	******************************************************************/
 	@Override protected void openPlainToken()throws IOException
 	{	
+		if (TRACE) TOUT.println("openPlainToken() ENTER");
 		//handle pending operation
 		switch(token_state)
 		{
@@ -75,23 +81,28 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 								out.write(DEFAULT_EMPTY_CHAR);
 								break;
 			case PLAIN_TOKEN_CLOSING: 
+								if (TRACE) TOUT.println("openPlainToken(), closing pending plain token");
 								out.write(TOKEN_SEPARATOR_CHAR); 
 								break;
 			case STRING_TOKEN_CLOSING:
+							    if (TRACE) TOUT.println("openPlainToken(), closing pending string token");
 								out.write(STRING_TOKEN_SEPARATOR_CHAR);
 								out.write(TOKEN_SEPARATOR_CHAR); 
 								break;
 		};
 		token_state = TTokenState.PLAIN_TOKEN_OPENED;
+		if (TRACE) TOUT.println("openPlainToken() LEAVE");
 	};
 	@Override protected void closePlainToken()throws IOException
 	{
+		if (TRACE) TOUT.println("closePlainToken()");
 		assert(token_state==TTokenState.PLAIN_TOKEN_OPENED);
 		//rememeber for the future.
 		token_state = TTokenState.PLAIN_TOKEN_CLOSING;
 	};
 	@Override protected void openStringToken()throws IOException
 	{
+		if (TRACE) TOUT.println("openStringToken() ENTER");
 		//handle pending operation depending on state.
 		switch(token_state)
 		{
@@ -102,18 +113,22 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 								out.write(STRING_TOKEN_SEPARATOR_CHAR);
 								break;
 			case PLAIN_TOKEN_CLOSING: 
+								if (TRACE) TOUT.println("openStringToken(), closing pending plain token");
 								out.write(TOKEN_SEPARATOR_CHAR);
 								out.write(STRING_TOKEN_SEPARATOR_CHAR);
 								break;
 			case STRING_TOKEN_CLOSING:
+								if (TRACE) TOUT.println("openStringToken() continuing previous string token");
 								//now optimize it, no separators. 
 								break;
 		};
 		token_state = TTokenState.STRING_TOKEN_OPENED;
+		if (TRACE) TOUT.println("openStringToken() LEAVE");
 		
 	}
 	@Override protected void closeStringToken()throws IOException
 	{
+		if (TRACE) TOUT.println("closeStringToken()"); 
 		assert(token_state==TTokenState.STRING_TOKEN_OPENED);
 		//rememeber for the future.
 		token_state = TTokenState.STRING_TOKEN_CLOSING;
@@ -163,6 +178,7 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 	protected void outPlainToken(char c)throws IOException
 	{
 		assert(isPlainTokenChar(c));
+		if (DUMP) TOUT.println("outPlainToken(0x"+Integer.toHexString(c)+")");
 		out.write(c);
 	};
 	/** Called by {@link #outToken}. This method intentionally does not validate 
@@ -172,10 +188,14 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 	*/
 	protected void outStringToken(char c)throws IOException
 	{
+		if (DUMP) TOUT.println("outPlainToken(0x"+Integer.toHexString(c)+")");
 		out.write(c);
 		//and escape it if necessary.
 		if (c==STRING_TOKEN_SEPARATOR_CHAR)
+		{
+			if (DUMP) TOUT.println("outPlainToken, escaping STRING_TOKEN_SEPARATOR_CHAR");
 			out.write(STRING_TOKEN_SEPARATOR_CHAR);
+		};
 	};
 	/* *****************************************************************
 	
@@ -208,6 +228,7 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 	};
 	@Override protected void beginDirectImpl(String name)throws IOException
 	{
+		if (DUMP) TOUT.println("beginDirectImpl(name=\""+name+"\") ENTER");
 		//check if we need to inject space before begin since there was no token?
 		//Notice, we don't need it before end token.
 		boolean inject_empty = token_state==TTokenState.NO_TOKEN;
@@ -230,6 +251,7 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 			};
 			out.write(STRING_TOKEN_SEPARATOR_CHAR);
 		}
+		if (DUMP) TOUT.println("beginDirectImpl() LEAVE");
 	};
 	/* *****************************************************************
 	
@@ -238,9 +260,11 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 	******************************************************************/
 	@Override protected void endImpl()throws IOException
 	{
+		if (DUMP) TOUT.println("endImpl() ENTER");
 		//terminate pending token before writing a signal.
 		terminateToken();	
 		out.write(END_SIGNAL_CHAR);
+		if (DUMP) TOUT.println("endImpl() LEAVE");
 	};
 	/** Empty */
 	@Override protected void openImpl()throws IOException

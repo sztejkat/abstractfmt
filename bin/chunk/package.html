@@ -370,6 +370,13 @@
      thous allows packing all ASCII chars (most frequent in western languages) into 1 byte,
      and all others into up to 3 bytes. This is not an UTF-8 encoding, but is simpler and
      a tiny bit more dense.
+     <p>
+     This encoding takes no account for upper or lower surogates and encodes
+     <code>char</code> comming from JAVA exactly as they are, without assuming that
+     they do represent UTF-16 encoded 0...0x10FFFF bit code-points.
+     <p>
+     Thanks to that it can be used to encode absolutely any <code>char[]</code>
+     which may appear in JAVA, even if it does not represent a valid <code>String</code>.
 
 
      <h1>Impact of <code>flush()</code> operation</h1>

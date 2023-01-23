@@ -61,8 +61,18 @@ public class ATestCase_SignalOperationsSafety extends AInterOpTestCase<IStructRe
 			w.close();
 			
 			r.open();
+			System.out.println("reading signal with allowed length");
 			r.next();
 			try{
+				//Note: Depending on format detail the end-begin optimized
+				//formats may present an "early failure" on reading end-signal
+				//since they will parse both "end" and "begin" in one run.
+				//On the other hand the non end-begin optimized formats won't fail
+				//on the end signal and will fail later on actual begin read.
+				//Thous we accept as text pass failure at any region.
+				System.out.println("reading end signal");
+				Assert.assertTrue(r.next()==null);
+				System.out.println("reading signal with incorrect length");
 				r.next();
 				Assert.fail("Should have thrown");
 			}catch(EFormatBoundaryExceeded ex){ System.out.println(ex);};
