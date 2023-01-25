@@ -467,6 +467,15 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 		finishPendingCloseToken();	
 		out.flush();
 	};
+	
+	/* ----------------------------------------------------------------
+				tuning
+	 ----------------------------------------------------------------*/
+	/** Formats to "t" and "f" to get denser boolean blocks*/
+	@Override protected String formatBooleanBlock(boolean v)
+	{
+		return v ? "t" : "f";
+	};
 	/* *****************************************************************
 	
 			IFormatLimits

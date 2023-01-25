@@ -168,7 +168,7 @@ public class Test_CPlainTxtReadFormat extends ATest
 		CPlainTxtReadFormat d=
 				new CPlainTxtReadFormat(
 						new StringReader(
-							"*\"maccaronii \"\"prompte\"\"\";"));
+							"*\"maccaronii \\\"prompte\\\"\";"));
 		d.open();
 		//System.out.println(d.next());
 		Assert.assertTrue("maccaronii \"prompte\"".equals(d.next()));
@@ -523,6 +523,294 @@ public class Test_CPlainTxtReadFormat extends ATest
 				d.next();
 				Assert.fail();
 		}catch(EEof ex){};
+		leave();
+	};
+	
+	
+	@Test public void testEscapedSlash()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"* \"\\\\.com\" ;"));
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		Assert.assertTrue(d.hasElementaryData());
+		String v = d.readString(100);
+		System.out.println(v);
+		Assert.assertTrue("\\.com".equals(v));
+		Assert.assertTrue(null==d.next());		
+		leave();
+	};
+	
+	@Test public void testUnescapedUnqotedGoodSurogate()throws IOException
+	{
+		/*
+			This is a piece of text which writer won't produce.
+			Writer will always double-quote text with surogate pairs
+		*/
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"* \uD801\uDC01 ;"));
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		Assert.assertTrue(d.hasElementaryData());
+		String v = d.readString(100);
+		System.out.println(v);
+		Assert.assertTrue("\uD801\uDC01".equals(v));
+		Assert.assertTrue(null==d.next());
+		
+		leave();
+	};
+	
+	@Test public void testEscapedQutedGoodSurogate()throws IOException
+	{
+		/*
+			This is a piece of text which writer won't produce.
+			Writer will always double-quote text with surogate pairs,
+			but won't escape a good pair
+		*/
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"* \"\\D801;\\DC01;\" ;"));
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		Assert.assertTrue(d.hasElementaryData());
+		String v = d.readString(100);
+		System.out.println(v);
+		Assert.assertTrue("\uD801\uDC01".equals(v));
+		Assert.assertTrue(null==d.next());
+		
+		leave();
+	};
+	
+	@Test public void testEscapedLoneUpperSurogate()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"* \"\\D801;\" ;"));
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		Assert.assertTrue(d.hasElementaryData());
+		String v = d.readString(100);
+		System.out.println(v);
+		Assert.assertTrue("\uD801".equals(v));
+		Assert.assertTrue(null==d.next());
+		
+		leave();
+	};
+	
+	
+	
+	@Test public void testEscaped3digitter()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"* \"\\34a;\" ;"));
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		Assert.assertTrue(d.hasElementaryData());
+		String v = d.readString(100);
+		System.out.println(v);
+		Assert.assertTrue("\u034A".equals(v));
+		Assert.assertTrue(null==d.next());
+		
+		leave();
+	};
+	
+	@Test public void testEscaped2digitter()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"* \"\\4f;\" ;"));
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		Assert.assertTrue(d.hasElementaryData());
+		String v = d.readString(100);
+		System.out.println(v);
+		Assert.assertTrue("\u004F".equals(v));
+		Assert.assertTrue(null==d.next());
+		
+		leave();
+	};
+	
+	@Test public void testEscaped1digitter()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"* \"\\8;\" ;"));
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		Assert.assertTrue(d.hasElementaryData());
+		String v = d.readString(100);
+		System.out.println(v);
+		Assert.assertTrue("\u0008".equals(v));
+		Assert.assertTrue(null==d.next());
+		
+		leave();
+	};
+	@Test public void testEscaped0digitter()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"* \"\\;\" ;"));
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		Assert.assertTrue(d.hasElementaryData());
+		String v = d.readString(100);
+		System.out.println(v);
+		Assert.assertTrue("\u0000".equals(v));
+		Assert.assertTrue(null==d.next());
+		
+		leave();
+	};
+	
+	
+	@Test public void testStringAfterEmptyName()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"* string ;"));
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		Assert.assertTrue(d.hasElementaryData());
+		String v = d.readString(100);
+		System.out.println(v);
+		Assert.assertTrue("string".equals(v));
+		Assert.assertTrue(null==d.next());
+		
+		leave();
+	};
+	
+	@Test public void testStringAfterEmptyQuotedName()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"*\"\" string ;"));
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		Assert.assertTrue(d.hasElementaryData());
+		String v = d.readString(100);
+		System.out.println(v);
+		Assert.assertTrue("string".equals(v));
+		Assert.assertTrue(null==d.next());
+		
+		leave();
+	};
+	
+	@Test public void testStringsStitchingAfterEmptyName()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"* string,_marlene;"));
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		String v = d.readString(100);
+		System.out.println(v);
+		Assert.assertTrue("string_marlene".equals(v));
+		Assert.assertTrue(null==d.next());
+		
+		leave();
+	};
+	@Test public void testStringsStitchingAfterEmptyNameWithSeparator()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"* string\t,\n\t_marlene;"));
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		String v = d.readString(100);
+		System.out.println(v);
+		Assert.assertTrue("string_marlene".equals(v));
+		Assert.assertTrue(null==d.next());
+		
+		leave();
+	};
+	
+	@Test public void testHandlingTooLongEscape()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"*u \"\\00000;\" , 3"));
+		d.open();
+		Assert.assertTrue("u".equals(d.next()));
+		try{
+			String v = d.readString(100);
+			Assert.fail();
+		}catch(EBrokenFormat ex){System.out.println(ex); };
+		leave();
+	};
+	@Test public void testHandlingMissingEscapeSemicolon()throws IOException
+	{
+		enter();
+		/*
+			Design notes:
+		*/
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"* \"\\0000\" "));
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		try{
+			String v = d.readString(100);
+			Assert.fail();
+		}catch(EBrokenFormat ex){System.out.println(ex); };
+		leave();
+	};
+	@Test public void testHandlingIvalidEscapeTerminator()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"* \"\\0000!\" "));
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		try{
+			String v = d.readString(100);
+			Assert.fail();
+		}catch(EBrokenFormat ex){System.out.println(ex); };
+		leave();
+	};
+	@Test public void testHandlingIvalidEscapeDigit()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"* \"\\000q;\" "));
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		try{
+			String v = d.readString(100);
+			Assert.fail();
+		}catch(EBrokenFormat ex){System.out.println(ex); };
 		leave();
 	};
 };

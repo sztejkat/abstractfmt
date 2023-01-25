@@ -95,7 +95,18 @@
       	<li>plain tokens is made of non-white-spaces and excludes ,;*"# and <u>surogates</u>, even correct;</li>
       	<li>quoted token is made of any characters enclosed in "" where \ is used as an escape character
       	allowing directly escape any <code>0...0xFFFF</code> Java char value (not unicode code-point!) \" to escape double-quote
-      	and \\ to escape \. We do allow unescaped correct surogates;</li>
+      	and \\ to escape \. We do allow unescaped correct surogates
+      	<p>
+      	The escaping allows <u>up to</u> four digits and requires terminating ;.
+      	<p>
+      	Good escapes are:
+      	<pre>
+      	\3Af7;
+      	\0000;
+      	\; &rarr; \0000; 
+      	\fe; \00FE;
+      	</pre>
+      	;</li>
       	<li>tokens are separated by any white-spaces and ,;</li>
       	<li>struct starts with * followed by name of begin signal and terminates with ; </li>
       	<li>You don't need , between structs;</li>

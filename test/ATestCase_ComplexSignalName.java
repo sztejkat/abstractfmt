@@ -108,6 +108,15 @@ public class ATestCase_ComplexSignalName extends AInterOpTestCase<IStructReadFor
 		leave();
 	};
 	
+	@Test public void test_slashunfriendly()throws IOException
+	{
+		enter();
+		//Note: dump files for all those test will be the same.
+			testSignalName("\\solo\"\'donna\u0000*;");
+		leave();
+	};
+	
+	
 	@Test public void testZeroInName()throws IOException{ testSignalName("Ba\u0000ca"); };
 	/** Tests name built of characters in specified unicode range
 	@param from lower boundary, inclusive

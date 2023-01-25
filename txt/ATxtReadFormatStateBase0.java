@@ -11,7 +11,7 @@ import java.io.IOException;
 	<h1>State handler</h1>
 	This class assumes, that the {@link #toNextChar}
 	is implemented by an instance {@link ATxtReadFormatStateBase0.AStateHandler} class
-	which do call {@link #setNextChar} to apropriate syntax
+	which do call {@link #queueNextChar} to apropriate syntax
 	and changes state by calling {@link #pushStateHandler},{@link #popStateHandler} or {@link #setStateHandler}
 	
 */
@@ -27,10 +27,19 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 			Invoked by {@link ATxtReadFormatStateBase0#toNextChar} */
 			protected abstract class AStateHandler
 			{
-				/** Invoked by {@link ATxtReadFormatStateBase0#toNextChar}.
-				Should do everything what {@link ATxtReadFormat1#toNextChar} does.
+				/** Invoked by {@link ATxtReadFormatStateBase0#toNextChar}
+				when syntax queue is empty.
+				<p>
+				Should do everything what {@link ATxtReadFormat1#toNextChar} does
+				using {@link #queueNextChar} or {@link #setNextChar}
+				or state management.
+				<p>
+				If after return from this method syntax queue is empty
+				the {@link ATxtReadFormatStateBase0#toNextChar}
+				will invoke again this method of currently active handler.
+				
 				@throws IOException if failed.
-				@see ATxtReadFormatStateBase0#setNextChar
+				@see ATxtReadFormatStateBase0#queueNextChar
 				@see ATxtReadFormatStateBase0#pushStateHandler
 				@see ATxtReadFormatStateBase0#popStateHandler
 				@see ATxtReadFormatStateBase0#setStateHandler
@@ -41,10 +50,38 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 				private CBoundStack<AStateHandler> states;
 				/** A current handler */
 				private AStateHandler current;
-				/** What to return from {@link #getNextSyntaxElement} */
-				private TSyntax next_syntax_element;
-				/** What to return from {@link #getNextChar} */
-				private int next_char;
+				
+				private static final int SYNTAX_QUEUE_INIT_SIZE = 8;
+				private static final int SYNTAX_QUEUE_SIZE_INCREMENT = 32;
+				/**
+				Pre-allocated FIFO.
+				<p>
+				We need a relatively fast, but shallow FIFO of
+				pairs {@link #TSyntax}-<code>int</code> to allow
+				more than one syntax element to be produced by a
+				single call to {@link AStateHandler#toNextChar}
+				since sometimes a single characte would have to
+				trigger faked multi-char syntax results. 
+				<p>
+				This is a first array of queue ring.
+				<p>
+				The value at {@link #next_queue_rptr} points
+				to what is to be returned from {@link #getNextSyntaxElement}
+				*/
+				private ATxtReadFormat1.ISyntax [] next_syntax_element = new ATxtReadFormat1.ISyntax[SYNTAX_QUEUE_INIT_SIZE];
+				/**
+				The value at {@link #next_queue_rptr} points
+				to what is to be returned from {@link #getNextChar}
+				@see #next_syntax_element
+				*/
+				private int [] next_char = new int [SYNTAX_QUEUE_INIT_SIZE];
+				/** Read pointer in syntax queue.  */
+				private int next_queue_rptr;
+				/** Write pointer in syntax queue. 
+				If both read and write pointers are equal queue is empty.
+				With each write pointer moves towards zero.*/
+				private int next_queue_wptr;
+
 				
 	/** Creates. Subclass must initialize state handler by calling
 	{@link #setStateHandler} and adjust stack limit with {@link #setHandlerStackLimit}.
@@ -129,7 +166,66 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 	/* -----------------------------------------------------------------
 				toNextCharRelated
 	-----------------------------------------------------------------*/
-	/** Sets values to be reported:
+	/** Tests if syntax queue is empty 
+	@return true if empty*/
+	private boolean syntaxQueueEmpty()
+	{
+		return next_queue_rptr==next_queue_wptr;
+	};
+	/** Pushes onto syntax queue, ensuring necessary space
+	@param character what 
+	@param syntaxt what
+	*/
+	private void queueSyntax( int character, TSyntax syntax )
+	{
+		int wptr = this.next_queue_wptr;
+		//We always make sure there is at least one empty spacer so
+		this.next_syntax_element[wptr]=syntax;
+		this.next_char[wptr]=character;
+		//move cursor towards zero with rollover
+		final int L = this.next_syntax_element.length;
+		wptr = (wptr==0) ? L-1: wptr-1;
+		if (wptr == this.next_queue_rptr)
+		{
+			//this is queue overflow, we need to boost it up.
+			final int NL = L + SYNTAX_QUEUE_SIZE_INCREMENT;
+			final ATxtReadFormat1.ISyntax [] new_next_syntax_element = new ATxtReadFormat1.ISyntax[ NL];
+			final int [] new_next_char = new int[NL];
+			final ATxtReadFormat1.ISyntax [] old_next_syntax_element = this.next_syntax_element;
+			final int [] old_next_char = this.next_char;
+			//now just read the WHOLE queue. It is now full absolutely
+			//so we can read old into a tail of the new.
+			for(int i = 0, r = this.next_queue_rptr ; i<L; i++)
+			{
+				int at = NL-1-i;
+				new_next_syntax_element[at]=old_next_syntax_element[r];
+				new_next_char[at]=old_next_char[r];
+				r = (r==0) ? L-1: r-1;
+			};
+			this.next_syntax_element=new_next_syntax_element;
+			this.next_char=new_next_char;
+			this.next_queue_rptr = NL-1;
+			this.next_queue_wptr = NL-1-L;
+		}else
+		{
+			//we fit 
+			this.next_queue_wptr = wptr;
+		};
+	};
+	/** Removes top of queue
+	@throws AssertionError if empty*/
+	private void dropQueueSyntax()
+	{
+		assert(!syntaxQueueEmpty());
+		int r= this.next_queue_rptr;
+		if (r==0)
+		{
+			r = this.next_syntax_element.length;
+		};
+		r--;
+		this.next_queue_rptr=r;
+	};
+	/** Sets value at the read pointer of a syntax queue overriding previously stored value. 
 	@param character from {@link #getNextChar}
 	@param syntax from {@link #getNextSyntaxElement}
 	@throws AssertionError if syntax is null and character is not -1 or
@@ -142,9 +238,31 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 					||
 				((syntax!=null)&&(character>=0))
 				):"inconsistent syntax ="+syntax+" with character=0x"+Integer.toHexString(character);
-				
-		this.next_syntax_element = syntax;
-		this.next_char=character;
+		//needs to queue it if empty or override if not.
+		if (syntaxQueueEmpty())
+		{
+			queueSyntax(character, syntax);
+		}
+		else
+		{
+			next_char[next_queue_wptr] = character;
+			next_syntax_element[next_queue_wptr] = syntax;
+		};
+	};
+	/** Puts next value, to be read after current, from  syntax queue 
+	@param character from {@link #getNextChar}
+	@param syntax from {@link #getNextSyntaxElement}
+	@throws AssertionError if syntax is null and character is not -1 or
+			if syntax is not null and character is -1
+	*/
+	protected void queueNextChar(int character, TSyntax syntax)
+	{
+		assert((character>=-1)&&(character<=0xFFFF));
+		assert( ((syntax==null)&&(character==-1))
+					||
+				((syntax!=null)&&(character>=0))
+				):"inconsistent syntax ="+syntax+" with character=0x"+Integer.toHexString(character);
+		queueSyntax(character, syntax);
 	};
 	/* *****************************************************************
 	
@@ -154,9 +272,26 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 	@Override protected final void toNextChar()throws IOException
 	{
 		assert(current!=null):"state handler not initialized. Call setStateHandler()";
-		if (DUMP) TOUT.println("toNextChar()->"+current);
-		current.toNextChar();
+		//Now first call may be with an empty, but subsequent needs to 
+		//drop what is in queue and eventually update.
+		if (!syntaxQueueEmpty())
+					dropQueueSyntax();
+		//Now test again and produce eventually new data.
+		while(syntaxQueueEmpty())
+		{
+			if (DUMP) TOUT.println("toNextChar()->"+current);
+			current.toNextChar();
+		}
 	};
-	@Override protected final TSyntax getNextSyntaxElement(){ return next_syntax_element; };
-	@Override protected final  int getNextChar(){ return next_char; };
+	@SuppressWarnings("unchecked")
+	@Override protected final TSyntax getNextSyntaxElement()
+	{
+		assert(!syntaxQueueEmpty());
+		return (TSyntax)next_syntax_element[next_queue_rptr]; 
+	};
+	@Override protected final  int getNextChar()
+	{
+		assert(!syntaxQueueEmpty());
+		return next_char[next_queue_rptr]; 
+	};
 };

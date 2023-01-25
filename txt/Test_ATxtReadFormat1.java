@@ -93,10 +93,11 @@ public class Test_ATxtReadFormat1 extends ATest
 			CStream input = new CStream();
 			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.VOID);
 			input.add('0',ATxtReadFormat1.TIntermediateSyntax.TOKEN);
-			input.add(',',ATxtReadFormat1.TIntermediateSyntax.NEXT_TOKEN);
+			input.add(',',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
 			input.add('3',ATxtReadFormat1.TIntermediateSyntax.TOKEN);
 			input.add('3',ATxtReadFormat1.TIntermediateSyntax.TOKEN);
 			input.add('\n',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+			input.add(',',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
 			input.add('4',ATxtReadFormat1.TIntermediateSyntax.TOKEN);
 			input.add('4',ATxtReadFormat1.TIntermediateSyntax.TOKEN);
 			
@@ -340,8 +341,8 @@ public class Test_ATxtReadFormat1 extends ATest
 			input.add('x',ATxtReadFormat1.TIntermediateSyntax.SIG_NAME);
 			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
 			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
-			input.add(',',ATxtReadFormat1.TIntermediateSyntax.NEXT_TOKEN);
-			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.VOID);
+			input.add(',',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
 			input.add('7',ATxtReadFormat1.TIntermediateSyntax.TOKEN);
 			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
 			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
@@ -379,8 +380,8 @@ public class Test_ATxtReadFormat1 extends ATest
 			input.add('*',ATxtReadFormat1.TIntermediateSyntax.SIG_ORDER);
 			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
 			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
-			input.add(',',ATxtReadFormat1.TIntermediateSyntax.NEXT_TOKEN);
-			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.VOID);
+			input.add(',',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
 			input.add('7',ATxtReadFormat1.TIntermediateSyntax.TOKEN);
 			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
 			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
@@ -484,6 +485,103 @@ public class Test_ATxtReadFormat1 extends ATest
 			d.setMaxSignalNameLength(3);
 			d.open();
 			Assert.assertTrue("xyz".equals(d.next()));
+			d.close();
+		leave();
+	};
+	
+	
+	@Test public void test_TestRepresentationOfQuotedToken_asString()throws IOException
+	{
+		enter();
+			CStream input = new CStream();
+			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+			input.add('\"',ATxtReadFormat1.TIntermediateSyntax.TOKEN_VOID);
+			input.add('0',ATxtReadFormat1.TIntermediateSyntax.TOKEN);
+			input.add('0',ATxtReadFormat1.TIntermediateSyntax.TOKEN);
+			input.add('\"',ATxtReadFormat1.TIntermediateSyntax.TOKEN_VOID);
+			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+			
+			System.out.println(input);
+			DUT d = new DUT(input.iterator());
+			d.open();
+			Assert.assertTrue("00".equals(d.readString(10)));
+			d.close();
+		leave();
+	};
+	
+	@Test public void test_TestRepresentationOfQuotedToken_asInt()throws IOException
+	{
+		enter();
+			CStream input = new CStream();
+			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+			input.add('\"',ATxtReadFormat1.TIntermediateSyntax.TOKEN_VOID);
+			input.add('1',ATxtReadFormat1.TIntermediateSyntax.TOKEN);
+			input.add('0',ATxtReadFormat1.TIntermediateSyntax.TOKEN);
+			input.add('\"',ATxtReadFormat1.TIntermediateSyntax.TOKEN_VOID);
+			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+			
+			System.out.println(input);
+			DUT d = new DUT(input.iterator());
+			d.open();
+			Assert.assertTrue(10==d.readInt());
+			d.close();
+		leave();
+	};
+	
+	@Test public void test_TestRepresentationOfQuotedEmptyToken()throws IOException
+	{
+		enter();
+			CStream input = new CStream();
+			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+			input.add('\"',ATxtReadFormat1.TIntermediateSyntax.TOKEN_VOID);
+			input.add('\"',ATxtReadFormat1.TIntermediateSyntax.TOKEN_VOID);
+			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+			//Note: Without a signal we will get "EOF" because nothing could have been read.
+			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.SIG_END);
+			
+			System.out.println(input);
+			DUT d = new DUT(input.iterator());
+			d.open();
+			Assert.assertTrue("".equals(d.readString(10)));
+			d.close();
+		leave();
+	};
+	
+	@Test public void test_TestRepresentationOfQuotedEmptyToken_2()throws IOException
+	{
+		enter();
+			CStream input = new CStream();
+			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+			input.add('\"',ATxtReadFormat1.TIntermediateSyntax.TOKEN_VOID);
+			input.add('\"',ATxtReadFormat1.TIntermediateSyntax.TOKEN_VOID);
+			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+			//Note: Without a signal we will get "EOF" because nothing could have been read.
+			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.SIG_END);
+			
+			System.out.println(input);
+			DUT d = new DUT(input.iterator());
+			d.open();
+			Assert.assertTrue(0==d.readChar());
+			d.close();
+		leave();
+	};
+	
+	@Test public void test_TestRepresentationOfUnQuotedEmptyToken()throws IOException
+	{
+		enter();
+			CStream input = new CStream();
+			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+			input.add(',',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+			input.add(',',ATxtReadFormat1.TIntermediateSyntax.TOKEN_VOID);
+			input.add((char)0,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+			input.add('s',ATxtReadFormat1.TIntermediateSyntax.TOKEN);
+			//Note: Without a signal we will get "EOF" because nothing could have been read.
+			input.add(' ',ATxtReadFormat1.TIntermediateSyntax.SIG_END);
+			
+			System.out.println(input);
+			DUT d = new DUT(input.iterator());
+			d.open();
+			Assert.assertTrue(0==d.readChar());
 			d.close();
 		leave();
 	};

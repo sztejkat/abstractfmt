@@ -562,7 +562,7 @@ public class Test_CPlainTxtWriteFormat extends ATest
 			
 			System.out.println(o);
 			
-			Assert.assertTrue("*[] true,false,false;".equals(o));
+			Assert.assertTrue("*[] t,f,f;".equals(o));
 			
 		leave();
 	};

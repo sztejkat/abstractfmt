@@ -91,10 +91,10 @@ public class SLogging
               //      returns a constant. This means, that enabling/disabling
               //      logs requires re-compilation of this class.
               //  if (_class.getName().equals("sztejkat.abstractfmt.bin.chunk.AChunkWriteFormat0")) return 1;
-              // if (_class.getName().equals("sztejkat.abstractfmt.txt.ATxtReadFormat0")) return 1;
-              if (_class.getName().equals("sztejkat.abstractfmt.txt.ATxtReadFormat1")) return 2;
-              if (_class.getName().equals("sztejkat.abstractfmt.txt.ATxtWriteFormat0")) return 2;
-              if (_class.getName().equals("sztejkat.abstractfmt.txt.plain.CPlainTxtWriteFormat")) return 2;
+              //if (_class.getName().equals("sztejkat.abstractfmt.txt.ATxtReadFormat0")) return 1;
+              //if (_class.getName().equals("sztejkat.abstractfmt.txt.ATxtReadFormat1")) return 2;
+              //if (_class.getName().equals("sztejkat.abstractfmt.txt.ATxtReadFormatStateBase0")) return 2;
+              //if (_class.getName().equals("sztejkat.abstractfmt.txt.plain.CPlainTxtReadFormat")) return 2;
               // if (_class == sztejkat.abstractfmt.bin.chunk.CChunkWriteFormat.class) return 1;
               // if (_class == sztejkat.abstractfmt.bin.chunk.CChunkReadFormat.class) return 1;
               

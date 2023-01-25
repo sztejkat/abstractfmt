@@ -20,27 +20,29 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 			private abstract class AStateHandler extends ATxtReadFormatStateBase0<ATxtReadFormat1.TIntermediateSyntax>.AStateHandler
 			{
 				/** Reads from {@link #in} semi transparently handles eof 
-				@return -1 or 0...0xFFFF. If -1 eof is already set to 
-				{@link #next_syntax_element}, {@link #next_char} */
+				@return -1 or 0...0xFFFF. If -1 eof is already send to {@link #queueNextChar} */
 				protected int read()throws IOException
 				{
 					int c = in.read();
 					assert((c>=-1)&&(c<=0xFFFF));
 					if (c==-1)
 					{
-						setNextChar(-1,null);
+						queueNextChar(-1,null);
 						return -1;
 					}else
 						return c;
 				};
 				
 				/** Arms exception for invalid, unexpected character
+				and additional message.
 				@param c char to show
+				@param explain explanation
 				@return exception armed with line info.
 				*/
-				protected EBrokenFormat unexpectedCharException(char c)
+				protected EBrokenFormat unexpectedCharException(char c,String explain)
 				{
-					return new EBrokenFormat("Unexpected character \'"+c+"\'(0x"+Integer.toHexString(c)+")"+getLineInfoMessage());
+					assert(explain!=null);
+					return new EBrokenFormat("Unexpected character \'"+c+"\'(0x"+Integer.toHexString(c)+")"+getLineInfoMessage()+"\n"+explain);
 				};
 			};
 			
@@ -62,19 +64,19 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 					 if (j==-1)
 					 {
 						 //in this case this is just an end of a comment
-						 setNextChar(current_eol,ATxtReadFormat1.TIntermediateSyntax.VOID);
+						 queueNextChar(current_eol,ATxtReadFormat1.TIntermediateSyntax.VOID);
 						 popStateHandler();
 					 }else
 					 if (j==next_eol)
 					 {
 						 //this is a part of a a comment, eat it.
-						 setNextChar(current_eol,ATxtReadFormat1.TIntermediateSyntax.VOID);
+						 queueNextChar(current_eol,ATxtReadFormat1.TIntermediateSyntax.VOID);
 						 popStateHandler();
 					 }else
 					 {
 						 //this is not a part of a comment.
 						 in.unread((char)j);	//leave for future processing.
-						 setNextChar(current_eol,ATxtReadFormat1.TIntermediateSyntax.VOID);
+						 queueNextChar(current_eol,ATxtReadFormat1.TIntermediateSyntax.VOID);
 						 popStateHandler();
 					 };
 				};
@@ -87,14 +89,14 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 					switch(i)
 					{	
 						case -1: popStateHandler();  //eof terminates comment.
-								 setNextChar(-1,null);
+								 queueNextChar(-1,null);
 								 break;
 						//handle possible double eol termination.
 						case '\r':handlePossibleNextEol((char)i,'\n'); break;
 						case '\n':handlePossibleNextEol((char)i,'\r'); break;
 						default:
 							//this is a comment, dump it to trash.
-							setNextChar(i,ATxtReadFormat1.TIntermediateSyntax.VOID);
+							queueNextChar(i,ATxtReadFormat1.TIntermediateSyntax.VOID);
 					}
 				};
 			};
@@ -120,39 +122,42 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 					if (c==CPlainTxtWriteFormat.COMMENT_CHAR)
 					{
 						pushStateHandler(COMMENT);
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
 					}else
 					if (c==CPlainTxtWriteFormat.TOKEN_SEPARATOR_CHAR)
 					{
-						//We don't change state. We indicate to superclass
-						//we got next token.
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.NEXT_TOKEN);
+						//This is an empty token since we have found separator instead
+						//of token body.
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.TOKEN_VOID);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+						//No state change
 					}else
 					if (c==CPlainTxtWriteFormat.BEGIN_SIGNAL_CHAR)
 					{
 						setStateHandler(COLLECTED_BEGIN);
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_BEGIN);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_BEGIN);
 					}else
 					if (c==CPlainTxtWriteFormat.END_SIGNAL_CHAR)
 					{
 						//We don't change state, we indicate to superclass we got end.
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_END);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_END);
 					}else
 					if (c==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)
 					{
 						setStateHandler(STRING_TOKEN_BODY);
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
+						//Sending TOKEN_VOID will trigger collection of a token body
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.TOKEN_VOID);
 					}else					
 					if (isTokenBodyChar(c))
 					{
 						setStateHandler(PLAIN_TOKEN_BODY);
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.TOKEN);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.TOKEN);
 					}else
 					if (isEmptyChar(c))
 					{
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
 					}else
-						throw unexpectedCharException(c);
+						throw unexpectedCharException(c,"while looking for next token body");
 				};
 			}
 			/**  We finished collecting token body, either string or plain.
@@ -170,28 +175,28 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 					if (c==CPlainTxtWriteFormat.COMMENT_CHAR)
 					{
 						pushStateHandler(COMMENT);
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
 					}else
 					if (c==CPlainTxtWriteFormat.TOKEN_SEPARATOR_CHAR)
 					{
 						setStateHandler(TOKEN_BODY_LOOKUP);
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.NEXT_TOKEN);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
 					}else
 					if (c==CPlainTxtWriteFormat.END_SIGNAL_CHAR)
 					{
 						setStateHandler(TOKEN_BODY_LOOKUP);
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_END);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_END);
 					}else
 					if (c==CPlainTxtWriteFormat.BEGIN_SIGNAL_CHAR)
 					{
 						setStateHandler(COLLECTED_BEGIN);
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_BEGIN);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_BEGIN);
 					}else
 					if (isEmptyChar(c))
 					{
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
 					}else
-						throw unexpectedCharException(c);
+						throw unexpectedCharException(c,"while looking for next token separator or signal");
 				};
 			};
 			 /** Collected the {@link CPlainTxtWriteFormat#BEGIN_SIGNAL_CHAR},
@@ -212,34 +217,35 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 					if (c==CPlainTxtWriteFormat.COMMENT_CHAR)
 					{
 						pushStateHandler(COMMENT);
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
 					}else
 					if (c==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)
 					{
 						setStateHandler(COLLECTING_STRING_BEGIN_NAME);
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_NAME_VOID);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_NAME_VOID);
 					}else
 					if (c==CPlainTxtWriteFormat.END_SIGNAL_CHAR)
 					{
 						setStateHandler(TOKEN_LOOKUP);
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_END);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_END);
 					}else
 					if (c==CPlainTxtWriteFormat.BEGIN_SIGNAL_CHAR)
 					{
-						setStateHandler(TOKEN_LOOKUP);
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_BEGIN);
+						setStateHandler(COLLECTED_BEGIN);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_BEGIN);
 					}else
 					if (isTokenBodyChar(c))
 					{
 						setStateHandler(COLLECTING_BEGIN_NAME);
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_NAME);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_NAME);
 					}else
 					if (isEmptyChar(c))
 					{
-						setStateHandler(TOKEN_LOOKUP);
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_NAME_VOID);
+						setStateHandler(TOKEN_BODY_LOOKUP);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_NAME_VOID);
+						queueNextChar(' ',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
 					}else
-						throw unexpectedCharException(c);
+						throw unexpectedCharException(c,"while looking for begin signal name");
 				};
 			};
 			/** Collected first character of begin signal name, un-quoted. 
@@ -256,18 +262,18 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 					if (c==CPlainTxtWriteFormat.COMMENT_CHAR)
 					{
 						pushStateHandler(COMMENT);
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
 					}else
 					if (isTokenBodyChar(c))
 					{
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_NAME);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_NAME);
 					}else
 					{
 						//Now basically we go to lookup. Easiest way is to un-read it, because
 						//it may be a signal.
 						in.unread(c);
 						setStateHandler(TOKEN_BODY_LOOKUP);
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
 					}
 				}
 			};
@@ -283,17 +289,23 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 			{
 						private final ATxtReadFormat1.TIntermediateSyntax body_syntax;
 						private final ATxtReadFormat1.TIntermediateSyntax terminator_syntax;
+						private final AStateHandler next_handler;
 				/** 
 				@param body_syntax a syntax element to set when encountering body character
-				@param terminator_syntax a syntax element to set when encountering string terminator 
+				@param terminator_syntax a syntax element to set when encountering string terminator
+				@param next_handler a state handler to set after finising collection
+									together with returning <code>terminator_syntax</code>;
 				*/
 				AStringBody_StateHandler(
 								ATxtReadFormat1.TIntermediateSyntax body_syntax,
-								ATxtReadFormat1.TIntermediateSyntax terminator_syntax
+								ATxtReadFormat1.TIntermediateSyntax terminator_syntax,
+								AStateHandler next_handler
 								)
 				{
 					assert(body_syntax!=null);
 					assert(terminator_syntax!=null);
+					assert(next_handler!=null);
+					this.next_handler = next_handler;
 					this.body_syntax=body_syntax;
 					this.terminator_syntax=terminator_syntax;
 				};
@@ -323,7 +335,7 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 						    )
 						{
 							//escaped directly
-							setNextChar(ce,body_syntax);
+							queueNextChar(ce,body_syntax);
 						}else
 						{
 							//escaped by hex
@@ -337,11 +349,11 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 								if (digit==';')
 								{
 									//complete
-									setNextChar(composed,body_syntax);
+									queueNextChar(composed,body_syntax);
 									break;
 								}else
 								{
-									if (n==4) throw unexpectedCharException((char)digit);
+									if (n==4) throw unexpectedCharException((char)digit,"while expecting hexadecimal escape terminator: ;");
 									if ((digit>='0')&&(digit<='9'))
 									{
 										digit -='0';
@@ -354,7 +366,7 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 									{
 										digit = digit-'A'+10;
 									}else
-										throw unexpectedCharException((char)digit); 
+										throw unexpectedCharException((char)digit,"while collecting hexadecimal escape"); 
 									composed<<=4;
 									composed|=digit;									
 								}
@@ -366,12 +378,12 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 					}else
 					if (c==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)
 					{
-						setStateHandler(TOKEN_LOOKUP);
-						setNextChar(c,terminator_syntax);
+						setStateHandler(next_handler);
+						queueNextChar(c,terminator_syntax);
 					}else
 					{
 						//everything else is a string body
-						setNextChar(c,body_syntax);
+						queueNextChar(c,body_syntax);
 					}
 				}
 			};
@@ -386,7 +398,8 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 					{
 						super(
 									ATxtReadFormat1.TIntermediateSyntax.TOKEN,
-									ATxtReadFormat1.TIntermediateSyntax.SEPARATOR
+									ATxtReadFormat1.TIntermediateSyntax.SEPARATOR,
+									TOKEN_LOOKUP
 									);
 					};
 			};
@@ -401,7 +414,8 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 					{
 						super(
 									ATxtReadFormat1.TIntermediateSyntax.SIG_NAME,
-									ATxtReadFormat1.TIntermediateSyntax.SIG_NAME_VOID
+									ATxtReadFormat1.TIntermediateSyntax.SIG_NAME_VOID,
+									TOKEN_BODY_LOOKUP
 									);
 					};
 			};
@@ -422,33 +436,33 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 					if (c==CPlainTxtWriteFormat.COMMENT_CHAR)
 					{
 						pushStateHandler(COMMENT);
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
 					}else
 					if (c==CPlainTxtWriteFormat.BEGIN_SIGNAL_CHAR)
 					{
 						setStateHandler(COLLECTED_BEGIN);
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_BEGIN);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_BEGIN);
 					}else
 					if (c==CPlainTxtWriteFormat.END_SIGNAL_CHAR)
 					{
 						//We don't change state, we indicate to superclass we got end.
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_END);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_END);
 					}else
 					if (c==CPlainTxtWriteFormat.TOKEN_SEPARATOR_CHAR)
 					{
 						setStateHandler(TOKEN_BODY_LOOKUP);
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.NEXT_TOKEN);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
 					}else
 					if (isTokenBodyChar(c))
 					{
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.TOKEN);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.TOKEN);
 					}else
 					if (isEmptyChar(c))
 					{
 						setStateHandler(TOKEN_LOOKUP);
-						setNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
 					}else
-						throw unexpectedCharException(c);
+						throw unexpectedCharException(c,"while collecting token body");
 				}
 			};
 						

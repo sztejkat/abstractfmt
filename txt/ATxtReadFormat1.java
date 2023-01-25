@@ -149,7 +149,8 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 			public static enum TIntermediateSyntax implements ISyntax
 			{
 				/** An ignorable character which can appear anywhere.
-				Does not cause any action except beeing ignored and skipped.*/
+				Does not cause any action except beeing ignored and skipped.
+				No state is changed.*/
 				VOID,
 				/** A character which is a start of a "begin" signal syntax.
 				<p>
@@ -176,18 +177,10 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 				*/
 				SIG_BEGIN,
 				/** A character appearing after {@link #SIG_BEGIN} or {@link #SIG_END_BEGIN}
-				indicating that collection of name should take place, but that character is not a part 
-				of a name. Allows to decode empty signal names.
+				indicating that collection of a name should start, if not yet, 
+				but that character is not a part of a name.
 				<p>
-				For an example the:
-				<pre>
-				name
-				</pre>
-				will be reported by SIG_NAME(n),SIG_NAME(a),SIG_NAME(m),SIG_NAME(e) while
-				<pre>
-				"name"
-				</pre>
-				will be reported by SIG_NAME_VOID("),SIG_NAME(n),SIG_NAME(a),SIG_NAME(m),SIG_NAME(e),SIG_NAME_VOID("),
+				Alike {@link #TOKEN_VOID}
 				*/
 				SIG_NAME_VOID,
 				/** Alike {@link SIG_NAME_VOID}, but is a part of signal name and should be collected. */ 
@@ -201,7 +194,6 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 				SIG_ORDER,
 				/** Alike {@link #SIG_BEGIN} but causes {@link ARegisteringStructReadFormat#readSignalReg}
 				to return {@link ARegisteringStructReadFormat.TSignalReg#SIG_END_BEGIN_DIRECT},
-				{@link ARegisteringStructReadFormat.TSignalReg#SIG_END_BEGIN_DIRECT},
 				{@link ARegisteringStructReadFormat.TSignalReg#SIG_END_BEGIN_AND_REGISTER},
 				{@link ARegisteringStructReadFormat.TSignalReg#SIG_END_BEGIN_REGISTERED}
 				accordingly. */
@@ -214,41 +206,20 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 				this one {@link #SIG_END}.*/
 				SIG_END,
 				/** A token or signal terminator. This character do not belong to any
-				syntax element and do terminate a previous syntax element.
-				<p>
-				For an example, if our syntax defines that we can't have empty
-				tokens and whitespace is token separator the:
-				<pre>
-				ab  de
-				</pre>
-				emits: 
-				<pre>
-	TOKEN(a),TOKEN(b),SEPARATOR( ),SEPARATOR( ),TOKEN(d), TOKEN(e)
-				</pre>
-				or:
-				<pre>
-	TOKEN(a),TOKEN(b),SEPARATOR( ),VOID,TOKEN(d), TOKEN(e)
-				</pre>
-				<p>
-				If we define that white-spaces are not parts of tokens and , is a delimiter
-				and ,, defines an empty token we do:
-				<pre>
-				ab , de
-				</pre>
-				emits:
-				<pre>
-	TOKEN(a),TOKEN(b),VOID,NEXT_TOKEN,VOID,TOKEN(d),TOKEN(e)
-				</pre>			
+				syntax element and do terminate a previous syntax element, if any.
+				It token was in progess will report {@link #TOKEN_BOUNDARY}. If
+				token was not in progress, will be skipped as of void or will be used
+				to detect when signal definition terminates.
 				*/
-				SEPARATOR,
-				/** A token or signal terminator. This character do not belong to any
-				syntax element and do terminate a previous syntax element 
-				and starts new token. 
-				*/ 				
-				NEXT_TOKEN,
+				SEPARATOR,				
 				/** A token character. This character do belong to a token, and if
-				token was not started, starts it and becomes a part of it. */
-				TOKEN;
+				token was not started, starts it and becomes a part of it. 
+				It is returned during token processing as a plain character.
+				*/
+				TOKEN,
+				/** A zero length token character. This character starts token body,
+				if it was not started, but is not added to it. */
+				TOKEN_VOID;
 				@Override public ATxtReadFormat1.TIntermediateSyntax syntax(){ return this; };
 			};
 			/** Token parsing state machine */
@@ -414,14 +385,8 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 				case SEPARATOR:
 						if (TRACE) TOUT.println("findNextToken() consuming separator");
 						consume(); break; //as void				
-				case NEXT_TOKEN:
-						//we have found a token, but char does not belong to
-						//it. Consume it and move to token collection.
-						consume();
-						token_state = TTokenState.TOKEN_BODY;
-						if (TRACE) TOUT.println("findNextToken()=true, stx="+stx+" token_state="+token_state+" LEAVE");
-						return true;
-				case TOKEN: 
+				case TOKEN_VOID:
+				case TOKEN:
 						//we have found a token, do NOT consume it, move to token collection
 						token_state = TTokenState.TOKEN_BODY;
 						if (TRACE) TOUT.println("findNextToken()=true, stx="+stx+" token_state="+token_state+" LEAVE");
@@ -450,6 +415,7 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 			};
 			switch(stx)
 			{
+				case TOKEN_VOID:
 				case VOID: consume(); break;	//consume and move forwards
 				case SIG_BEGIN:
 				case SIG_END_BEGIN:
@@ -462,12 +428,6 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 						//terminated a token. Do consume it and move at lookup. 
 						consume();
 						token_state = TTokenState.TOKEN_LOOKUP;
-						if (TRACE) TOUT.println("nextTokenBody()=TOKEN_BOUNDARY, stx="+stx+" token_state="+token_state+" LEAVE");
-						return TOKEN_BOUNDARY;
-				case NEXT_TOKEN:
-						//terminated token, but also beginning of next token.
-						consume(); //must be consumed, so that we start serving next token.	
-						//Do NOT change token lookup.
 						if (TRACE) TOUT.println("nextTokenBody()=TOKEN_BOUNDARY, stx="+stx+" token_state="+token_state+" LEAVE");
 						return TOKEN_BOUNDARY;
 				case TOKEN: 
@@ -539,6 +499,7 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 			};
 			switch(stx)
 			{
+				case TOKEN_VOID:
 				case VOID: consume(); break;	//consume and move forwards
 				case SIG_BEGIN:
 				case SIG_END_BEGIN:
@@ -550,11 +511,6 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 				case SEPARATOR:
 						//terminated a token. Do not consume it
 						if (TRACE) TOUT.println("nextTokenBody()=TOKEN_BOUNDARY, separator, stx="+stx+" token_state="+token_state+" LEAVE");
-						return TOKEN_BOUNDARY;
-				case NEXT_TOKEN:
-						//terminated token, but also beginning of next token.
-						//Oppositie to whend processing token, we do not consume it
-						if (TRACE) TOUT.println("nextTokenBody()=TOKEN_BOUNDARY, next token, stx="+stx+" token_state="+token_state+" LEAVE");
 						return TOKEN_BOUNDARY;
 				case TOKEN: 
 						//we have found a token char, NOT consume it and return.

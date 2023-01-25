@@ -15,10 +15,10 @@ import java.io.*;
 */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-					//ATestCase_BasicSignalOperations.class,
-					//ATestCase_OptimizedSignalOperations.class,
-					//ATestCase_SignalOperationsSafety.class,
-					/*ATestCase_ComplexSignalName.class/*,
+					ATestCase_BasicSignalOperations.class,
+					ATestCase_OptimizedSignalOperations.class,
+					ATestCase_SignalOperationsSafety.class,
+					ATestCase_ComplexSignalName.class,
 					ATestCase_BooleanElementaryPrimitive.class,
 					ATestCase_BooleanBlockPrimitive.class,
 					ATestCase_ByteElementaryPrimitive.class,
@@ -35,7 +35,7 @@ import java.io.*;
 					ATestCase_FloatBlockPrimitive.class,
 					ATestCase_DoubleElementaryPrimitive.class,
 					ATestCase_DoubleBlockPrimitive.class,
-					ATestCase_StringBlockPrimitive.class*/
+					ATestCase_StringBlockPrimitive.class
 					})
 public class TestSuite_CPlainTxtFormat extends ATest
 {

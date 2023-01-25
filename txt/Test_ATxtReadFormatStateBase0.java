@@ -16,6 +16,7 @@ public class Test_ATxtReadFormatStateBase0 extends ATest
 					{
 								final int c;
 								final ATxtReadFormat1.TIntermediateSyntax s;
+								int calls;
 						H(int c, ATxtReadFormat1.TIntermediateSyntax s)
 						{
 							this.c=c;
@@ -23,13 +24,69 @@ public class Test_ATxtReadFormatStateBase0 extends ATest
 						};
 						protected void toNextChar()throws IOException
 						{
+							calls++;
 							System.out.println("called H("+c+")");
 							setNextChar(c,s);
 						};
 					};
 					
+					class Hqueues extends AStateHandler
+					{
+								final int [] c;
+								final ATxtReadFormat1.TIntermediateSyntax [] s;
+								int calls;
+						Hqueues(
+									int [] c,
+									ATxtReadFormat1.TIntermediateSyntax [] s
+								 )
+						{
+							this.c=c;
+							this.s=s;
+						};
+						protected void toNextChar()throws IOException
+						{
+							System.out.println("called Hqueues()");
+							for(int i=0;i<c.length;i++)
+							{
+								System.out.println("->"+c[i]+" "+s[i]);
+								queueNextChar(c[i],s[i]);
+							};
+							calls++;
+						};
+					};
+					
+					class Hswitching extends AStateHandler
+					{
+								final int c;
+								final AStateHandler next;
+								int calls;
+						Hswitching(int c, AStateHandler next)
+						{
+							this.c=c;
+							this.next = next;
+						};
+						protected void toNextChar()throws IOException
+						{
+							calls++;
+							System.out.println("called Hswitching("+c+")");
+							if (calls>=c)
+							{
+								System.out.println("moving to next");
+								setStateHandler(next);
+							};
+						};
+					};
+					
 					final H H1   = new H(1,ATxtReadFormat1.TIntermediateSyntax.VOID);
 					final H Heof = new H(-1,null);
+					final Hqueues Hqueues2 = new Hqueues(
+											new int[]{3,5},
+											new ATxtReadFormat1.TIntermediateSyntax []
+											{
+												ATxtReadFormat1.TIntermediateSyntax.VOID,
+												ATxtReadFormat1.TIntermediateSyntax.TOKEN
+											});
+					final Hswitching Hs = new Hswitching(3,H1);
 				DUT()
 				{
 					super(0,100); 
@@ -49,6 +106,9 @@ public class Test_ATxtReadFormatStateBase0 extends ATest
 			Assert.assertTrue(d.getStateHandler()==d.Heof);
 		leave();
 	};
+	
+	
+	
 	
 	@Test public void testCanPushPopState()throws EFormatBoundaryExceeded
 	{
@@ -105,4 +165,82 @@ public class Test_ATxtReadFormatStateBase0 extends ATest
 			Assert.assertTrue(d.getNextChar()==d.Heof.c);
 		leave();
 	};
+	
+	
+	@Test public void testSyntaxQueue_with_small_bursts()throws IOException
+	{
+		enter();
+			DUT d = new DUT();
+			d.setStateHandler(d.Hqueues2);			
+			for(int i=1; i< 50; i++)
+			{
+				d.toNextChar();
+				System.out.println("i="+i);
+				Assert.assertTrue(d.Hqueues2.calls==i);
+				Assert.assertTrue(d.getNextSyntaxElement()==ATxtReadFormat1.TIntermediateSyntax.VOID);
+				Assert.assertTrue(d.getNextChar()==3);
+				Assert.assertTrue(d.getNextSyntaxElement()==ATxtReadFormat1.TIntermediateSyntax.VOID);
+				Assert.assertTrue(d.getNextChar()==3);
+				Assert.assertTrue(d.getNextSyntaxElement()==ATxtReadFormat1.TIntermediateSyntax.VOID);
+				Assert.assertTrue(d.getNextChar()==3);
+			
+				d.toNextChar();
+				Assert.assertTrue(d.Hqueues2.calls==i);
+				Assert.assertTrue(d.getNextSyntaxElement()==ATxtReadFormat1.TIntermediateSyntax.TOKEN);
+				Assert.assertTrue(d.getNextChar()==5);
+			
+			};
+			
+		leave();
+	};
+	
+	@Test public void testSyntaxQueueOverflow()throws IOException
+	{
+		enter();
+			DUT d = new DUT();
+			d.setStateHandler(d.H1);
+			//Fill in queue sure to trigger overflows several times.
+			System.out.println("filling");
+			for(int i=0; i< 250; i++)
+			{
+				ATxtReadFormat1.TIntermediateSyntax v = ((i & 0x01) !=0) ? 
+										ATxtReadFormat1.TIntermediateSyntax.VOID:
+										ATxtReadFormat1.TIntermediateSyntax.SIG_END;
+									 
+				d.queueNextChar(i,v);
+			};
+			System.out.println("picking");
+			//And pick it up.
+			//Since we filled it by false operation first toNextChar() would
+			//drop our first op. Thous we first test, then nextchar.
+			for(int i=0; i< 250; i++)
+			{				
+				ATxtReadFormat1.TIntermediateSyntax v = ((i & 0x01) !=0) ? 
+										ATxtReadFormat1.TIntermediateSyntax.VOID:
+										ATxtReadFormat1.TIntermediateSyntax.SIG_END;
+				System.out.println("i="+i+" "+d.getNextSyntaxElement()+" expected "+v+" "+d.getNextChar());
+				Assert.assertTrue(d.getNextSyntaxElement()==v);
+				Assert.assertTrue(d.getNextChar()==i);
+				d.toNextChar();
+				//A last call to next means, we allready picked up everything
+				Assert.assertTrue(d.H1.calls== ((i<249) ? 0 : 1));
+			};
+			//and after last we should have one additional call.
+			Assert.assertTrue(d.H1.calls==1);
+			
+		leave();
+	};
+	
+	
+	@Test(timeout=5000) public void testHandlerLoops()throws IOException
+	{
+		enter();
+			DUT d = new DUT();
+			d.setStateHandler(d.Hs);			
+			d.toNextChar();
+			Assert.assertTrue(d.Hs.calls==3);
+			Assert.assertTrue(d.H1.calls==1);
+		leave();
+	};
+	
 };

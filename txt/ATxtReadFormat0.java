@@ -359,6 +359,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 					<li>true if: 
 						<ul>
 							<li>collected token represents "true", case insensitive;</li>
+							<li>collected token represents "t", case insensitive;</li>
 							<li>collected token represents "1";</li>
 							<li>collected token is not empty and can be converted to floating
 							point or integer number which would not return true if compared with zero;</li>
@@ -368,6 +369,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 						<ul>
 							<li>collected token is empty;</li>
 							<li>collected token represents "false", case insensitive;</li>
+							<li>collected token represents "f", case insensitive;</li>
 							<li>collected token represents "0";</li>
 							<li>collected token is not empty and can be converted to floating
 							point number or integer which would return true if compared with zero;</li>
@@ -383,8 +385,10 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 		//Detect special texts
 		if (b.length()==0) return false;
 		if (equalsCaseInsensitive(b,"true")) return true;
+		if (equalsCaseInsensitive(b,"t")) return true;
 		if (equalsCaseInsensitive(b,"1")) return true;
 		if (equalsCaseInsensitive(b,"false")) return false;
+		if (equalsCaseInsensitive(b,"f")) return false;
 		if (equalsCaseInsensitive(b,"0")) return false;
 		String sb = b.toString();
 		try{
@@ -488,7 +492,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 		int c= collectCharacter();
 		assert( (c>=-1) && (c<=0xFFFF) );
 		if (c==-1) throw new EUnexpectedEof();
-		if (TRACE) TOUT.println("readCharImpl=\'"+(char)c+"\" LEAVE");
+		if (TRACE) TOUT.println("readCharImpl=\'"+(char)c+"\'(0x"+Integer.toHexString(c)+") LEAVE");
 		return (char)c;
 	};	
 	/**  

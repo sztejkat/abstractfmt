@@ -120,6 +120,42 @@ public class Test_ATxtReadFormat0 extends ATest
 		Assert.assertTrue(false==d.readBoolean());
 		leave();
 	};
+	@Test public void testNotEnclosed_Boolean_F()throws IOException
+	{
+		enter();
+		final int [] x = new int[]{ 'F' };
+		DUT d= new DUT(x);
+		d.open();
+		Assert.assertTrue(false==d.readBoolean());
+		leave();
+	};
+	@Test public void testNotEnclosed_Boolean_f()throws IOException
+	{
+		enter();
+		final int [] x = new int[]{ 'f' };
+		DUT d= new DUT(x);
+		d.open();
+		Assert.assertTrue(false==d.readBoolean());
+		leave();
+	};
+	@Test public void testNotEnclosed_Boolean_T()throws IOException
+	{
+		enter();
+		final int [] x = new int[]{ 'T' };
+		DUT d= new DUT(x);
+		d.open();
+		Assert.assertTrue(true==d.readBoolean());
+		leave();
+	};
+	@Test public void testNotEnclosed_Boolean_t()throws IOException
+	{
+		enter();
+		final int [] x = new int[]{ 't' };
+		DUT d= new DUT(x);
+		d.open();
+		Assert.assertTrue(true==d.readBoolean());
+		leave();
+	};
 	@Test public void testNotEnclosed_Boolean_parsable_zero_1()throws IOException
 	{
 		enter();
