@@ -87,7 +87,7 @@ public class Test_CPlainTxtWriteFormat extends ATest
 		leave();
 	};
 	
-	@Test public void testSpecialCharToken()throws IOException
+	@Test public void testSpecialCharToken_quote()throws IOException
 	{
 		enter();
 			StringWriter ow = new StringWriter();
@@ -101,7 +101,62 @@ public class Test_CPlainTxtWriteFormat extends ATest
 			
 			System.out.println(o);
 			
-			Assert.assertTrue("\"\"\"\"".equals(o));
+			Assert.assertTrue("\"\\\"\"".equals(o));
+			
+		leave();
+	};
+	@Test public void testSpecialCharToken_single_uppersurogate()throws IOException
+	{
+		enter();
+			StringWriter ow = new StringWriter();
+			CPlainTxtWriteFormat w = new CPlainTxtWriteFormat(ow);
+		
+			w.open();
+			w.writeChar('\uD831');
+			w.close();
+			
+			String o = ow.toString();
+			
+			System.out.println(o);
+			
+			Assert.assertTrue("\"\\D831;\"".equals(o));
+			
+		leave();
+	};
+	@Test public void testSpecialCharToken_dualstitched_surogates()throws IOException
+	{
+		enter();
+			StringWriter ow = new StringWriter();
+			CPlainTxtWriteFormat w = new CPlainTxtWriteFormat(ow);
+		
+			w.open();
+			w.writeChar('\uD831');
+			w.writeChar('\uDC31');
+			w.close();
+			
+			String o = ow.toString();
+			
+			System.out.println(o);
+			
+			Assert.assertTrue("\"\uD831\uDC31\"".equals(o));
+			
+		leave();
+	};
+	@Test public void testSpecialCharToken_slash()throws IOException
+	{
+		enter();
+			StringWriter ow = new StringWriter();
+			CPlainTxtWriteFormat w = new CPlainTxtWriteFormat(ow);
+		
+			w.open();
+			w.writeChar('\\');
+			w.close();
+			
+			String o = ow.toString();
+			
+			System.out.println(o);
+			
+			Assert.assertTrue("\"\\\\\"".equals(o));
 			
 		leave();
 	};
@@ -200,6 +255,27 @@ public class Test_CPlainTxtWriteFormat extends ATest
 		leave();
 	};
 	
+	@Test public void testPlainBeginEndSignal_empty_twice()throws IOException
+	{
+		enter();
+			StringWriter ow = new StringWriter();
+			CPlainTxtWriteFormat w = new CPlainTxtWriteFormat(ow);
+		
+			w.open();
+			w.begin("mordimer"); //this does NOT require any escaping
+			w.end();
+			w.begin("mordimer"); //this does NOT require any escaping
+			w.end();
+			w.close();
+			
+			String o = ow.toString();
+			
+			System.out.println(o);
+			
+			Assert.assertTrue("*mordimer;*mordimer;".equals(o));
+			
+		leave();
+	};
 	
 	@Test public void testComplexBeginEndSignal_1()throws IOException
 	{
@@ -237,7 +313,7 @@ public class Test_CPlainTxtWriteFormat extends ATest
 			
 			System.out.println(o);
 			
-			Assert.assertTrue("*\"name=\"\"Anna\"\"\" \"a\";".equals(o));
+			Assert.assertTrue("*\"name=\\\"Anna\\\"\" \"a\";".equals(o));
 			
 		leave();
 	};
@@ -302,6 +378,144 @@ public class Test_CPlainTxtWriteFormat extends ATest
 		leave();
 	};
 	
+	
+	@Test public void testNameWithValidSurogate()throws IOException
+	{
+		enter();
+			StringWriter ow = new StringWriter();
+			CPlainTxtWriteFormat w = new CPlainTxtWriteFormat(ow);
+		
+			w.open();
+			w.begin("flying\uD800\uDC00moth"); //this DOES require enclosing, but won't be escaped
+			w.end();
+			w.close();
+			
+			String o = ow.toString();
+			
+			System.out.println(o);
+			
+			Assert.assertTrue("*\"flying\uD800\uDC00moth\";".equals(o));
+			
+		leave();
+	};
+	
+	@Test public void testNameWithValidSurogate_at_eof()throws IOException
+	{
+		enter();
+			StringWriter ow = new StringWriter();
+			CPlainTxtWriteFormat w = new CPlainTxtWriteFormat(ow);
+		
+			w.open();
+			w.begin("flying\uD899\uDC99"); //this DOES require enclosing, but won't be escaped
+			w.close();
+			
+			String o = ow.toString();
+			
+			System.out.println(o);
+			
+			Assert.assertTrue("*\"flying\uD899\uDC99\"".equals(o));
+			
+		leave();
+	};
+	@Test public void testNameWithValidSurogate_at_end()throws IOException
+	{
+		enter();
+			StringWriter ow = new StringWriter();
+			CPlainTxtWriteFormat w = new CPlainTxtWriteFormat(ow);
+		
+			w.open();
+			w.begin("flying\uD899\uDC99"); //this DOES require enclosing, but won't be escaped
+			w.end();
+			w.close();
+			
+			String o = ow.toString();
+			
+			System.out.println(o);
+			
+			Assert.assertTrue("*\"flying\uD899\uDC99\";".equals(o));
+			
+		leave();
+	};
+	
+	@Test public void testNameWithInvalidUpperSurogate()throws IOException
+	{
+		enter();
+			StringWriter ow = new StringWriter();
+			CPlainTxtWriteFormat w = new CPlainTxtWriteFormat(ow);
+		
+			w.open();
+			w.begin("flying\uD800moth"); //this DOES require enclosing, and will be escaped
+			w.end();
+			w.close();
+			
+			String o = ow.toString();
+			
+			System.out.println(o);
+			
+			Assert.assertTrue("*\"flying\\D800;moth\";".equals(o));
+			
+		leave();
+	};
+	
+	@Test public void testNameWithInvalidUpperSurogate_at_end()throws IOException
+	{
+		enter();
+			StringWriter ow = new StringWriter();
+			CPlainTxtWriteFormat w = new CPlainTxtWriteFormat(ow);
+		
+			w.open();
+			w.begin("flying\uD8EF"); //this DOES require enclosing, and will be escaped
+			w.end();
+			w.close();
+			
+			String o = ow.toString();
+			
+			System.out.println(o);
+			
+			Assert.assertTrue("*\"flying\\D8EF;\";".equals(o));
+			
+		leave();
+	};
+	
+	@Test public void testNameWithInvalidUpperSurogate_at_eof()throws IOException
+	{
+		enter();
+			StringWriter ow = new StringWriter();
+			CPlainTxtWriteFormat w = new CPlainTxtWriteFormat(ow);
+		
+			w.open();
+			w.begin("flying\uD8EF"); //this DOES require enclosing, and will be escaped
+			w.close();
+			
+			String o = ow.toString();
+			
+			System.out.println(o);
+			
+			Assert.assertTrue("*\"flying\\D8EF;\"".equals(o));
+			
+		leave();
+	};
+	@Test public void testNameWithInvalidLowerSurogate()throws IOException
+	{
+		enter();
+			StringWriter ow = new StringWriter();
+			CPlainTxtWriteFormat w = new CPlainTxtWriteFormat(ow);
+		
+			w.open();
+			w.begin("flying\uDCE0moth"); //this DOES require enclosing, and will be escaped
+			w.end();
+			w.close();
+			
+			String o = ow.toString();
+			
+			System.out.println(o);
+			
+			Assert.assertTrue("*\"flying\\DCE0;moth\";".equals(o));
+			
+		leave();
+	};
+	
+	
 	@Test public void testSignalInSignal()throws IOException
 	{
 		enter();
@@ -325,7 +539,7 @@ public class Test_CPlainTxtWriteFormat extends ATest
 			
 			System.out.println(o);
 			
-			Assert.assertTrue("*girl *age 33; *3sizes 90,40,90;;".equals(o));
+			Assert.assertTrue("*girl *age 33;*3sizes 90,40,90;;".equals(o));
 			
 		leave();
 	};
@@ -392,7 +606,7 @@ public class Test_CPlainTxtWriteFormat extends ATest
 			
 			System.out.println(o);
 			
-			Assert.assertTrue("*[] \"ab\"\"q\";".equals(o));
+			Assert.assertTrue("*[] \"ab\\\"q\";".equals(o));
 			
 		leave();
 	};

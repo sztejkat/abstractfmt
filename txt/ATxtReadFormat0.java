@@ -21,6 +21,16 @@ import java.io.IOException;
 	Especially encountering {@link #TOKEN_BOUNDARY} control character
 	always indicates termination of a token even if there was no regular
 	character and form a token of zero characters in length.
+	<p>
+	Tokens do correspond to sequence of:
+	{@link ATxtWriteFormat0#openPlainToken},{@link ATxtWriteFormat0#outPlainToken},
+	{@link ATxtWriteFormat0#closePlainToken}
+	or 
+	{@link ATxtWriteFormat0#openStringToken},{@link ATxtWriteFormat0#outStringToken},
+	{@link ATxtWriteFormat0#closeStringToken}.
+	<p>
+	If those two differ, it is up to a superclass to process those differences
+	and present to this class just a "token".
 	
 	
 	<h2>Parsing tokens</h2>

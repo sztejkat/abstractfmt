@@ -18,7 +18,7 @@ import java.io.*;
 					//ATestCase_BasicSignalOperations.class,
 					//ATestCase_OptimizedSignalOperations.class,
 					//ATestCase_SignalOperationsSafety.class,
-					ATestCase_ComplexSignalName.class/*,
+					/*ATestCase_ComplexSignalName.class/*,
 					ATestCase_BooleanElementaryPrimitive.class,
 					ATestCase_BooleanBlockPrimitive.class,
 					ATestCase_ByteElementaryPrimitive.class,

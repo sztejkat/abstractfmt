@@ -24,9 +24,9 @@
        0xfffe and 0xffff (UCS noncharacters) should not appear in
        conforming UTF-8 streams.<br>
        (...)
-       </i>
-       what is a very sad thing because we use characters as numbers
-       and not necessairly supported surogate pairs.
+       </i><br>
+      what is a very sad thing, because it forces us to use a far more complex
+      escaping as one may expect.
 
 
       
@@ -51,6 +51,7 @@
       	() - grouped expression
       	+ - one or more time
       	? - zero or one time.
+      	?n - up to n times
       </pre>
       and characters are:
       <pre>
@@ -79,8 +80,9 @@
       	
       	comment:= # (^[newline_character])*
       	empty_character:= class:unicode whitespace, including new-lines
-      	plain_token:= (^[empty_character , ; * # " ])*
-      	quoted_token:= " (^["] | ("") )* "
+      	plain_token:= (^[empty_character , ; * # " , 0xD800-0xDFFF])*
+      	quoted_token:= " (^[" | 0xD800-0xDFFF ] | escape )* "
+      	escape:= (\\ | \[0-9,a-f,A-F]?4; | \" )
       	struct:= begin stream_element* end 
       	begin:= [*]plain_token |
       			[*]quoted_token
@@ -90,8 +92,10 @@
       <ul>
       	<li>comment starts with # and lasts till end of line. Comments can happen anywhere, including
       	inside plain tokens but exluding quoted tokens and do not affect syntax;</li>
-      	<li>plain tokens is made of non-white-spaces and excludes ,;*"#;</li>
-      	<li>quoted token is made of any characters enclosed in "" where " is escaped by doubling it;</li>
+      	<li>plain tokens is made of non-white-spaces and excludes ,;*"# and <u>surogates</u>, even correct;</li>
+      	<li>quoted token is made of any characters enclosed in "" where \ is used as an escape character
+      	allowing directly escape any <code>0...0xFFFF</code> Java char value (not unicode code-point!) \" to escape double-quote
+      	and \\ to escape \. We do allow unescaped correct surogates;</li>
       	<li>tokens are separated by any white-spaces and ,;</li>
       	<li>struct starts with * followed by name of begin signal and terminates with ; </li>
       	<li>You don't need , between structs;</li>

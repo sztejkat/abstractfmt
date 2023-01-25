@@ -112,6 +112,30 @@
 	stored in stream as single entities and written or read using dedicated single 
 	argument API.
 	
+	<h3>Notes about char, char[] and String</h3>
+	Since JDK8 <code>char</code> is no longer 1:1 mapped with "unicode code-point", as since that moment
+	unicode allowed more than 65536 different characters. To keep JAVA compatible with
+	previous versions the decision was made, that <code>char</code> is no longer a "unicode character"
+	and if a sequence of <code>char[]</code> is used to represent String it is assumed internally
+	using UTF-16 encoding:
+	<pre>
+	U - input character 0x1_0000...0x10_FFFF
+	U' = yyyy_yyyy_yyxx_xxxx_xxxx  // U - 0x10000
+	first char  = 1101_10yy_yyyy_yyyy      // 0xD800 + yyyyyyyyyy
+	second char = 1101_11xx_xxxx_xxxx      // 0xDC00 + xxxxxxxxxx
+	</pre>
+	Even tough this was changes Java <u>still</u> accepts all possible combinations of
+	upper/lower surogates, even if they are not forming valid unicode code-points. This is 
+	because <code>char</code> is frequently used as an "unsigned integer number" and only
+	in a context of <code>String</code> it is a "part of a human text".
+	<p>
+	Inside this library there is explicite <u>required</u> to allow <u>absolutely any</u>
+	combination of <code>char</code> primitives, regardless if they are valid code points or
+	not in all operations, either single, sequences or String.
+	<p>
+	This should be taken in account for text formats since due to that fact such malformed
+	sequences <u>cannot</u> be encoded directly by any unicode encoding, including UTF-8,UTF-16 and
+	even UTF-32.
 	
 	<h2 id="PRIMITIVE_SEQUENCES">Primitive sequences</h2>
 	All primitive JAVA array types:

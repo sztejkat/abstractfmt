@@ -10,6 +10,6 @@ import org.junit.Assert;
 	This class is a pure formality and runs
 	tests for plain text implementation write format.
 */
-public class Test_ATxtWriteFormat0 extends sztejkat.abstractfmt.txt.plain.TestCPlainTxtWriteFormat
+public class Test_ATxtWriteFormat0 extends sztejkat.abstractfmt.txt.plain.Test_CPlainTxtWriteFormat
 {
 };

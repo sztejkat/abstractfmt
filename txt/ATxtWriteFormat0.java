@@ -74,32 +74,58 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@throws IOException if failed.
 	*/
 	protected abstract void closeStringToken()throws IOException;
-	/** Writes single character of token.
+	/** Writes single character of a plain token.
 	<p>
-	Invoked when token is open by {@link #openPlainToken} or {@link #openStringToken}
+	Invoked when token is open by {@link #openPlainToken}.
+	<p>
+	This method indirectly assumes, that lower encoding is capable of handling any 
+	combination of <code>char</code> values, including unallowed surogate pairs,
+	however the standard formatting of plain tokens will not generate any surogates.
+	@param c char to write.
+	@throws IOException if failed
+	*/
+	protected abstract void outPlainToken(char c)throws IOException;
+	
+	/** Writes single character of a plain token.
+	<p>
+	Invoked when token is open by {@link #openStringToken}.
 	<p>
 	This method assumes, that lower encoding is capable of handling any 
 	combination of <code>char</code> values, including unallowed surogate pairs. 
 	@param c char to write.
 	@throws IOException if failed
-	*/
-	protected abstract void outToken(char c)throws IOException;
+	*/	
+	protected abstract void outStringToken(char c)throws IOException;
 	/* --------------------------------------------------------------------------
 				Elementary primitive values.
 	--------------------------------------------------------------------------*/
-	/** Invokes {@link #outToken} for every charcter
+	/** Invokes {@link #outPlainToken} for every charcter
 	@param token non-null, but can be empty.
 	@throws IOException if failed.
 	*/
-	private void outToken(String token)throws IOException
+	protected void outPlainToken(String token)throws IOException
 	{
-		if (TRACE) TOUT.println("outToken(\""+token+"\") ENTER");
+		if (TRACE) TOUT.println("outPlainToken(\""+token+"\") ENTER");
 		for(int i=0,n=token.length();i<n;i++)
 		{
-			outToken(token.charAt(i));
+			outPlainToken(token.charAt(i));
 		};
-		if (TRACE) TOUT.println("outToken() LEAVE");
+		if (TRACE) TOUT.println("outPlainToken() LEAVE");
 	};
+	/** Invokes {@link #outStringToken} for every charcter
+	@param token non-null, but can be empty.
+	@throws IOException if failed.
+	*/
+	protected void outStringToken(String token)throws IOException
+	{
+		if (TRACE) TOUT.println("outStringToken(\""+token+"\") ENTER");
+		for(int i=0,n=token.length();i<n;i++)
+		{
+			outStringToken(token.charAt(i));
+		};
+		if (TRACE) TOUT.println("outStringToken() LEAVE");
+	};
+	
 	/** Called by {@link #writeBooleanImpl} to produce boolean token.
 	<p>
 	Default implementation returns "true" or "false"
@@ -110,7 +136,7 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@Override protected final void writeBooleanImpl(boolean v)throws IOException
 	{
 		openPlainToken();
-		outToken(formatBoolean(v));
+		outPlainToken(formatBoolean(v));
 		closePlainToken();
 	};
 	
@@ -124,7 +150,7 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@Override protected void writeByteImpl(byte v)throws IOException
 	{
 		openPlainToken();
-		outToken(formatByte(v));
+		outPlainToken(formatByte(v));
 		closePlainToken();
 	};
 	
@@ -140,7 +166,7 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@Override protected void writeCharImpl(char v)throws IOException
 	{
 		openStringToken();
-		outToken(formatChar(v));
+		outStringToken(formatChar(v));
 		closeStringToken();
 	};
 	
@@ -154,7 +180,7 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@Override protected void writeShortImpl(short v)throws IOException
 	{
 		openPlainToken();
-		outToken(formatShort(v));
+		outPlainToken(formatShort(v));
 		closePlainToken();
 	};
 	
@@ -168,7 +194,7 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@Override protected void writeIntImpl(int v)throws IOException
 	{
 		openPlainToken();
-		outToken(formatInt(v));
+		outPlainToken(formatInt(v));
 		closePlainToken();
 	};
 	
@@ -182,7 +208,7 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@Override protected void writeLongImpl(long v)throws IOException
 	{
 		openPlainToken();
-		outToken(formatLong(v));
+		outPlainToken(formatLong(v));
 		closePlainToken();
 	};
 	
@@ -196,7 +222,7 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@Override protected void writeFloatImpl(float v)throws IOException
 	{
 		openPlainToken();
-		outToken(formatFloat(v));
+		outPlainToken(formatFloat(v));
 		closePlainToken();
 	};
 	
@@ -210,7 +236,7 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@Override protected void writeDoubleImpl(double v)throws IOException
 	{
 		openPlainToken();
-		outToken(formatDouble(v));
+		outPlainToken(formatDouble(v));
 		closePlainToken();
 	};
 	
@@ -227,7 +253,7 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@Override protected final void writeBooleanBlockImpl(boolean v)throws IOException
 	{
 		openPlainToken();
-		outToken(formatBooleanBlock(v));
+		outPlainToken(formatBooleanBlock(v));
 		closePlainToken();
 	};
 	
@@ -241,7 +267,7 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@Override protected final void writeByteBlockImpl(byte v)throws IOException
 	{
 		openPlainToken();
-		outToken(formatByteBlock(v));
+		outPlainToken(formatByteBlock(v));
 		closePlainToken();
 	};		
 	
@@ -255,7 +281,7 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@Override protected final void writeShortBlockImpl(short v)throws IOException
 	{
 		openPlainToken();
-		outToken(formatShortBlock(v));
+		outPlainToken(formatShortBlock(v));
 		closePlainToken();
 	};
 	
@@ -274,14 +300,14 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 		openStringToken();
 			while(length--!=0)
 			{
-				outToken(formatCharBlock(buffer[offset++]));
+				outStringToken(formatCharBlock(buffer[offset++]));
 			};
 		closeStringToken();
 	};
 	@Override protected final void writeCharBlockImpl(char v)throws IOException
 	{
 		openStringToken();
-		outToken(formatCharBlock(v));
+		outStringToken(formatCharBlock(v));
 		closeStringToken();
 	};
 	
@@ -296,7 +322,7 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@Override protected final void writeIntBlockImpl(int v)throws IOException
 	{
 		openPlainToken();
-		outToken(formatIntBlock(v));
+		outPlainToken(formatIntBlock(v));
 		closePlainToken();
 	};
 	
@@ -311,7 +337,7 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@Override protected final void writeLongBlockImpl(long v)throws IOException
 	{
 		openPlainToken();
-		outToken(formatLongBlock(v));
+		outPlainToken(formatLongBlock(v));
 		closePlainToken();
 	};
 	
@@ -327,7 +353,7 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@Override protected final void writeFloatBlockImpl(float v)throws IOException
 	{
 		openPlainToken();
-		outToken(formatFloatBlock(v));
+		outPlainToken(formatFloatBlock(v));
 		closePlainToken();
 	};
 	
@@ -341,7 +367,7 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@Override protected final void writeDoubleBlockImpl(double v)throws IOException
 	{
 		openPlainToken();
-		outToken(formatDoubleBlock(v));
+		outPlainToken(formatDoubleBlock(v));
 		closePlainToken();
 	};
 	
@@ -360,14 +386,14 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 		openStringToken();
 			while(length--!=0)
 			{
-				outToken(formatStringBlock(characters.charAt(offset++)));
+				outStringToken(formatStringBlock(characters.charAt(offset++)));
 			};
 		closeStringToken();
 	};
 	@Override protected final void writeStringImpl(char v)throws IOException
 	{
 		openStringToken();
-		outToken(formatStringBlock(v));
+		outStringToken(formatStringBlock(v));
 		closeStringToken();
 	};
 };

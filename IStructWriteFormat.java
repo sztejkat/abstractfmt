@@ -25,11 +25,7 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	/** <a name="BEGIN"></a>
 	Writes "begin" signal opening the structure.
 	
-	@param name non null name of a structure which now begins. A name 
-			should be a well formed unicode string, that is it <u>should not</u>
-			carry un-paired surogates as they do not represent a valid text.
-			How the class behaves if such an un-paired surogate is present
-			is implementation-dependent.
+	@param name non null name of a structure which now begins. 
 			
 	@throws AssertionError if <code>name</code> is null.
 	@throws EFormatBoundaryExceeded if name of signal is too long.
@@ -214,9 +210,8 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	written with {@link #writeCharBlock}.
 	</i>
 	<p>See also notes in {@link #writeCharBlock(char,int,int)}.
-	@param characters a character sequence. This sequence <i>should not</i> contain
-			un-paired surogate characters, but it is not required to be detected
-			since they are not allowed to appear in any unicode text.
+	@param characters a character sequence of absolutely any combination,
+				including invalid unicode higher/lower surogates combinations.
 	@param offset --//--
 	@param length --//--
 	@throws IOException --//--
@@ -240,30 +235,10 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	
 	/**  See {@link #writeBooleanBlock(boolean[],int,int)}
 	This method write sequence of characters using fast, random access mode, ie. as a
-	sequence of 16 bit UTF-16 characters.
-	<p>
-	Difference between String and char [] arrays.
-	<p>
-	Since JDK8 char is no longer 1:1 mapped with "unicode code-point", as since that moment
-	unicode allowed more than 65536 different characters. To keep JAVA compatible with
-	previous versions the decision was made, that char is no longer a "unicode character"
-	and if a sequence of char[] is used to represent String it is assumed internally
-	using UTF-16 encoding:
-	<pre>
-	U - input character 0x1_0000...0x10_FFFF
-	U' = yyyy_yyyy_yyxx_xxxx_xxxx  // U - 0x10000
-	first char  = 1101_10yy_yyyy_yyyy      // 0xD800 + yyyyyyyyyy
-	second char = 1101_11xx_xxxx_xxxx      // 0xDC00 + xxxxxxxxxx
-	</pre>
-	The {@link ##writeString(CharSequence,int,int)} <u>is allowed</u> to barf or incorrectly
-	encode texts which do contain 0xD8xx followed by a character which does not belong to 
-	0xDCxx realm and thous do not form a valid "unicode code-point" since such characters
-	do not exist in unicode realm.
-	<p>
-	This method is however explicite <u>required</u> to allow <u>absolutely any</u>
-	combination of <code>char</code> primitives, regardless if they are valid code points or
-	not.
-	@param buffer --//--
+	sequence of 16 bit integers.
+	
+	@param buffer what to write. May contain absolutely any combination of characters,
+		including invalid unicode higher/lower surogates combinations.
 	@param offset --//--
 	@param length --//--
 	@throws IOException --//--

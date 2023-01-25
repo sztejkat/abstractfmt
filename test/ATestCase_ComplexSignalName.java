@@ -350,16 +350,10 @@ public class ATestCase_ComplexSignalName extends AInterOpTestCase<IStructReadFor
 		The 0xD800...0xDFFF is a "surogate range" 
 		in which Strings do allow only a combination of 0xD800...0xDBFF followed by	0xDC00...0xDFFF.
 		Any other combination is a "malformed surogate" and won't be correctly processed by any
-		standard String processing routine. 
+		standard encoding.
 		
-		How Java String do react on in is not necessairly specified, but from observation it allows, due to
-		compatiblity, such malformed surogates.
-		
-		The won't however get past the encoder/decoder barrier beacuse those
-		characters are NOT LONGER considered to be valid code points.
-		
-		Thous we do EXCLUDE them from names.
-	
+		However we DO REQUIRE it to be a valid name, so we do test it.
+	*/
 	@Test public void testP0xD800()throws IOException{enter();testRangeName((char)0xD800, (char)0xD8FF);leave(); }
 	@Test public void testP0xD900()throws IOException{enter();testRangeName((char)0xD900, (char)0xD9FF);leave(); }
 	@Test public void testP0xDA00()throws IOException{enter();testRangeName((char)0xDA00, (char)0xDAFF);leave(); }
@@ -368,7 +362,7 @@ public class ATestCase_ComplexSignalName extends AInterOpTestCase<IStructReadFor
 	@Test public void testP0xDD00()throws IOException{enter();testRangeName((char)0xDD00, (char)0xDDFF);leave(); }
 	@Test public void testP0xDE00()throws IOException{enter();testRangeName((char)0xDE00, (char)0xDEFF);leave(); }
 	@Test public void testP0xDF00()throws IOException{enter();testRangeName((char)0xDF00, (char)0xDFFF);leave(); }
-	*/
+	
 	
 	@Test public void testP0xE100()throws IOException{enter();testRangeName((char)0xE100, (char)0xE1FF);leave(); }	
 	@Test public void testP0xE200()throws IOException{enter();testRangeName((char)0xE200, (char)0xE2FF);leave(); }

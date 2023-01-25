@@ -299,32 +299,80 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 				};
 				@Override protected void toNextChar()throws IOException
 				{
-					int i= read();
-					if (i==-1) return;
-					final char c=(char)i;
-					if (c==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)
+					final char c;
 					{
+						int i= read();
+						if (i==-1) return;
+						c=(char)i;
+					};
+					//Detect escape sequence
+					//Note: switch not possible? Not a compile time constat inside a class scope.
+					if (c==CPlainTxtWriteFormat.ESCAPE_CHAR)
+					{
+						//yes, look ahead
 						//either escaped or end of body
-						final int j = read();
-						if (j==-1) return;
-						char ce = (char)j;
-						if (ce==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)
+						final char ce;
 						{
-							//escaped
-							setNextChar(c,body_syntax);
+							final int j = in.read();
+							if (j==-1) throw new EUnexpectedEof("in escape sequence");
+							ce= (char)j;
+						};
+						if (
+							(ce==CPlainTxtWriteFormat.ESCAPE_CHAR)||
+						    (ce==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)
+						    )
+						{
+							//escaped directly
+							setNextChar(ce,body_syntax);
 						}else
 						{
-							//un-read for token lookup.
-							in.unread(ce);
-							setStateHandler(TOKEN_LOOKUP);
-							setNextChar(c,terminator_syntax);
+							//escaped by hex
+							//We accept 0...9,a...f,A...F  zero to four times and 
+							//require the tailing ;
+							int digit = ce;
+							char composed = 0;
+							for(int n=0;;n++)
+							{
+								//process the digit, pending
+								if (digit==';')
+								{
+									//complete
+									setNextChar(composed,body_syntax);
+									break;
+								}else
+								{
+									if (n==4) throw unexpectedCharException((char)digit);
+									if ((digit>='0')&&(digit<='9'))
+									{
+										digit -='0';
+									}else
+									if ((digit>='a')&&(digit<='f'))
+									{
+										digit = digit-'a'+10;
+									}else
+									if ((digit>='A')&&(digit<='F'))
+									{
+										digit = digit-'A'+10;
+									}else
+										throw unexpectedCharException((char)digit); 
+									composed<<=4;
+									composed|=digit;									
+								}
+								//next digit
+								digit = in.read();
+								if (digit==-1) throw new EUnexpectedEof("in hex escape sequence");
+							};
 						}
 					}else
-					if (isStringTokenBodyChar(c))
+					if (c==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)
 					{
-						setNextChar(c,body_syntax);
+						setStateHandler(TOKEN_LOOKUP);
+						setNextChar(c,terminator_syntax);
 					}else
-						throw unexpectedCharException(c);
+					{
+						//everything else is a string body
+						setNextChar(c,body_syntax);
+					}
 				}
 			};
 			 /** Collected {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR}
@@ -463,10 +511,10 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 				(c==CPlainTxtWriteFormat.BEGIN_SIGNAL_CHAR)
 				);
 	};
-	private static boolean isStringTokenBodyChar(char c)
+	/*private static boolean isStringTokenBodyChar(char c)
 	{
 		return c!=CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR;
-	};
+	};*/
 	
 	/* ********************************************************************
 	
