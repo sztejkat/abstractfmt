@@ -76,7 +76,11 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 	*/
 	public CPlainTxtWriteFormat(Writer out)
 	{
-		super(0);	// no registry support.
+		super(0);	//We do not support registered names.
+					//Due to JAVA lacking virtual multiple inheritance
+					//it was for me easier to inherite the ARegisteringStructWriteFormat
+					//in generic text support and then disable it here rather
+					//than playing with class composition.
 		assert(out!=null);
 		this.out = out;
 	};

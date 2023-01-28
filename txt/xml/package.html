@@ -12,15 +12,47 @@
       <h1>Use of XML standard</h1>
       This format do produce "well formed XML", but cannot parse all
       "well formed" XMLs.
+      <p>
+      Note: Refer to XML specification <a href="https://www.w3.org/TR/xml/">there</a>
+      or a <a href="doc-files/XML_specification.html">copy</a> provided with this package
+      for Your convinience.
+      
+      <h2>Restrictions on parsing</h2>
+      During parsing the classes implementing signal format over the XML
+      are expected to:
+      <ul>
+      	<li>support only required set of entities, as by 4.6 of specification:
+      	<code>lt, gt, amp, apos, quot</code>;
+      	<li>ignore declarations of named entities, either internal or external;</li>
+      	<li>ignore CDATA sections;</li>
+      	<li>ignore processing ? instructions;</li>
+      	<li>ignore NOTATION sections;</li>
+      	<li>ignore DOCTYPE syntax declaration;</li>
+      </ul>
+      
 
       <h2>XML schema</h2>
       The format is schema-less since there is no way to define schema
       for unknown data structures.
+      
 
       <h2>XML body</h2>
-      Opening stream opens XML body, closing stream closes it.
+      Opening stream writes XML prolog (defined by an implementation).
+      <p>
+      Closing stream do:
+      	<ul>
+      		<li>if signal <u>recursion depth is zero</u> writes XML tag
+      		closing xml element opened in prolog;</li>
+      		<li>if signal recustion depth is NOT zero, all XML tags
+      		which were open but not closed are left as they are and
+      		not closing tag for an element opened in prolog is written.
+      		</li>
+      	</ul>
+      This method was selected because even tough closing a stream with 
+      un-closed signals will produce a faulty XML I find it still better
+      than faking the correctness by forcibly closing the dangling tags.
 
-      <h2>Invalid characters</h2>
+      <h2 id="INVALID_CHARACTER">Invalid characters</h2>
       XML defines following classes off "cannot encode" characters:
       <ul>
           <li>characters which are proper XML characters, but cannot be
@@ -34,10 +66,9 @@
             &amp;<i>entity mnemonic</i>;
             &amp;#<i>unicode</i>;
       </pre>
-      The set of supported mnemonics will be defined in implementing class.
       <p>
       Second type of characters cannot be present in XML file. Our abstract
-      format do require however, that the entire 0...0xFFFF space of unicode
+      format do require however, that the entire 0...0xFFFF space of JAVA
       characters can be used for names, elementary characters
       and strings.
       <p>
@@ -65,9 +96,6 @@
       The exact set of characters which are escaped vary depending on where they
       are used in XML. The smallest allowed set is used to start tag name, slightly
       larger in the remaning part of the name and largerst inside XML element body.
-
-      <h2>Included XML, xlink and other extensions</h2>
-      Not supported. A plain, single continous data character stream is to be used.
 
       <h2>XML comments</h2>
       Supported. May appear anywhere inside a tag body, including inside
