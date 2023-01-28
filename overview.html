@@ -140,9 +140,7 @@
     <i>text</i>                             /
     ....
     </pre>
-    to just man a specific <u>single attribute</u> to each of ELEMENTs.
-    <p>
-    Can You do it without parsing the shape definitions?
+    Can You do extract a single attribute of a named ELEMENT without parsing the entire ELEMENT definition?
 
 
     <h2>Boundary checking</h2>
@@ -155,7 +153,7 @@
 
 
     <h2>Dumb transcoding</h2>
-    Ok, no imagine You have two pairs of <code>DataInput/DataOutptu</code>. Both are breaking contract, since
+    Ok, no imagine You have two pairs of <code>DataInput/DataOutput</code>. Both are breaking contract, since
     pair A is reading and writing XML and pair B is reading and writing JSON.
     <p>
     Wouldn't it be great to just be able to read from A DataInput and write it to B DataOutput?

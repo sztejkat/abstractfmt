@@ -367,4 +367,15 @@ public class ATestCase_StringBlockPrimitive extends AInterOpTestCase<IStructRead
 		testWriteSpecial("\"ooops");
 		leave();
 	};
+	
+	
+	@Test public void writeXML_surogates()throws IOException
+	{
+		enter();	//Note: dump files will be overriden by each call.
+		testWriteSpecial("\uD800\uDC00");	//this is good surogate
+		testWriteSpecial("\uDC00\uD800");	//this is bad surogate
+		testWriteSpecial("\uD800");			//this is dangling surogate
+		leave();
+	};
+	
 }

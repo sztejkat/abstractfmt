@@ -19,14 +19,14 @@
 	<p>
 	In generic implementing a stream may involve some "read-ahead" or
 	"unreading" but from the user API point of view cursor always moves
-	only forward.
+	forwards only.
 	
 	
 	
 	
 	<h2 id="PRIMITIVE_DATA">Primitive data</h2>
 	Any data which is reflecting native JAVA data types,
-	including <code>String</code> and arrays and excluding references.
+	including <code>String</code> and arrays and <u>excluding</u> references.
 	<p>
 	Primitive data are divided in two categories:
 	<ul>
@@ -42,8 +42,9 @@
 	It is allowed however to <u>fail misserably</u>	if type of primitive which is found in stream is different from the type 
 	expected by the reading code. This failure is allowed to be delayed	and corrupt reading of all other primitive 
 	data <u>up to the nearest <a href="#SIGNAL">signal</a></u>. 
-	The request to reach/detection of the signal <u>must be executed correct</u> and
-	<u>must correct</u>	that faulty condition. Reading of the data after the signal must be unaffected by a previous mistake.
+	The request to reach/detection of the signal <u>must be executed correctly</u> and
+	<u>must correct</u>	that faulty condition. The act of reading the data after the signal must no be affected 
+	by any previous mistake.
 	<p>
 	This correction must take place always and unconditionally,
 	even if signal happens to appear in the middle of primitive data.
@@ -57,7 +58,8 @@
 	<h2 id="SIGNAL">Signal</h2>
 	An unique sequence of bits (or other entities) in stream which can
 	be always correctly idenitified regardless of the position of a cursor
-	inside any portion of primitive data.
+	inside any portion of primitive data, providing that all cursor movements
+	were preformed through API defined here.
 	<p>
 	The signal must have such a property that:
 	<ul>
@@ -116,7 +118,7 @@
 	Since JDK8 <code>char</code> is no longer 1:1 mapped with "unicode code-point", as since that moment
 	unicode allowed more than 65536 different characters. To keep JAVA compatible with
 	previous versions the decision was made, that <code>char</code> is no longer a "unicode character"
-	and if a sequence of <code>char[]</code> is used to represent String it is assumed internally
+	and if a sequence of <code>char[]</code> is used to represent a text it is assumed internally
 	using UTF-16 encoding:
 	<pre>
 	U - input character 0x1_0000...0x10_FFFF
@@ -127,15 +129,22 @@
 	Even tough this was changes Java <u>still</u> accepts all possible combinations of
 	upper/lower surogates, even if they are not forming valid unicode code-points. This is 
 	because <code>char</code> is frequently used as an "unsigned integer number" and only
-	in a context of <code>String</code> it is a "part of a human text".
+	in a context of <code>String</code> it may be a "part of a human text".
 	<p>
 	Inside this library there is explicite <u>required</u> to allow <u>absolutely any</u>
 	combination of <code>char</code> primitives, regardless if they are valid code points or
 	not in all operations, either single, sequences or String.
 	<p>
-	This should be taken in account for text formats since due to that fact such malformed
-	sequences <u>cannot</u> be encoded directly by any unicode encoding, including UTF-8,UTF-16 and
-	even UTF-32.
+	This should be taken in account for text formats. The <code>java.io.Reader</code> and 
+	<code>java.io.Writer</code> is using standard encoders/decoders which do work under an
+	assumption that sequence of characters passed to them do represent UTF-16 encoded text.
+	They do decode UTF-16 to UTF-32 and then do make an attempt to transcode it to
+	desired format. Since the pool of 0xD800...0xDFFF is specifically <u>excluded</u>
+	from valid UTF-32 set they do fail to encode invalid surogate sequences and either throw or substitute
+	them with "default character". Which is not what we want here.
+	<p>
+	Note: The WTF-8 encoder / decoder should do the trick, but we relying on it would
+	be troublesome. You are free to do it anyways.
 	
 	<h2 id="PRIMITIVE_SEQUENCES">Primitive sequences</h2>
 	All primitive JAVA array types:
@@ -256,15 +265,15 @@
 	   	<li>requires,  that there is no hard, conceptually built-in limitation
 	   	   on the depths of structures recursion;</li>
 	   	<li>requires,  that there is no limitation on what characters can be contained
-	   	    in name, including <code>(char)0</code> and names are stored as supplied, without
+	   	    in name, including <code>(char)0</code>. Names are required to be stored as supplied, without
 	   	    any upper/lower case handling nor normalization of any kind. Especially the 
 	   	    "" (empty) name is allowed. However <code>null</code> reference does not 
 	   	    describe a valid name and is not the same as "" (empty);</li>
-	   	<li>requires, that formats must contain an adjustable function which
+	   	<li>requires, that format must contain an adjustable function which
 	   	    will prevent it from reading and writing too long names;</li>
-	   	<li>requires, that formats must contain an adjustable function which
+	   	<li>requires, that format must contain an adjustable function which
 	   	    will prevent it from reading and writing too deeply recursed structures;</li>
-	   	<li>requires, that formats which do contain some hard-coded, built in limits
+	   	<li>requires, that format which do contain some hard-coded, built in limits
 	   	    for names or recursion must report them to user through well defined API;</li>
 	   </ul>
 	   Additionally this format recommends that:
@@ -299,7 +308,7 @@
 	   Writing of primitive sequence is allowed in any place, except if
 	   primitive sequence write of an another type was initialized.
 	   <p>
-	   First write of primitive sequence of type T initializes the primitive
+	   First write of primitive sequence of type T[] initializes the primitive
 	   sequence in stream and since that moment only allowed subsequent
 	   writes are signals and sequence of the same type.
 	   <p>
@@ -313,8 +322,8 @@
 	   <p>
 	   <i>Note: This assumption was made with Java classes serialization in mind,
 	   where there will be, by convention, plenty of textual information which can
-	   be efficiently stored using compact UTF-8 encoding. The <code>char[]</code> is on the other
-	   hand reserved for cases when UFT-8 encoding would be not optimal and UTF-16 would be best.</i>   
+	   be efficiently stored using compact UTF-8/WTF-8 encoding. The <code>char[]</code> is on the other
+	   hand reserved for cases when UFT-8/WTF-8 encoding would be not optimal and UTF-16/WTF-16 would be best.</i>   
 	   <p>
 	   There is no requirement that any kind of type information is to be
 	   stored, however signal names can be used to provide that kind of information.
@@ -329,24 +338,97 @@
 	</ul>
 	
 	<h3 id="EOF_HANDLING">End-of-file condition</h3>
+	<h4>Permanent end-of-file</h4>
+	A "permanent end-of-file" condition happens when there is absolutely no possibility
+	that subsequent read attempts may read some data. This is a usual case for files
+	which are opened in exclusive mode - once You reached end of a file no more data may 
+	appear in it ever until You close the file and release for others to use.
+	<p>
 	The format requires that a <u>permanent</u> "no more data" condition
-	is represented by throwing an <code>IOException</code>.
+	is represented by throwing a <a href="EUnexpectedEof.html">EUnexpectedEof</a>.
+	
+	<h4>Temporary end of file</h4>
+	A "temporary end-of-file" is characteristic for live connections with timeouts on
+	the stream and no keep-alive signature. The typical scenario is when You listen to 
+	a data line for incomming packets and nothing comes in. Or when You listen for an
+	answer, but there is no such. Or a packet You are processing is broken in half and 
+	the rest of it is lost.
+	<p>
+	However after some time new data may appear, but 
+	the time specified is longer than I/O timeout and Your low level I/O routines do
+	return with "nothing to read" report.
 	<p>
 	How the API behaves if there is <u>temporary</u> "no more data" in stream
-	it is unspecified and depends on implementation. It may 
-	either block awaiting for new data to come, or throw an exception. 
-	 
+	it is unspecified and depends on implementation.
+	It may either block awaiting for new data to come, or throw an exception.
 	<p>
-	<i>Note: The example of "permanent no more data" is the end of file on
-	disk when file is open in an exclusive mode. The example of "temporary no more data"
-	is when the network connection fails to supply data in specified time frame because
-	the data source has nothing to say at the moment but the connection is still alive.
-	</i>
-	<p>
-	<i>
-	The "permanent no more data" 
-	cannot be cleared, the "temporary no more data" can be when new data will be present.
-	</i> 
+	Implementations of this API <u>should</u> however specify how they do behave in 
+	case when low-level I/O returns with a <u>temporary</u> "end-of-file" condition.
+	
+	<h4 id="TEMPEOF">Support types for a temporary lack of data</h4>	
+	This support may be:
+	<table border="1">
+	<caption>Eof handling support types</caption>
+	<tr>
+		<td><b>Support type</b></td>
+		<td><b>Signal read</b></td>
+		<td><b>elementary reads</b></td>
+		<td><b>sequence reads</b></td>		
+	</tr>
+	<tr>
+		<td><b>None</b>
+		<br>
+		This is a default support level
+		if not specified otherwise
+		</b></td>
+		<td>throws <a href="EUnexpectedEof.html">EUnexpectedEof</a>, the effect of future use of stream is unpredicatable;</td>
+		<td>throws <a href="EUnexpectedEof.html">EUnexpectedEof</a>, the effect of future use of stream is unpredicatable;</td>
+		<td>returns with a partial read or throws <a href="EUnexpectedEof.html">EUnexpectedEof</a>
+		if could not read any data. If thrown, the effect of future use of stream is unpredicatable;</td>
+	</tr>
+	<tr>
+		<td><b>Frame</b></td>
+		<td>If structure recursion level is zero it throws <a href="ETemporaryEndOfFile.html">ETemporaryEndOfFile</a> and allows 
+		operation to be re-tried to check if next signal did appear.
+		<br>
+		If structure recursion level is higher behaves as "None";</td>
+		<td>as "None";</td>
+		<td>as "None"</td>
+	</tr>
+	<tr>
+		<td><b>Signal</b></td>
+		<td>Regrdless of recursion depths throws <a href="ETemporaryEndOfFile.html">ETemporaryEndOfFile</a> and allows 
+		operation to be re-tried to check if next signal did appear;</td>
+		<td>as "None";</td>
+		<td>as "None"</td>
+	</tr>
+	<tr>
+		<td><b>Full</b></td>
+		<td>throws <a href="ETemporaryEndOfFile.html">ETemporaryEndOfFile</a> and allows 
+		operation to be re-tried to check if next signal did appear;</td>
+		<td>throws <a href="ETemporaryEndOfFile.html">ETemporaryEndOfFile</a> and allows operation
+		to re-try reading this exact primitive element again using this exact
+		method. Any partially read element must not be discarded and must be available
+		for subsequent reads;</td>
+		<td>returns with a partial read or throws <a href="ETemporaryEndOfFile.html">ETemporaryEndOfFile</a>
+		if could not read any data. Subsequent calls to the same block
+		read are allowed to try to read newly incomming data. 
+		Any partially read element must not be discarded and must be available
+		for subsequent reads;</td>
+	</tr>
+	</table>
+	Notes:
+		<ol>
+			<li>File-based stream or stream wrapped in carrier protocols which do warrant the delivery 
+			will use "None" model since there is no benefit from using other eof-support models.</li>
+			<li>The low-level direct hardware connection streams which decided to use this format
+			as <u>their own protocol</u> will need "Frame" model to allow for infinite silence 
+			between frames and to be able to detect lack of response from remote party.</li>
+			<li>"Signal" and "Full" models will be rarely needed. Implementing the "Full" model
+			is especially cumbersome and tricky	and thous not recommended.</li>
+		</ol>
+	
+	
 	
 	<h3>Reading errors handling</h3>
 	This format defines, that if stream throws an exception
@@ -464,6 +546,7 @@
         <p>
         Tests are implemented by classes declared using following schema:
         <pre>
+        	 <i>stand-alone tests for public, protected or package private methods</i>
              public class TestXXXX
              {
                 ....
@@ -472,16 +555,18 @@
              ....
              public class Test_XXXX
              {
-             .....
+                 ....
+                &#64;org.junit.Test public void test....
              }
              ...
+             <i>internal tests requiring access to private fields or methods, or just very compact tests</i>
              public class XXXX
              {
                     ....
                     public static class Test
                     {
                       ...
-                       org.junit.Test public void test....
+                       &#64;org.junit.Test public void test....
                     }
              };
         </pre>
@@ -498,11 +583,12 @@
             <li>encourages them to run them, as running is as simple as typing <code>./test-package.sh</code>;</li>
         </ul>
         <i>Note: I have chosen to do it that way, because I did observe that industry standard approach when tests are moved
-        to other packages or to other source trees frequently encourages coders to introduce changes without
-        testing them. Simply compilation of tests do require additional effort.</i>
-
+        to other packages or even to other source trees frequently encourages coders to introduce changes without
+        testing them. The open-source projects do rarely have separate test teams (this project does not)
+        so encouraging coders to run tests is critical for project quality</i>
         <p>
-        The <code>sztejkat.abstractfmt.test</code> package is expected to contain testing utilities.
+        The <code>sztejkat.abstractfmt.test</code> package is expected to contain testing utilities including
+        <i>test suite components</i> for testing implementations "by the contract".
 
 
 
@@ -585,7 +671,7 @@
                          public final class SSingleton implements IContract
                          {
                                 public static final SSingleton INSTANCE = new SSingleton();
-                                private SToolbox(){}; //disable creation of instances
+                                private SSingleton(){}; //disable creation of instances
                          };
                          </pre>
                          </li>

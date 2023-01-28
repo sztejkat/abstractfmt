@@ -13,28 +13,23 @@
       <h1>Format description</h1>
       This format does not implement neither "end-begin" optimization nor name
       registry.
+      
       <h2>Encoding</h2>
-      A text format using UTF-8 encoding.
-      All characters are allowed, BOM on the beginning of stream is not allowed.
+      Unspecified, however thre is required that the entire <u>allowed</u>
+      set of Unicode which may be carried by UTF-16 can be encoded in 
+      a text file. Not allowed, bad UTF-16 sequences are escaped by this format.
       <p>
-      Note: A standard JAVA UTF-8 encoder do obey the rule:
-      <i>(...)
-       <br>
-       The UCS code values 0xd800–0xdfff (UTF-16 surrogates) as well as
-       0xfffe and 0xffff (UCS noncharacters) should not appear in
-       conforming UTF-8 streams.<br>
-       (...)
-       </i><br>
-      what is a very sad thing, because it forces us to use a far more complex
-      escaping as one may expect.
-
+      Usually UFT-8 will be fine.
+      <p>
+      The writer writes \n as EOL, but reader is EOL agnostic and recognizes
+      all \n,\r,\n\r,\r\n as valid single EOL sequence.
 
       
       
-      <h1>Sytax description</h1>
+      <h1>Syntax description</h1>
       The syntax definiion is using a simplfied BNF notation
       <pre>
-           a:= expression &larr; syntax element defined by an "expression"
+           a:= expression &larr; <i>syntax element defined by an "expression"</i>
       </pre>
       where expression is a either
       <pre>
@@ -95,9 +90,9 @@
       	<li>plain tokens is made of non-white-spaces and excludes ,;*"# and <u>surogates</u>, even correct;</li>
       	<li>quoted token is made of any characters enclosed in "" where \ is used as an escape character
       	allowing directly escape any <code>0...0xFFFF</code> Java char value (not unicode code-point!) \" to escape double-quote
-      	and \\ to escape \. We do allow unescaped correct surogates
+      	and \\ to escape \. We do allow unescaped correct surogates inside quouted tokens, but not inside un-quoted.
       	<p>
-      	The escaping allows <u>up to</u> four digits and requires terminating ;.
+      	The escaping allows <u>up to</u> four hex digits and requires terminating semicolon.
       	<p>
       	Good escapes are:
       	<pre>
@@ -106,11 +101,12 @@
       	\; &rarr; \0000; 
       	\fe; \00FE;
       	</pre>
-      	;</li>
-      	<li>tokens are separated by any white-spaces and ,;</li>
-      	<li>struct starts with * followed by name of begin signal and terminates with ; </li>
-      	<li>You don't need , between structs;</li>
-      	<li>two consequenct , , with any spaces do indicate an empty token;</li>
+      	</li>
+      	<li>tokens are separated by any white-spaces and comma;</li>
+      	<li>struct starts with * followed by name of begin signal, either quoted or plain, and is terminated with semicolon;</li>
+      	<li>You don't need comma between structs;</li>
+      	<li>two consequenct , , with any spaces do indicate an empty token which is implemented as numeric zero
+      	or character <code>(char)0</code>;</li>
       </ul>
       <h2>Examples</h2>
       <pre>
@@ -122,8 +118,33 @@
       </pre>
       
       <h1>Parsing tokens</h1>
-      This format is using rules found in <code>sztejkat.abstractfmt.txt.ATxtReadFormat0</code>
-      and basically does everything possible to parse tokens or fragments of them into
-      what You do request.
+      This format do write tokens using <code>sztejkat.abstractfmt.txt.ATxtReadFormat1</code> formating style
+      and parses using <code>sztejkat.abstractfmt.txt.ATxtReadFormat0</code> rules.
+      <p>
+      From less formal point of view it means that:
+      <ul>
+      	<li>for formating:
+      		<ul>
+      			<li>all numeric values are encoded as decimals;</li>
+      			<li>booleans are encoded as "t" or "f";</li>
+      			<li>characters or string writes are always written as quoted tokens and are stitched together
+      			into one long token;</li>
+      			<li>comments are never written automatically, but API allows for that;</li>
+      		</ul>
+      	</li>
+      	<li>for parsing:
+		  <ul>
+			<li>it doesn't matter if token is quoted or plain, the inside of it is processed regardless of a form;</li>
+			<li>numeric <code>readXXX</code> always do load the whole token and are trying to parse it into a number
+			of any float or integer form and interprete it, using everything Java can do. 
+			The size of token is limited to a sane value and stream
+			complains if it is too long;</li>
+			<li>boolean reading additionally understands "true","t","false","f" case insensitive tokens;</li>
+			<li>character or string methods always do process tokens character by character and transparently cross
+			the token boundaries;</li>
+		  </ul>
+		 </li>
+	</ul>
+      
 </body>
 </html>

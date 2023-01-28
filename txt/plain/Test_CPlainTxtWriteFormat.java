@@ -633,4 +633,266 @@ public class Test_CPlainTxtWriteFormat extends ATest
 			
 		leave();
 	};
+	
+	
+	
+	private static void printlnDetailed(String s)
+	{
+		for(int i=0;i<s.length();i++)
+		{
+			char c= s.charAt(i);
+			System.out.print(c+"("+Integer.toHexString(c)+")");
+		};
+		System.out.println();
+	};
+	private void testComment_StandAlone(String cmt, String expected)throws IOException
+	{
+		enter("\""+cmt+"\"");
+		StringWriter ow = new StringWriter();
+			CPlainTxtWriteFormat w = new CPlainTxtWriteFormat(ow);
+		
+			w.open();
+			w.writeComment(cmt);
+			w.close();
+			
+			String o = ow.toString();
+			
+			System.out.println("\""+o+"\"");
+			printlnDetailed(o);
+			printlnDetailed(expected);
+			Assert.assertTrue(expected.equals(o));
+		leave();
+	};
+	@Test public void testSingleLineComment_StandAlone()throws IOException
+	{
+		enter();
+			testComment_StandAlone(
+				"This is my comment",
+				"#This is my comment\n"
+				);
+		leave();
+	};
+	@Test public void testSingleLineComment_StandAlone_withEol()throws IOException
+	{
+		enter();
+			testComment_StandAlone(
+				"This is my comment\n",
+				"#This is my comment\n"
+				);
+		leave();
+	};
+	@Test public void testSingleLineComment_StandAlone_withEol_r()throws IOException
+	{
+		enter();
+			testComment_StandAlone(
+				"This is my comment\r",
+				"#This is my comment\r"
+				);
+		leave();
+	};
+	@Test public void testSingleLineComment_StandAlone_withEol_rn()throws IOException
+	{
+		enter();
+			testComment_StandAlone(
+				"This is my comment\r\n",
+				"#This is my comment\r\n"
+				);
+		leave();
+	};
+	
+	@Test public void testTwoLineComment_StandAlone()throws IOException
+	{
+		enter();
+			testComment_StandAlone(
+				"This is\nSecond line",
+				"#This is\n#Second line\n"
+				);
+		leave();
+	};
+	
+	@Test public void testTwoLineComment_StandAlone_withEol()throws IOException
+	{
+		enter();
+			testComment_StandAlone(
+				"This is\nSecond line\n",
+				"#This is\n#Second line\n"
+				);
+		leave();
+	};
+	
+	@Test public void testTwoLineComment_StandAlone_rn()throws IOException
+	{
+		enter();
+			testComment_StandAlone(
+				"This is\r\nSecond line",
+				"#This is\r\n#Second line\n"
+				);
+		leave();
+	};
+	@Test public void testTwoLineComment_StandAlone_nr()throws IOException
+	{
+		enter();
+			testComment_StandAlone(
+				"This is\n\rSecond line",
+				"#This is\n\r#Second line\r"
+				);
+		leave();
+	};
+	@Test public void testBlockComment_StandAlone_n()throws IOException
+	{
+		enter();
+			testComment_StandAlone(
+				"This is\n\n\nSecond line",
+				"#This is\n#\n#\n#Second line\n"
+				);
+		leave();
+	};
+	@Test public void testBlockComment_StandAlone_rn()throws IOException
+	{
+		enter();
+			testComment_StandAlone(
+				"This is\r\n\r\n\r\nSecond line",
+				"#This is\r\n#\r\n#\r\n#Second line\n"
+				);
+		leave();
+	};
+	@Test public void testBlockComment_StandAlone_nr()throws IOException
+	{
+		enter();
+			testComment_StandAlone(
+				"This is\n\r\n\r\n\rSecond line",
+				"#This is\n\r#\n\r#\n\r#Second line\r"
+				);
+		leave();
+	};
+	
+	@Test public void testCommentAndTokens()throws IOException
+	{
+		enter();
+			StringWriter ow = new StringWriter();
+			CPlainTxtWriteFormat w = new CPlainTxtWriteFormat(ow);
+		
+			w.open();
+			w.writeInt(10);
+			w.writeComment("X");
+			w.writeInt(10);
+			w.close();
+			
+			String o = ow.toString();
+			
+			System.out.println("\""+o+"\"");
+			final String expected="10#X\n,10";
+			Assert.assertTrue(expected.equals(o));
+		leave();
+		leave();
+	};
+	
+	
+	@Test public void testSurogate_followedby_tokens()throws IOException
+	{
+		/*
+			A test case verifying if surogate manipulation is correctly terminated by 
+			plain tokens.
+		*/
+			enter();
+			StringWriter ow = new StringWriter();
+			CPlainTxtWriteFormat w = new CPlainTxtWriteFormat(ow);
+		
+			
+			w.open();
+			w.writeChar((char)0xD800);
+			w.writeChar((char)0xDC01);	//good surogate pair
+			w.writeInt(-234);
+			w.writeChar((char)0xDC00);
+			w.writeChar((char)0xD801);	//bad surogate pair
+			w.writeInt(-235);
+			w.writeChar((char)0xD800);	//dangling upper surogate
+			w.writeInt(-236);
+			w.close();
+		
+			String o = ow.toString();
+			System.out.println(o);
+			
+				
+			final String expected="\"\uD800\uDC01\",-234,\"\\DC00;\\D801;\",-235,\"\\D800;\",-236";
+									// good surogate pair is not escaped
+															//bad is escaped and dangling too.
+			System.out.println(expected);
+			Assert.assertTrue(expected.equals(o));
+		
+			leave();
+	};
+	
+	@Test public void testSurogate_followedby_begin()throws IOException
+	{
+		/*
+			A test case verifying if surogate manipulation is correctly terminated by 
+			signals
+		*/
+			enter();
+			StringWriter ow = new StringWriter();
+			CPlainTxtWriteFormat w = new CPlainTxtWriteFormat(ow);
+		
+			
+			w.open();
+			w.writeChar((char)0xD800);
+			w.writeChar((char)0xDC01);	//good surogate pair
+			w.begin("");
+			w.writeChar((char)0xDC00);
+			w.writeChar((char)0xD801);	//bad surogate pair
+			w.begin("");
+			w.writeChar((char)0xD800);	//dangling upper surogate
+			w.begin("");
+			w.close();
+		
+			String o = ow.toString();
+			System.out.println("-"+o+"-");
+			
+				
+			final String expected="\"\uD800\uDC01\"* \"\\DC00;\\D801;\"* \"\\D800;\"*";
+									// good surogate pair is not escaped
+															//bad is escaped and dangling too.
+			System.out.println(expected);
+			Assert.assertTrue(expected.equals(o));
+		
+			leave();
+	};
+	
+	@Test public void testSurogate_followedby_end()throws IOException
+	{
+		/*
+			A test case verifying if surogate manipulation is correctly terminated by 
+			signals
+		*/
+			enter();
+			StringWriter ow = new StringWriter();
+			CPlainTxtWriteFormat w = new CPlainTxtWriteFormat(ow);
+		
+			
+			w.open();
+			w.begin("");
+			w.begin("");
+			w.begin("");
+			w.writeChar((char)0xD800);
+			w.writeChar((char)0xDC01);	//good surogate pair
+			w.end();
+			w.writeChar((char)0xDC00);
+			w.writeChar((char)0xD801);	//bad surogate pair
+			w.end();
+			w.writeChar((char)0xD800);	//dangling upper surogate
+			w.end();
+			w.close();
+		
+			String o = ow.toString();
+			System.out.println("-"+o+"-");
+			
+				
+			final String expected="* * * \"\uD800\uDC01\";\"\\DC00;\\D801;\";\"\\D800;\";";
+									// good surogate pair is not escaped
+															//bad is escaped and dangling too.
+			System.out.println(expected);
+			Assert.assertTrue(expected.equals(o));
+		
+			leave();
+	};
 };

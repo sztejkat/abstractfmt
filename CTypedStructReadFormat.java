@@ -3,7 +3,7 @@ import sztejkat.abstractfmt.logging.SLogging;
 import java.io.IOException;
 
 /**
-	A reading counterpart of {@link CTypedStructWriteFormat}
+	A reading counterpart of {@link CTypedStructWriteFormat}.
 */
 public class CTypedStructReadFormat extends AReservedNameReadFormat implements ITypedStructReadFormat
 {

@@ -9,11 +9,26 @@ import java.io.IOException;
 	A state based, handler organized text parsing.
 	
 	<h1>State handler</h1>
-	This class assumes, that the {@link #toNextChar}
-	is implemented by an instance {@link ATxtReadFormatStateBase0.AStateHandler} class
-	which do call {@link #queueNextChar} to apropriate syntax
-	and changes state by calling {@link #pushStateHandler},{@link #popStateHandler} or {@link #setStateHandler}
-	
+	This class assumes that threre is a certain "state graph" represented by a graph
+	of instances of {@link ATxtReadFormatStateBase0.AStateHandler} class.
+	<p>
+	One of such states is "current" and initialized during a class construction.
+	<p>
+	This class basically does:
+	<ul>
+		<li>it serves the syntax avaliable through {@link #getNextSyntaxElement}
+		and {@link #getNextChar} from the "syntax queue";</li>
+		<li>it implements {@link #toNextChar} by calling "current" state 
+		in a loop as long, as "syntax queue" is empty;</li>
+		<li>the state handlers are expected to process characters from low level
+		stream and use:
+			<ul>
+				<li>{@link #queueNextChar}/{@link #setNextChar} to feed the "syntax queue";</li>
+				<li>{@link #pushStateHandler},{@link #popStateHandler} or {@link #setStateHandler}
+				to traverse the state graph;</li>
+			</ul>
+		</li>
+	</ul>
 */
 public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.ISyntax> 
 						extends ATxtReadFormat1<TSyntax>
@@ -57,7 +72,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 				Pre-allocated FIFO.
 				<p>
 				We need a relatively fast, but shallow FIFO of
-				pairs {@link #TSyntax}-<code>int</code> to allow
+				pairs <code>TSyntax</code>-<code>int</code> to allow
 				more than one syntax element to be produced by a
 				single call to {@link AStateHandler#toNextChar}
 				since sometimes a single characte would have to
@@ -67,6 +82,8 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 				<p>
 				The value at {@link #next_queue_rptr} points
 				to what is to be returned from {@link #getNextSyntaxElement}
+				<p>
+				Note: This array actually carries <code>TSyntax</code> objects. We simply can't have generic arrays.
 				*/
 				private ATxtReadFormat1.ISyntax [] next_syntax_element = new ATxtReadFormat1.ISyntax[SYNTAX_QUEUE_INIT_SIZE];
 				/**
@@ -144,7 +161,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 		current = states.pop();
 		if (TRACE) TOUT.println("popStateHandler()->"+current);
 	};
-	/** Changes limit of  stack size used by {@link #pushStackHandler}.
+	/** Changes limit of  stack size used by {@link #pushStateHandler}.
 	<p>
 	Default limit is -1, unlimited.
 	@param limit new limit, maximum size of stack before failure or -1 if not limit it 
@@ -174,7 +191,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 	};
 	/** Pushes onto syntax queue, ensuring necessary space
 	@param character what 
-	@param syntaxt what
+	@param syntax what
 	*/
 	private void queueSyntax( int character, TSyntax syntax )
 	{

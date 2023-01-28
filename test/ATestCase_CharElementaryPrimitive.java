@@ -191,4 +191,42 @@ public class ATestCase_CharElementaryPrimitive extends AInterOpTestCase<IStructR
 			}catch(IllegalStateException ex){ System.out.println(ex); }
 			r.close();
 	};
+	
+	
+	
+	/**
+		Test if we can write a sequence of good and bad surogates,
+		mixing them with numbers
+	@throws IOException .
+	*/
+	@Test public void testBadSurogates()throws IOException
+	{
+			enter();
+			CPair<?,?> p = createTestDevice();
+			final IStructWriteFormat w= p.writer;
+			final IStructReadFormat  r= p.reader;
+			
+			w.open();
+			w.writeChar((char)0xD800);
+			w.writeChar((char)0xDC01);	//good surogate pair
+			w.writeInt(-234);
+			w.writeChar((char)0xDC00);
+			w.writeChar((char)0xD801);	//bad surogate pair
+			w.writeInt(-235);
+			w.writeChar((char)0xD800);	//dangling upper surogate
+			w.writeInt(-236);
+			w.close();
+			
+			
+			r.open();
+			Assert.assertTrue(r.readChar()==(char)0xD800);
+			Assert.assertTrue(r.readChar()==(char)0xDC01);
+			Assert.assertTrue(r.readInt()==-234);
+			Assert.assertTrue(r.readChar()==(char)0xDC00);
+			Assert.assertTrue(r.readChar()==(char)0xD801);
+			Assert.assertTrue(r.readInt()==-235);
+			Assert.assertTrue(r.readChar()==(char)0xD800);
+			Assert.assertTrue(r.readInt()==-236);
+			r.close();
+	};
 };

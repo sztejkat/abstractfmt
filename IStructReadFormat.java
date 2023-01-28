@@ -7,68 +7,79 @@ import java.io.IOException;
 	<p>
 	This is a reading end of a format.
 	
-	<h1 id="TEMPEOF">Support for a temporary lack of data</h1>
-	Implementations must specify how do they behave in 
-	case when low-level I/O returns with an "End-of-file" condition.
-	<p>
-	This support may be:
-	<table border="1">
-	<caption>Eof handling support types</caption>
-	<tr>
-		<td><b>Support type</b></td>
-		<td><b>{@link #next()}</b></td>
-		<td><b>elementary reads</b></td>
-		<td><b>sequence reads</b></td>		
-	</tr>
-	<tr>
-		<td><b>None</b></td>
-		<td>throws {@link EUnexpectedEof}, the effect of future use of stream is unpredicatable;</td>
-		<td>throws {@link EUnexpectedEof}, the effect of future use of stream is unpredicatable;</td>
-		<td>returns with a partial read or throws {@link EUnexpectedEof}
-		if could not read any data. If thrown, the effect of future use of stream is unpredicatable;</td>
-	</tr>
-	<tr>
-		<td><b>Frame</b></td>
-		<td>If structure recursion level is zero it throws {@link ETemporaryEndOfFile} and allows 
-		operation to be re-tried to check if next signal did appear.
-		<br>
-		If structure recursion level is higher behaves as "None";</td>
-		<td>as "None";</td>
-		<td>as "None"</td>
-	</tr>
-	<tr>
-		<td><b>Signal</b></td>
-		<td>throws {@link ETemporaryEndOfFile} and allows 
-		operation to be re-tried to check if next signal did appear;</td>
-		<td>as "None";</td>
-		<td>as "None"</td>
-	</tr>
-	<tr>
-		<td><b>Full</b></td>
-		<td>throws {@link ETemporaryEndOfFile} and allows 
-		operation to be re-tried to check if next signal did appear;</td>
-		<td>throws {@link ETemporaryEndOfFile} and allows operation
-		to re-try reading this exact primitive element again using this exact
-		method. Any partially read element must not be discarded and must be available
-		for subsequent reads;</td>
-		<td>returns with a partial read or throws {@link ETemporaryEndOfFile}
-		if could not read any data. Subsequent calls to the same block
-		read are allowed to try to read newly incomming data. 
-		Any partially read element must not be discarded and must be available
-		for subsequent reads;</td>
-	</tr>
+	<h1>Method groups</h1>
+	<table border="2">
+	<caption> Method groups</caption>
+		<tr>
+		<td>
+			State
+		</td>
+		<td>
+			{@link #open},{@link #close}
+		</td>
+		</tr>
+		<tr>
+		<td>
+			Structure traversing
+		</td>
+		<td>
+			{@link #next},{@link #hasElementaryData},{@link #skip},{@link #skip(int)}
+		</td>
+		</tr>
+		<tr>
+		<td>
+			Single primitive elements 
+		</td>
+		<td>
+			{@link #readBoolean},
+			{@link #readByte},
+			{@link #readChar},
+			{@link #readInt},
+			{@link #readLong},
+			{@link #readFloat},
+			{@link #readDouble}
+		</td>
+		</tr>
+		<tr>
+		<td>
+			Sequences of primitive elements, array variants 
+		</td>
+		<td>
+			{@link #readBooleanBlock(boolean[],int,int)},{@link #readBooleanBlock(boolean[])},<br>
+			{@link #readByteBlock(byte[],int,int)},{@link #readByteBlock(byte[])},<br>
+			{@link #readCharBlock(char[],int,int)},{@link #readCharBlock(char[])},<br>
+			{@link #readShortBlock(short[],int,int)},{@link #readShortBlock(short[])},<br>
+			{@link #readIntBlock(int[],int,int)},{@link #readIntBlock(int[])},<br>
+			{@link #readLongBlock(long[],int,int)},{@link #readLongBlock(long[])},<br>
+			{@link #readFloatBlock(float[],int,int)},{@link #readFloatBlock(float[])},<br>
+			{@link #readDoubleBlock(double[],int,int)},{@link #readDoubleBlock(double[])},<br>
+		</td>
+		</tr>
+		<tr>
+		<td>
+			Sequences of primitive elements, single element variants 
+		</td>
+		<td>
+			{@link #readBooleanBlock},
+			{@link #readByteBlock},
+			{@link #readCharBlock},
+			{@link #readIntBlock},
+			{@link #readLongBlock},
+			{@link #readFloatBlock},
+			{@link #readDoubleBlock}
+		</td>
+		</tr>
+		<tr>
+		<td>
+			Sequences of <code>String</code>
+		</td>
+		<td>
+			{@link #readString(Appendable,int)},
+			{@link #readString(int)},
+			{@link #readString()}
+		</td>
+		</tr>
 	</table>
-	<p>
-	<i>Note: File-based stream or stream wrapped in carrier protocols
-	which do warrant the delivery will use "None" model since it does not
-	have any benefits from using other eof-support models.</i>
-	<p>
-	<i>The low-level direct hardware connection	streams which decided to use this format
-	as <u>their own protocol</u> will need "Frame" model to allow for infinite silence 
-	between frames and to be able to detect lack of response from remote party.</i>
-	<p>
-	<i>"Signal" and "Full" models will be rarely needed. Implementing the "Full" model
-	is especially cumbersome and tricky	and thous not recommended.</i>
 	
 	<h1>Thread safety</h1>
 	Formats are <u>not thread safe</u>.	Yes, this is intentional. Check package description
@@ -76,7 +87,7 @@ import java.io.IOException;
 	
 	<h1>IOException</h1>
 	Whenever this contract states that something <i>throws IOException</i> it is strictly
-	required that a specific exception is throws for a specific reason.
+	required that a <u>specific exception class</u> is thrown for a specific reason.
 */
 public interface IStructReadFormat extends Closeable, IFormatLimits
 {	

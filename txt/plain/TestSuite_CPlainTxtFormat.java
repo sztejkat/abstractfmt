@@ -3,6 +3,8 @@ import  sztejkat.abstractfmt.*;
 import  sztejkat.abstractfmt.test.*;
 import org.junit.BeforeClass;
 import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import java.io.*;
@@ -35,7 +37,8 @@ import java.io.*;
 					ATestCase_FloatBlockPrimitive.class,
 					ATestCase_DoubleElementaryPrimitive.class,
 					ATestCase_DoubleBlockPrimitive.class,
-					ATestCase_StringBlockPrimitive.class
+					ATestCase_StringBlockPrimitive.class,
+					ATestCase_Comments.class
 					})
 public class TestSuite_CPlainTxtFormat extends ATest
 {
@@ -72,5 +75,5 @@ public class TestSuite_CPlainTxtFormat extends ATest
 	{
 		AInterOpTestCase.factory = null;
 	};
-
+	
 };

@@ -12,7 +12,7 @@ package sztejkat.abstractfmt;
 	Stream can always recover from this exception by either
 	skipping structure content or trying other method.
 	<p>
-	This exception is specific for <i>fully described streams</i>.
+	This exception is specific for <i>typed streams</i>.
 */
 public class ETypeMissmatch extends java.io.IOException
 {

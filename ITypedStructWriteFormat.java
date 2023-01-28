@@ -5,7 +5,7 @@ package sztejkat.abstractfmt;
 	implementation.
 	<p>
 	No change in contract, this class can be used excactly the same
-	way as the standard <i>undescribed</i> writer.
+	way as the standard <i>untyped</i> writer.
 */
 public interface ITypedStructWriteFormat extends IStructWriteFormat
 {

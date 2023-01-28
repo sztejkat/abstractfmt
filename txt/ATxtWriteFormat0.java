@@ -42,7 +42,7 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	/* ---------------------------------------------------------------
 			Token processing
 	---------------------------------------------------------------*/
-	/** Will be invoked before {@link #outToken}'d the content of token
+	/** Will be invoked before {@link #outPlainToken}'d the content of token
 	representing an elementary primitivie value or an element of primitive
 	sequence, for all values except <code>char</code>,<code>char[]</code>
 	or <code>String</code>. In such case the {@link #openStringToken}
@@ -56,7 +56,7 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@throws IOException if failed.
 	*/
 	protected abstract void closePlainToken()throws IOException;
-	/** Will be invoked before {@link #outToken}'d the content of token
+	/** Will be invoked before {@link #outStringToken}'d the content of token
 	representing an elementary primitivie value or an element of primitive
 	sequence for <code>char</code>,<code>char[]</code>
 	or <code>String</code>. For other values the {@link #openPlainToken}
@@ -86,7 +86,7 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	*/
 	protected abstract void outPlainToken(char c)throws IOException;
 	
-	/** Writes single character of a plain token.
+	/** Writes single character of a string token.
 	<p>
 	Invoked when token is open by {@link #openStringToken}.
 	<p>
@@ -156,7 +156,7 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	
 	/** Called by {@link #writeCharImpl} to produce char token.
 	@param v value 
-	@return text representation of v, {@link Character.toString}. 
+	@return text representation of v, {@link Character#toString}. 
 	*/
 	protected String formatChar(char v)
 	{

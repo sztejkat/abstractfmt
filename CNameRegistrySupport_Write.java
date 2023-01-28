@@ -6,19 +6,20 @@ import java.util.TreeMap;
 	<p>
 	This registry support maps <code>String</code>
 	to <code>int</code> and is intended to aid implementation
-	of {@link IStructWriteFormat#optimizeBeginName}
+	of {@link IStructWriteFormat#optimizeBeginName}.
 	<p>
 	The implementation is nothing more sophisticated
 	than <code>TreeMap</code>.
 	<p>
 	The optimized implementation is expected to write into
-	a stream a three kind "signals":
+	a stream a three kinds of "signal":
 	<ul>
 		<li>direct endcoded <code>String</code> named "begin" signals;</li>
 		<li>indirect encoded named begin signals, with a sub-range of <code>int</code>
 		used as a short form name;</li>
-		<li>a mixed "begin" signal which both uses the name and assign a number
-		to it;</li>
+		<li>a mixed "begin" signal which uses both the name and a number and is used
+		to pass to reading side the information which number should be mapped to which name
+		for the future;</li>
 	</ul>
 	@see CNameRegistrySupport_Read
 */

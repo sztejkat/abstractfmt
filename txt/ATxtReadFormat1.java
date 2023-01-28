@@ -1,5 +1,7 @@
 package sztejkat.abstractfmt.txt;
 import sztejkat.abstractfmt.*;
+import sztejkat.abstractfmt.utils.CBoundStack;
+import sztejkat.abstractfmt.utils.CAdaptivePushBackReader;
 import sztejkat.abstractfmt.logging.SLogging;
 import java.io.IOException;
 import java.io.Reader;
@@ -70,22 +72,25 @@ import java.io.Reader;
 		<tr><td>s</td><td>XML attribute name</td></tr>
 		<tr><td> ... </td><td>-//-</td></tr>
 		<tr><td> = </td><td>XML attribute operator</td></tr>
-		<tr><td> &#22; </td><td>XML attribute value separator</td></tr>
+		<tr><td> &#x22; </td><td>XML attribute value separator</td></tr>
 		<tr><td>f</td><td>XML attribute value</td></tr>
 		<tr><td> ... </td><td>-//-</td></tr>
-		<tr><td> &#22; </td><td>XML attribute value separator</td></tr>
+		<tr><td> &#x22; </td><td>XML attribute value separator</td></tr>
 		<tr><td> </td><td>XML separator</td></tr>
 		<tr><td> &gt; </td><td>XML element start exit</td></tr>
 	</table>
 	<p id="STAR1">*)Notice that "XML element start entry" requires some  look forward to check
-	if it is not: <code>&lt;/</code> nor <code>&lt;!--</code><p>
+	if it is not: <code>&lt;</code> nor <code>&lt;!--</code>.
 	<p>
 	This is a relatively simple and well isolated syntax processing machine You may provide
 	for Your format and encode in this class. I don't make any assumption if You provide it
 	by subclassing or by a separate engine object.
 	
-	<h2>Parsing support</h2>
-	The text parsing into characters and syntax elementd do requires, mostly, two kinds of services:
+	<h2>Parsing support provided for subclasses</h2>
+	This class does not provide tools, but assume that some parsing concepts are followed
+	in subclasses. Those concepts are briefly shown below.
+	<p>
+	The text parsing into characters and syntax elements do requires, mostly, two kinds of services:
 	<ul>
 		<li>character stream related:
 			<ul>
@@ -144,7 +149,8 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 			};
 			/**
 				A syntax definition for {@link #getNextSyntaxElement}
-				used to perform all remaning decoding.
+				used to perform all remaining decoding. Used to give 
+				a meaning to a character fetched by {@link #toNextChar}.
 			*/
 			public static enum TIntermediateSyntax implements ISyntax
 			{
@@ -169,10 +175,10 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 				<p>
 				The signal is then interpreted as:
 				<ul>
-					<li>if neither name or index was collected, as {@link ARegisteringStructReadFormat.TSignalReg#SIG_BEGIN_DIRECT}
+					<li>if neither name or index was collected, as {@link ARegisteringStructReadFormat.TSignalReg}.SIG_BEGIN_DIRECT
 						with an empty name;</li>
-					<li>if both name or index was collected, as {@link ARegisteringStructReadFormat.TSignalReg#SIG_BEGIN_AND_REGISTER};</li>
-					<li>if only index was collected as {@link ARegisteringStructReadFormat.TSignalReg#SIG_BEGIN_REGISTERED};</li>
+					<li>if both name or index was collected, as {@link ARegisteringStructReadFormat.TSignalReg}.SIG_BEGIN_AND_REGISTER;</li>
+					<li>if only index was collected as {@link ARegisteringStructReadFormat.TSignalReg}.SIG_BEGIN_REGISTERED;</li>
 				</ul>
 				*/
 				SIG_BEGIN,
@@ -193,9 +199,9 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 				and that index of registration is order based */
 				SIG_ORDER,
 				/** Alike {@link #SIG_BEGIN} but causes {@link ARegisteringStructReadFormat#readSignalReg}
-				to return {@link ARegisteringStructReadFormat.TSignalReg#SIG_END_BEGIN_DIRECT},
-				{@link ARegisteringStructReadFormat.TSignalReg#SIG_END_BEGIN_AND_REGISTER},
-				{@link ARegisteringStructReadFormat.TSignalReg#SIG_END_BEGIN_REGISTERED}
+				to return {@link ARegisteringStructReadFormat.TSignalReg}.SIG_END_BEGIN_DIRECT,
+				{@link ARegisteringStructReadFormat.TSignalReg}.SIG_END_BEGIN_AND_REGISTER,
+				{@link ARegisteringStructReadFormat.TSignalReg}.SIG_END_BEGIN_REGISTERED
 				accordingly. */
 				SIG_END_BEGIN,
 				/**A character which is a start of a "end" signal syntax.
@@ -235,9 +241,11 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 			/** Parser state */
 			private TTokenState token_state;
 			/** Used to implement peek/drop look-ahead parsing model 
-			True if {@link #peek_next_char} and {@link #peek_syntax}
-			are up to date and not consumed
+			True if the {@link #toNextChar} was called and
+			values returned from {@link #peekSyntax}
+			and {@link #peekChar} are ready to be accessed.
 			@see #validatePeek
+			@see #consume
 			*/ 
 			private boolean peek_valid;
 			/** Buffer for collecting name and index */
@@ -282,21 +290,18 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 	/** Reads next char from input and deuduces what does it mean.
 	Updates {@link #getNextSyntaxElement} and {@link #getNextChar}
 	@throws IOException if failed to deduce. End-of-file is explicite excluded.
-	@see ATxtReadFormatSupport#toNextChar
 	*/
 	protected abstract void toNextChar()throws IOException;
 	/** Tells what the character fetched by most recent call to do mean.
 	@return syntax element describing the meaning of character or null
 			to indicate end-of-file condition.
 	@throws AssertionError if {@link #toNextChar} was never called.
-	@see ATxtReadFormatSupport#getNextSyntaxElement
 	*/
 	protected abstract TSyntax getNextSyntaxElement();
 	/** Returns the character fetched by most recent call to do mean.
 	@return a character read 0...0xFFFF, or -1 to indicate end-of-file
-			condition.
+			condition (together with {@link #getNextSyntaxElement} returning null.
 	@throws AssertionError if {@link #toNextChar} was never called.
-	@see ATxtReadFormatSupport#getNextChar
 	*/
 	protected abstract int getNextChar();
 	/* ********************************************************************
@@ -305,7 +310,10 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 	
 	* *********************************************************************/
 	/** Makes sure that {@link #peek_valid} is up to date.
-	If nothings is peeed will call {@link #nextChar}.*/
+	If it not will call {@link #toNextChar}.
+	@throws IOException if {@link #toNextChar} failed.
+	@see #consume
+	*/
 	private void validatePeek()throws IOException
 	{
 		if (!this.peek_valid)
@@ -316,7 +324,10 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 		};
 	};
 	/** Calls {@link #validatePeek} and returns character at cursor
-	@return of {@link #getNextChar} */
+	@return of {@link #getNextChar} 
+	@see #consume
+	@throws IOException if {@link #validatePeek} failed.
+	*/
 	private int peekChar()throws IOException
 	{
 		validatePeek();
@@ -324,6 +335,8 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 	};
 	/** Calls {@link #validatePeek} and returns syntax at cursor
 	@return take from {@link #getNextSyntaxElement}, can be null at eof
+	@see #consume
+	@throws IOException if {@link #validatePeek} failed.
 	*/
 	private TIntermediateSyntax peekSyntax()throws IOException
 	{
@@ -341,7 +354,7 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 		}
 	};
 	/** Consumes peeked character, if any.
-	Makes sure that nearest {@link #validatePeek} will call {@link #nextChar} */
+	Makes sure that nearest {@link #validatePeek} will call {@link #toNextChar} */
 	private void consume()
 	{
 		if (TRACE) TOUT.println("consume() "+(this.peek_valid  ? "consumed":"nothing to consume"));
@@ -583,7 +596,7 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 			default: throw new AssertionError();
 		}
 	};
-	/** Invoked by {@link #processSignal} when cursor is at {@link TIntermediateSyntax.SIG_END} character.
+	/** Invoked by {@link #processSignal} when cursor is at {@link TIntermediateSyntax#SIG_END} character.
 	@return what return from caller
 	@throws IOException if failed */
 	private TSignalReg processEndSignal()throws IOException
@@ -596,7 +609,7 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 		if (TRACE) TOUT.println("processEndSignal=TSignalReg.SIG_END, LEAVE");
 		return TSignalReg.SIG_END;
 	};
-	/** Invoked by {@link #processSignal} when cursor is at {@link TIntermediateSyntax.SIG_BEGIN} character.
+	/** Invoked by {@link #processSignal} when cursor is at {@link TIntermediateSyntax#SIG_BEGIN} character.
 	@return what return from caller
 	@throws IOException if failed */
 	private TSignalReg processBeginSignal()throws IOException
@@ -610,7 +623,7 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 						TSignalReg.SIG_BEGIN_REGISTERED
 						);
 	};
-	/** Invoked by {@link #processSignal} when cursor is at {@link TIntermediateSyntax.SIG_END_BEGIN} character.
+	/** Invoked by {@link #processSignal} when cursor is at {@link TIntermediateSyntax#SIG_END_BEGIN} character.
 	@return what return from caller
 	@throws IOException if failed */
 	private TSignalReg processEndBeginSignal()throws IOException

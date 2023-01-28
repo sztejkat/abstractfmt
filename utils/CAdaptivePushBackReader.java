@@ -42,9 +42,15 @@ public class CAdaptivePushBackReader extends Reader
 		end of line.
 		*/
 		private int char_number;
-		/** Line type trackers. See {@link #updateLineInfo} */
+		/** Eol type trackers. 
+		@see #updateLineInfoOnUnread
+		@see #updateLineInfoOnRead
+		*/
 		private boolean was_r;
-		/** Line type trackers. See {@link #updateLineInfo} */
+		/** Eol type trackers. 
+		@see #updateLineInfoOnUnread
+		@see #updateLineInfoOnRead
+		*/
 		private boolean was_n;
 		
 	/* -------------------------------------------------------------------

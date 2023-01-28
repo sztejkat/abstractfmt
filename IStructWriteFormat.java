@@ -8,6 +8,80 @@ import java.io.IOException;
 	<p>
 	This is a writing end of a format.	
 	
+	<h1>Method groups</h1>
+	<table border="2">
+	<caption> Method groups</caption>
+		<tr>
+		<td>
+			State
+		</td>
+		<td>
+			{@link #open},{@link #close},{@link #flush}
+		</td>
+		</tr>
+		<tr>
+		<td>
+			Structure production
+		</td>
+		<td>
+			{@link #begin},{@link #end},{@link #optimizeBeginName}
+		</td>
+		</tr>
+		<tr>
+		<td>
+			Single primitive elements 
+		</td>
+		<td>
+			{@link #writeBoolean},
+			{@link #writeByte},
+			{@link #writeChar},
+			{@link #writeInt},
+			{@link #writeLong},
+			{@link #writeFloat},
+			{@link #writeDouble}
+		</td>
+		</tr>
+		<tr>
+		<td>
+			Sequences of primitive elements, array variants 
+		</td>
+		<td>
+			{@link #writeBooleanBlock(boolean[],int,int)},{@link #writeBooleanBlock(boolean[])},<br>
+			{@link #writeByteBlock(byte[],int,int)},{@link #writeByteBlock(byte[])},<br>
+			{@link #writeCharBlock(char[],int,int)},{@link #writeCharBlock(char[])},<br>
+			{@link #writeShortBlock(short[],int,int)},{@link #writeShortBlock(short[])},<br>
+			{@link #writeIntBlock(int[],int,int)},{@link #writeIntBlock(int[])},<br>
+			{@link #writeLongBlock(long[],int,int)},{@link #writeLongBlock(long[])},<br>
+			{@link #writeFloatBlock(float[],int,int)},{@link #writeFloatBlock(float[])},<br>
+			{@link #writeDoubleBlock(double[],int,int)},{@link #writeDoubleBlock(double[])},<br>
+		</td>
+		</tr>
+		<tr>
+		<td>
+			Sequences of primitive elements, single element variants 
+		</td>
+		<td>
+			{@link #writeBooleanBlock},
+			{@link #writeByteBlock},
+			{@link #writeCharBlock},
+			{@link #writeIntBlock},
+			{@link #writeLongBlock},
+			{@link #writeFloatBlock},
+			{@link #writeDoubleBlock}
+		</td>
+		</tr>
+		<tr>
+		<td>
+			Sequences of <code>String</code>
+		</td>
+		<td>
+			{@link #writeString(CharSequence,int,int)},
+			{@link #writeString(CharSequence)},
+			{@link #writeString(char)},
+		</td>
+		</tr>
+	</table>
+	
 	<h1>Thread safety</h1>
 	Format is <u>not thread safe</u>.	
 */
@@ -32,8 +106,6 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 		See {@link IFormatLimits#getMaxSignalNameLength}
 	@throws EFormatBoundaryExceeded if structure recursion depth control is enabled
 		and this limit is exceeded. See {@link IFormatLimits#setMaxStructRecursionDepth}
-	@throws IllegalArgumentException if name contains invalid surogates combination
-		and format does not support such non-unicode characters.
 	@throws IOException if low level i/o fails or stream is closed/not opened
 	*/
 	public void begin(String name)throws IOException;
@@ -144,7 +216,7 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 		Primitive blocks
 		
 	=============================================================*/		
-	/** Writes a part of a primitive data sequence.
+	/** Writes a part of a boolean primitive data sequence.
 	
 	@param buffer source of data, non-null.
 	@param offset first byte to write in <code>buffer</code>
@@ -158,8 +230,8 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	@throws IllegalStateException if a sequence of incompatible type is in progress.
 	*/
 	public void writeBooleanBlock(boolean [] buffer, int offset, int length)throws IOException;		
-	/** See {@link #writeBooleanBlock(boolean[],int,int)}
-	@param buffer --//--
+	/** Writes a part of a boolean  primitive data sequence.
+	@param buffer  {@link #writeBooleanBlock(boolean[],int,int)}, an entire array is written.
 	@throws IOException --//--
 	*/
 	public default void writeBooleanBlock(boolean [] buffer)throws IOException
@@ -176,14 +248,14 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	
 	
 	
-	/**  See {@link #writeBooleanBlock(boolean[],int,int)}
+	/**  The byte variant of {@link #writeBooleanBlock(boolean[],int,int)}
 	@param buffer --//--
 	@param offset --//--
 	@param length --//--
 	@throws IOException --//--
 	*/
 	public void writeByteBlock(byte [] buffer, int offset, int length)throws IOException;		
-	/** See {@link #writeBooleanBlock(boolean[],int,int)}
+	/** The byte variant of {@link #writeBooleanBlock(boolean[])}
 	@param buffer --//--
 	@throws IOException --//--
 	*/
@@ -192,7 +264,7 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 			assert(buffer!=null);
 			writeByteBlock(buffer,0,buffer.length);
 	}		
-	/** See {@link #writeBooleanBlock(boolean[],int,int)}
+	/** The byte variant of {@link #writeBooleanBlock(boolean)}
 	@param v single byte to write
 	@throws IOException --//--
 	*/
@@ -201,15 +273,17 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	
 	
 	
-	/**  See {@link #writeBooleanBlock(boolean[],int,int)}.
+	/** The String variant of {@link #writeBooleanBlock(boolean[],int,int)}.
 	<p>
 	This method writes string of characters using a compact, non random access mode,
 	ie. UTF-8 or alike.
+	<p>
 	<i>
 	Note: sequence written with this method is <u>not</u> compatible with sequence 
 	written with {@link #writeCharBlock}.
 	</i>
-	<p>See also notes in {@link #writeCharBlock(char,int,int)}.
+	<p>
+	See also notes in {@link #writeCharBlock(char[],int,int)}.
 	@param characters a character sequence of absolutely any combination,
 				including invalid unicode higher/lower surogates combinations.
 	@param offset --//--
@@ -219,7 +293,7 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 			pair.
 	*/
 	public void writeString(CharSequence characters, int offset, int length)throws IOException;		
-	/** See {@link #writeBooleanBlock(boolean[],int,int)}
+	/** The String variant of  {@link #writeBooleanBlock(boolean[])}
 	@param characters --//--
 	@throws IOException --//--
 	*/
@@ -233,7 +307,8 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	@throws IOException see {@link #writeString(CharSequence)} */
 	public void writeString(char c)throws IOException;
 	
-	/**  See {@link #writeBooleanBlock(boolean[],int,int)}
+	/** The char variant of {@link #writeBooleanBlock(boolean[],int,int)}.
+	<p>
 	This method write sequence of characters using fast, random access mode, ie. as a
 	sequence of 16 bit integers.
 	
@@ -242,9 +317,10 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	@param offset --//--
 	@param length --//--
 	@throws IOException --//--
+	 
 	*/
 	public void writeCharBlock(char [] buffer, int offset, int length)throws IOException;		
-	/** See {@link #writeBooleanBlock(boolean[],int,int)}
+	/** The char variant of  {@link #writeBooleanBlock(boolean[])}
 	@param buffer --//--
 	@throws IOException --//--
 	*/
@@ -253,7 +329,7 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 			assert(buffer!=null);
 			writeCharBlock(buffer,0,buffer.length);
 	}
-	/** See {@link #writeBooleanBlock(boolean[],int,int)}
+	/** The char variant of  {@link #writeBooleanBlock(boolean)}
 	@param data single element to write
 	@throws IOException --//--
 	*/
@@ -262,14 +338,14 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	
 	
 	
-	/**  See {@link #writeBooleanBlock(boolean[],int,int)}
+	/**  The short variant of  {@link #writeBooleanBlock(boolean[],int,int)}
 	@param buffer --//--
 	@param offset --//--
 	@param length --//--
 	@throws IOException --//--
 	*/
 	public void writeShortBlock(short [] buffer, int offset, int length)throws IOException;		
-	/** See {@link #writeBooleanBlock(boolean[],int,int)}
+	/** The short variant of {@link #writeBooleanBlock(boolean[])}
 	@param buffer --//--
 	@throws IOException --//--
 	*/
@@ -278,7 +354,7 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 			assert(buffer!=null);
 			writeShortBlock(buffer,0,buffer.length);
 	}
-	/** See {@link #writeBooleanBlock(boolean[],int,int)}
+	/** The short variant of {@link #writeBooleanBlock(boolean)}
 	@param data single element to write
 	@throws IOException --//--
 	*/
@@ -286,14 +362,14 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	
 	
 	
-	/**  See {@link #writeBooleanBlock(boolean[],int,int)}
+	/**  The int variant of {@link #writeBooleanBlock(boolean[],int,int)}
 	@param buffer --//--
 	@param offset --//--
 	@param length --//--
 	@throws IOException --//--
 	*/
 	public void writeIntBlock(int [] buffer, int offset, int length)throws IOException;		
-	/** See {@link #writeBooleanBlock(boolean[],int,int)}
+	/** The int variant of  {@link #writeBooleanBlock(boolean[])}
 	@param buffer --//--
 	@throws IOException --//--
 	*/
@@ -302,7 +378,7 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 			assert(buffer!=null);
 			writeIntBlock(buffer,0,buffer.length);
 	}
-	/** See {@link #writeBooleanBlock(boolean[],int,int)}
+	/** The int variant of  {@link #writeBooleanBlock(boolean)}
 	@param data single element to write
 	@throws IOException --//--
 	*/
@@ -310,14 +386,14 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	
 	
 	
-	/**  See {@link #writeBooleanBlock(boolean[],int,int)}
+	/**  The long variant of  {@link #writeBooleanBlock(boolean[],int,int)}
 	@param buffer --//--
 	@param offset --//--
 	@param length --//--
 	@throws IOException --//--
 	*/
 	public void writeLongBlock(long [] buffer, int offset, int length)throws IOException;		
-	/** See {@link #writeBooleanBlock(boolean[],int,int)}
+	/** The long variant of  {@link #writeBooleanBlock(boolean[])}
 	@param buffer --//--
 	@throws IOException --//--
 	*/
@@ -326,7 +402,7 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 			assert(buffer!=null);
 			writeLongBlock(buffer,0,buffer.length);
 	}
-	/** See {@link #writeBooleanBlock(boolean[],int,int)}
+	/** The long variant of  {@link #writeBooleanBlock(boolean)}
 	@param data single element to write
 	@throws IOException --//--
 	*/
@@ -335,7 +411,8 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	
 	
 	
-	/**  See {@link #writeBooleanBlock(boolean[],int,int)}
+	/**  The float variant of  {@link #writeBooleanBlock(boolean[],int,int)}.
+	<p>
 	Must preserve NaN and +/-Infinity correctly.
 	@param buffer --//--
 	@param offset --//--
@@ -343,7 +420,8 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	@throws IOException --//--
 	*/
 	public void writeFloatBlock(float [] buffer, int offset, int length)throws IOException;
-	/** See {@link #writeBooleanBlock(boolean[],int,int)}
+	/** The float variant of  {@link #writeBooleanBlock(boolean[])}.
+	<p>
 	Must preserve NaN and +/-Infinity correctly.
 	@param buffer --//--
 	@throws IOException --//--
@@ -353,7 +431,8 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 			assert(buffer!=null);
 			writeFloatBlock(buffer,0,buffer.length);
 	}
-	/** See {@link #writeBooleanBlock(boolean[],int,int)}
+	/** The float variant of  {@link #writeBooleanBlock(boolean)}.
+	<p>
 	Must preserve NaN and +/-Infinity correctly.
 	@param data single element to write
 	@throws IOException --//--
@@ -362,7 +441,8 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	
 	
 	
-	/**  See {@link #writeBooleanBlock(boolean[],int,int)}.
+	/**  The double variant of  {@link #writeBooleanBlock(boolean[],int,int)}.
+	<p>
 	Must preserve NaN and +/-Infinity correctly.
 	@param buffer --//--
 	@param offset --//--
@@ -370,7 +450,8 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 	@throws IOException --//--
 	*/
 	public void writeDoubleBlock(double [] buffer, int offset, int length)throws IOException;
-	/** See {@link #writeBooleanBlock(boolean[],int,int)}.
+	/**  The double variant of {@link #writeBooleanBlock(boolean[])}.
+	<p>
 	Must preserve NaN and +/-Infinity correctly.
 	@param buffer --//--
 	@throws IOException --//--
@@ -380,7 +461,8 @@ public interface IStructWriteFormat extends Closeable, Flushable, IFormatLimits
 			assert(buffer!=null);
 			writeDoubleBlock(buffer,0,buffer.length);
 	}
-	/** See {@link #writeBooleanBlock(boolean[],int,int)}.
+	/**  The double variant of {@link #writeBooleanBlock(boolean)}.
+	<p>
 	Must preserve NaN and +/-Infinity correctly.
 	@param data single element to write
 	@throws IOException --//--

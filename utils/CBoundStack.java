@@ -35,7 +35,7 @@ public class CBoundStack<TElement extends Object>
 	
 	* *********************************************************************/
 	/** Pushes  item on  stack
-	@param  non null
+	@param e non null
 	@throws EFormatBoundaryExceeded if there is no more place on stack
 	*/
 	public void push(TElement e)throws EFormatBoundaryExceeded

@@ -82,6 +82,86 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 	};
 	
 	/* *****************************************************************
+		
+			Extension, comment writing
+	
+	******************************************************************/
+	/** Writes a single or multi-line comment.
+	@param s comment to write. This comment <u>must not</u> contain
+			invalid surogate characters, but it is not verified.
+	@throws IOException if failed.
+	*/
+	public void writeComment(String s)throws IOException
+	{
+		//We do close a current token. We can safely do it, 
+		//because we can only inject comments between numeric
+		//tokens or withing a string which will stitch at reading side.
+		tryCloseToken();
+		//Now write comment character.
+		out.write(COMMENT_CHAR);
+		//and now write body, detecting eols.
+		//We need to prevent system from seeing any character AFTER
+		//the EOL. We do not need to change all eols into comments
+		//tough, because they are ignorable. It would be nice however
+		//if we could do it. We have to however add eol after a comment
+		//if it is not there.
+		//So what patterns do we have?
+		//			a\nb	->a\n#b
+		//			a\n\nb	->a\n#\n#b
+		//			a\n\rb	->a\n\r#b
+		//			a\rb	->a\r#b
+		//			a\r\rb	->a\r#\r#b
+		//			a\r\nb	->a\r\n#b
+		char c = 0;
+		char found_eol = '\n';
+		for(int i = 0, lim = s.length(); i<lim; i++)
+		{
+			char n= s.charAt(i);
+			//First pattern
+			if (
+					(i!=lim-1)
+					&&
+					(
+					((c=='\n')&&(n!='\r'))
+						||
+					((c=='\r')&&(n!='\n'))
+					)
+				)
+				{
+						//System.out.print("#<"+n+"("+Integer.toHexString(n)+")");
+						out.write(COMMENT_CHAR);
+						out.write(n);
+						found_eol=c;
+						c = n;
+				}else
+			if (	(i!=lim-1)
+					&&
+					(
+						((c=='\n')&&(n=='\r'))
+							||
+						((c=='\r')&&(n=='\n')))
+					)
+				{
+					found_eol=n;
+					out.write(n);						
+					out.write(COMMENT_CHAR);
+					c = 0;
+					//System.out.print(n+"("+Integer.toHexString(n)+")->#");
+				}else
+				{
+					//System.out.print(n+"("+Integer.toHexString(n)+")");
+					out.write(n);
+					c = n;
+				};
+			
+		};
+		if ((c!='\n')&&(c!='\r')) 
+		{
+			out.write(found_eol);
+		}
+		
+	};
+	/* *****************************************************************
 	
 			ATxtWriteFormat0
 	
@@ -89,6 +169,30 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 	/* --------------------------------------------------------------
 					Common part for plain and string tokens.
 	----------------------------------------------------------------*/
+	/** Closes and finishes token, if any 
+	@throws IOException if failed 
+	*/
+	private void tryCloseToken()throws IOException
+	{
+		switch(token_state)
+		{
+			case NOTHING:
+			case BEGIN_INDICATOR:
+			case BEGIN_WRITTEN:
+			case END_WRITTEN:
+			case NO_TOKEN:		break;
+			case PLAIN_TOKEN_OPENED:
+								closePlainToken(); 
+								finishPendingClosePlainToken(); 
+								break;
+			case STRING_TOKEN_OPENED:  
+								closeStringToken(); 
+								finishPendingCloseStringToken(); 
+								break;
+			case PLAIN_TOKEN_CLOSING:  finishPendingClosePlainToken(); break;
+			case STRING_TOKEN_CLOSING: finishPendingCloseStringToken(); break;
+		};
+	};
 	/** Finishes pending closeToken action if any.
 	@throws IOException if failed
 	@see #finishPendingCloseStringToken
@@ -103,11 +207,9 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 			//is in progress. We just terminate what is pending.
 			case STRING_TOKEN_CLOSING:
 					finishPendingCloseStringToken();
-					token_state= TTokenState.NO_TOKEN;
 					break;
 			case PLAIN_TOKEN_CLOSING:
 					finishPendingClosePlainToken();
-					token_state= TTokenState.NO_TOKEN;
 					break;
 		};
 	};
@@ -125,8 +227,10 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 			case BEGIN_INDICATOR: 
 								break;
 			case BEGIN_WRITTEN:
-			case NO_TOKEN:
 								out.write(DEFAULT_EMPTY_CHAR);
+								break;
+			case NO_TOKEN:
+								out.write(TOKEN_SEPARATOR_CHAR);
 								break;
 			case PLAIN_TOKEN_OPENED:
 								//not re-opening.
@@ -138,7 +242,7 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 			case STRING_TOKEN_OPENED: throw new AssertionError();
 			case STRING_TOKEN_CLOSING:
 							    if (TRACE) TOUT.println("openPlainToken(), closing pending string token");
-								out.write(STRING_TOKEN_SEPARATOR_CHAR);
+							    finishPendingCloseStringToken();
 								out.write(TOKEN_SEPARATOR_CHAR); 
 								break;
 		};
@@ -195,10 +299,13 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 	/** Called by {@link #finishPendingCloseToken()} when detected that 
 	plain token closure is pending.
 	<p>
-	Empty.
+	Just changes state.
 	@throws IOException .
 	*/
-	protected void finishPendingClosePlainToken()throws IOException{	};
+	protected void finishPendingClosePlainToken()throws IOException
+	{
+		token_state= TTokenState.NO_TOKEN;	
+	};
 	
 	
 	/* -----------------------------------------------------------------
@@ -216,6 +323,9 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 		    					out.write(STRING_TOKEN_SEPARATOR_CHAR);
 								break;
 			case NO_TOKEN:
+								out.write(TOKEN_SEPARATOR_CHAR);
+								out.write(STRING_TOKEN_SEPARATOR_CHAR);
+								break;
 			case BEGIN_WRITTEN:
 								out.write(DEFAULT_EMPTY_CHAR);
 								out.write(STRING_TOKEN_SEPARATOR_CHAR);
@@ -356,7 +466,7 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 		out.write(';');
 	};
 	/** Called by {@link #finishPendingCloseToken()} when detected that 
-	string token closure is pending.
+	string token closure is pending. Writes closure and changes state.
 	@throws IOException .
 	*/
 	protected void finishPendingCloseStringToken()throws IOException
@@ -371,6 +481,7 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 			};
 			//and then write closing ".
 			out.write(STRING_TOKEN_SEPARATOR_CHAR);
+			token_state= TTokenState.NO_TOKEN;
 	};
 	
 	
@@ -397,9 +508,9 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 	/** Tests if specified string name can be stored as a plain token
 	@param name name to test
 	@return true if can be stored as a plain token, false if needs to be stored
-			as a string token 
+			as a string token
 	*/
-	protected boolean isPlainName(String name)throws IOException
+	protected boolean isPlainName(String name)
 	{
 		assert(name!=null);
 		for(int i=0,n =name.length(); i<n; i++)

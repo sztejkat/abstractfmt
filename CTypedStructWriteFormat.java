@@ -2,7 +2,7 @@ package sztejkat.abstractfmt;
 import sztejkat.abstractfmt.logging.SLogging;
 import java.io.IOException;
 /**
-	The <i>described</i> stream implementing {@link ITypedStructWriteFormat}.
+	The <i>typed</i> stream implementing {@link ITypedStructWriteFormat}.
 	<p>
 	This stream is implemented over the {@link AReservedNameWriteFormat}.
 	
@@ -28,8 +28,8 @@ import java.io.IOException;
 		double[]		
 	</pre>
 	with {@link AReservedNameWriteFormat#reserveName}
-	and requires them to be optimized by calling {@link IStructWriteFormat#optimizeBeginName}
-	on the underlying stream in order of appearance in above list.
+	and requests to optimize them by calling {@link IStructWriteFormat#optimizeBeginName}
+	on the underlying stream. The call is made in order of appearance on above list.
 	<p>
 	<i>Note: This set may be customized by an apropriate constructor argument
 	what may be wise if XML format is used as a back-end due to some of them not
@@ -43,14 +43,14 @@ import java.io.IOException;
 		signal;</li>
 		<li>said operation is same type;</li>
 	</ul>
-	If it is nothing is done.
+	If it is, nothing is done.
 	<p>
 	If it is not:
 	<ul>
 		<li>if there was an elementary primitive operation of another type
 		the <code>end</code> signal is written to a stream;</li>
-		<li>then the reserved name <code>begin</code> is written 
-		with {@link AReservedNameWriteFormat#beginReserved} and name matching the type.
+		<li>then the <code>begin</code> signal is written 
+		with {@link AReservedNameWriteFormat#beginReserved} and a name matching the type.
 	</ul>
 	
 	<h2>Describing primitive block operations</h2>
@@ -59,8 +59,7 @@ import java.io.IOException;
 	
 	<h1>Effect and examples</h1>
 	In effect the sequnece of elementary primitive operations of the same type
-	is enclosed by <code>begin</code> and <code>end</code> signal which do carry
-	the matchng reserved name.
+	is enclosed by <code>begin(type_name)</code> and <code>end</code> signals.
 	<p>
 	For an example if user writes:
 	<pre>

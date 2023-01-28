@@ -25,6 +25,7 @@ public class ATestCase_BasicSignalOperations extends AInterOpTestCase<IStructRea
 			p.writer.close();
 			try{
 					p.reader.next();
+					Assert.fail();
 			}catch(ENotOpen ex){System.out.println(ex); };
 	};
 	/**
@@ -773,6 +774,20 @@ public class ATestCase_BasicSignalOperations extends AInterOpTestCase<IStructRea
 				r.next();
 				Assert.fail("Should have thrown");
 			}catch(EEof ex){ System.out.println(ex);};
+	};
+	
+	
+	@Test public void testAnonymousBeginAtTheEnd()throws IOException
+	{
+			enter();
+			CPair<?,?> p = createTestDevice();
+			p.writer.open();
+			p.writer.begin("");
+			p.writer.close();
+			
+			p.reader.open();
+			Assert.assertTrue("".equals(p.reader.next()));
+			
 	};
 };
 

@@ -1,6 +1,11 @@
 package sztejkat.abstractfmt;
 
-/** Limiting values for streams, adjustable */
+/** Limiting values for streams, adjustable.
+	<p>
+	This contract defines how to access and adjust limits for signal names length
+	and recursion depth. This contract is common for both reading and writing and
+	thous it is defined separately.
+*/
 public interface IFormatLimits
 {
 	/* .........................................................

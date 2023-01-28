@@ -20,7 +20,8 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 			private abstract class AStateHandler extends ATxtReadFormatStateBase0<ATxtReadFormat1.TIntermediateSyntax>.AStateHandler
 			{
 				/** Reads from {@link #in} semi transparently handles eof 
-				@return -1 or 0...0xFFFF. If -1 eof is already send to {@link #queueNextChar} */
+				@return -1 or 0...0xFFFF. If -1 eof is already send to {@link #queueNextChar} 
+				@throws IOException if {@link #in} thrown.*/
 				protected int read()throws IOException
 				{
 					int c = in.read();
@@ -277,13 +278,14 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 					}
 				}
 			};
-			/** A string body collector.
+			/**  A string body collector.
 				 <p>
 				 Collected {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR}
-				 opening string token. Now expecting either {@link #isStringTokenBodyChar}
-				 or {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR}
-				 or any other char terminating it. We will do a look-ahead for
-				 escapes applied to {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR} 
+				 opening string token. Now expecting un-escaped
+				 {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR}
+				 or any other char forming the string.
+				 <p>
+				 Will correctly handle all escapes.
 		    */
 			private abstract class AStringBody_StateHandler extends AStateHandler
 			{
@@ -387,11 +389,9 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 					}
 				}
 			};
-			 /** Collected {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR}
-				 opening string token. Now expecting either {@link #isStringTokenBodyChar}
-				 or {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR}
-				 or any other char terminating it. We will do a look-ahead for
-				 escapes applied to {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR} */
+			/**
+			Responsible for collecting double quouted token body. 
+			*/
 			private final class STRING_TOKEN_BODY_StateHandler extends AStringBody_StateHandler
 			{
 					STRING_TOKEN_BODY_StateHandler()
@@ -403,11 +403,9 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 									);
 					};
 			};
-			/** Collected {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR}
-				 opening begin name. Now expecting either {@link #isStringTokenBodyChar}
-				 or {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR}
-				 or any other char terminating it. We will do a look-ahead for
-				 escapes applied to {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR} */
+			/**
+			Responsible for collecting double quouted begin signal name. 
+			*/
 			private final class COLLECTING_STRING_BEGIN_NAME_StateHandler extends AStringBody_StateHandler
 			{
 					COLLECTING_STRING_BEGIN_NAME_StateHandler()
