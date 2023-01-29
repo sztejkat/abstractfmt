@@ -10,12 +10,16 @@ import org.junit.Assert;
 */
 public class Test_ATxtWriteFormat1 extends ATest
 {
-		private static final class DUT extends ATxtWriteFormat1
+		private static class DUT extends ATxtWriteFormat1
 		{
 					public final StringBuilder stream = new StringBuilder(); 
 				DUT()
 				{
 					super(5);
+				};
+				@Override protected void outSignalSeparator()throws IOException
+				{ 
+					stream.append(' ');
 				};
 				@Override protected void outTokenSeparator()throws IOException
 				{
@@ -68,6 +72,14 @@ public class Test_ATxtWriteFormat1 extends ATest
 				@Override public int getMaxSupportedStructRecursionDepth(){ return -1; };
 				@Override public int getMaxSupportedSignalNameLength(){ return Integer.MAX_VALUE; };
 		};
+		/** This class tests how the engine works if string tokens stitching is disabled */
+		private static class NonStitchingDUT extends DUT
+		{
+				@Override protected void closeStringToken()throws IOException
+				{
+					closeStringToken_no_stitching();
+				};
+		};
 		
 	@Test public void testPlainTokenSequencingWithoutSignal()throws IOException
 	{
@@ -102,9 +114,9 @@ public class Test_ATxtWriteFormat1 extends ATest
 			d.close();
 			String o = d.stream.toString();
 			System.out.println(o);
-			Assert.assertTrue(("*beginDirectImpl*>p1p0<,>p0<*endImpl*"+
+			Assert.assertTrue(("*beginDirectImpl* >p1p0<,>p0<*endImpl* "+
 								">p1p0<,>p0<"+
-								"*beginDirectImpl*>p1p0<,>p0<*endImpl*").equals(o));
+								"*beginDirectImpl* >p1p0<,>p0<*endImpl*").equals(o));
 		leave();
 	};
 	
@@ -115,12 +127,31 @@ public class Test_ATxtWriteFormat1 extends ATest
 			d.open();
 				d.writeChar('a');
 				d.writeString("DA");
+				d.writeString("DA");
 			d.close();
 			String o = d.stream.toString();
 			System.out.println(o);
-			Assert.assertTrue("\"sasDsA\"".equals(o));
+			Assert.assertTrue("\"sasDsAsDsA\"".equals(o));
 		leave();
 	};
+	
+	
+	@Test public void testDisabledStringTokenStitchingWithoutSignal()throws IOException
+	{
+		enter();
+			NonStitchingDUT d = new NonStitchingDUT();
+			d.open();
+				d.writeChar('a');
+				d.writeString("DA");
+				d.writeString("DA");
+			d.close();
+			String o = d.stream.toString();
+			System.out.println(o);
+			Assert.assertTrue("\"sa\",\"sDsA\",\"sDsA\"".equals(o));
+		leave();
+	};
+	
+	
 	@Test public void testStringTokenStitchingWithSignal()throws IOException
 	{
 		enter();
@@ -138,9 +169,9 @@ public class Test_ATxtWriteFormat1 extends ATest
 			Assert.assertTrue(
 							("\"sasDsA\""+
 								"*beginDirectImpl*"+
-								"\"sDsA\""+
+								" \"sDsA\""+
 								"*endImpl*"+
-								"\"sDsA\"")
+								" \"sDsA\"")
 								.equals(o));
 		leave();
 	};

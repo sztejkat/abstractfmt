@@ -21,14 +21,14 @@ import java.io.IOException;
 	This class achives that by intercepting {@link #openPlainToken}
 	and {@link #openStringToken} and converting them to
 	necessary sequence of calls to:
-	{@link #outTokenSeparator},{@link #openPlainTokenImpl},
+	{@link #outTokenSeparator},{@link #outSignalSeparator}, {@link #openPlainTokenImpl},
 	{@link #openStringTokenImpl} and etc. according to current
 	state of the token list.
 	<p>
 	The state of token list is tracked by interception
 	of token related methods {@link #openPlainToken},{@link #openStringToken},
 	{@link #closePlainToken},{@link #closeStringToken}
-	and signal related method {@link #terminatePendingBlockOperation}.
+	and signal related method {@link #flushSignalPayload}.
 	
 	<h1>User API</h1>
 	No change when comparet to {@link ATxtWriteFormat0}.
@@ -42,7 +42,8 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 					*/
 					NOTHING,
 					/** Once signal was written or begun to be written.
-					Indicates that no token seprator is necessary
+					Indicates that no token seprator is necessary,
+					however a signal separator is necessary.
 					*/
 					SIGNAL,
 					/** Once token of any type was written
@@ -86,22 +87,39 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 	/* ---------------------------------------------------------
 				Token related
 	---------------------------------------------------------*/
+	/** Invoken when class detects that signal was written and
+	token is to be opened. Once this method returns
+	the {@link #openPlainTokenImpl} or {@link #openStringTokenImpl}
+	is invoked 
+	@throws IOException if failed.
+	*/
+	protected abstract void outSignalSeparator()throws IOException;
 	/** Invoken when class detects that token was written and
 	next token is to be opened. Once this method returns
-	{@link #openPlainTokenImpl} or {@link #openStringTokenImpl}
-	is invoked */
+	the {@link #openPlainTokenImpl} or {@link #openStringTokenImpl}
+	is invoked
+	@throws IOException if failed.
+	*/
 	protected abstract void outTokenSeparator()throws IOException;
 	/** Invoked by {@link #openPlainToken} when it decides that
-	actuall opening should take place */
+	actuall opening should take place 
+	@throws IOException if failed.
+	*/
 	protected abstract void openPlainTokenImpl()throws IOException;
 	/** Invoked by {@link #openStringToken} when it decides that
-	actuall opening should take place */
+	actuall opening should take place 
+	@throws IOException if failed.
+	*/
 	protected abstract void openStringTokenImpl()throws IOException;
 	/** Invoked by {@link #closePlainToken} when it decides that
-	actuall closeing should take place */
+	actuall closing should take place 
+	@throws IOException if failed.
+	*/
 	protected abstract void closePlainTokenImpl()throws IOException;
 	/** Invoked by {@link #closeStringToken} when it decides that
-	actuall closeing should take place */
+	actuall closing should take place 
+	@throws IOException if failed.
+	*/
 	protected abstract void closeStringTokenImpl()throws IOException;
 	
 	/* **********************************************************
@@ -113,13 +131,17 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 	{@link #outTokenSeparator} and {@link #openPlainTokenImpl}.
 	If string token stitching is in progress will terminate it.
 	@throws AssertionError if in incorrect state
+	@throws IOException if failed.
 	*/
 	@Override protected final void openPlainToken()throws IOException
 	{
 		switch(token_state)
 		{
 			case NOTHING:	//no separator necessary at the beginning of a file
-			case SIGNAL:	//no separator necessary after signal
+						openPlainTokenImpl();
+						break;
+			case SIGNAL:	//no token separator necessary after signal, but signal is a must
+						outSignalSeparator();
 						openPlainTokenImpl();
 						break;
 			case AFTER_TOKEN:
@@ -153,7 +175,10 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 		switch(token_state)
 		{
 			case NOTHING:	//no separator necessary at the beginning of a file
-			case SIGNAL:	//no separator necessary after signal
+						openStringTokenImpl();
+						break;
+			case SIGNAL:	//no token separator necessary after signal, but signal is a must
+						outSignalSeparator();
 						openStringTokenImpl();
 						break;
 			case AFTER_TOKEN:
@@ -189,7 +214,9 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 	{
 		closeStringToken_stitching();
 	};
-	/** "Stitching" variant of {@link #closeStringToken} */
+	/** "Stitching" variant of {@link #closeStringToken}
+	@throws IOException if failed.
+	*/
 	protected final void closeStringToken_stitching()throws IOException
 	{
 		switch(token_state)
@@ -208,7 +235,9 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 						throw new AssertionError("token_state="+token_state);
 		}
 	};
-	/** Non-"stitching" variant of {@link #closeStringToken} */
+	/** Non-"stitching" variant of {@link #closeStringToken} 
+	@throws IOException if failed.
+	*/
 	protected final void closeStringToken_no_stitching()throws IOException
 	{
 		switch(token_state)
@@ -252,6 +281,28 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 	};
 	/* **********************************************************
 	
+			Support necessary for injecting off-band data
+			which are not a part of token-signal chain
+			
+	***********************************************************/
+	/** Prepares state machine to inject off band data.
+		Off band data can be incjected only between tokens.
+		and always do terminate current token (if any)
+	@throws IOException if failed.
+	*/
+	protected void openOffBandData()throws IOException
+	{
+		flushStringTokenStitching();
+	};
+	/** Prepares state machine to return to token processing
+	@throws IOException if failed.
+	*/
+	protected void closeOffBandData()throws IOException
+	{
+	};
+	
+	/* **********************************************************
+	
 			Support necessary for state handling
 			
 	***********************************************************/
@@ -261,8 +312,9 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 	Should be invoked before writing any signal and before flushing
 	data to down-stream.
 	@throws AssertionError if some tokens were not closed through API
+	@throws IOException if failed.
 	*/
-	protected final void flushStringTokenStitching()throws IOException
+	private void flushStringTokenStitching()throws IOException
 	{
 		switch(token_state)
 		{
@@ -286,7 +338,7 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 		@throws AssertionError if some tokens were not closed through API
 		@throws AssertionError {@link #flushStringTokenStitching} was not called.
 	*/
-	protected final void setTokenStateToAfterSignal()
+	private void setTokenStateToAfterSignal()
 	{
 		assert(
 				(token_state!=TTokenState.PLAIN_TOKEN)

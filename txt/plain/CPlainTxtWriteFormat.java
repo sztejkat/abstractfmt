@@ -1,5 +1,5 @@
 package sztejkat.abstractfmt.txt.plain;
-import sztejkat.abstractfmt.txt.ATxtWriteFormat0;
+import sztejkat.abstractfmt.txt.ATxtWriteFormat1;
 import sztejkat.abstractfmt.*;
 import sztejkat.abstractfmt.logging.SLogging;
 import java.io.IOException;
@@ -8,7 +8,7 @@ import java.io.Writer;
 /**
 	A reference plain text format implementation, writing side.
 */
-public class CPlainTxtWriteFormat extends ATxtWriteFormat0
+public class CPlainTxtWriteFormat extends ATxtWriteFormat1
 {
 		 private static final long TLEVEL = SLogging.getDebugLevelForClass(CPlainTxtWriteFormat.class);
          private static final boolean TRACE = (TLEVEL!=0);
@@ -32,37 +32,16 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 			
 				/** Where to write. Protected to allow some data injcection in superclasses modifications */
 				protected final Writer out;
-				/** What are we doing with a token? */
-				private static enum TTokenState
-				{
-					/** Nothing was written to a stream yet*/
-					NOTHING,
-					/** A begin indicator was written, name follows in form of a token */
-					BEGIN_INDICATOR,
-					/** A begin name was written */
-					BEGIN_WRITTEN,
-					/** An end indicator was written */
-					END_WRITTEN,
-					/** A token is terminated */
-					NO_TOKEN,
-					/** Plain token in progress */
-					PLAIN_TOKEN_OPENED,
-					/** String token in progress */
-					STRING_TOKEN_OPENED,
-					/** Plain token closed, but writing closure data is pending */
-					PLAIN_TOKEN_CLOSING,
-					/** String token closed, but writing closure data is pending */
-					STRING_TOKEN_CLOSING;
-				};
-				private TTokenState token_state = TTokenState.NOTHING;
-				/** Set to true in {@link TTokenState#STRING_TOKEN_OPENED}
-				if upper surogate was detected thous we may have 
-				a proper surogate sequence, possibly.
+				
+				/** Set to true in string token	if upper surogate was detected 
+				thous we may have a proper surogate sequence, possibly.
 				The link {@link #upper_surogate_pending}
 				do carry the surogate in question*/
 				private boolean is_upper_surogate_pending;
 				private char upper_surogate_pending;
-				
+				/** Used to track if inject signal separator or not.
+				In generic end signals do not need signal separators. */
+				private boolean last_signal_was_begin;
 				
 	/* ****************************************************************
 	
@@ -97,11 +76,7 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 	*/
 	public void writeComment(String s)throws IOException
 	{
-		//We do close a current token. We can safely do it, 
-		//because we can only inject comments between numeric
-		//tokens or withing a string which will stitch at reading side.
-		tryCloseToken();
-		//Now write comment character.
+		openOffBandData();
 		out.write(COMMENT_CHAR);
 		//and now write body, detecting eols.
 		//We need to prevent system from seeing any character AFTER
@@ -163,214 +138,95 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 		{
 			out.write(found_eol);
 		}
-		
+		closeOffBandData();
 	};
 	/* *****************************************************************
 	
-			ATxtWriteFormat0
+			ATxtWriteFormat1 / ATxtWriteFormat0
 	
 	******************************************************************/
 	/* --------------------------------------------------------------
-					Common part for plain and string tokens.
+					common tokens
 	----------------------------------------------------------------*/
-	/** Closes and finishes token, if any 
-	@throws IOException if failed 
-	*/
-	private void tryCloseToken()throws IOException
+	@Override protected void outSignalSeparator()throws IOException
 	{
-		switch(token_state)
-		{
-			case NOTHING:
-			case BEGIN_INDICATOR:
-			case BEGIN_WRITTEN:
-			case END_WRITTEN:
-			case NO_TOKEN:		break;
-			case PLAIN_TOKEN_OPENED:
-								closePlainToken(); 
-								finishPendingClosePlainToken(); 
-								break;
-			case STRING_TOKEN_OPENED:  
-								closeStringToken(); 
-								finishPendingCloseStringToken(); 
-								break;
-			case PLAIN_TOKEN_CLOSING:  finishPendingClosePlainToken(); break;
-			case STRING_TOKEN_CLOSING: finishPendingCloseStringToken(); break;
-		};
+		if (last_signal_was_begin)
+				out.write(DEFAULT_EMPTY_CHAR);
 	};
-	/** Finishes pending closeToken action if any.
-	@throws IOException if failed
-	@see #finishPendingCloseStringToken
-	@see #finishPendingClosePlainToken
-	*/
-	private void finishPendingCloseToken()throws IOException
+	@Override protected void outTokenSeparator()throws IOException
 	{
-		if (TRACE) TOUT.println("finishPendingCloseToken()");
-		switch(token_state)
-		{
-			//Note: Intentionally no toggling if other state 
-			//is in progress. We just terminate what is pending.
-			case STRING_TOKEN_CLOSING:
-					finishPendingCloseStringToken();
-					break;
-			case PLAIN_TOKEN_CLOSING:
-					finishPendingClosePlainToken();
-					break;
-		};
+		out.write(TOKEN_SEPARATOR_CHAR);
 	};
 	/* --------------------------------------------------------------
 					plain tokens
-	----------------------------------------------------------------*/
-	@Override protected void openPlainToken()throws IOException
-	{	
-		if (TRACE) TOUT.println("openPlainToken() ENTER");
-		//handle pending operation
-		switch(token_state)
-		{
-			case NOTHING:
-			case END_WRITTEN:
-			case BEGIN_INDICATOR: 
-								break;
-			case BEGIN_WRITTEN:
-								out.write(DEFAULT_EMPTY_CHAR);
-								break;
-			case NO_TOKEN:
-								out.write(TOKEN_SEPARATOR_CHAR);
-								break;
-			case PLAIN_TOKEN_OPENED:
-								//not re-opening.
-								break;
-			case PLAIN_TOKEN_CLOSING: 
-								if (TRACE) TOUT.println("openPlainToken(), closing pending plain token");
-								out.write(TOKEN_SEPARATOR_CHAR); 
-								break;
-			case STRING_TOKEN_OPENED: throw new AssertionError();
-			case STRING_TOKEN_CLOSING:
-							    if (TRACE) TOUT.println("openPlainToken(), closing pending string token");
-							    finishPendingCloseStringToken();
-								out.write(TOKEN_SEPARATOR_CHAR); 
-								break;
-		};
-		token_state = TTokenState.PLAIN_TOKEN_OPENED;
-		if (TRACE) TOUT.println("openPlainToken() LEAVE");
-	};
-	
-	/** Tests if specified character can be used in plain token
-	@param c char to check
-	@return true if is allowed, false if not */
-	static boolean isPlainTokenChar(char c)
-	{
-		if (Character.isWhitespace(c)) return false;
-		switch(c)
-		{
-			case TOKEN_SEPARATOR_CHAR:
-			case STRING_TOKEN_SEPARATOR_CHAR:
-			case END_SIGNAL_CHAR:
-			case COMMENT_CHAR:  
-			case BEGIN_SIGNAL_CHAR:  return false;
-		};
-		//We do NOT allow surogates in plain token because our tokenization
-		//procedure has no way to escape eventuall incorrect surogates
-		if ((c>=0xD800)&&(c<=0xDFFF)) return false;
-		return true;
-	};
-	/** Validates state and calls {@link #outPlainTokenImpl} */
-	@Override protected final void outPlainToken(char c)throws IOException
-	{
-		assert(token_state == TTokenState.PLAIN_TOKEN_OPENED);
-		outPlainTokenImpl(c);
-	};
-	
-	/** Called by {@link #outPlainToken}. This method intentionally does not validate 
-	state, as it will be also called for begin signal handling.
-	@param c must be {@link #isPlainTokenChar}
-	@throws IOException if failed;
-	*/
-	protected void outPlainTokenImpl(char c)throws IOException
+	----------------------------------------------------------------*/	
+	@Override protected void openPlainTokenImpl()throws IOException{};
+	@Override protected void closePlainTokenImpl()throws IOException{};
+	@Override protected void outPlainToken(char c)throws IOException
 	{
 		assert(isPlainTokenChar(c));
 		if (DUMP) TOUT.println("outPlainToken(0x"+Integer.toHexString(c)+")");
 		out.write(c);
 	};
-	
-	
-	@Override protected void closePlainToken()throws IOException
-	{
-		if (TRACE) TOUT.println("closePlainToken()");
-		assert(token_state==TTokenState.PLAIN_TOKEN_OPENED);
-		//rememeber for the future.
-		token_state = TTokenState.PLAIN_TOKEN_CLOSING;
-	};
-	/** Called by {@link #finishPendingCloseToken()} when detected that 
-	plain token closure is pending.
-	<p>
-	Just changes state.
-	@throws IOException .
-	*/
-	protected void finishPendingClosePlainToken()throws IOException
-	{
-		token_state= TTokenState.NO_TOKEN;	
-	};
-	
-	
-	/* -----------------------------------------------------------------
-			String tokens	
-	-----------------------------------------------------------------*/
-	@Override protected void openStringToken()throws IOException
-	{
-		if (TRACE) TOUT.println("openStringToken() ENTER");
-		//handle pending operation depending on state.
-		switch(token_state)
-		{
-			case NOTHING:
-		    case BEGIN_INDICATOR:
-		    case END_WRITTEN:
-		    					out.write(STRING_TOKEN_SEPARATOR_CHAR);
-								break;
-			case NO_TOKEN:
-								out.write(TOKEN_SEPARATOR_CHAR);
-								out.write(STRING_TOKEN_SEPARATOR_CHAR);
-								break;
-			case BEGIN_WRITTEN:
-								out.write(DEFAULT_EMPTY_CHAR);
-								out.write(STRING_TOKEN_SEPARATOR_CHAR);
-								break;
-			case PLAIN_TOKEN_OPENED: throw new AssertionError();
-			case PLAIN_TOKEN_CLOSING: 
-								if (TRACE) TOUT.println("openStringToken(), closing pending plain token");
-								out.write(TOKEN_SEPARATOR_CHAR);
-								out.write(STRING_TOKEN_SEPARATOR_CHAR);
-								break;
-			case STRING_TOKEN_OPENED: break; //no re-opening.
-			case STRING_TOKEN_CLOSING:
-								if (TRACE) TOUT.println("openStringToken() continuing previous string token");
-								//now optimize it, no separators. 
-								break;
-		};
-		token_state = TTokenState.STRING_TOKEN_OPENED;
-		if (TRACE) TOUT.println("openStringToken() LEAVE");
-		
-	}
-	
+	/* --------------------------------------------------------------
+					string tokens
+					
+			Redirects to EscapedStringToken engine
+	----------------------------------------------------------------*/
 	/**
-		Validates state and calls {@link #outStringTokenImpl} 
-	*/
-	@Override protected final void outStringToken(char c)throws IOException
+	@see #openEscapedStringToken */
+	@Override protected void openStringTokenImpl()throws IOException
 	{
-		assert(token_state==TTokenState.STRING_TOKEN_OPENED);
-		outStringTokenImpl(c);
+		out.write(STRING_TOKEN_SEPARATOR_CHAR);
+		openEscapedStringToken();
 	};
+	/**
+	@see #closeEscapedStringToken */
+	@Override protected void closeStringTokenImpl()throws IOException
+	{
+		closeEscapedStringToken();
+		out.write(STRING_TOKEN_SEPARATOR_CHAR);
+	};
+	/**
+	@see #outEscapedStringToken(char) */
+	@Override protected void outStringToken(char c)throws IOException
+	{
+		outEscapedStringToken(c);
+	};
+	/* ***************************************************************
 	
-	/** Called by {@link #outStringToken}. This method intentionally does not validate 
-	state, as it will be also called for begin signal handling.
-	@param c must be {@link #isPlainTokenChar}
-	@throws IOException if failed;
+				state-less support for escaped string tokens
+				
+	****************************************************************/
+	/** Used by {@link #openStringTokenImpl} to initiate escaping mechanism.
+		Opposite to string tokens the 
+		{@link #openEscapedStringToken},
+		{@link #outEscapedStringToken(char)},{@link #outEscapedStringToken(String)},
+		{@link #closeEscapedStringToken}
+		can be used regardless of token state. For an example to write names
+		of signals.
+		<p>
+		Does not write opening and closig ""
+		@throws IOException if failed.
 	*/
-	protected void outStringTokenImpl(char c)throws IOException
+	protected void openEscapedStringToken()throws IOException
+	{
+		assert(!is_upper_surogate_pending);
+	};
+	/** Implements all escaping necessary for handling {@link #outStringToken(char)}.
+	Sequence of calls to this method must be terminated by calling 
+	{@link #closeEscapedStringToken} to purge dangling upper surogate.
+	@param c char to write 
+	@see #outEscapedStringToken(String)
+	@throws IOException if failed 
+	@see #is_upper_surogate_pending
+	@see #openEscapedStringToken
+	*/
+	protected void outEscapedStringToken(char c)throws IOException
 	{
 		if (DUMP) TOUT.println("outStringTokenImpl(0x"+Integer.toHexString(c)+") ENTER");
 		//Now inside a string we do allow __correct__ surogates.
 		//and let them to be handled by down-stream
-		
 		if (is_upper_surogate_pending)
 		{
 			//a proper stream allows only lower surogate
@@ -386,7 +242,6 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 				out.write(c);
 				upper_surogate_pending = 0;
 				is_upper_surogate_pending = false;
-				
 				return;
 			}
 			//it is not a propert surogate
@@ -432,14 +287,29 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 		}
 		if (DUMP) TOUT.println("outStringTokenImpl() LEAVE");
 	};
-	
-	
-	@Override protected void closeStringToken()throws IOException
+	/** Invokes {@link #outEscapedStringToken} for every charcter
+	@param token non-null, but can be empty.
+	@throws IOException if failed.
+	@see #openEscapedStringToken
+	*/
+	protected void outEscapedStringToken(String token)throws IOException
 	{
-		if (TRACE) TOUT.println("closeStringToken()"); 
-		assert(token_state==TTokenState.STRING_TOKEN_OPENED);
-		//rememeber for the future.
-		token_state = TTokenState.STRING_TOKEN_CLOSING;
+		if (TRACE) TOUT.println("outEscapedStringToken(\""+token+"\") ENTER");
+		for(int i=0,n=token.length();i<n;i++)
+		{
+			outEscapedStringToken(token.charAt(i));
+		};
+		if (TRACE) TOUT.println("outEscapedStringToken() LEAVE");
+	};
+	/** Terminates sequence of {@link #outEscapedStringToken(char)}
+	by purging pending upper surogates.
+	@throws IOException if failed.
+	@see #openEscapedStringToken
+	@see #flushPendingSurogates
+	*/
+	protected void closeEscapedStringToken()throws IOException
+	{
+		flushPendingSurogates();
 	};
 				/** Hex conversion table for escaping */
 				private static final char [] HEX = new char[]
@@ -469,28 +339,47 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 		};
 		out.write(';');
 	};
-	/** Called by {@link #finishPendingCloseToken()} when detected that 
-	string token closure is pending. Writes closure and changes state.
+	/** Called by {@link #closeStringTokenImpl()} and {@link #closeEscapedStringToken} to flush pending
+	dangling upper surogate if any.
 	@throws IOException .
 	*/
-	protected void finishPendingCloseStringToken()throws IOException
+	private void flushPendingSurogates()throws IOException
 	{
-			//Now we have two tasks: first handle eventual
-			//pending upper surogate
-			if (is_upper_surogate_pending)
-			{
-					escape(upper_surogate_pending);
-					is_upper_surogate_pending = false;
-					upper_surogate_pending=0;
-			};
-			//and then write closing ".
-			out.write(STRING_TOKEN_SEPARATOR_CHAR);
-			token_state= TTokenState.NO_TOKEN;
+		//Now we have two tasks: first handle eventual
+		//pending upper surogate
+		if (is_upper_surogate_pending)
+		{
+				escape(upper_surogate_pending);
+				is_upper_surogate_pending = false;
+				upper_surogate_pending=0;
+		};
 	};
 	
 	
+	/* **********************************************************
 	
+			ARegisteringStructWriteFormat
 	
+	***********************************************************/
+	/** Tests if specified character can be used in plain token
+	@param c char to check
+	@return true if is allowed, false if not */
+	static boolean isPlainTokenChar(char c)
+	{
+		if (Character.isWhitespace(c)) return false;
+		switch(c)
+		{
+			case TOKEN_SEPARATOR_CHAR:
+			case STRING_TOKEN_SEPARATOR_CHAR:
+			case END_SIGNAL_CHAR:
+			case COMMENT_CHAR:  
+			case BEGIN_SIGNAL_CHAR:  return false;
+		};
+		//We do NOT allow surogates in plain token because our tokenization
+		//procedure has no way to escape eventuall incorrect surogates
+		if ((c>=0xD800)&&(c<=0xDFFF)) return false;
+		return true;
+	};
 	
 	
 	
@@ -527,27 +416,21 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 	@Override protected void beginDirectImpl(String name)throws IOException
 	{
 		if (DUMP) TOUT.println("beginDirectImpl(name=\""+name+"\") ENTER");
-		//terminate pending token before writing a signal.
-		finishPendingCloseToken();
-		//The special case is a begin-begin which must produce
-		//a separator.
-		if (token_state==TTokenState.BEGIN_WRITTEN) out.write(DEFAULT_EMPTY_CHAR);
+		//Tokens are managed by superclass so we just need to decide on how to
+		//write the body.		
 		out.write(BEGIN_SIGNAL_CHAR);
-		token_state = TTokenState.BEGIN_INDICATOR; //force no space before token
 		if (isPlainName(name))
 		{
-			openPlainToken();
-			outPlainToken(name);
-			closePlainToken();
-			finishPendingCloseToken();
+			out.write(name);
 		}else
 		{
-			openStringToken();
-			outStringToken(name);
-			closeStringToken();
-			finishPendingCloseToken();
+			out.write(STRING_TOKEN_SEPARATOR_CHAR);
+				openEscapedStringToken();
+				outEscapedStringToken(name);			
+				closeEscapedStringToken();
+			out.write(STRING_TOKEN_SEPARATOR_CHAR);
 		}
-		token_state = TTokenState.BEGIN_WRITTEN;
+		last_signal_was_begin = true;
 		if (DUMP) TOUT.println("beginDirectImpl() LEAVE");
 	};
 	/* *****************************************************************
@@ -558,17 +441,12 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 	@Override protected void endImpl()throws IOException
 	{
 		if (DUMP) TOUT.println("endImpl() ENTER");
-		//terminate pending token before writing a signal.
-		finishPendingCloseToken();	
 		out.write(END_SIGNAL_CHAR);
-		token_state = TTokenState.END_WRITTEN;
+		last_signal_was_begin = false;
 		if (DUMP) TOUT.println("endImpl() LEAVE");
 	};
 	/** Empty */
-	@Override protected void openImpl()throws IOException
-	{
-		
-	};
+	@Override protected void openImpl()throws IOException{};
 	/** Closes output writer */
 	@Override protected void closeImpl()throws IOException
 	{
@@ -577,9 +455,7 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat0
 	/** Flushes output writer, terminates pending token */
 	@Override protected void flushImpl()throws IOException
 	{
-		//This is a slight overkill, but helps to keep stream consistency
-		//and is absolutely necessary on close.
-		finishPendingCloseToken();	
+		super.flushImpl();	
 		out.flush();
 	};
 	

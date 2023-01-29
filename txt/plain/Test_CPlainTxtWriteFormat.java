@@ -539,7 +539,7 @@ public class Test_CPlainTxtWriteFormat extends ATest
 			
 			System.out.println(o);
 			
-			Assert.assertTrue("*girl *age 33;*3sizes 90,40,90;;".equals(o));
+			Assert.assertTrue("*girl*age 33;*3sizes 90,40,90;;".equals(o));
 			
 		leave();
 	};
@@ -787,6 +787,57 @@ public class Test_CPlainTxtWriteFormat extends ATest
 		leave();
 	};
 	
+	@Test public void testCommentTerminatesStringToken()throws IOException
+	{
+		enter();
+			StringWriter ow = new StringWriter();
+			CPlainTxtWriteFormat w = new CPlainTxtWriteFormat(ow);
+		
+			w.open();
+			w.writeString("333");
+			w.writeComment("X");
+			w.writeString("444");
+			w.close();
+			
+			String o = ow.toString();
+			
+			System.out.println("\""+o+"\"");
+			final String expected="\"333\"#X\n,\"444\"";
+			Assert.assertTrue(expected.equals(o));
+		leave();
+		leave();
+	};
+	
+	
+	@Test public void testPostAndPreSignalSeparators()throws IOException
+	{
+		enter();
+			StringWriter ow = new StringWriter();
+			CPlainTxtWriteFormat w = new CPlainTxtWriteFormat(ow);
+		
+			w.open();
+			w.writeInt(10);
+			w.begin("marry");
+			w.writeInt(10);
+			w.writeInt(10);
+			w.end();
+			w.writeInt(10);
+			w.begin("any");
+			w.end();
+			w.writeInt(10);
+			w.begin("");
+			w.writeInt(10);
+			w.end();
+			w.close();
+			
+			String o = ow.toString();
+			
+			System.out.println("\""+o+"\"");
+			final String expected="10*marry 10,10;10*any;10* 10;";
+			Assert.assertTrue(expected.equals(o));
+		leave();
+		leave();
+	};
 	
 	@Test public void testSurogate_followedby_tokens()throws IOException
 	{
@@ -887,10 +938,10 @@ public class Test_CPlainTxtWriteFormat extends ATest
 			System.out.println("-"+o+"-");
 			
 				
-			final String expected="* * * \"\uD800\uDC01\";\"\\DC00;\\D801;\";\"\\D800;\";";
+			final String expected="*** \"\uD800\uDC01\";\"\\DC00;\\D801;\";\"\\D800;\";";
 									// good surogate pair is not escaped
 															//bad is escaped and dangling too.
-			System.out.println(expected);
+			System.out.println("-"+expected+"-");
 			Assert.assertTrue(expected.equals(o));
 		
 			leave();

@@ -217,8 +217,9 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 					final char c=(char)i;
 					if (c==CPlainTxtWriteFormat.COMMENT_CHAR)
 					{
+						setStateHandler(TOKEN_BODY_LOOKUP);
 						pushStateHandler(COMMENT);
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
 					}else
 					if (c==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)
 					{
@@ -262,8 +263,9 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 					final char c=(char)i;
 					if (c==CPlainTxtWriteFormat.COMMENT_CHAR)
 					{
+						setStateHandler(TOKEN_BODY_LOOKUP);
 						pushStateHandler(COMMENT);
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
 					}else
 					if (isTokenBodyChar(c))
 					{
@@ -433,8 +435,9 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 					final char c=(char)i;
 					if (c==CPlainTxtWriteFormat.COMMENT_CHAR)
 					{
+						setStateHandler(TOKEN_BODY_LOOKUP);
 						pushStateHandler(COMMENT);
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
 					}else
 					if (c==CPlainTxtWriteFormat.BEGIN_SIGNAL_CHAR)
 					{

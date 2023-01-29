@@ -49,6 +49,130 @@ public class Test_CPlainTxtReadFormat extends ATest
 		}catch(EEof ex){};
 		leave();
 	};
+	
+	@Test public void testNamelessBeginSequence()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"***;;;"));
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		Assert.assertTrue("".equals(d.next()));
+		Assert.assertTrue("".equals(d.next()));
+		Assert.assertTrue(null==d.next());
+		Assert.assertTrue(null==d.next());
+		Assert.assertTrue(null==d.next());
+		leave();
+	};
+	@Test public void testNamelessBeginSequenceWithSeparator()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"* *\t*\n;\t;\r\n;\n"));
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		Assert.assertTrue("".equals(d.next()));
+		Assert.assertTrue("".equals(d.next()));
+		Assert.assertTrue(null==d.next());
+		Assert.assertTrue(null==d.next());
+		Assert.assertTrue(null==d.next());
+		leave();
+	};
+	@Test public void testNamedBeginSequenceWithSeparator()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"*robo\n*skunk *\"marty\" ;;;"));
+		d.open();
+		Assert.assertTrue("robo".equals(d.next()));
+		Assert.assertTrue("skunk".equals(d.next()));
+		Assert.assertTrue("marty".equals(d.next()));
+		Assert.assertTrue(null==d.next());
+		Assert.assertTrue(null==d.next());
+		Assert.assertTrue(null==d.next());
+		leave();
+	};
+	
+	@Test public void testNamedBeginSequenceWithoutSeparator()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"*robo*skunk*\"marty\";;;"));
+		d.open();
+		Assert.assertTrue("robo".equals(d.next()));
+		Assert.assertTrue("skunk".equals(d.next()));
+		Assert.assertTrue("marty".equals(d.next()));
+		Assert.assertTrue(null==d.next());
+		Assert.assertTrue(null==d.next());
+		Assert.assertTrue(null==d.next());
+		leave();
+	};
+	
+	@Test public void testNamedBeginChainWithoutSeparator()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"*robo;*skunk;*\"marty\";"));
+		d.open();
+		Assert.assertTrue("robo".equals(d.next()));
+		Assert.assertTrue(null==d.next());
+		Assert.assertTrue("skunk".equals(d.next()));
+		Assert.assertTrue(null==d.next());
+		Assert.assertTrue("marty".equals(d.next()));
+		Assert.assertTrue(null==d.next());
+		leave();
+	};
+	
+	@Test public void testBeginTerminatesPlainToken()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"10*hobbo"));
+		d.open();
+		Assert.assertTrue(10==d.readInt());
+		Assert.assertTrue("hobbo".equals(d.next()));
+		
+		leave();
+	};  
+	@Test public void testEndTerminatesPlainToken()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"* 10;"));
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		Assert.assertTrue(10==d.readInt());
+		Assert.assertTrue(null==d.next());
+		
+		leave();
+	};
+	@Test public void testNoSeparatorAfterQuotedBegin()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"*\"hobbo\"10"));
+		d.open();
+		Assert.assertTrue("hobbo".equals(d.next()));
+		Assert.assertTrue(10==d.readInt());
+		leave();
+	};  
+	
 	@Test public void testEmptyStructWithInnerSeparators()throws IOException
 	{
 		enter();
@@ -476,26 +600,20 @@ public class Test_CPlainTxtReadFormat extends ATest
 		leave();
 	};
 	
-	@Test public void testCommentsWithEmptyStruct()throws IOException
-	{
-		/*
-			A rather brute test showing that comments can be injected
-			in a body of plain toke and outside it.
-			
-			Uses all eol sequences.
-		*/
+	@Test public void testCommentIsIgnoredInFistBlock()throws IOException
+	{		
 		enter();
 		CPlainTxtReadFormat d=
 				new CPlainTxtReadFormat(
 						new StringReader(
-							"#This is a comment \r"+
-							"*#This is an injected comment\n"+
-							"ma# Again injected comment\r\n"+
-							"mma #Comment\n\r"+
-							";"));
+							"#A comment\n"+
+							"*ma 4,3;"));
+							
 		d.open();
-		Assert.assertTrue("mamma".equals(d.next()));
-		Assert.assertTrue(!d.hasElementaryData());
+		Assert.assertTrue("ma".equals(d.next()));
+		Assert.assertTrue(d.hasElementaryData());
+		Assert.assertTrue(d.readInt()==4);
+		Assert.assertTrue(d.readInt()==3);
 		Assert.assertTrue(null==d.next());
 		Assert.assertTrue(!d.hasElementaryData());
 		try{
@@ -504,6 +622,61 @@ public class Test_CPlainTxtReadFormat extends ATest
 		}catch(EEof ex){};
 		leave();
 	};
+	
+	@Test public void testCommentTerminatesName()throws IOException
+	{		
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"*ma#comment\n4,3;"));
+							
+		d.open();
+		Assert.assertTrue("ma".equals(d.next()));
+		Assert.assertTrue(d.hasElementaryData());
+		Assert.assertTrue(d.readInt()==4);
+		Assert.assertTrue(d.readInt()==3);
+		Assert.assertTrue(null==d.next());
+		Assert.assertTrue(!d.hasElementaryData());
+		try{
+				d.next();
+				Assert.fail();
+		}catch(EEof ex){};
+		leave();
+	};
+	
+	@Test public void testCommentDoesNotPreventStchingOfStrigs()throws IOException
+	{		
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"*ma robo,#comment\n, \"teur\";"));
+							
+		d.open();
+		Assert.assertTrue("ma".equals(d.next()));
+		Assert.assertTrue("roboteur".equals(d.readString(100)));
+		leave();
+	};
+	
+	@Test public void testCommentTerminatesPlainToken()throws IOException
+	{		
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"*ma 4#comment\n4,3;"));
+							
+		d.open();
+		Assert.assertTrue("ma".equals(d.next()));
+		Assert.assertTrue(d.hasElementaryData());
+		Assert.assertTrue(d.readInt()==4);
+		//Note: If comment would not terminted, we would get 44.
+		//		We can't however fetch next int, because we would get
+		//		a syntax error due to lack of ,
+		leave();
+	};
+	
 	@Test public void testCommentIgnoredInQuoted()throws IOException
 	{
 		/*
