@@ -4,8 +4,6 @@ import  sztejkat.abstractfmt.test.*;
 import  sztejkat.abstractfmt.utils.CAddablePollableArrayList;
 import org.junit.BeforeClass;
 import org.junit.AfterClass;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -26,35 +24,7 @@ import java.io.PrintStream;
 		<p>
 		For typed tests it runs own test cases.
 */
-@RunWith(Suite.class)
-@Suite.SuiteClasses({
-					//untyped test cases
-					ATestCase_BasicSignalOperations.class,
-					ATestCase_SignalOperationsSafety.class,
-					ATestCase_OptimizedSignalOperations.class,
-					ATestCase_ComplexSignalName.class,
-					ATestCase_BooleanElementaryPrimitive.class,
-					ATestCase_BooleanBlockPrimitive.class,
-					ATestCase_ByteBlockPrimitive.class,
-					ATestCase_ByteElementaryPrimitive.class,
-					ATestCase_ShortElementaryPrimitive.class,
-					ATestCase_ShortBlockPrimitive.class,
-					ATestCase_CharElementaryPrimitive.class,
-					ATestCase_CharBlockPrimitive.class,
-					ATestCase_IntElementaryPrimitive.class,
-					ATestCase_IntBlockPrimitive.class,
-					ATestCase_LongElementaryPrimitive.class,
-					ATestCase_LongBlockPrimitive.class,
-					ATestCase_FloatElementaryPrimitive.class,
-					ATestCase_FloatBlockPrimitive.class,
-					ATestCase_DoubleElementaryPrimitive.class,
-					ATestCase_DoubleBlockPrimitive.class,
-					ATestCase_StringBlockPrimitive.class,
-					//Typed test cases
-					ATestCase_PeekOperations.class,
-					ATestCase_TypeDefence.class
-					})
-public class TestSuite_CTypedFormat_overObjFormat1 extends ATest
+public class TestSuite_CTypedFormat_overObjFormat1 extends ADefaultTypedTestSuite
 {
 	
 	@BeforeClass public static void armImplementation()

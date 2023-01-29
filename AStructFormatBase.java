@@ -207,7 +207,11 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 		/** Terminates block operation, if any
 		by calling <code>endXXXBlock()</code>.
 		<p>
-		Is to be invoked before {@link #enterStruct}/{@link #leaveStruct}
+		Is to be invoked inside signal operations at each call,
+		after validating if they are legit to be called.
+		It should be invoked before	writing or reading of actual signal content
+		since closing block may generate some I/O operations.
+		
 		@throws IOException if an eventual termination of block failed.
 		@see #block_type
 		@see #endBooleanBlock */

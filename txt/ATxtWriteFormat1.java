@@ -14,8 +14,24 @@ import java.io.IOException;
 	<pre>
 	  signal token (token_separator token)* signal
 	</pre>
-	and that sequence of string tokens are to be stitched
-	into a one string token.
+	and that sequence of string tokens are to be "stitched"
+	into a one string token (see {@link #closeStringToken} for
+	how to disable this behavior).
+	<p>
+	This class achives that by intercepting {@link #openPlainToken}
+	and {@link #openStringToken} and converting them to
+	necessary sequence of calls to:
+	{@link #outTokenSeparator},{@link #openPlainTokenImpl},
+	{@link #openStringTokenImpl} and etc. according to current
+	state of the token list.
+	<p>
+	The state of token list is tracked by interception
+	of token related methods {@link #openPlainToken},{@link #openStringToken},
+	{@link #closePlainToken},{@link #closeStringToken}
+	and signal related method {@link #terminatePendingBlockOperation}.
+	
+	<h1>User API</h1>
+	No change when comparet to {@link ATxtWriteFormat0}.
 */
 public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 {
@@ -25,7 +41,7 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 					Indicates that no token seprator is necessary.
 					*/
 					NOTHING,
-					/** Once signal was written.
+					/** Once signal was written or begun to be written.
 					Indicates that no token seprator is necessary
 					*/
 					SIGNAL,
@@ -87,71 +103,7 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 	/** Invoked by {@link #closeStringToken} when it decides that
 	actuall closeing should take place */
 	protected abstract void closeStringTokenImpl()throws IOException;
-	/* ---------------------------------------------------------
-				Intercepted calls to signal operations from ARegisteringStructWriteFormat
-	---------------------------------------------------------*/
-	/** As {@link ARegisteringStructWriteFormat#beginAndRegisterImpl}, called 
-	in a way that all token state is correctly managed 
-	@param name --//--
-	@param index --//--
-	@param order --//--
-	@throws IOException --//--
-	*/
-	protected abstract void beginAndRegisterImpl2(String name, int index, int order)throws IOException;
-	/** As {@link ARegisteringStructWriteFormat#endBeginAndRegisterImpl}, called 
-	in a way that all token state is correctly managed.
-	<p>
-	By default calls superclass implementation of that method.
-	@param name --//--
-	@param index --//--
-	@param order --//--
-	@throws IOException --//--
-	*/
-	protected void endBeginAndRegisterImpl2(String name, int index, int order)throws IOException
-	{
-		super.endBeginAndRegisterImpl(name,index,order);
-	};
-	/** As {@link ARegisteringStructWriteFormat#beginRegisteredImpl}, called 
-	in a way that all token state is correctly managed.
-	@param index --//--
-	@param order --//--
-	@throws IOException --//--
-	*/
-	protected abstract void beginRegisteredImpl2(int index, int order)throws IOException;
-	/** As {@link ARegisteringStructWriteFormat#endBeginRegisteredImpl}, called 
-	in a way that all token state is correctly managed.
-	<p>
-	By default calls superclass implementation of that method.
-	@param index --//--
-	@param order --//--
-	@throws IOException --//--
-	*/
-	protected void endBeginRegisteredImpl2(int index, int order)throws IOException
-	{
-		super.endBeginRegisteredImpl(index,order);
-	}
-	/** As {@link ARegisteringStructWriteFormat#beginDirectImpl}, called 
-	in a way that all token state is correctly managed.
-	@param name --//--
-	@throws IOException --//--
-	*/
-	protected abstract void beginDirectImpl2(String name)throws IOException;
-	/** As {@link ARegisteringStructWriteFormat#endBeginDirectImpl}, called 
-	in a way that all token state is correctly managed.
-	<p>
-	By default calls superclass implementation of that method.
-	@param name --//--
-	@throws IOException --//--
-	*/
-	protected void endBeginDirectImpl2(String name)throws IOException
-	{
-		super.endBeginDirectImpl(name);
-	}
-	/** As {@link AStructWriteFormatBase0#endImpl}, called 
-	in a way that all token state is correctly managed.
-	@throws IOException --//--
-	*/
-	protected abstract void endImpl2()throws IOException;
+	
 	/* **********************************************************
 	
 			ATxtWriteFromat0
@@ -357,78 +309,49 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 		flushStringTokenStitching();
 	};
 	/* **********************************************************
-	
-			ARegisteringStructWriteFormat
+		
+			Note:
+				We have three points at which we can intercept
+				signal operations:
+				
+				AStructWriteFormatBase.begin
+				ARegisteringStructWriteFormat.beginImpl
+				and
+				ARegisteringStructWriteFormat.beginAndRegisterImpl familly.
+				
+				Our interception do serve two purposes:
+					1.To call flushStringTokenStitching which may produce
+					  some output;
+					2.To trace state with setTokenStateToAfterSignal
+					
+				The AStructWriteFormatBase.begin does:
+					- tests if this is allowed call.
+						* here we need to terminate pending stitching.
+					- terminate pending block operation which MAY generate output
+						* here we should 
+					- goes to beginImpl
+						ARegisteringStructWriteFormat.beginImpl does:
+							- not generate anything, but dispateches to beginAndRegisterImpl
+							  and so on.
+				Since our flushStringTokenStitching() needs to terminate the token which may
+				be a part of a sequence the correct position is to capture the begin() and
+				end(). 
+				
+				The ideal point will be a termination point which 
+				is provided to us by AStructWriteFormatBase0.flushSignalPayload();
 			
 	***********************************************************/
-	/** Calls {@link #beginAndRegisterImpl2} after handling tokens.
-	@see #flushStringTokenStitching
-	@see #setTokenStateToAfterSignal
+	
+	/** Overriden to call link {@link #flushStringTokenStitching} 
+	to terminate any pending token, call super implementation 
+	and then indicate with {@link #setTokenStateToAfterSignal}
+	that form point of view of tokens we are after the signal.
+	
 	*/
-	@Override protected final void beginAndRegisterImpl(String name, int index, int order)throws IOException
+	@Override protected void flushSignalPayload()throws IOException
 	{
 		flushStringTokenStitching();
-			beginAndRegisterImpl2(name,index,order);
+		super.flushSignalPayload();
 		setTokenStateToAfterSignal();
-	};
-	/** Calls {@link #endBeginAndRegisterImpl2} after handling tokens.
-	@see #flushStringTokenStitching
-	@see #setTokenStateToAfterSignal
-	*/
-	@Override protected final void endBeginAndRegisterImpl(String name, int index, int order)throws IOException
-	{
-		flushStringTokenStitching();
-			endBeginAndRegisterImpl2(name,index,order);
-		setTokenStateToAfterSignal();
-	};
-	/** Calls {@link #beginRegisteredImpl2} after handling tokens.
-	@see #flushStringTokenStitching
-	@see #setTokenStateToAfterSignal
-	*/
-	@Override protected final void beginRegisteredImpl(int index, int order)throws IOException
-	{
-		flushStringTokenStitching();
-			beginRegisteredImpl(index,order);
-		setTokenStateToAfterSignal();
-	};
-	/** Calls {@link #endBeginRegisteredImpl2} after handling tokens.
-	@see #flushStringTokenStitching
-	@see #setTokenStateToAfterSignal
-	*/
-	@Override protected final void endBeginRegisteredImpl(int index, int order)throws IOException
-	{
-		flushStringTokenStitching();
-			endBeginRegisteredImpl2(index,order);
-		setTokenStateToAfterSignal();
-	};
-	/** Calls {@link #beginDirectImpl2} after handling tokens.
-	@see #flushStringTokenStitching
-	@see #setTokenStateToAfterSignal
-	*/
-	@Override protected final void beginDirectImpl(String name)throws IOException
-	{
-		flushStringTokenStitching();
-			beginDirectImpl2(name);
-		setTokenStateToAfterSignal();
-	};
-	/** Calls {@link #endBeginDirectImpl2} after handling tokens.
-	@see #flushStringTokenStitching
-	@see #setTokenStateToAfterSignal
-	*/
-	@Override protected final void endBeginDirectImpl(String name)throws IOException
-	{
-		flushStringTokenStitching();
-			endBeginDirectImpl2(name);
-		setTokenStateToAfterSignal();
-	};
-	/** Calls {@link #endImpl2} after handling tokens.
-	@see #flushStringTokenStitching
-	@see #setTokenStateToAfterSignal
-	*/
-	@Override protected final void endImpl()throws IOException
-	{
-		flushStringTokenStitching();
-			endImpl2();
-		setTokenStateToAfterSignal();
-	};
+	}; 
 };

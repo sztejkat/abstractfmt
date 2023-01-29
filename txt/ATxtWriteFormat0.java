@@ -6,10 +6,65 @@ import java.io.IOException;
 
 /**
 	A bottom most layer of text based formats providing transformation
-	of tokens into primitive data, writing end.
+	of primitive data into "tokens". A writing part for  {@link ATxtReadFormat0}.
 	<p>
-	This class is providing token level production inside a payaload
-	and is encoding primitives in a way compatible with {@link ATxtReadFormat0}
+	This class is made around a concept of "tokens" of two kinds: plain and
+	string. 
+	<table border="2">
+	<caption>Token types</caption>
+	<tr style="color:#000000;background-color:#FFF0F0">
+	<th>
+		Token
+	</th>
+	<th>
+		Usage
+	</th>
+	<th>
+		Methods
+	</th>
+	</tr>
+	<tr>
+		<td>
+		Plain token
+		</td>
+		<td>
+			Used to write elementary primitives
+			and elements of sequences except:
+			<code>char,</code><code>char[]</code>,<code>String</code>
+		</td>
+		<td>
+			{@link #openPlainToken},{@link #outPlainToken(char)},
+			{@link #outPlainToken(String)},{@link #closePlainToken}.
+		</td>
+	</tr>
+	<tr>
+		<td>
+		String token
+		</td>
+		<td>
+			Used to write elementary primitives
+			and elements of:
+			<code>char,</code><code>char[]</code>,<code>String</code>
+		</td>
+		<td>
+			{@link #openStringToken},{@link #outStringToken(char)},
+			{@link #outStringToken(String)},{@link #closeStringToken}.
+		</td>
+	</tr>
+	</table>
+	All token related methods are used according to below schema:
+	<pre>
+		writeXXXX(<i>primitive element</i>)
+		{
+			...
+			openYYYToken()
+				outYYYToken(....
+				outYYYToken(....
+				....
+			closeYYYToken()
+			....
+		}
+	</pre>
 */
 public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 {
@@ -46,13 +101,13 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	representing an elementary primitivie value or an element of primitive
 	sequence, for all values except <code>char</code>,<code>char[]</code>
 	or <code>String</code>. In such case the {@link #openStringToken}
-	is invoked 
+	is invoked.
 	@throws IOException if failed.
 	@see #closePlainToken
 	*/
 	protected abstract void openPlainToken()throws IOException;
 	/** Will be invoked after a content of token opened by {@link #openPlainToken}
-	is outed 
+	was written. 
 	@throws IOException if failed.
 	*/
 	protected abstract void closePlainToken()throws IOException;
@@ -70,7 +125,7 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	*/
 	protected abstract void openStringToken()throws IOException;
 	/** Will be invoked after a content of token opened by {@link #openStringToken}
-	is outed 
+	was written. 
 	@throws IOException if failed.
 	*/
 	protected abstract void closeStringToken()throws IOException;
@@ -83,6 +138,7 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	however the standard formatting of plain tokens will not generate any surogates.
 	@param c char to write.
 	@throws IOException if failed
+	@see #outPlainToken(String)
 	*/
 	protected abstract void outPlainToken(char c)throws IOException;
 	
@@ -94,6 +150,7 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	combination of <code>char</code> values, including unallowed surogate pairs. 
 	@param c char to write.
 	@throws IOException if failed
+	@see #outStringToken(String)
 	*/	
 	protected abstract void outStringToken(char c)throws IOException;
 	/* --------------------------------------------------------------------------

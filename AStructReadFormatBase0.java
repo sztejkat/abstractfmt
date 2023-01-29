@@ -324,13 +324,23 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 		/* ----------------------------------------------------------
 				Signal operations
 		----------------------------------------------------------*/
+		/** A housekeeping method for {@link #next} responsible
+		for perfoming any closure operation on payload carried between signals.
+		Default implementation calls {@link #terminatePendingBlockOperation} 
+		@throws IOException if generation of closure failed.
+		*/
+		protected void pullSignalPayload()throws IOException
+		{
+			//Terminate block type, according to type
+			terminatePendingBlockOperation();
+		};
 		@Override public String next()throws IOException
 		{
 			if (TRACE) TOUT.println("next() ENTER");
 			//basic state
 			validateUsable();
-			//now terminate block operation in progress, if any.
-			terminatePendingBlockOperation();
+			//do house keeping
+			pullSignalPayload();
 			//ask subclass
 			if (TRACE) TOUT.println("next()->nextImpl()");
 			String signal = nextImpl();						

@@ -5,8 +5,6 @@ import  sztejkat.abstractfmt.test.*;
 import  sztejkat.abstractfmt.utils.CAddablePollableArrayList;
 import org.junit.BeforeClass;
 import org.junit.AfterClass;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -24,31 +22,7 @@ import java.io.PrintStream;
 		This test suite dumps test files content to text files on writer close
 		using struct level indentation. 
 */
-@RunWith(Suite.class)
-@Suite.SuiteClasses({
-					ATestCase_BasicSignalOperations.class,
-					ATestCase_OptimizedSignalOperations.class,
-					ATestCase_SignalOperationsSafety.class,
-					ATestCase_ComplexSignalName.class,
-					ATestCase_BooleanElementaryPrimitive.class,
-					ATestCase_BooleanBlockPrimitive.class,
-					ATestCase_ByteElementaryPrimitive.class,
-					ATestCase_ByteBlockPrimitive.class,
-					ATestCase_ShortElementaryPrimitive.class,
-					ATestCase_ShortBlockPrimitive.class,
-					ATestCase_CharElementaryPrimitive.class,
-					ATestCase_CharBlockPrimitive.class,
-					ATestCase_IntElementaryPrimitive.class,
-					ATestCase_IntBlockPrimitive.class,
-					ATestCase_LongElementaryPrimitive.class,
-					ATestCase_LongBlockPrimitive.class,
-					ATestCase_FloatElementaryPrimitive.class,
-					ATestCase_FloatBlockPrimitive.class,
-					ATestCase_DoubleElementaryPrimitive.class,
-					ATestCase_DoubleBlockPrimitive.class,
-					ATestCase_StringBlockPrimitive.class
-					})
-public class TestSuite_ObjFormat0 extends ATest
+public class TestSuite_ObjFormat0 extends ADefaultUntypedTestSuite
 {
 	
 	@BeforeClass public static void armImplementation()

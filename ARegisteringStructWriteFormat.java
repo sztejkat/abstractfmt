@@ -180,7 +180,7 @@ public abstract class ARegisteringStructWriteFormat extends AStructWriteFormatBa
 		************************************************************************/
 		/** Dispatches to {@link #beginDirectImpl},{@link #beginAndRegisterImpl} or 
 		{@link #beginRegisteredImpl} */
-		@Override protected final void beginImpl(String name)throws IOException
+		@Override protected void beginImpl(String name)throws IOException
 		{
 			if (TRACE) TOUT.println("beginImpl(\""+name+"\") ENTER");
 		 	if (registry==null)
@@ -217,7 +217,7 @@ public abstract class ARegisteringStructWriteFormat extends AStructWriteFormatBa
 		/** Dispatches to {@link #endBeginDirectImpl},{@link #endBeginAndRegisterImpl} or 
 		{@link #endBeginRegisteredImpl} 
 		*/
-		@Override protected final void endBeginImpl(String name)throws IOException
+		@Override protected void endBeginImpl(String name)throws IOException
 		{
 			if (TRACE) TOUT.println("endBeginImpl(\""+name+"\") ENTER");
 			//Note: same logic as beginImpl, just calls different methods.

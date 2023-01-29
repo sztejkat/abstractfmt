@@ -140,7 +140,7 @@ public abstract class AXMLWriteFormat0 extends ATxtWriteFormat0
 	@param xml non null, text to pass char-by-char to {@link #outXMLToken}
 	@throws IOException if failed.
 	*/
-	protected final void outXMLToken(String xml)throws IOException
+	protected void outXMLToken(String xml)throws IOException
 	{
 		assert(xml!=null);
 		for(int i=0, n=xml.length(); i<n; i++)

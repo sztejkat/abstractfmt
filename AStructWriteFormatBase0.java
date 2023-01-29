@@ -95,7 +95,9 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 		@throws IOException if failed  */
 		protected abstract void closeImpl()throws IOException;
 		/** Called by {@link #flush} when flushed all pending states to actually 
-		perform lower level flush 
+		perform lower level flush. 
+		<p>
+		Note: flush() is always called inside a close().
 		@throws IOException if failed */
 		protected abstract void flushImpl()throws IOException;
 		/* ------------------------------------------------------------------
@@ -303,6 +305,16 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 		
 				
 		************************************************************************/
+		/** A housekeeping method for {@link #begin}/{@link #end} responsible
+		for perfoming any closure operation on payload carried between signals.
+		Default implementation calls {@link #terminatePendingBlockOperation} 
+		@throws IOException if generation of closure failed.
+		*/
+		protected void flushSignalPayload()throws IOException
+		{
+			//Terminate block type, according to type
+			terminatePendingBlockOperation();
+		};
 		/** Tests if end-begin optimization has pending and and flushes it.
 		To be invoked before any primitive operation.
 		@throws IOException if failed 
@@ -332,8 +344,8 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 			validateUsable();
 			//validat recursion levels.			
 			leaveStruct();
-			//Terminate block type, according to type
-			terminatePendingBlockOperation();
+			//Do necessary cleanup.
+			flushSignalPayload();
 			
 			//Handle end-begin optimization
 			if (!pending_end) 
@@ -362,8 +374,8 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 		    //validat recursion levels.
 		    enterStruct();
 		    
-		    //Terminate block type, according to type
-			terminatePendingBlockOperation();
+		   //Do necessary cleanup.
+			flushSignalPayload();
 		    
 			//Handle end-begin optimization
 			if (!pending_end)

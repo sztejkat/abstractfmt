@@ -26,5 +26,11 @@ cd ..
 
 echo "Building bin subpackage"
 cd bin
-./build-package.sh
+./build-subpackages.sh
+cd ..
+
+
+echo "Building txt subpackage"
+cd txt
+./build-subpackages.sh
 cd ..
