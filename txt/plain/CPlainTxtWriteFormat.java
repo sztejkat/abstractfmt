@@ -35,7 +35,7 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat1
 				
 				/** Set to true in string token	if upper surogate was detected 
 				thous we may have a proper surogate sequence, possibly.
-				The link {@link #upper_surogate_pending}
+				The {@link #upper_surogate_pending}
 				do carry the surogate in question*/
 				private boolean is_upper_surogate_pending;
 				private char upper_surogate_pending;
@@ -345,8 +345,7 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat1
 	*/
 	private void flushPendingSurogates()throws IOException
 	{
-		//Now we have two tasks: first handle eventual
-		//pending upper surogate
+		//Handle eventual pending upper surogate
 		if (is_upper_surogate_pending)
 		{
 				escape(upper_surogate_pending);
