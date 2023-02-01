@@ -21,27 +21,29 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat1
 			static final char DEFAULT_EMPTY_CHAR = ' ';
 			/** A string token separator character */
 			static final char STRING_TOKEN_SEPARATOR_CHAR = '\"';
-			/** An escape character inside a string character */
-			static final char ESCAPE_CHAR = '\\';
 			/** A end signal char */
 			static final char END_SIGNAL_CHAR = ';';
 			/** A begin signal char */
 			static final char BEGIN_SIGNAL_CHAR = '*';
 			/** A comment start character */
 			static final char COMMENT_CHAR = '#';
+			/** A escape character */
+			static final char ESCAPE_CHAR = '\\';
 			
 				/** Where to write. Protected to allow some data injcection in superclasses modifications */
 				protected final Writer out;
 				
-				/** Set to true in string token	if upper surogate was detected 
-				thous we may have a proper surogate sequence, possibly.
-				The {@link #upper_surogate_pending}
-				do carry the surogate in question*/
-				private boolean is_upper_surogate_pending;
-				private char upper_surogate_pending;
 				/** Used to track if inject signal separator or not.
 				In generic end signals do not need signal separators. */
 				private boolean last_signal_was_begin;
+				/** An escaping engine */
+				private final APlainEscapingEngine escaper = new APlainEscapingEngine()
+				{
+					@Override protected void out(char c)throws IOException
+					{
+						CPlainTxtWriteFormat.this.out.write(c);
+					};
+				};
 				
 	/* ****************************************************************
 	
@@ -211,7 +213,7 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat1
 	*/
 	protected void openEscapedStringToken()throws IOException
 	{
-		assert(!is_upper_surogate_pending);
+		
 	};
 	/** Implements all escaping necessary for handling {@link #outStringToken(char)}.
 	Sequence of calls to this method must be terminated by calling 
@@ -225,66 +227,7 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat1
 	protected void outEscapedStringToken(char c)throws IOException
 	{
 		if (DUMP) TOUT.println("outStringTokenImpl(0x"+Integer.toHexString(c)+") ENTER");
-		//Now inside a string we do allow __correct__ surogates.
-		//and let them to be handled by down-stream
-		if (is_upper_surogate_pending)
-		{
-			//a proper stream allows only lower surogate
-			//if character is a lower surogate?
-			if ((c>=0xDC00)&&(c<=0xDFFF))
-			{
-				//yes, we can pass both to encoder and be sure it will
-				//encode it correctly
-				if (DUMP) TOUT.println("outStringTokenImpl() surogate pair "+Integer.toHexString(upper_surogate_pending)+
-										" "+Integer.toHexString(c)+" LEAVE");
-					
-				out.write(upper_surogate_pending);
-				out.write(c);
-				upper_surogate_pending = 0;
-				is_upper_surogate_pending = false;
-				return;
-			}
-			//it is not a propert surogate
-			if (DUMP) TOUT.println("outStringTokenImpl(), improper surogate pair");
-			escape(upper_surogate_pending);				
-			upper_surogate_pending = 0;
-			is_upper_surogate_pending = false;
-		};
-		//Check if we do init a pending upper surogate?
-		if ((c>=0xD800)&&(c<=0xDBFF))
-		{
-			if (DUMP) TOUT.println("outStringTokenImpl(), detected upper surogate LEAVE");
-			//yes, make it pending
-			upper_surogate_pending = c;
-			is_upper_surogate_pending = true;
-			return;
-		};
-		//and escape it if necessary.
-		switch(c)
-		{
-			case STRING_TOKEN_SEPARATOR_CHAR:
-					//escape it
-					if (DUMP) TOUT.println("outStringTokenImpl() escaping "+STRING_TOKEN_SEPARATOR_CHAR);
-					out.write(ESCAPE_CHAR);
-					out.write(STRING_TOKEN_SEPARATOR_CHAR);
-					break;
-			case ESCAPE_CHAR:
-					if (DUMP) TOUT.println("outStringTokenImpl() escaping "+ESCAPE_CHAR);
-					out.write(ESCAPE_CHAR);
-					out.write(ESCAPE_CHAR);
-					break;
-			default:
-					//now the only possible problem is a lower surogate
-					if ((c>=0xDC00)&&(c<=0xDFFF))
-					{
-						if (DUMP) TOUT.println("outStringTokenImpl() escaping lower surogate");
-						escape(c);
-					}else
-					{
-						if (DUMP) TOUT.println("outStringTokenImpl() writing directly");
-						out.write(c);
-					};
-		}
+		escaper.write(c);
 		if (DUMP) TOUT.println("outStringTokenImpl() LEAVE");
 	};
 	/** Invokes {@link #outEscapedStringToken} for every charcter
@@ -309,51 +252,9 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat1
 	*/
 	protected void closeEscapedStringToken()throws IOException
 	{
-		flushPendingSurogates();
+		escaper.flush();
 	};
-				/** Hex conversion table for escaping */
-				private static final char [] HEX = new char[]
-										{
-											'0','1','2','3','4','5','6','7','8','9',
-											'A','B','C','D','E','F'
-										};
-	/** Writes character hex escape 
-	@param c what to escape
-	@throws IOException if failed.
-	*/
-	protected void escape(char c)throws IOException
-	{
-		if (DUMP) TOUT.println("escape(0x"+Integer.toHexString(c)+")");
-		out.write(ESCAPE_CHAR);
-		boolean was_emited = false;
-		for(int i=4;--i>=0;)
-		{
-			int nibble = (c & 0xF000)>>>(4+4+4);
-			if (!was_emited)
-			{
-				if (nibble==0) continue;
-			};
-			was_emited = true;
-			out.write(HEX[nibble]);
-			c<<=4;
-		};
-		out.write(';');
-	};
-	/** Called by {@link #closeStringTokenImpl()} and {@link #closeEscapedStringToken} to flush pending
-	dangling upper surogate if any.
-	@throws IOException .
-	*/
-	private void flushPendingSurogates()throws IOException
-	{
-		//Handle eventual pending upper surogate
-		if (is_upper_surogate_pending)
-		{
-				escape(upper_surogate_pending);
-				is_upper_surogate_pending = false;
-				upper_surogate_pending=0;
-		};
-	};
-	
+				
 	
 	/* **********************************************************
 	
