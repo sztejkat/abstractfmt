@@ -6,7 +6,7 @@ package sztejkat.abstractfmt.txt.xml;
 	An XML writer.
 	<p>
 	This class add following functionality to pure elementary primitives
-	related functionality of {@link #ATxtWriteFormat0}:
+	related functionality of {@link #ATxtWriteFormat1}:
 	<table boder="2">
 	<caption>Methods grouped by functionality</caption>
 	<tr>
@@ -26,7 +26,7 @@ package sztejkat.abstractfmt.txt.xml;
 		XML prolog and closure
 	</td>
 	<td>
-		{@link #writeXMLProlog}
+		{@link #writeXMLProlog}},{@link #writeXMLClosure}
 	</td>
 	</tr>
 	
@@ -34,7 +34,7 @@ package sztejkat.abstractfmt.txt.xml;
 	</table>
 
 */
-public abstract class AXMLWriteFormat0 extends ATxtWriteFormat0
+public abstract class AXMLWriteFormat0 extends ATxtWriteFormat1
 {
 				/** Set to true if upper surogate was in 
 				a token and write was post-poned to check
@@ -182,15 +182,7 @@ public abstract class AXMLWriteFormat0 extends ATxtWriteFormat0
 	{
 		throw new UnsupportedOperationException();
 	};
-	@Override protected void beginRegisteredImpl(int index, int order)throws IOException
-	{
-		Todo:
-			
-			refactor CPlainTxtWrite token to an another
-			level of support class since the tokenization
-			procedure visible there is a very usefull for
-			all classes where we do use token lists.
-	};
+	........... todo
 		
 		
 }

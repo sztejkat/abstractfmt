@@ -35,7 +35,7 @@ public abstract class AUnescapingEngine
 				    	REGULAR_CHAR(a)
 						REGULAR_CHAR(b)
 						REGULAR_CHAR(c)
-						ESCAPE_BODY_VOID(&amp)
+						ESCAPE_BODY_VOID(&amp;)
 						ESCAPE_BODY(#)
 						ESCAPE_BODY(x)
 						ESCAPE_BODY(3)
@@ -89,24 +89,41 @@ public abstract class AUnescapingEngine
 	/* ********************************************
 	
 			Services required form subclasses.
+			
+			Note:
+				Those services may look a bit awkward and non-streamline
+				but I liked them to be focused on just escapes and have
+				nothig to do with the actual reading or writing 
+				from a stream. 
 	
 	**********************************************/
+	/*--------------------------------------------------------------------
+				downstream
+	--------------------------------------------------------------------*/
 	/** Like {@link java.io.Reader#read}, reads single <code>char</code>
-	from downstream.
+	from downstream, dumb way without any processing.
 	@return -1 if end-of-file, 0...0xFFFF represeting single UTF-16 of Java
 		<code>char</code> otherwise
 	@throws IOException if failed.
 	*/
 	protected abstract int readImpl()throws IOException;
 	
+	/*--------------------------------------------------------------------
+				un-escaping
+	--------------------------------------------------------------------*/
 	/** Tests if specified character is a part of an escape sequence.
-	@param c char to check 
+	
+	@param c char to check, got from {@link #readImpl}
 	@param escape_sequence_length a length of already collected escape sequence. 
 			-1 if no escape collection is in progress.
+	@param sequece_index 0 in a call which is detecting the start of
+			escape sequence, then incremented with each processed escape sequence
+			character regardless if it was added to collection buffer or not.
+			A kind of state-machine index for fixed length escapes.
 	@return meaning of character
 	@throws IOException if found a bad escape. Recommended to use {@link EBrokenFormat}
 	*/
-	protected abstract TEscapeCharType isEscape(char c, int escape_sequence_length)throws IOException;
+	protected abstract TEscapeCharType isEscape(char c, int escape_sequence_length, int sequece_index)throws IOException;
 	
 	/** Called once {@link #isEscape} is used to detect
 	the end of collected escape sequence.
@@ -142,11 +159,11 @@ public abstract class AUnescapingEngine
 		if (ci==-1) return -1;
 		//qualify it
 		char c = (char) ci;
-		TEscapeCharType t = isEscaspe(c, -1 )
+		TEscapeCharType t = isEscape(c, -1, 0 );
 		if (t==TEscapeCharType.REGULAR_CHAR) return ci; //not initiate anything.
 		try{
 				//now loop collecting
-				for(;;)
+				for(int sequence_char=1;;sequence_char++)
 				{
 					switch(t)
 					{
@@ -177,12 +194,12 @@ public abstract class AUnescapingEngine
 					if (ci==-1) throw new EUnexpectedEof("Eof inside escape sequence!");
 					//qualify
 					c = (char) ci;
-					t = isEscaspe(c, collection_buffer.length() )
-				};
+					t = isEscape(c, collection_buffer.length(),sequence_char );
+				}
 		}finally
 		{
 			//purge collection buffer.
 			collection_buffer.setLength(0); 
-		};
+		}
 	};
 };
