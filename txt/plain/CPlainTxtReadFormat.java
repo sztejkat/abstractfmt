@@ -294,6 +294,14 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 						private final ATxtReadFormat1.TIntermediateSyntax body_syntax;
 						private final ATxtReadFormat1.TIntermediateSyntax terminator_syntax;
 						private final AStateHandler next_handler;
+						private final APlainUnescapingEngine escaper = new APlainUnescapingEngine()
+						{
+							@Override protected int readImpl()throws IOException{ return in.read(); };
+							@Override protected void unread(char c)throws IOException
+							{
+								in.unread(c);
+							};
+						};
 				/** 
 				@param body_syntax a syntax element to set when encountering body character
 				@param terminator_syntax a syntax element to set when encountering string terminator
@@ -313,74 +321,21 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 					this.body_syntax=body_syntax;
 					this.terminator_syntax=terminator_syntax;
 				};
+				@Override protected void onEnter()
+				{
+					//Just to be sure, that if escaper thrown AND state transition was mande AND something
+					//was read in an another state (without passing through the escaper) the escaper syntax
+					//is reset.
+					escaper.reset();
+				};
 				@Override protected void toNextChar()throws IOException
 				{
-					final char c;
-					{
-						int i= read();
-						if (i==-1) return;
-						c=(char)i;
-					};
-					//Detect escape sequence
-					//Note: switch not possible? Not a compile time constat inside a class scope.
-					if (c==CPlainTxtWriteFormat.ESCAPE_CHAR)
-					{
-						//yes, look ahead
-						//either escaped or end of body
-						final char ce;
-						{
-							final int j = in.read();
-							if (j==-1) throw new EUnexpectedEof("in escape sequence");
-							ce= (char)j;
-						};
-						if (
-							(ce==CPlainTxtWriteFormat.ESCAPE_CHAR)||
-						    (ce==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)
-						    )
-						{
-							//escaped directly
-							queueNextChar(ce,body_syntax);
-						}else
-						{
-							//escaped by hex
-							//We accept 0...9,a...f,A...F  zero to four times and 
-							//require the tailing ;
-							int digit = ce;
-							char composed = 0;
-							for(int n=0;;n++)
-							{
-								//process the digit, pending
-								if (digit==';')
-								{
-									//complete
-									queueNextChar(composed,body_syntax);
-									break;
-								}else
-								{
-									if (n==4) throw unexpectedCharException((char)digit,"while expecting hexadecimal escape terminator: ;");
-									if ((digit>='0')&&(digit<='9'))
-									{
-										digit -='0';
-									}else
-									if ((digit>='a')&&(digit<='f'))
-									{
-										digit = digit-'a'+10;
-									}else
-									if ((digit>='A')&&(digit<='F'))
-									{
-										digit = digit-'A'+10;
-									}else
-										throw unexpectedCharException((char)digit,"while collecting hexadecimal escape"); 
-									composed<<=4;
-									composed|=digit;									
-								}
-								//next digit
-								digit = in.read();
-								if (digit==-1) throw new EUnexpectedEof("in hex escape sequence");
-							};
-						}
-					}else
-					if (c==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)
+					int i = escaper.read();
+					if (i==-1) return;
+					assert((i>=-1)&&(i<=0xFFFF));
+					char c = (char)i;
+					//detect un-escaped string terminator.
+					if ((c==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)&&(!escaper.isEscaped()))
 					{
 						setStateHandler(next_handler);
 						queueNextChar(c,terminator_syntax);

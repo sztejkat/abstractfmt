@@ -12,7 +12,15 @@ public class Test_ATxtReadFormatStateBase0 extends ATest
 {
 		private static final class DUT extends ATxtReadFormatStateBase0<ATxtReadFormat1.TIntermediateSyntax>
 		{
-					class H extends AStateHandler
+					abstract class ACountingStateHandler extends AStateHandler
+					{		
+							public int enters;
+							public int leaves;
+							
+						@Override protected void onEnter(){ enters++; };
+						@Override protected void onLeave(){ leaves++;};
+					};
+					class H extends ACountingStateHandler
 					{
 								final int c;
 								final ATxtReadFormat1.TIntermediateSyntax s;
@@ -30,7 +38,7 @@ public class Test_ATxtReadFormatStateBase0 extends ATest
 						};
 					};
 					
-					class Hqueues extends AStateHandler
+					class Hqueues extends ACountingStateHandler
 					{
 								final int [] c;
 								final ATxtReadFormat1.TIntermediateSyntax [] s;
@@ -55,7 +63,7 @@ public class Test_ATxtReadFormatStateBase0 extends ATest
 						};
 					};
 					
-					class Hswitching extends AStateHandler
+					class Hswitching extends ACountingStateHandler
 					{
 								final int c;
 								final AStateHandler next;
@@ -107,7 +115,19 @@ public class Test_ATxtReadFormatStateBase0 extends ATest
 		leave();
 	};
 	
-	
+	@Test public void testSetCounts()
+	{
+		enter();
+			DUT d = new DUT();
+			d.setStateHandler(d.H1);
+			Assert.assertTrue(d.H1.enters==1);
+			d.setStateHandler(d.Heof);
+			Assert.assertTrue(d.H1.enters==1);
+			Assert.assertTrue(d.H1.leaves==1);
+			Assert.assertTrue(d.Heof.enters==1);
+			Assert.assertTrue(d.Heof.leaves==0);
+		leave();
+	};
 	
 	
 	@Test public void testCanPushPopState()throws EFormatBoundaryExceeded
@@ -122,6 +142,31 @@ public class Test_ATxtReadFormatStateBase0 extends ATest
 			try{
 				d.popStateHandler();
 			}catch(NoSuchElementException ex){};
+		leave();
+	};
+	
+	@Test public void testPushPopState_counts()throws EFormatBoundaryExceeded
+	{
+		enter();
+			DUT d = new DUT();
+			d.pushStateHandler(d.H1);
+				Assert.assertTrue(d.H1.enters==1);
+				Assert.assertTrue(d.H1.leaves==0);
+			d.pushStateHandler(d.Heof);
+				Assert.assertTrue(d.H1.enters==1);
+				Assert.assertTrue(d.H1.leaves==1);
+				
+				Assert.assertTrue(d.Heof.enters==1);
+				Assert.assertTrue(d.Heof.leaves==0);
+				
+			d.popStateHandler();
+			
+				Assert.assertTrue(d.H1.enters==2);
+				Assert.assertTrue(d.H1.leaves==1);
+				
+				Assert.assertTrue(d.Heof.enters==1);
+				Assert.assertTrue(d.Heof.leaves==1);
+			
 		leave();
 	};
 	

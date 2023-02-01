@@ -60,6 +60,10 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 				@see ATxtReadFormatStateBase0#setStateHandler
 				*/
 				protected abstract void toNextChar()throws IOException;
+				/** Invoked when state becomes current. Default is empty. */
+				protected void onEnter(){};
+				/** Invoked when is no longer current. Default is empty. */
+				protected void onLeave(){};
 			};
 				/** Lazy initialized handler stack */
 				private CBoundStack<AStateHandler> states;
@@ -135,7 +139,9 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 	protected void setStateHandler(AStateHandler h)
 	{
 		if (TRACE) TOUT.println("setStateHandler("+h+")");
+		if (this.current!=null) this.current.onLeave();
 		this.current = h;
+		if (this.current!=null) this.current.onEnter();
 	};
 	/** Pushes current state handler (if not null) on stack and
 	makes h current
@@ -150,15 +156,19 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 		{
 			if (states==null) states = new CBoundStack<AStateHandler>();
 			states.push(current);
+			if (this.current!=null) this.current.onLeave();
 		};
 		current = h;
+		if (this.current!=null) this.current.onEnter();
 	};
 	/** Pops state handler from a stack and makes it current 
 	@throws NoSuchElementException if stack is empty */
 	protected void popStateHandler()
 	{
 		if (states==null) throw new NoSuchElementException();
+		if (this.current!=null) this.current.onLeave();
 		current = states.pop();
+		if (this.current!=null) this.current.onEnter();
 		if (TRACE) TOUT.println("popStateHandler()->"+current);
 	};
 	/** Changes limit of  stack size used by {@link #pushStateHandler}.

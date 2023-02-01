@@ -15,7 +15,7 @@ public class Test_AUnescapingEngine extends ATest
 					A class which is recognizing a \u0000
 					JAVA style escape sequence. Only upper case HEX is recognized.
 				*/
-				private static class DUT_JVA extends AUnescapingEngine
+				private static class DUT_JVA extends AUnescapingEngine2
 				{
 								private final StringReader in;
 							
@@ -24,13 +24,13 @@ public class Test_AUnescapingEngine extends ATest
 							this.in = new StringReader(in);
 						};
 						
-						@Override protected int readImpl()throws IOException
+						@Override protected int readImpl2()throws IOException
 						{
 							return in.read();
 						};
-						@Override protected TEscapeCharType isEscape(char c, int escape_sequence_length, int sequece_index)throws IOException
+						@Override protected TEscapeCharType isEscape(char c, int escape_sequence_length, int sequence_index)throws IOException
 						{
-							switch(sequece_index)
+							switch(sequence_index)
 							{
 								case 0:
 										return c=='\\' ? TEscapeCharType.ESCAPE_BODY_VOID : TEscapeCharType.REGULAR_CHAR;
@@ -64,7 +64,7 @@ public class Test_AUnescapingEngine extends ATest
 					
 					The & is remembered but ; is NOT.
 				*/
-				private static class DUT_XML extends AUnescapingEngine
+				private static class DUT_XML extends AUnescapingEngine2
 				{
 								private final StringReader in;
 							
@@ -73,13 +73,13 @@ public class Test_AUnescapingEngine extends ATest
 							this.in = new StringReader(in);
 						};
 						
-						@Override protected int readImpl()throws IOException
+						@Override protected int readImpl2()throws IOException
 						{
 							return in.read();
 						};
-						@Override protected TEscapeCharType isEscape(char c, int escape_sequence_length, int sequece_index)throws IOException
+						@Override protected TEscapeCharType isEscape(char c, int escape_sequence_length, int sequence_index)throws IOException
 						{
-							switch(sequece_index)
+							switch(sequence_index)
 							{
 								case 0:
 										return c=='&' ? TEscapeCharType.ESCAPE_BODY : TEscapeCharType.REGULAR_CHAR;
@@ -98,6 +98,66 @@ public class Test_AUnescapingEngine extends ATest
 								return (char)(Integer.parseInt(collection_buffer.toString().substring(1),16));
 							}catch(NumberFormatException ex){ throw new IOException(ex);}
 						};
+				};
+				
+				
+				
+				/*
+					A class which is recognizing a silly
+					escapes:
+						\r
+						\n
+						but \? where ? is neither n nor r 
+						produces just \
+						
+					I call it "silly" because it won't work correctly
+					in case of eof since can't tell apart "missing data"
+					from "stand-alone escape". And obviously can't
+					encode \ followed by letter n.
+				*/
+				private static class DUT_Silly extends AUnescapingEngine2
+				{
+								private final StringReader in;
+							
+						public DUT_Silly(String in)
+						{
+							this.in = new StringReader(in);
+						};
+						
+						@Override protected int readImpl2()throws IOException
+						{
+							return in.read();
+						};
+						@Override protected TEscapeCharType isEscape(char c, int escape_sequence_length, int sequence_index)throws IOException
+						{
+							switch(sequence_index)
+							{
+								case 0:
+										return c=='\\' ? TEscapeCharType.ESCAPE_BODY : TEscapeCharType.REGULAR_CHAR;
+								default:
+										switch(c)
+										{
+											case 'n':
+											case 'r': 
+													return TEscapeCharType.ESCAPE_LAST_BODY;
+											default:
+													return TEscapeCharType.REGULAR_CHAR;
+										}
+							}
+						};
+						@Override protected char unescape(StringBuilder collection_buffer)throws IOException
+						{
+							//In this mode we have either 1 or 2 char buffer so:
+							System.out.println("collection_buffer="+collection_buffer);
+							char c = collection_buffer.charAt(collection_buffer.length()-1);
+							switch(c)
+							{
+								case 'n': return '\n';
+								case 'r': return '\r';
+								case '\\': return '\\';
+								default: throw new AssertionError("found:"+c);
+							}
+						}
 				};
 				
 				
@@ -206,6 +266,26 @@ public class Test_AUnescapingEngine extends ATest
 		leave();
 	};
 	
+	@Test public void test_reports_escaped()throws IOException
+	{
+		enter();
+			DUT_JVA  d = new DUT_JVA("a\\u3344a\\u0456");
+			Assert.assertTrue(d.read()=='a');
+			Assert.assertTrue(!d.isEscaped());
+			
+			Assert.assertTrue(d.read()=='\u3344');
+			Assert.assertTrue(d.isEscaped());
+			
+			Assert.assertTrue(d.read()=='a');
+			Assert.assertTrue(!d.isEscaped());
+			
+			Assert.assertTrue(d.read()=='\u0456');
+			Assert.assertTrue(d.isEscaped());
+			
+			Assert.assertTrue(d.read()==-1);
+			Assert.assertTrue(!d.isEscaped());
+		leave();
+	};
 	
 	/* ********************************************************************
 	
@@ -260,6 +340,68 @@ public class Test_AUnescapingEngine extends ATest
 			collect(new DUT_XML("marryane&888"),1000);
 			Assert.fail();
 		}catch(IOException ex){ System.out.println(ex);};
+		leave();
+	};
+	
+	
+	
+	
+	/* ***************************************************************
+	
+			DUT_Silly
+			
+	
+	*****************************************************************/
+	@Test public void not_escape_silly()throws IOException
+	{
+		enter();
+			Assert.assertTrue(
+					"marryane".equals(collect(new DUT_Silly("marryane"),1000))
+					);
+		leave();
+	};
+	@Test public void at_start_silly()throws IOException
+	{
+		enter();
+			Assert.assertTrue(
+					"\nmarryane".equals(collect(new DUT_Silly("\\nmarryane"),1000))
+					);
+		leave();
+	};
+	@Test public void at_end_silly()throws IOException
+	{
+		enter();
+			Assert.assertTrue(
+					"marryane\r".equals(collect(new DUT_Silly("marryane\\r"),1000))
+					);
+		leave();
+	};
+	@Test public void chained_silly()throws IOException
+	{
+		enter();
+			Assert.assertTrue(
+					"m\n\narryane".equals(collect(new DUT_Silly("m\\n\\narryane"),1000))
+					);
+		leave();
+	};
+	@Test public void silly_with_other_char()throws IOException
+	{
+		enter();
+			Assert.assertTrue(
+					"m\\xarryane".equals(collect(new DUT_Silly("m\\xarryane"),1000))
+					);
+		leave();
+	};
+	@Test public void silly_with_other_char_was_escaped()throws IOException
+	{
+		enter();
+			DUT_Silly d = new DUT_Silly("m\\xarryane");
+			Assert.assertTrue(d.read()=='m');
+			Assert.assertTrue(!d.isEscaped());
+			Assert.assertTrue(d.read()=='\\');
+			Assert.assertTrue(d.isEscaped());
+			Assert.assertTrue(d.read()=='x');
+			Assert.assertTrue(!d.isEscaped());
 		leave();
 	};
 };

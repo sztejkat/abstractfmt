@@ -780,6 +780,23 @@ public class Test_CPlainTxtReadFormat extends ATest
 		leave();
 	};
 	
+	@Test public void testEscaped4digitter()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"* \"\\34af;\" ;"));
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		Assert.assertTrue(d.hasElementaryData());
+		String v = d.readString(100);
+		System.out.println(v);
+		Assert.assertTrue("\u34AF".equals(v));
+		Assert.assertTrue(null==d.next());
+		
+		leave();
+	};
 	
 	
 	@Test public void testEscaped3digitter()throws IOException
@@ -811,7 +828,7 @@ public class Test_CPlainTxtReadFormat extends ATest
 		Assert.assertTrue("".equals(d.next()));
 		Assert.assertTrue(d.hasElementaryData());
 		String v = d.readString(100);
-		System.out.println(v);
+		System.out.println("-"+v+"-");
 		Assert.assertTrue("\u004F".equals(v));
 		Assert.assertTrue(null==d.next());
 		

@@ -75,11 +75,9 @@ public abstract class AUnescapingEngine
 					*/
 					ESCAPE_BODY_VOID,
 				};
-				/** Set if escape was terminated by REGULAR_CHAR and we
-				need to double-buffer a char in {@link #char_pending}*/
-				private boolean is_char_pending;
-				/** See {@link #is_char_pending} */
-				private char char_pending;
+				
+				/** Used to process {@link #isEscaped} */
+				private boolean is_escaped;
 				
 	public AUnescapingEngine()
 	{
@@ -107,7 +105,14 @@ public abstract class AUnescapingEngine
 	@throws IOException if failed.
 	*/
 	protected abstract int readImpl()throws IOException;
-	
+	/** Un-reads character back to {@link #readImpl}
+	Will be used only in case when REGULAR_CHAR is found to be terminating
+	an escape sequence.
+	@param c a regular charater which is to be put back to down-stream
+			and re-interpreted later.
+	@throws IOException if failed
+	*/
+	protected abstract void unread(char c)throws IOException;
 	/*--------------------------------------------------------------------
 				un-escaping
 	--------------------------------------------------------------------*/
@@ -116,18 +121,21 @@ public abstract class AUnescapingEngine
 	@param c char to check, got from {@link #readImpl}
 	@param escape_sequence_length a length of already collected escape sequence. 
 			-1 if no escape collection is in progress.
-	@param sequece_index 0 in a call which is detecting the start of
+	@param sequence_index 0 in a call which is detecting the start of
 			escape sequence, then incremented with each processed escape sequence
 			character regardless if it was added to collection buffer or not.
 			A kind of state-machine index for fixed length escapes.
 	@return meaning of character
 	@throws IOException if found a bad escape. Recommended to use {@link EBrokenFormat}
 	*/
-	protected abstract TEscapeCharType isEscape(char c, int escape_sequence_length, int sequece_index)throws IOException;
+	protected abstract TEscapeCharType isEscape(char c, int escape_sequence_length, int sequence_index)throws IOException;
 	
 	/** Called once {@link #isEscape} is used to detect
-	the end of collected escape sequence.
-	@param collection_buffer buffer with collected escape.
+	the end of collected escape sequence. Can be called only once per each collected
+	escape sequence as the engine is allowed to track some state of collected escapes.
+	
+	@param collection_buffer buffer with collected escape. May be altered by this
+			call, so one must call this method only once per each collected sequence.
 	@return unescaped character
 	@throws IOException if this is a bad escape.
 	*/
@@ -138,6 +146,23 @@ public abstract class AUnescapingEngine
 			public API
 	
 	**********************************************/
+	/** Forgets everything it had in memory, including 
+	pending characters and escape results.
+	<p>
+	Intended to be used in case when some data were read 
+	from downstream behind the back of the un-escaping engine. 
+	*/
+	public void reset()
+	{
+		is_escaped = false;
+		collection_buffer.setLength(0); 
+	};
+	/** Returns if a last character returned by 
+	{@link #read} was produced by un-escaping */
+	public final boolean isEscaped()
+	{
+		return is_escaped;
+	};
 	/** Like {@link java.io.Reader#read}, reads <code>char</code>
 	from downstream, unescapes it if necessary
 	@return -1 if end-of-file or 0...0xFFFF represeting single UTF-16 of Java
@@ -147,12 +172,7 @@ public abstract class AUnescapingEngine
 	*/
 	public int read()throws IOException
 	{
-		//handle pending?
-		if (is_char_pending)
-		{
-			is_char_pending = false;
-			return char_pending;
-		};
+		is_escaped = false;	//always, for pending, regulars and eof
 		//ask downstream.
 		int ci = readImpl();
 		assert((ci>=-1)&&(ci<=0xFFFF));
@@ -162,6 +182,7 @@ public abstract class AUnescapingEngine
 		TEscapeCharType t = isEscape(c, -1, 0 );
 		if (t==TEscapeCharType.REGULAR_CHAR) return ci; //not initiate anything.
 		try{
+				is_escaped = true;
 				//now loop collecting
 				for(int sequence_char=1;;sequence_char++)
 				{
@@ -169,9 +190,8 @@ public abstract class AUnescapingEngine
 					{
 						case REGULAR_CHAR: 
 								//not add, terminate, keep for later return 
-								char_pending = unescape(collection_buffer);
-								is_char_pending = true;
-								return c;
+								unread(c);
+								return unescape(collection_buffer);
 						case ESCAPE_BODY:
 								//collect, continue
 								collection_buffer.append(c);

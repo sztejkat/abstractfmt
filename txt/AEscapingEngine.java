@@ -125,6 +125,14 @@ public abstract class AEscapingEngine implements Appendable,Flushable
 		append(c,0,c.length);
 		return this;
 	};
+	/** As {@link #append(char)}
+	@param c --
+	@throws IOException if failed
+	*/
+	public final void write(char c)throws IOException
+	{
+		appendImpl(c);
+	};
 	/* ******************************************
 	
 			Appendable
