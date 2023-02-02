@@ -95,6 +95,14 @@ public abstract class AEscapingEngine implements Appendable,Flushable
 			Public API
 	
 	********************************************/
+	/** Makes the engine to forget everything.
+	Usefull for state based escapers using for an example
+	different set of escapes for first character  */
+	public void reset()
+	{
+		this.is_upper_surogate_pending = false;
+		this.upper_surogate_pending = 0;
+	};
 	/** An array variant missing in original Appendable
 	@param c what to write, non-null.
 	@param off where to start

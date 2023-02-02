@@ -213,7 +213,7 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat1
 	*/
 	protected void openEscapedStringToken()throws IOException
 	{
-		
+		escaper.reset();
 	};
 	/** Implements all escaping necessary for handling {@link #outStringToken(char)}.
 	Sequence of calls to this method must be terminated by calling 
