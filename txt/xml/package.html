@@ -101,23 +101,35 @@
       The signals are parsed as usual XML elements.
       <p>
       The body of XML element is parsed as a sequence of comma separated "tokens", either enclosed in "" or not.
-      The interpretation of token depends on the method called and details
-      are described in <a href="../ATxtReadFormat0.html">sztejkat.abstractfmt.txt.ATxtReadFormat0</a>.
-      The parser does everything what is possible to turn token into requested data form. If number read is requested,
-      it attempts to do everything standard Java Number types can do. If <code>char</code> is requested it will
-      process tokens char-by-char.
+      <h2>Parsing tokens</h2>
+      <i><small>Note: those are the same rules as for <code>sztejkat.abstractfmt.txt.plain</code> format.</small></i><br>
+      This format do write tokens using <code>sztejkat.abstractfmt.txt.ATxtReadFormat1</code> formating style
+      and parses using <code>sztejkat.abstractfmt.txt.ATxtReadFormat0</code> rules.
       <p>
-      The empty token:
-      <pre>
-      	1,,3
-      </pre>
-      is understood as numeric 0 or <code>(char)0</code> and this sequence may read as: <code>1,0,3</code>
-      or <code>'1',(char)0,'3'</code> depending on what methods are used to process the data.
-      <p>
-      Note: You should <u>not rely</u> on this ability. Always read the data with the apropriate method. 
-      The details of processing may be changed in the future and relying on parsing details will result
-      in Your code to be unusable with an another implementations of signal format.
-      
+      From less formal point of view it means that:
+      <ul>
+      	<li>for formating:
+      		<ul>
+      			<li>all numeric values are encoded as decimals;</li>
+      			<li>booleans are encoded as "t" or "f";</li>
+      			<li>characters or string writes are always written as quoted tokens and are stitched together
+      			into one long token;</li>
+      			<li>comments are never written automatically, but API allows for that;</li>
+      		</ul>
+      	</li>
+      	<li>for parsing:
+		  <ul>
+			<li>it doesn't matter if token is quoted or plain, the inside of it is processed regardless of a form;</li>
+			<li>numeric <code>readXXX</code> always do load the whole token and are trying to parse it into a number
+			of any float or integer form and interprete it, using everything Java can do. 
+			The size of token is limited to a sane value and stream
+			complains if it is too long;</li>
+			<li>boolean reading additionally understands "true","t","false","f" case insensitive tokens;</li>
+			<li>character or string methods always do process tokens character by character and transparently cross
+			the token boundaries;</li>
+		  </ul>
+		 </li>
+	</ul>
       
       
       

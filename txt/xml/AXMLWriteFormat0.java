@@ -3,7 +3,7 @@ import sztejkat.abstractfmt.txt.*;
 import java.io.IOException;
 import java.util.ArrayDeque;
 /**
-	An XML writer.
+	An XML writer, base routines.
 	<p>
 	See package description for format specification.
 */
@@ -21,6 +21,14 @@ public abstract class AXMLWriteFormat0 extends ATxtWriteFormat1
 				/** An escaping engine used to write string token content
 				inside an XML element body */
 				private final AEscapingEngine string_token_escaper = new AStringTokenEscapingEngine()
+				{
+					@Override protected void out(char c)throws IOException
+					{
+						AXMLWriteFormat0.this.outXML(c);
+					};
+				};
+				/** An escaping engine used to write comments */
+				private final AEscapingEngine comment_escaper = new AXMLBodyEscapingEngine()
 				{
 					@Override protected void out(char c)throws IOException
 					{
@@ -102,6 +110,22 @@ public abstract class AXMLWriteFormat0 extends ATxtWriteFormat1
 	{
 		outXML("</xml>");
 	};
+	/** Writes single XML comment.
+	@param comment a comment string. Will be correctly escaped 
+			to avoid all problematic characters so that parser
+			is not fooled by it. 
+			<p>
+			Notice however that escaped comment may be a problematic 
+			for a human	to read, so You should avoid such comments.
+	*/
+	public void writeXMLComment(String comment)throws IOException
+	{
+		openOffBandData();
+		outXML("<!--");
+			comment_escaper.append(comment);
+		outXML(" -->");
+		closeOffBandData();
+	};
 	/* *****************************************************************
 	
 			ATxtWriteFormat0
@@ -117,7 +141,14 @@ public abstract class AXMLWriteFormat0 extends ATxtWriteFormat1
 	{
 		string_token_escaper.write(c);
 	};
-	
+	/* ----------------------------------------------------------------
+				tuning
+	 ----------------------------------------------------------------*/
+	/** Formats to "t" and "f" to get denser boolean blocks*/
+	@Override protected String formatBooleanBlock(boolean v)
+	{
+		return v ? "t" : "f";
+	};
 	/* *****************************************************************
 	
 			ATxtWriteFormat1

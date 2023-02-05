@@ -146,6 +146,15 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat1
 	{
 		outEscapedStringToken(c);
 	};
+	
+	/* ----------------------------------------------------------------
+				tuning
+	 ----------------------------------------------------------------*/
+	/** Formats to "t" and "f" to get denser boolean blocks*/
+	@Override protected String formatBooleanBlock(boolean v)
+	{
+		return v ? "t" : "f";
+	};
 	/* ***************************************************************
 	
 				state-less support for escaped string tokens
@@ -232,13 +241,6 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat1
 		return true;
 	};
 	
-	
-	
-	/* *****************************************************************
-	
-			ARegisteringStructWriteFormat
-	
-	******************************************************************/
 	/** Always throws, should not be ever called */
 	@Override protected void beginAndRegisterImpl(String name, int index, int order)throws IOException
 	{
@@ -310,14 +312,6 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat1
 		out.flush();
 	};
 	
-	/* ----------------------------------------------------------------
-				tuning
-	 ----------------------------------------------------------------*/
-	/** Formats to "t" and "f" to get denser boolean blocks*/
-	@Override protected String formatBooleanBlock(boolean v)
-	{
-		return v ? "t" : "f";
-	};
 	/* *****************************************************************
 	
 			IFormatLimits

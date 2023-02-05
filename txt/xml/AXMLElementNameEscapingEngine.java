@@ -20,7 +20,9 @@ abstract class AXMLElementNameEscapingEngine extends AXMLEscapingEngineBase
 	* *************************************************************************/
 	@Override protected boolean mustEscapeCodepoint(int code_point)
 	{
-		return !(is_first_char  ?
+		boolean f = is_first_char;
+		is_first_char = false;
+		return !(f  ?
 				SXMLChar_classifier.isNameStartChar(code_point)
 				:
 				SXMLChar_classifier.isNameChar(code_point));
@@ -29,15 +31,7 @@ abstract class AXMLElementNameEscapingEngine extends AXMLEscapingEngineBase
 	{
 		escapeAsCustomEscape(c);
 	};
-	/** Overriden to handle {@link #is_first_char} */
-	@Override protected void appendImpl(char c)throws IOException
-	{
-		super.appendImpl(c);
-		//Now clear that decission only if we processed at least one char. 
-		if (!isCodepointPending())
-				is_first_char = false;
-			
-	};
+	
 	/** Overriden to handle {@link #is_first_char} */
 	@Override public void reset()
 	{

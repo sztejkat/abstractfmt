@@ -86,6 +86,10 @@ public abstract class AEscapingEngine implements Appendable,Flushable
 	<p>
 	This method is used <u>after</u> {@link #mustEscape} and 
 	for both chars and unicode code-points produced by "upper surogate"+"lower surogate" pair.
+	<p>
+	This method will be invoked for each and every code point, in order of appearance
+	and once and only once for each code point.
+	
 	@param code_point code-point to test, full range.
 	@return true if it must be escaped.
 	*/
