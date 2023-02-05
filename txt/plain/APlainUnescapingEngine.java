@@ -6,7 +6,7 @@ import java.io.IOException;
 /**
 	A reverse engine for {@link APlainEscapingEngine}
 */
-public abstract class APlainUnescapingEngine extends AUnescapingEngine
+abstract class APlainUnescapingEngine extends AUnescapingEngine
 {
 			/** A mode handler, used to handle all characters
 			after reconing what type of escape we have at hand.

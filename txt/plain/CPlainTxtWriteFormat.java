@@ -36,8 +36,16 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat1
 				/** Used to track if inject signal separator or not.
 				In generic end signals do not need signal separators. */
 				private boolean last_signal_was_begin;
-				/** An escaping engine */
+				/** An escaping engine for names and string tokens */
 				private final APlainEscapingEngine escaper = new APlainEscapingEngine()
+				{
+					@Override protected void out(char c)throws IOException
+					{
+						CPlainTxtWriteFormat.this.out.write(c);
+					};
+				};
+				/** An escaping engine for comments*/
+				private final ACommentEscapingEngine comment_escaper = new ACommentEscapingEngine()
 				{
 					@Override protected void out(char c)throws IOException
 					{
@@ -79,67 +87,10 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat1
 	public void writeComment(String s)throws IOException
 	{
 		openOffBandData();
-		out.write(COMMENT_CHAR);
-		//and now write body, detecting eols.
-		//We need to prevent system from seeing any character AFTER
-		//the EOL. We do not need to change all eols into comments
-		//tough, because they are ignorable. It would be nice however
-		//if we could do it. We have to however add eol after a comment
-		//if it is not there.
-		//So what patterns do we have?
-		//			a\nb	->a\n#b
-		//			a\n\nb	->a\n#\n#b
-		//			a\n\rb	->a\n\r#b
-		//			a\rb	->a\r#b
-		//			a\r\rb	->a\r#\r#b
-		//			a\r\nb	->a\r\n#b
-		char c = 0;
-		char found_eol = '\n';
-		for(int i = 0, lim = s.length(); i<lim; i++)
-		{
-			char n= s.charAt(i);
-			//First pattern
-			if (
-					(i!=lim-1)
-					&&
-					(
-					((c=='\n')&&(n!='\r'))
-						||
-					((c=='\r')&&(n!='\n'))
-					)
-				)
-				{
-						//System.out.print("#<"+n+"("+Integer.toHexString(n)+")");
-						out.write(COMMENT_CHAR);
-						out.write(n);
-						found_eol=c;
-						c = n;
-				}else
-			if (	(i!=lim-1)
-					&&
-					(
-						((c=='\n')&&(n=='\r'))
-							||
-						((c=='\r')&&(n=='\n')))
-					)
-				{
-					found_eol=n;
-					out.write(n);						
-					out.write(COMMENT_CHAR);
-					c = 0;
-					//System.out.print(n+"("+Integer.toHexString(n)+")->#");
-				}else
-				{
-					//System.out.print(n+"("+Integer.toHexString(n)+")");
-					out.write(n);
-					c = n;
-				};
-			
-		};
-		if ((c!='\n')&&(c!='\r')) 
-		{
-			out.write(found_eol);
-		}
+			out.write(COMMENT_CHAR);
+			comment_escaper.reset();
+			comment_escaper.append(s);
+			comment_escaper.flush();
 		closeOffBandData();
 	};
 	/* *****************************************************************

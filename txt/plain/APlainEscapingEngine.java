@@ -18,7 +18,7 @@ import java.io.IOException;
 		<li>bad surogates are hex escaped.</li>
 	</ul>
 */
-public abstract class APlainEscapingEngine extends AEscapingEngine
+abstract class APlainEscapingEngine extends AEscapingEngine
 {
 				/** Hex conversion table for escaping */
 				private static final char [] HEX = new char[]

@@ -657,8 +657,10 @@ public class Test_CPlainTxtWriteFormat extends ATest
 			
 			String o = ow.toString();
 			
-			System.out.println("\""+o+"\"");
+			System.out.println("written: \""+o+"\"");
+			System.out.println("detailed written:");
 			printlnDetailed(o);
+			System.out.println("detailed expected:");
 			printlnDetailed(expected);
 			Assert.assertTrue(expected.equals(o));
 		leave();
@@ -725,7 +727,7 @@ public class Test_CPlainTxtWriteFormat extends ATest
 		enter();
 			testComment_StandAlone(
 				"This is\r\nSecond line",
-				"#This is\r\n#Second line\n"
+				"#This is\r\n#Second line\r\n"
 				);
 		leave();
 	};
@@ -734,7 +736,7 @@ public class Test_CPlainTxtWriteFormat extends ATest
 		enter();
 			testComment_StandAlone(
 				"This is\n\rSecond line",
-				"#This is\n\r#Second line\r"
+				"#This is\n\r#Second line\n\r"
 				);
 		leave();
 	};
@@ -743,7 +745,7 @@ public class Test_CPlainTxtWriteFormat extends ATest
 		enter();
 			testComment_StandAlone(
 				"This is\n\n\nSecond line",
-				"#This is\n#\n#\n#Second line\n"
+				"#This is\n\n\n#Second line\n"
 				);
 		leave();
 	};
@@ -752,7 +754,7 @@ public class Test_CPlainTxtWriteFormat extends ATest
 		enter();
 			testComment_StandAlone(
 				"This is\r\n\r\n\r\nSecond line",
-				"#This is\r\n#\r\n#\r\n#Second line\n"
+				"#This is\r\n\r\n\r\n#Second line\r\n"
 				);
 		leave();
 	};
@@ -761,7 +763,7 @@ public class Test_CPlainTxtWriteFormat extends ATest
 		enter();
 			testComment_StandAlone(
 				"This is\n\r\n\r\n\rSecond line",
-				"#This is\n\r#\n\r#\n\r#Second line\r"
+				"#This is\n\r\n\r\n\r#Second line\n\r"
 				);
 		leave();
 	};
