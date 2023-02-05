@@ -63,16 +63,24 @@ public abstract class AEscapingEngine implements Appendable,Flushable
 	/*--------------------------------------------------------------------
 				escaping
 	--------------------------------------------------------------------*/	
-	/** Tests if specified JAVA character must be escaped.
+	/** Tests if specified Java character must be escaped.
+	This test happens prior to solving UTF-16 encoding on every incomming
+	character.
+	<p>
+	If the UTF-16 encoding is fine for You and You don't need to 
+	handle differently Java character and Unicode code-point
+	the default implementation may be left as it is since
+	it calls {@link #mustEscapeCodepoint}.
 	<p>
 	This method is used <u>prior</u> to {@link #mustEscapeCodepoint}
 	on any incomming character.
+	
 	@param c char to test. The surogates range 0xD800...0xDFFF is 
 			excluded from here, decoded and passed to {@link #mustEscapeCodepoint}.
 			The invalid surogates are uncodintionally escaped.
 	@return true if it must be escaped.
 	*/
-	protected abstract boolean mustEscape(char c);
+	protected boolean mustEscape(char c){ return mustEscapeCodepoint(c); };
 	
 	/** Tests if specified Unicode code-point must be escaped.
 	<p>
@@ -88,8 +96,20 @@ public abstract class AEscapingEngine implements Appendable,Flushable
 	@param c a char to escape, may be a surogate.
 	@throws IOException if failed */
 	protected abstract void escape(char c)throws IOException;
-	
-	
+	/** Escapes code-point 
+	By default splits it into upper/lower surogate and
+	passes down to {@link #escape} 
+	@param c a code-point, above 0xFFFF range.
+	@param upper_surogate upper surogate of <code>c</code>, as it was stored in UTF-16 stream
+	@param lower_surogate lowe surogate of <code>c</code>
+	@throws IOException if failed.
+	*/
+	protected void escapeCodepoint(int c, char upper_surogate, char lower_surogate)throws IOException
+	{
+		assert(c>0xFFFF);
+		escape(upper_surogate);
+		escape(lower_surogate);
+	};
 	/* ******************************************
 	
 			Public API
@@ -111,7 +131,7 @@ public abstract class AEscapingEngine implements Appendable,Flushable
 	@throws IOException if failed.
 	@see #flush
 	*/	
-	public Appendable append(char c[], int off, int length)throws IOException
+	public final Appendable append(char c[], int off, int length)throws IOException
 	{
 		assert(c!=null);
 		assert(off>=0);
@@ -127,7 +147,7 @@ public abstract class AEscapingEngine implements Appendable,Flushable
 	@throws IOException if failed.
 	@see #flush
 	*/
-	public Appendable append(char c[])throws IOException
+	public final Appendable append(char c[])throws IOException
 	{
 		assert(c!=null);
 		append(c,0,c.length);
@@ -161,12 +181,25 @@ public abstract class AEscapingEngine implements Appendable,Flushable
 		appendImpl(c);
 		return this;
 	};
+	/* ----------------------------------------------
+	
+			Core service for Appendable
+	
+	---------------------------------------------- */
+	/** Returns true if most recent call to {@link #appendImpl}
+	resulted in character NOT being fully processeed because
+	it was a start of UTF-16 surogate pair and next character
+	is required to make a decission
+	@return false if nothing is pending.
+	*/
+	protected final boolean isCodepointPending(){ return is_upper_surogate_pending; };
 	/** Writes a single character, escaping it if necessary.
 	If character represents an "upper surogate" the operation
 	is delayed till next call or {@link #flush}.
 	@param c char to write
 	@throws IOException if failed.
 	@see #flush
+	@see #isCharacterPending
 	*/
 	protected void appendImpl(char c)throws IOException
 	{
@@ -186,8 +219,9 @@ public abstract class AEscapingEngine implements Appendable,Flushable
 				{
 					//This is a code point which may not be passed in direct,
 					//un-escaped form. We do escape both surogates.
-					escape(upper_surogate_pending);
-					escape(c);
+					escapeCodepoint(code_point,
+									upper_surogate_pending,
+									c);
 				}else
 				{
 					//we can pass it as it is.
@@ -217,7 +251,7 @@ public abstract class AEscapingEngine implements Appendable,Flushable
 				|| 
 				mustEscape(c)				//cause by char
 				|| 
-				(mustEscapeCodepoint(c))	//cause by code point which is char in this case.
+				mustEscapeCodepoint(c)	//cause by code point which is char in this case.
 				)
 			escape(c);
 		else
@@ -229,7 +263,7 @@ public abstract class AEscapingEngine implements Appendable,Flushable
 			this specific case it is important.
 	@see #flush
 	*/
-	public Appendable append(CharSequence csq)throws IOException
+	public final Appendable append(CharSequence csq)throws IOException
 	{
 		assert(csq!=null);
 		return append(csq,0,csq.length());
@@ -239,7 +273,7 @@ public abstract class AEscapingEngine implements Appendable,Flushable
 			this specific case it is important.
 	@see #flush
 	*/
-	public Appendable append(CharSequence csq,int start,int end)throws IOException
+	public final Appendable append(CharSequence csq,int start,int end)throws IOException
 	{
 		assert(csq!=null);
 		for(int i=start; i<end; i++)
@@ -255,7 +289,25 @@ public abstract class AEscapingEngine implements Appendable,Flushable
 	
 	********************************************/
 	/** Tests if there is an unprocessed "upper surogate" pending and if it
-	is passes it to {@link #escape}. */
+	is passes it to {@link #escape}. 
+	<p>
+	Notice that if there are surogates the effect of:
+	<pre>
+		append("some text with surogates"); flush();
+	</pre>
+	will be <u>different</u> from the effect of:
+	<pre>
+	for(char C: "some text with surogates")
+	{
+		append(C); flush();
+	}
+	</pre>
+	as all surogates will be treated as "dangling" and require escaping.
+	<p>
+	This is the price we also pay with <code>java.io.Writer</code>, altough in
+	the last case in a different way: the dangling surogate is not flushed down
+	the stream.
+	*/
 	public void flush()throws IOException
 	{
 		//Handle eventual pending upper surogate

@@ -47,7 +47,7 @@ public class Test_AEscapingEngine extends ATest
 					/** A collected stream of {@link Character}
 					for {@link #out} or {@link Escape} for {@link #escape} */
 					public final LinkedList<Object> stream;
-					
+				
 				DUT(){ this.stream = new LinkedList<Object>(); };
 				
 				@Override protected boolean mustEscape(char c)
@@ -75,6 +75,7 @@ public class Test_AEscapingEngine extends ATest
 				{
 					stream.add(Character.valueOf(c));
 				};
+				
 			}
 	
 	private static void compare(DUT d,Object [] expected)
@@ -316,4 +317,5 @@ public class Test_AEscapingEngine extends ATest
 				testString_byArray(s,exp);
 		leave();
 	};
+	
 };

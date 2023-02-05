@@ -3,7 +3,7 @@ import sztejkat.abstractfmt.txt.*;
 import java.io.IOException;
 import java.util.ArrayDeque;
 /**
-	An XML writer.
+	An XML writer, base routines.
 	<p>
 	See package description for format specification.
 */

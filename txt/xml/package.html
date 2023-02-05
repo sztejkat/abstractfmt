@@ -50,67 +50,17 @@
       un-closed signals will produce a faulty XML I find it still better
       than faking the correctness by forcibly closing the dangling tags.
 
-      <h1 id="INVALID_CHARACTER">Invalid characters</h1>
-      XML defines following classes off "cannot encode" characters:
-      <ul>
-          <li>characters which are proper XML characters, but cannot be
-          encoded using current low level character encoding;</li>
-          <li>characters which cannot be used in XML regardless of how they are
-          presented. These are mostly "invalid" unicode code-point, but not always;</li>
-          <li>characters which are valid but cannot be used for tag names, attribute names and etc;</li>
-      </ul>
-      First type of characters can be encoded using known set of entities in style
-      <pre>
-            &amp;<i>entity mnemonic</i>;
-            &amp;#<i>unicode</i>;
-      </pre>
-      <p>
-      Second type of characters cannot be present in XML file at all. Our abstract
-      format do require however, that the entire 0...0xFFFF space of JAVA
-      characters can be used for names, elementary characters and strings.
-      No XML escape or any other defined method allows to embedd them in XML file.
-      <p>
-      The set of characters which can begin a tag name is even more restrictive.
-      We however have to be able to use the whole set of JAVA characters
-      in tag names, so we have to somehow <i>escape</i> them. The escape convention
-      should be able to escape everything and be used in any XML context.
-      <p>      
-      The first character of XML element must be the "base char" what excludes
-      any reasonable escape selection past true letters or _ or :.
-      <p>
-      Where in fact : is also excluded due to later use for "namespace" handling 
-      (not XML base standard scope, but 99% of parsers do reserve : for namespace separator).
-      <p>
-      This means, that _ (U+005F, 95 decimal) is the only reasonable escape character we can actually use
-      for an escape.
-      <p>
-      <h2 id="ESCAPE">Escaping invalid character</h2>
-      So this format is using following escaping model:
-      <pre>
-           _                             &rarr; __
-           <i>not allowed character U+xxxx</i>  &rarr; _xxxx;
-      </pre>
-      that is the '_' is encoded as either <code>_005F</code>
-      or <code>__</code> (double _). Any not allowed character is encoded
-      using <code>_xxxx;</code> syntax, where x up to four hexadecimal
-      digits, case insensitve representing the JAVA char which is to be escaped.
-      <p>
-      Notice: the JAVA char, not UNICODE code-point, what means that we escape the UTF-16
-      encoded stream without first transforming it to valid unicode code-points.
-      This convention is necessary since our strings may carry <u>invalid</u> UTF-16 surogates.
-      <p>
-      The valid UTF-16 surogate pairs are <u>not</u> escaped if they are allowed in the used XML context.
-      <p>
-      The exact set of characters which are escaped vary depending on where they
-      are used in XML. The smallest allowed set is used to start tag name, slightly
-      larger in the remaning part of the name and largerst inside XML element body.
+    
+      
 
       <h1>XML comments</h1>
       Supported everywhere where XML allows them. The XML comment, alike in XML,
       do affect the parser and is seen as a <a href="#TOKENS">"token" terminator</a>. 
       
 
+      
       <h1>Adaptation of XML to signal format</h1>
+      
       <h2>Begin signal</h2>
       Begin signal is always encoded directly, without any names registry nor optimization
       and is represented as an opening XML tag:
@@ -119,6 +69,8 @@
       </pre>
       where <code>nnnn</code> is a signal name, with not allowed characters <a href="#ESCAPE">escaped</a>.
 
+      
+      
       <h2>End signal</h2>
       End signal in XML cannot be anonymous and must be encoded alike <code>begin</code> signal:
       <pre>
@@ -130,14 +82,21 @@
       cause excesive memory consumption. Thous XML format do have some natural limit
       for recursion depth.</i>
 
+      
+      
       <h2 id="TOKENS">XML element body</h2>
-      Inside a tag body elementary primitives are stored one by one, using "tokens" separated by <code>,</code> and optional
-      ignorable white spaces.
-      <p>
+      Inside an XML element body elementary primitives are stored one by one, using "tokens" separated by <code>,</code> and optional
+      ignorable white spaces. There are two kinds of tokens:
+      <ul>
+      	<li>"plain tokens", which can't contain the <code>,"</code> or white-space character;</li>
+      	<li id="STRTOKEN">"string tokens", which are enclosed in " and can contain any text;</li>
+      </ul>
       The syntax which tells how primitive elements are turned into "tokens"
       is described in <a href="../ATxtWriteFormat0.html">sztejkat.abstractfmt.txt.ATxtWriteFormat0</a>
-      class.
+      class. 
 
+      
+      
       <h2>Parsing</h2>
       The signals are parsed as usual XML elements.
       <p>
@@ -159,7 +118,87 @@
       The details of processing may be changed in the future and relying on parsing details will result
       in Your code to be unusable with an another implementations of signal format.
       
+      
+      
+      
+      
 
+      <h1 id="INVALID_CHARACTER">Invalid characters</h1>
+      XML defines following classes off "cannot encode" characters:
+      <ul>
+          <li>characters which are proper XML characters, but cannot be
+          encoded using current low level character encoding;</li>
+          <li>characters which cannot be used in XML regardless of how they are
+          presented. These are mostly "invalid" unicode code-point, but not always;</li>
+          <li>characters which are valid but cannot be used for tag names, attribute names and etc;</li>
+      </ul>
+      First type of characters can be encoded using known set of entities in style
+      <pre>
+            &amp;<i>entity mnemonic</i>;
+            &amp;#<i>unicode</i>;
+      </pre>
+      Second type of characters cannot be present in XML file at all. Our abstract
+      format do require however, that the entire 0...0xFFFF space of JAVA
+      characters can be used for names, elementary characters and strings.
+      No XML escape or any other defined method allows to embedd them in XML file.
+      <p>
+      The set of characters which can begin an XML element name is even more restrictive.
+      We however have to be able to use the whole set of JAVA characters
+      in XML elements name, so we have to somehow <i>escape</i> them. The escape convention
+      should be able to escape everything and be used in <u>any XML context</u>.
+      <p>      
+      The first character of XML element must be the "base char" what excludes
+      any reasonable escape selection past true letters or _ or :.
+      <p>
+      Where in fact : is also excluded due to later use for "namespace" handling 
+      (not XML base standard scope, but 99% of parsers do reserve : for namespace separator).
+      <p>
+      This means, that _ (U+005F, 95 decimal) is the only reasonable escape character we can actually use
+      for an escape.
+      
+      
+      
+      
+      <h2 id="ESCAPE">Escaping invalid character</h2>
+      The Java character (not code-point) which can't be, for any reason, passed directly to
+      an XML file is encoded as:
+      <pre>
+      	_HHHH
+      </pre>
+      where H are <u>exactly</u> four hexadecimal digits representing
+      the Java <code>char</code> in question. Upper case is used during generation, but
+      both upper and lower case is accepted during parsing.
+      <p>
+      The '_' can be encoded in two forms:
+      <ul>
+      	<li>'__' or;</li>
+      	<li>'_005F' ;</li>
+      </ul>
+      This form of an escape can appear in XML elements names while <code>&amp;#xHHH;</code>
+      form can't. 
+      
+      
+      
+      <h2>Parsing escapes</h2>
+      All escapes are parsed <u>after</u> XML syntax is processed and <u>after</u> XML element
+      body is split into <a href="#TOKENS">tokens</a>.
+      
+      
+      <h2>What is escaped?</h2>
+      <ol>
+      	<li>the XML element names are escaped using <code>_HHHH</code> syntax;</li>
+      	<li>the <a href="#STRTOKEN">"string token"</a> body is escaped using
+      	primary the <code>&amp;#xXXX;</a> XML syntax and only characters which 
+      	can't be present in XML are escaped using <code>_HHHH</code> syntax.
+      	This means that _ can be either __ or _005F or &amp;#95; or &amp;#x5F;.
+      	<p>
+      	Notice that "plain tokens" are not escaped as by definition they
+      	can't contain unprocessable characters;</li>
+      	<li>comments, generated by API, are escaped using only <code>&amp;#xXXX;</a>
+      	XML syntax and do not allow characters which can't be contained inside an
+      	XML;</li>
+      </ol>
+      
 
 </body>
 </html>

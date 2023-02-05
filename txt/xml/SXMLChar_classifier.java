@@ -18,7 +18,7 @@ import sztejkat.abstractfmt.txt.*;
 	<a href="doc-files/XML_specification.htm">
 	Extensible Markup Language (XML) 1.0 (Fifth Edition) W3C Recommendation 26 November 2008</a>
 */
-static class SXMLChar_classifier
+class SXMLChar_classifier
 {
 	/** Tests against 2.2 of XML specs
 	@param c unicode code-point.
@@ -38,7 +38,7 @@ static class SXMLChar_classifier
 	*/
 	static boolean isXMLRecommendedChar(int c)
 	{
-		return isXML(c) && (!
+		return isXMLChar(c) && (!
 				(
 					((c>=0x7F)&&(c<=0x84))|| ((c>=0x86)&&(c<=0x9F))|| ((c>=0xFDD0)&&(c<=0xFDEF))||
 					((c>=0x1FFFE)&&(c<=0x1FFFF))|| ((c>=0x2FFFE)&&(c<=0x2FFFF))|| ((c>=0x3FFFE)&&(c<=0x3FFFF))||
@@ -47,7 +47,7 @@ static class SXMLChar_classifier
 					((c>=0xAFFFE)&&(c<=0xAFFFF))|| ((c>=0xBFFFE)&&(c<=0xBFFFF))|| ((c>=0xCFFFE)&&(c<=0xCFFFF))||
 					((c>=0xDFFFE)&&(c<=0xDFFFF))|| ((c>=0xEFFFE)&&(c<=0xEFFFF))|| ((c>=0xFFFFE)&&(c<=0xFFFFF))||
 					((c>=0x10FFFE)&&(c<=0x10FFFF))
-				);
+				));
 	};
 	/** Tests against 2.3 of XML specs
 	@param c unicode code-point.
@@ -67,7 +67,7 @@ static class SXMLChar_classifier
 	{
 			return /*(c==':') || */
 					(c=='_') ||
-					((c>='A')&&(c<='Z')) || ((c>='a')&&(c<='z')) || ((c>=0xC0&&(c<=0xD6)) || ((c>=0xD8&&(c<=0xF6)) ||
+					((c>='A')&&(c<='Z')) || ((c>='a')&&(c<='z')) || ((c>=0xC0)&&(c<=0xD6)) || ((c>=0xD8)&&(c<=0xF6)) ||
 					((c>=0xF8)&&(c<=0x2FF)) || ((c>=0x370)&&(c<=0x37D)) || ((c>=0x37F)&&(c<=0x1FFF)) ||
 					((c>=0x200C)&&(c<=0x200D)) || ((c>=0x2070)&&(c<=0x218F)) || ((c>=0x2C00)&&(c<=0x2FEF)) ||
 					((c>=0x3001)&&(c<=0xD7FF)) || ((c>=0xF900)&&(c<=0xFDCF)) || ((c>=0xFDF0)&&(c<=0xFFFD)) ||
@@ -93,11 +93,14 @@ static class SXMLChar_classifier
 			situation since we won't be using any possibly conflicting
 			sets in here.
 			*/
+			/** See {@link #isDataChar}. A valid body character. */
 			static final int XML_DATA_CHAR = 0;
+			/** See {@link #isDataChar}. Not a body character, but allowed in XML */
 			static final int XML_ENTITY = 1;
+			/** See {@link #isDataChar}. Not a body character, and NOT allowed in XML */
 			static final int NON_XML_COMPATIBLE = 2;
 			
-	/** Tests against 2.4 of XML specs.
+	/** Tests against 2.4 of XML specs, if character is a valid element body character.
 	@param c unicode code-point.
 	@return
 			<ul>
