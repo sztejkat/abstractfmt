@@ -12,7 +12,7 @@ import java.io.IOException;
 */
 abstract class AXMLElementNameEscapingEngine extends AXMLEscapingEngineBase
 {
-				private boolean is_first_char;
+				private boolean is_first_char = true;
 	/* *************************************************************************
 	
 				AEscapingEngine
@@ -36,6 +36,13 @@ abstract class AXMLElementNameEscapingEngine extends AXMLEscapingEngineBase
 	@Override public void reset()
 	{
 		super.reset();
-		is_first_char = false;
+		is_first_char = true;
+	};
+	@Override public void flush()throws IOException
+	{
+		//Now handle the special case: if nothing is written write _
+		boolean f = is_first_char && !isCodepointPending();
+		super.flush();
+		if (f) out('_');
 	};
 };

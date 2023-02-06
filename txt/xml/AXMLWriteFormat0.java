@@ -238,4 +238,32 @@ public abstract class AXMLWriteFormat0 extends ATxtWriteFormat1
 			xml_element_escaper.flush();
 		outXML('>');
 	};
+	
+	/* *******************************************************************************
+	
+		Design notes.
+		
+			A reader may start pondering why I did not use the javax.xml.stream.XMLEventWriter
+			
+			Well... 
+			
+			There are following reasons:
+			
+			1. The XMLEventWriter is not specified well enough for me. Especially it does not
+				say how it will handle characters which are prohibited in XML body, 
+				bad surogate pairs and Unicode code points which are not valid XML characters.
+				
+				From what I can suspect, it won't do it as I need it so I would have to
+				provide a heavy escaping by myself anyway.
+				
+			2. It is based around String as an elementary entity, while I did specify my
+				own generic text API at char level. It should not be a problem tough, if not the fact
+				that the javax.xml.stream.XMLEventReader is also String based. What is worse
+				the XMLEventReader.nextEvent() is an un-bound read which will try to load
+				the whole XML element body. This is out-of-memory attack prone and unacceptable
+				in this format API.
+				
+			3. Writing XML is trivial. No need to overcomplicate it unless using DOM model.
+				
+	* ***************************************************************************************/
 }

@@ -68,6 +68,9 @@
             &lt;<i>nnnn</i>&gt;
       </pre>
       where <code>nnnn</code> is a signal name, with not allowed characters <a href="#ESCAPE">escaped</a>.
+      <p>
+      Since XML element name cannot be empty for some unknown reason the
+      empty name is encoded as a single '_'. 
 
       
       
@@ -194,11 +197,17 @@
       <h2>Parsing escapes</h2>
       All escapes are parsed <u>after</u> XML syntax is processed and <u>after</u> XML element
       body is split into <a href="#TOKENS">tokens</a>.
+      <p>
+      If '_' starting an escape sequence is a last character in a sequence which is to
+      be un-escaped it is skipped and results in no character production.
+      <p>
+      Otherwise it must be followed either by four hex digits, upper or lower case or '_'.
+      It is an error if it is followed by anything else.
       
       
       <h2>What is escaped?</h2>
       <ol>
-      	<li>the XML element names are escaped using <code>_HHHH</code> syntax;</li>
+      	<li>the XML element names (thous begin signal names) are escaped using <code>_HHHH</code> syntax;</li>
       	<li>the <a href="#STRTOKEN">"string token"</a> body is escaped using
       	primary the <code>&amp;#xXXX;</a> XML syntax and only characters which 
       	can't be present in XML are escaped using <code>_HHHH</code> syntax.
