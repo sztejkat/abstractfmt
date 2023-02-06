@@ -126,5 +126,36 @@ public class Test_AXMLElementNameEscapingEngine extends sztejkat.abstractfmt.tes
 			Assert.assertTrue("_002Ema.2_002Dma-2".equals(y));
 		leave();
 	};
+	
+	
+	@Test public void test_surogateAtStart()throws IOException
+	{
+		enter();
+			DUT d = new DUT();
+			
+			d.append("\uD830\uDC30<>");
+			d.flush();
+			
+			final String y = d.o.toString();
+			System.out.println("\""+y+"\"");
+			
+			Assert.assertTrue("\uD830\uDC30_003C_003E".equals(y));
+		leave();
+	};
+	
+	@Test public void test_name_with_underscores()throws IOException
+	{
+		enter();
+			DUT d = new DUT();
+			
+			d.append("_int_32");
+			d.flush();
+			
+			final String y = d.o.toString();
+			System.out.println("\""+y+"\"");
+			
+			Assert.assertTrue("__int__32".equals(y));
+		leave();
+	};
 };
 	

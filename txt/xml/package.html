@@ -10,12 +10,26 @@
       This package defines how signal format is projected on XML file.
 
       <h1>Use of XML standard</h1>
-      This format do produce "well formed XML", but cannot parse all
+      This format do produce "well formed XML 1.1", but cannot parse all
       "well formed" XMLs.
       <p>
       Note: Refer to XML specification <a href="https://www.w3.org/TR/xml/">there</a>
-      or a <a href="doc-files/XML_specification.html">copy</a> provided with this package
+      or a <a href="doc-files/xml1.1/XML_specification.html">copy</a> provided with this package
       for Your convinience.
+      
+      <h3>Breaking change</h3>
+      The XML 1.0 Ed 5 introduced a "breaking change" by allowing characters which were not
+      allwed in XML 1.0 Ed 4 and below <u>without</u> bumping up version in XML prolog.
+      This results in incompatibility and files produced with Ed 5 are not well formed when
+      processed by parsers of Ed 4 and below. Which, by the way, are default for JDK8...11 and 
+      Firefox. 
+      <p>
+      The correct edition was introduced <u>earlier</u> in 2006 in a form of XML 1.1. The XML 1.0
+      was bumped up to same character set in 2008 what created a "breaking change". How they could
+      miss that? I can't imagine. 
+      <p>
+      Thous I actually had a choice: to stay at 1.0 Ed4 or to select 1.1. The last choice seems
+      to be more logic and coherent as up to now (2023) it does not generated any "breaking changes". 
       
       <h1>Restrictions on parsing</h1>
       During parsing the classes implementing signal format over the XML
@@ -184,12 +198,13 @@
       the Java <code>char</code> in question. Upper case is used during generation, but
       both upper and lower case is accepted during parsing.
       <p>
-      The '_' can be encoded in two forms:
+      The '_' can be encoded in three forms:
       <ul>
       	<li>'__' or;</li>
       	<li>'_005F' ;</li>
+      	<li>'&amp;#x5F;' ;</li>
       </ul>
-      This form of an escape can appear in XML elements names while <code>&amp;#xHHH;</code>
+      Two first forms of an escape can appear in XML elements names while <code>&amp;#xHHH;</code>
       form can't. 
       
       

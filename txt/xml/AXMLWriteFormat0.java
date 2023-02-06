@@ -90,14 +90,14 @@ public abstract class AXMLWriteFormat0 extends ATxtWriteFormat1
 	<p>
 	Standard implementation writes a single XML token:
 	<pre>
-	&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+	&lt;?xml version="1.1" encoding="UTF-8"?&gt;
 	&lt;xml&gt;
 	</pre>
 	@see #outXML(String)	
 	*/
 	protected void writeXMLProlog()throws IOException
 	{
-		outXML("<?xml version=\"1.0\" encoding=\"UTF-8\" ?><xml>");
+		outXML("<?xml version=\"1.1\" encoding=\"UTF-8\" ?><xml>");
 	};
 	/** A method which will be called by {@link #closeImpl} to
 	terminate the element started by {@link #writeXMLProlog}.

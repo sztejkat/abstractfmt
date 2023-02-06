@@ -102,7 +102,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 		/*
 				Test if missing xml prolog
 				
-				<?xml version=\"1.0\" encoding=\"UTF-8\" ?>
+				<?xml version=\"1.1\" encoding=\"UTF-8\" ?>
 				
 				is detected.
 		*/
@@ -126,7 +126,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 		/*
 				Test if bad xml prolog
 				
-				<?xml version=\"1.0\" encoding=\"UTF-8\" ?>
+				<?xml version=\"1.1\" encoding=\"UTF-8\" ?>
 				
 				is detected.
 		*/
@@ -136,7 +136,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			OutputStreamWriter o = new OutputStreamWriter(
 											new FileOutputStream(temp),
 											"UTF-8");
-			o.write("<?xml version=\"1.0\" encoding=\"UTF-8\" >");
+			o.write("<?xml version=\"1.1\" encoding=\"UTF-8\" >");
 			o.write("<body></body>");
 			o.close();
 			assertXMLFileIsBad(temp);
@@ -156,7 +156,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			OutputStreamWriter o = new OutputStreamWriter(
 											new FileOutputStream(temp),
 											"UTF-8");
-			o.write("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
+			o.write("<?xml version=\"1.1\" encoding=\"UTF-8\" ?>");
 			o.write("<xml><body></body>");
 			o.close();
 			
@@ -177,7 +177,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			OutputStreamWriter o = new OutputStreamWriter(
 											new FileOutputStream(temp),
 											"UTF-8");
-			o.write("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
+			o.write("<?xml version=\"1.1\" encoding=\"UTF-8\" ?>");
 			o.write("<xml></body>");
 			o.close();
 			
@@ -198,7 +198,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			OutputStreamWriter o = new OutputStreamWriter(
 											new FileOutputStream(temp),
 											"UTF-8");
-			o.write("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
+			o.write("<?xml version=\"1.1\" encoding=\"UTF-8\" ?>");
 			o.write("<+parma></+parma>");
 			o.close();
 			assertXMLFileIsBad(temp);
@@ -218,7 +218,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			OutputStreamWriter o = new OutputStreamWriter(
 											new FileOutputStream(temp),
 											"UTF-8");
-			o.write("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
+			o.write("<?xml version=\"1.1\" encoding=\"UTF-8\" ?>");
 			o.write("<xml><&amp;parma><&amp;parma></xml>");
 			o.close();
 			
@@ -244,7 +244,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			OutputStreamWriter o = new OutputStreamWriter(
 											new FileOutputStream(temp),
 											"UTF-8");
-			o.write("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");			
+			o.write("<?xml version=\"1.1\" encoding=\"UTF-8\" ?>");			
 			o.write("<xml>&amp;&#xDC01;</xml>");	
 			o.close();
 			
@@ -287,7 +287,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			//Test if it is a valid XML
 			validateXMLFile(temp);
 			//Compare against known code
-			Assert.assertTrue("<?xml version=\"1.0\" encoding=\"UTF-8\" ?><xml></xml>".equals(s.toString()));
+			Assert.assertTrue("<?xml version=\"1.1\" encoding=\"UTF-8\" ?><xml></xml>".equals(s.toString()));
 		leave();
 	};
 	
@@ -315,7 +315,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			//Test if it is a valid XML
 			validateXMLFile(temp);
 			//Compare against known code
-			Assert.assertTrue(("<?xml version=\"1.0\" encoding=\"UTF-8\" ?><xml>"+
+			Assert.assertTrue(("<?xml version=\"1.1\" encoding=\"UTF-8\" ?><xml>"+
 			"<spartan></spartan>"+
 			"</xml>").equals(s.toString()));
 		leave();
@@ -346,8 +346,36 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			// Note: We do not allow empty XML names, so, as package description
 			//		 is saying, we do expect _. This is handled by name escaping
 			//		 engine tough, but I did not add own test to it.
-			Assert.assertTrue(("<?xml version=\"1.0\" encoding=\"UTF-8\" ?><xml>"+
+			Assert.assertTrue(("<?xml version=\"1.1\" encoding=\"UTF-8\" ?><xml>"+
 			"<_></_>"+
+			"</xml>").equals(s.toString()));
+		leave();
+	};
+	
+	@Test public void testSurogateName()throws IOException
+	{
+		enter();
+			File temp = getTempXMLFile();		 //file for manual inspection
+			StringWriter s = new StringWriter(); //memory buffer for fast compare
+			CMuxWriter mux = new CMuxWriter(
+						new Writer[]
+						{
+							s,
+							new OutputStreamWriter(
+										new FileOutputStream(temp),
+										"UTF-8")
+						});						//mux writing to both
+			
+			CXMLWriteFormat o = new CXMLWriteFormat(mux);
+			o.open();
+				o.begin("\uD830\uDC30<>");
+				o.end();
+			o.close();
+			//Test if it is a valid XML
+			validateXMLFile(temp);
+			//None of chars is valid so all should be escaped with _
+			Assert.assertTrue(("<?xml version=\"1.1\" encoding=\"UTF-8\" ?><xml>"+
+			"<\uD830\uDC30_003C_003E></\uD830\uDC30_003C_003E>"+
 			"</xml>").equals(s.toString()));
 		leave();
 	};

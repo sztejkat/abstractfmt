@@ -20,12 +20,14 @@ abstract class AXMLElementNameEscapingEngine extends AXMLEscapingEngineBase
 	* *************************************************************************/
 	@Override protected boolean mustEscapeCodepoint(int code_point)
 	{
+		System.out.println("0x"+Integer.toHexString(code_point));
 		boolean f = is_first_char;
 		is_first_char = false;
-		return !(f  ?
-				SXMLChar_classifier.isNameStartChar(code_point)
-				:
-				SXMLChar_classifier.isNameChar(code_point));
+		return  (code_point=='_') || 
+				(!(f  ?
+					SXMLChar_classifier_1_1_E2.isNameStartChar(code_point)
+					:
+					SXMLChar_classifier_1_1_E2.isNameChar(code_point)));
 	};
 	@Override protected void escape(char c)throws IOException
 	{
