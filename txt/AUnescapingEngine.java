@@ -78,6 +78,12 @@ public abstract class AUnescapingEngine
 				
 				/** Used to process {@link #isEscaped} */
 				private boolean is_escaped;
+				/** Set to true if {@link #unescpae} returned 
+				value greater than 0xFFFF which needs to be 
+				turned into a surogate pair. The lower part
+				of it is left pending. */
+				private boolean is_pending_lower_surogate;
+				private char pending_lower_surogate;
 				
 	public AUnescapingEngine()
 	{
@@ -116,7 +122,7 @@ public abstract class AUnescapingEngine
 	/*--------------------------------------------------------------------
 				un-escaping
 	--------------------------------------------------------------------*/
-	/** Tests if specified character is a part of an escape sequence.
+	/** Tests if specified character is a part/start/end of an escape sequence.
 	
 	@param c char to check, got from {@link #readImpl}
 	@param escape_sequence_length a length of already collected escape sequence. 
@@ -136,10 +142,11 @@ public abstract class AUnescapingEngine
 	
 	@param collection_buffer buffer with collected escape. May be altered by this
 			call, so one must call this method only once per each collected sequence.
-	@return unescaped character
+	@return unescaped unicode code point or single java character. Full set of unicode code-points
+			and full set of  characters is allowed here.
 	@throws IOException if this is a bad escape.
 	*/
-	protected abstract char unescape(StringBuilder collection_buffer)throws IOException;
+	protected abstract int unescape(StringBuilder collection_buffer)throws IOException;
 	
 	/* ********************************************
 	
@@ -155,6 +162,8 @@ public abstract class AUnescapingEngine
 	public void reset()
 	{
 		is_escaped = false;
+		is_pending_lower_surogate = false;
+		pending_lower_surogate = 0;
 		collection_buffer.setLength(0); 
 	};
 	/** Returns if a last character returned by 
@@ -162,6 +171,27 @@ public abstract class AUnescapingEngine
 	public final boolean isEscaped()
 	{
 		return is_escaped;
+	};
+	/** Calls {@link #unescape} and handles returned upper code points 
+	@param collection_buffer see {@link #unescape}
+	@return --//--
+	@see #is_pending_lower_surogate
+	*/
+	private char unescapeCodePoint(StringBuilder collection_buffer)throws IOException
+	{
+		int c = unescape(collection_buffer);
+		assert((c>=0)&&(c<=0x10FFFF)):"0x"+Integer.toHexString(c)+"("+c+") is not Unicode";
+		if (c>0xFFFF)
+		{
+				//needs to be split to surogates.
+				c = c - 0x1_0000;
+				char upper = (char)( (c >> 10)+0xD800);
+				char lower = (char)( (c & 0x3FF)+0xDC00);
+				is_pending_lower_surogate = true;
+				pending_lower_surogate = lower;
+				return upper;
+		}else
+			return (char)c;
 	};
 	/** Like {@link java.io.Reader#read}, reads <code>char</code>
 	from downstream, unescapes it if necessary
@@ -172,6 +202,14 @@ public abstract class AUnescapingEngine
 	*/
 	public int read()throws IOException
 	{
+		//handle pending surogate.
+		if (is_pending_lower_surogate)
+		{
+			is_pending_lower_surogate = false;
+			int c = pending_lower_surogate;
+			pending_lower_surogate = 0;
+			return c;
+		};
 		is_escaped = false;	//always, for pending, regulars and eof
 		//ask downstream.
 		int ci = readImpl();
@@ -191,7 +229,7 @@ public abstract class AUnescapingEngine
 						case REGULAR_CHAR: 
 								//not add, terminate, keep for later return 
 								unread(c);
-								return unescape(collection_buffer);
+								return unescapeCodePoint(collection_buffer);
 						case ESCAPE_BODY:
 								//collect, continue
 								collection_buffer.append(c);
@@ -199,10 +237,10 @@ public abstract class AUnescapingEngine
 						case ESCAPE_LAST_BODY:
 								//collect, terminate
 								collection_buffer.append(c);
-								return unescape(collection_buffer);
+								return unescapeCodePoint(collection_buffer);
 						case ESCAPE_LAST_BODY_VOID:
 								//not collect, process
-								return unescape(collection_buffer);
+								return unescapeCodePoint(collection_buffer);
 						case ESCAPE_BODY_VOID:
 								//drop it 
 								break;

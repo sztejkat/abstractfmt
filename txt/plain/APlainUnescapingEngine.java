@@ -17,7 +17,7 @@ abstract class APlainUnescapingEngine extends AUnescapingEngine
 			private static abstract class AModeHandler
 			{
 				protected abstract TEscapeCharType isEscape(char c, int escape_sequence_length, int sequence_index)throws IOException;
-				protected abstract char unescape(StringBuilder collection_buffer)throws IOException;
+				protected abstract int unescape(StringBuilder collection_buffer)throws IOException;
 			};
 			
 			/** Direct single char collection mode */
@@ -30,7 +30,7 @@ abstract class APlainUnescapingEngine extends AUnescapingEngine
 					//First char is a last char.
 					return TEscapeCharType.ESCAPE_LAST_BODY;  
 				};
-				protected char unescape(StringBuilder collection_buffer)throws IOException
+				protected int unescape(StringBuilder collection_buffer)throws IOException
 				{
 					assert(collection_buffer.length()==1);
 					return collection_buffer.charAt(0);
@@ -51,7 +51,7 @@ abstract class APlainUnescapingEngine extends AUnescapingEngine
 					else
 						return TEscapeCharType.ESCAPE_BODY;
 				};
-				protected char unescape(StringBuilder collection_buffer)throws IOException
+				protected int unescape(StringBuilder collection_buffer)throws IOException
 				{
 					assert(collection_buffer.length()<=4);
 					char v = 0;
@@ -122,10 +122,10 @@ abstract class APlainUnescapingEngine extends AUnescapingEngine
 		//this is handled always, regardless of sequence index.
 		return this.mode_handler.isEscape(c,escape_sequence_length,sequence_index);
 	};
-	@Override protected char unescape(StringBuilder collection_buffer)throws IOException
+	@Override protected int unescape(StringBuilder collection_buffer)throws IOException
 	{
 		assert(this.mode_handler!=null); //can be called only once per buffer collection.
-		final char c= this.mode_handler.unescape(collection_buffer);
+		final int c= this.mode_handler.unescape(collection_buffer);
 		this.mode_handler = null;
 		return c;
 	};

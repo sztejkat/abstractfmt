@@ -47,7 +47,7 @@ public class Test_AUnescapingEngine extends ATest
 										throw new AssertionError();
 							}
 						};
-						@Override protected char unescape(StringBuilder collection_buffer)throws IOException
+						@Override protected int unescape(StringBuilder collection_buffer)throws IOException
 						{
 							System.out.println("unescape "+collection_buffer);
 							Assert.assertTrue(collection_buffer.length()==4);
@@ -59,7 +59,7 @@ public class Test_AUnescapingEngine extends ATest
 				
 				
 				/*
-					A class which is recognizing an XML &0;
+					A class which is recognizing an XML &0; (hex only)
 					JAVA style escape of variable length.
 					
 					The & is remembered but ; is NOT.
@@ -84,18 +84,18 @@ public class Test_AUnescapingEngine extends ATest
 								case 0:
 										return c=='&' ? TEscapeCharType.ESCAPE_BODY : TEscapeCharType.REGULAR_CHAR;
 								default:
-										if (escape_sequence_length>=6) throw new IOException("Too long");
+										if (escape_sequence_length>=10) throw new IOException("Too long escape_sequence_length="+escape_sequence_length);
 										return (c==';') ?  TEscapeCharType.ESCAPE_LAST_BODY_VOID :TEscapeCharType.ESCAPE_BODY ;
 							}
 						};
-						@Override protected char unescape(StringBuilder collection_buffer)throws IOException
+						@Override protected int unescape(StringBuilder collection_buffer)throws IOException
 						{
 							System.out.println("unescape "+collection_buffer);
-							Assert.assertTrue(collection_buffer.length()<=6);
+							Assert.assertTrue(collection_buffer.length()<=9);
 							Assert.assertTrue(collection_buffer.length()>=1);
 							try{
 								Assert.assertTrue(collection_buffer.charAt(0)=='&');
-								return (char)(Integer.parseInt(collection_buffer.toString().substring(1),16));
+								return (Integer.parseInt(collection_buffer.toString().substring(1),16));
 							}catch(NumberFormatException ex){ throw new IOException(ex);}
 						};
 				};
@@ -145,7 +145,7 @@ public class Test_AUnescapingEngine extends ATest
 										}
 							}
 						};
-						@Override protected char unescape(StringBuilder collection_buffer)throws IOException
+						@Override protected int unescape(StringBuilder collection_buffer)throws IOException
 						{
 							//In this mode we have either 1 or 2 char buffer so:
 							System.out.println("collection_buffer="+collection_buffer);
@@ -287,6 +287,7 @@ public class Test_AUnescapingEngine extends ATest
 		leave();
 	};
 	
+	
 	/* ********************************************************************
 	
 			The XML like model
@@ -342,7 +343,13 @@ public class Test_AUnescapingEngine extends ATest
 		}catch(IOException ex){ System.out.println(ex);};
 		leave();
 	};
-	
+	@Test public void test_with_upper_codepoint()throws IOException
+	{
+		enter();
+			Assert.assertTrue("m\uDBFC\uDC00".equals(collect(new DUT_XML("m&10F000;"),1000)));
+		
+		leave();
+	};
 	
 	
 	
