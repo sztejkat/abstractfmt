@@ -118,10 +118,10 @@ public abstract class AXMLWriteFormat0 extends ATxtWriteFormat1
 			Notice however that escaped comment may be a problematic 
 			for a human	to read, so You should avoid such comments.
 	*/
-	public void writeXMLComment(String comment)throws IOException
+	public void writeComment(String comment)throws IOException
 	{
 		openOffBandData();
-		outXML("<!--");
+		outXML("<!-- ");
 			comment_escaper.append(comment);
 		outXML(" -->");
 		closeOffBandData();

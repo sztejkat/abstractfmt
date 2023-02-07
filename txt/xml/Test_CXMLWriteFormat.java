@@ -379,4 +379,557 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			"</xml>").equals(s.toString()));
 		leave();
 	};
+	
+	
+	@Test public void testNestedStruct()throws IOException
+	{
+		enter();
+			File temp = getTempXMLFile();		 //file for manual inspection
+			StringWriter s = new StringWriter(); //memory buffer for fast compare
+			CMuxWriter mux = new CMuxWriter(
+						new Writer[]
+						{
+							s,
+							new OutputStreamWriter(
+										new FileOutputStream(temp),
+										"UTF-8")
+						});						//mux writing to both
+			
+			CXMLWriteFormat o = new CXMLWriteFormat(mux);
+			o.open();
+				o.begin("andy");
+					o.begin("mandy");
+					o.end();
+					o.begin("dandy");
+					o.end();
+				o.end();
+			o.close();
+			//Test if it is a valid XML
+			validateXMLFile(temp);
+			//None of chars is valid so all should be escaped with _
+			Assert.assertTrue(("<?xml version=\"1.1\" encoding=\"UTF-8\" ?><xml>"+
+			"<andy><mandy></mandy><dandy></dandy></andy>"+
+			"</xml>").equals(s.toString()));
+		leave();
+	};
+	
+	
+	@Test public void testBoolean()throws IOException
+	{
+		enter();
+			File temp = getTempXMLFile();		 //file for manual inspection
+			StringWriter s = new StringWriter(); //memory buffer for fast compare
+			CMuxWriter mux = new CMuxWriter(
+						new Writer[]
+						{
+							s,
+							new OutputStreamWriter(
+										new FileOutputStream(temp),
+										"UTF-8")
+						});						//mux writing to both
+			
+			CXMLWriteFormat o = new CXMLWriteFormat(mux);
+			o.open();
+				o.writeBoolean(false);
+				o.writeBoolean(true);
+				o.begin("andy");
+					o.writeBoolean(false);
+					o.writeBoolean(true);
+				o.end();
+			o.close();
+			//Test if it is a valid XML
+			validateXMLFile(temp);
+			//None of chars is valid so all should be escaped with _
+			Assert.assertTrue(("<?xml version=\"1.1\" encoding=\"UTF-8\" ?>"+
+							   "<xml>false,true<andy>false,true</andy></xml>"
+			).equals(s.toString()));
+		leave();
+	};
+	
+	@Test public void testByteShortIntLong()throws IOException
+	{
+		enter();
+			File temp = getTempXMLFile();		 //file for manual inspection
+			StringWriter s = new StringWriter(); //memory buffer for fast compare
+			CMuxWriter mux = new CMuxWriter(
+						new Writer[]
+						{
+							s,
+							new OutputStreamWriter(
+										new FileOutputStream(temp),
+										"UTF-8")
+						});						//mux writing to both
+			
+			CXMLWriteFormat o = new CXMLWriteFormat(mux);
+			o.open();
+				o.writeByte((byte)-7);
+				o.writeShort((short)3332);
+				o.writeInt(12345678);
+				o.writeLong(-3949849494L);
+				o.begin("andy");
+					o.writeByte((byte)-7);
+					o.writeShort((short)3332);
+					o.writeInt(12345678);
+					o.writeLong(-3949849494L);
+				o.end();
+			o.close();
+			//Test if it is a valid XML
+			validateXMLFile(temp);
+			//None of chars is valid so all should be escaped with _
+			Assert.assertTrue(("<?xml version=\"1.1\" encoding=\"UTF-8\" ?>"+
+							   "<xml>-7,3332,12345678,-3949849494<andy>-7,3332,12345678,-3949849494</andy></xml>"
+			).equals(s.toString()));
+		leave();
+	};
+	
+	@Test public void testFloatDouble()throws IOException
+	{
+		enter();
+			File temp = getTempXMLFile();		 //file for manual inspection
+			StringWriter s = new StringWriter(); //memory buffer for fast compare
+			CMuxWriter mux = new CMuxWriter(
+						new Writer[]
+						{
+							s,
+							new OutputStreamWriter(
+										new FileOutputStream(temp),
+										"UTF-8")
+						});						//mux writing to both
+			
+			CXMLWriteFormat o = new CXMLWriteFormat(mux);
+			o.open();
+				o.writeFloat(-33.3E-3f);
+				o.writeDouble(+33.3E-3);
+				o.begin("andy");
+					o.writeFloat(-33.3E-3f);
+					o.writeDouble(+33.3E-3);
+				o.end();
+			o.close();
+			//Test if it is a valid XML
+			validateXMLFile(temp);
+			//None of chars is valid so all should be escaped with _
+			Assert.assertTrue(("<?xml version=\"1.1\" encoding=\"UTF-8\" ?>"+
+							   "<xml>-0.0333,0.0333<andy>-0.0333,0.0333</andy></xml>"
+			).equals(s.toString()));
+		leave();
+	};
+	
+	
+	@Test public void testCharInterlaved()throws IOException
+	{
+		enter();
+			File temp = getTempXMLFile();		 //file for manual inspection
+			StringWriter s = new StringWriter(); //memory buffer for fast compare
+			CMuxWriter mux = new CMuxWriter(
+						new Writer[]
+						{
+							s,
+							new OutputStreamWriter(
+										new FileOutputStream(temp),
+										"UTF-8")
+						});						//mux writing to both
+			
+			CXMLWriteFormat o = new CXMLWriteFormat(mux);
+			o.open();
+				o.writeChar('m');
+				o.writeChar('o');
+				o.writeChar('u');
+				o.begin("andy");
+					o.writeChar('s');
+					o.writeChar('e');
+					o.writeInt(0);
+					o.writeChar('r');
+				o.end();
+				o.writeChar('d');
+			o.close();
+			//Test if it is a valid XML
+			validateXMLFile(temp);
+			//None of chars is valid so all should be escaped with _
+			Assert.assertTrue(("<?xml version=\"1.1\" encoding=\"UTF-8\" ?>"+
+							   "<xml>\"mou\"<andy>\"se\",0,\"r\"</andy>\"d\"</xml>"
+			).equals(s.toString()));
+		leave();
+	};
+	
+	@Test public void testCharEscaping()throws IOException
+	{
+		enter();
+			File temp = getTempXMLFile();		 //file for manual inspection
+			StringWriter s = new StringWriter(); //memory buffer for fast compare
+			CMuxWriter mux = new CMuxWriter(
+						new Writer[]
+						{
+							s,
+							new OutputStreamWriter(
+										new FileOutputStream(temp),
+										"UTF-8")
+						});						//mux writing to both
+			
+			CXMLWriteFormat o = new CXMLWriteFormat(mux);
+			o.open();
+				o.writeChar('m');
+				o.writeChar('\"');
+				o.writeChar('_');
+				o.begin("andy");
+					o.writeChar('\uD800');
+					o.writeChar('\u0000');
+					o.writeInt(0);
+					o.writeChar('r');
+				o.end();
+				o.writeChar('d');
+			o.close();
+			//Test if it is a valid XML
+			validateXMLFile(temp);
+			//None of chars is valid so all should be escaped with _
+			Assert.assertTrue(("<?xml version=\"1.1\" encoding=\"UTF-8\" ?>"+
+							   "<xml>\"m&quot;__\"<andy>\"_D800_0000\",0,\"r\"</andy>\"d\"</xml>"
+			).equals(s.toString()));
+		leave();
+	};
+	
+	
+	@Test public void testBooleanBlock()throws IOException
+	{
+		/*
+			Note: 
+				Due to the fact that blocks are handled by 
+				superclass testing boolean block is enough.
+				This is the only block which differs from
+				superclas block.
+		*/
+		enter();
+			File temp = getTempXMLFile();		 //file for manual inspection
+			StringWriter s = new StringWriter(); //memory buffer for fast compare
+			CMuxWriter mux = new CMuxWriter(
+						new Writer[]
+						{
+							s,
+							new OutputStreamWriter(
+										new FileOutputStream(temp),
+										"UTF-8")
+						});						//mux writing to both
+			
+			CXMLWriteFormat o = new CXMLWriteFormat(mux);
+			o.open();
+				o.writeBooleanBlock(new boolean[]{ true, false, false, true});
+				o.begin("blk");
+					o.writeBooleanBlock(new boolean[]{ true, false, false, true});
+				o.end();
+			o.close();
+			//Test if it is a valid XML
+			validateXMLFile(temp);
+			//None of chars is valid so all should be escaped with _
+			Assert.assertTrue(("<?xml version=\"1.1\" encoding=\"UTF-8\" ?>"+
+							   "<xml>t,f,f,t<blk>t,f,f,t</blk></xml>"
+			).equals(s.toString()));
+		leave();
+	};
+	
+	
+	@Test public void testByteBlock()throws IOException
+	{
+		/*
+			A bit excessive test
+		*/
+		enter();
+			File temp = getTempXMLFile();		 //file for manual inspection
+			StringWriter s = new StringWriter(); //memory buffer for fast compare
+			CMuxWriter mux = new CMuxWriter(
+						new Writer[]
+						{
+							s,
+							new OutputStreamWriter(
+										new FileOutputStream(temp),
+										"UTF-8")
+						});						//mux writing to both
+			
+			CXMLWriteFormat o = new CXMLWriteFormat(mux);
+			o.open();
+				o.writeByteBlock(new byte[4]);
+				o.begin("blk");
+					o.writeByteBlock(new byte[2]);
+					o.writeByteBlock(new byte[2]);
+				o.end();
+			o.close();
+			//Test if it is a valid XML
+			validateXMLFile(temp);
+			//None of chars is valid so all should be escaped with _
+			Assert.assertTrue(("<?xml version=\"1.1\" encoding=\"UTF-8\" ?>"+
+							   "<xml>0,0,0,0<blk>0,0,0,0</blk></xml>"
+			).equals(s.toString()));
+		leave();
+	};
+	
+	
+	@Test public void testShortBlock()throws IOException
+	{
+		/*
+			A bit excessive test
+		*/
+		enter();
+			File temp = getTempXMLFile();		 //file for manual inspection
+			StringWriter s = new StringWriter(); //memory buffer for fast compare
+			CMuxWriter mux = new CMuxWriter(
+						new Writer[]
+						{
+							s,
+							new OutputStreamWriter(
+										new FileOutputStream(temp),
+										"UTF-8")
+						});						//mux writing to both
+			
+			CXMLWriteFormat o = new CXMLWriteFormat(mux);
+			o.open();
+				o.writeShortBlock(new short[4]);
+				o.begin("blk");
+					o.writeShortBlock(new short[2]);
+					o.writeShortBlock(new short[2]);
+				o.end();
+			o.close();
+			//Test if it is a valid XML
+			validateXMLFile(temp);
+			//None of chars is valid so all should be escaped with _
+			Assert.assertTrue(("<?xml version=\"1.1\" encoding=\"UTF-8\" ?>"+
+							   "<xml>0,0,0,0<blk>0,0,0,0</blk></xml>"
+			).equals(s.toString()));
+		leave();
+	};
+	
+	@Test public void testIntBlock()throws IOException
+	{
+		/*
+			A bit excessive test
+		*/
+		enter();
+			File temp = getTempXMLFile();		 //file for manual inspection
+			StringWriter s = new StringWriter(); //memory buffer for fast compare
+			CMuxWriter mux = new CMuxWriter(
+						new Writer[]
+						{
+							s,
+							new OutputStreamWriter(
+										new FileOutputStream(temp),
+										"UTF-8")
+						});						//mux writing to both
+			
+			CXMLWriteFormat o = new CXMLWriteFormat(mux);
+			o.open();
+				o.writeIntBlock(new int[4]);
+				o.begin("blk");
+					o.writeIntBlock(new int[2]);
+					o.writeIntBlock(new int[2]);
+				o.end();
+			o.close();
+			//Test if it is a valid XML
+			validateXMLFile(temp);
+			//None of chars is valid so all should be escaped with _
+			Assert.assertTrue(("<?xml version=\"1.1\" encoding=\"UTF-8\" ?>"+
+							   "<xml>0,0,0,0<blk>0,0,0,0</blk></xml>"
+			).equals(s.toString()));
+		leave();
+	};
+	
+	@Test public void testLongBlock()throws IOException
+	{
+		/*
+			A bit excessive test
+		*/
+		enter();
+			File temp = getTempXMLFile();		 //file for manual inspection
+			StringWriter s = new StringWriter(); //memory buffer for fast compare
+			CMuxWriter mux = new CMuxWriter(
+						new Writer[]
+						{
+							s,
+							new OutputStreamWriter(
+										new FileOutputStream(temp),
+										"UTF-8")
+						});						//mux writing to both
+			
+			CXMLWriteFormat o = new CXMLWriteFormat(mux);
+			o.open();
+				o.writeLongBlock(new long[4]);
+				o.begin("blk");
+					o.writeLongBlock(new long[2]);
+					o.writeLongBlock(new long[2]);
+				o.end();
+			o.close();
+			//Test if it is a valid XML
+			validateXMLFile(temp);
+			//None of chars is valid so all should be escaped with _
+			Assert.assertTrue(("<?xml version=\"1.1\" encoding=\"UTF-8\" ?>"+
+							   "<xml>0,0,0,0<blk>0,0,0,0</blk></xml>"
+			).equals(s.toString()));
+		leave();
+	};
+	
+	@Test public void testFloatBlock()throws IOException
+	{
+		/*
+			A bit excessive test
+		*/
+		enter();
+			File temp = getTempXMLFile();		 //file for manual inspection
+			StringWriter s = new StringWriter(); //memory buffer for fast compare
+			CMuxWriter mux = new CMuxWriter(
+						new Writer[]
+						{
+							s,
+							new OutputStreamWriter(
+										new FileOutputStream(temp),
+										"UTF-8")
+						});						//mux writing to both
+			
+			CXMLWriteFormat o = new CXMLWriteFormat(mux);
+			o.open();
+				o.writeFloatBlock(new float[4]);
+				o.begin("blk");
+					o.writeFloatBlock(new float[2]);
+					o.writeFloatBlock(new float[2]);
+				o.end();
+			o.close();
+			//Test if it is a valid XML
+			validateXMLFile(temp);
+			//None of chars is valid so all should be escaped with _
+			Assert.assertTrue(("<?xml version=\"1.1\" encoding=\"UTF-8\" ?>"+
+							   "<xml>0.0,0.0,0.0,0.0<blk>0.0,0.0,0.0,0.0</blk></xml>"
+			).equals(s.toString()));
+		leave();
+	};
+	
+	
+	@Test public void testDoubleBlock()throws IOException
+	{
+		/*
+			A bit excessive test
+		*/
+		enter();
+			File temp = getTempXMLFile();		 //file for manual inspection
+			StringWriter s = new StringWriter(); //memory buffer for fast compare
+			CMuxWriter mux = new CMuxWriter(
+						new Writer[]
+						{
+							s,
+							new OutputStreamWriter(
+										new FileOutputStream(temp),
+										"UTF-8")
+						});						//mux writing to both
+			
+			CXMLWriteFormat o = new CXMLWriteFormat(mux);
+			o.open();
+				o.writeDoubleBlock(new double[4]);
+				o.begin("blk");
+					o.writeDoubleBlock(new double[2]);
+					o.writeDoubleBlock(new double[2]);
+				o.end();
+			o.close();
+			//Test if it is a valid XML
+			validateXMLFile(temp);
+			//None of chars is valid so all should be escaped with _
+			Assert.assertTrue(("<?xml version=\"1.1\" encoding=\"UTF-8\" ?>"+
+							   "<xml>0.0,0.0,0.0,0.0<blk>0.0,0.0,0.0,0.0</blk></xml>"
+			).equals(s.toString()));
+		leave();
+	};
+	
+	
+	@Test public void testCharBlock()throws IOException
+	{
+		/*
+			A bit excessive test
+		*/
+		enter();
+			File temp = getTempXMLFile();		 //file for manual inspection
+			StringWriter s = new StringWriter(); //memory buffer for fast compare
+			CMuxWriter mux = new CMuxWriter(
+						new Writer[]
+						{
+							s,
+							new OutputStreamWriter(
+										new FileOutputStream(temp),
+										"UTF-8")
+						});						//mux writing to both
+			
+			CXMLWriteFormat o = new CXMLWriteFormat(mux);
+			o.open();
+				o.writeCharBlock(new char[4]);
+				o.begin("blk");
+					o.writeCharBlock(new char[]{'a','s'});
+					o.writeCharBlock(new char[2]);
+				o.end();
+			o.close();
+			//Test if it is a valid XML
+			validateXMLFile(temp);
+			//None of chars is valid so all should be escaped with _
+			Assert.assertTrue(("<?xml version=\"1.1\" encoding=\"UTF-8\" ?>"+
+							   "<xml>\"_0000_0000_0000_0000\"<blk>\"as_0000_0000\"</blk></xml>"
+			).equals(s.toString()));
+		leave();
+	};
+	
+	@Test public void testStringBlock()throws IOException
+	{
+		/*
+			A bit excessive test
+		*/
+		enter();
+			File temp = getTempXMLFile();		 //file for manual inspection
+			StringWriter s = new StringWriter(); //memory buffer for fast compare
+			CMuxWriter mux = new CMuxWriter(
+						new Writer[]
+						{
+							s,
+							new OutputStreamWriter(
+										new FileOutputStream(temp),
+										"UTF-8")
+						});						//mux writing to both
+			
+			CXMLWriteFormat o = new CXMLWriteFormat(mux);
+			o.open();
+				o.writeString('a');
+				o.writeString('\u0000');
+				o.begin("blk");
+					o.writeString("boruta");
+					o.writeString("druch");
+				o.end();
+			o.close();
+			//Test if it is a valid XML
+			validateXMLFile(temp);
+			//None of chars is valid so all should be escaped with _
+			Assert.assertTrue(("<?xml version=\"1.1\" encoding=\"UTF-8\" ?>"+
+							   "<xml>\"a_0000\"<blk>\"borutadruch\"</blk></xml>"
+			).equals(s.toString()));
+		leave();
+	};
+	
+	
+	@Test public void testCommentWithinStringBlock()throws IOException
+	{
+		enter();
+			File temp = getTempXMLFile();		 //file for manual inspection
+			StringWriter s = new StringWriter(); //memory buffer for fast compare
+			CMuxWriter mux = new CMuxWriter(
+						new Writer[]
+						{
+							s,
+							new OutputStreamWriter(
+										new FileOutputStream(temp),
+										"UTF-8")
+						});						//mux writing to both
+			
+			CXMLWriteFormat o = new CXMLWriteFormat(mux);
+			o.open();
+				o.writeString('a');
+				o.writeComment("Nothing special \n but few lines <>");
+				o.writeString('\u0000');
+			o.close();
+			//Test if it is a valid XML
+			validateXMLFile(temp);
+			//None of chars is valid so all should be escaped with _
+			Assert.assertTrue(("<?xml version=\"1.1\" encoding=\"UTF-8\" ?>"+
+							   "<xml>\"a\"<!-- Nothing special \n"+
+							   " but few lines &lt;&gt; -->,\"_0000\"</xml>"
+			).equals(s.toString()));
+		leave();
+	};
 }

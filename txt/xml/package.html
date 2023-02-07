@@ -48,8 +48,12 @@
       The format is schema-less since there is no way to define schema
       for unknown data structures.
 
-      <h1>XML body</h1>
-      Opening stream writes XML prolog (defined by an implementation).
+      <h1>Main XML element</h1>
+      Opening stream writes XML prolog:
+      <pre>
+      	&lt;?xml version="1.1" encoding="UTF-8" ?&gt;
+      	&lt;xml&gt;
+      </pre>
       <p>
       Closing stream does:
       	<ul>
@@ -59,6 +63,7 @@
       		which were open but not closed are left as they are, and
       		it is not closing the tag for an element opened in prolog.
       		</li>
+      		
       	</ul>
       This method was selected because even tough closing a stream with 
       un-closed signals will produce a faulty XML I find it still better
