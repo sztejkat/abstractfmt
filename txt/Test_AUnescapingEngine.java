@@ -93,6 +93,8 @@ public class Test_AUnescapingEngine extends ATest
 							System.out.println("unescape "+collection_buffer);
 							Assert.assertTrue(collection_buffer.length()<=9);
 							Assert.assertTrue(collection_buffer.length()>=1);
+							
+							if (collection_buffer.length()==1) return -1; // void.
 							try{
 								Assert.assertTrue(collection_buffer.charAt(0)=='&');
 								return (Integer.parseInt(collection_buffer.toString().substring(1),16));
@@ -351,7 +353,13 @@ public class Test_AUnescapingEngine extends ATest
 		leave();
 	};
 	
-	
+	@Test public void test_with_void()throws IOException
+	{
+		enter();
+			Assert.assertTrue("m 3".equals(collect(new DUT_XML("m&;&20;3"),1000)));
+		
+		leave();
+	};
 	
 	/* ***************************************************************
 	

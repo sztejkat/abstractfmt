@@ -142,8 +142,10 @@ public abstract class AUnescapingEngine
 	
 	@param collection_buffer buffer with collected escape. May be altered by this
 			call, so one must call this method only once per each collected sequence.
-	@return unescaped unicode code point or single java character. Full set of unicode code-points
+	@return unescaped unicode code point or single java character or -1. Full set of unicode code-points
 			and full set of  characters is allowed here.
+			<p>
+			The -1 means: "This escape is an empty character".
 	@throws IOException if this is a bad escape.
 	*/
 	protected abstract int unescape(StringBuilder collection_buffer)throws IOException;
@@ -177,10 +179,11 @@ public abstract class AUnescapingEngine
 	@return --//--
 	@see #is_pending_lower_surogate
 	*/
-	private char unescapeCodePoint(StringBuilder collection_buffer)throws IOException
+	private int unescapeCodePoint(StringBuilder collection_buffer)throws IOException
 	{
 		int c = unescape(collection_buffer);
-		assert((c>=0)&&(c<=0x10FFFF)):"0x"+Integer.toHexString(c)+"("+c+") is not Unicode";
+		assert((c>=-1)&&(c<=0x10FFFF)):"0x"+Integer.toHexString(c)+"("+c+") is not Unicode";
+		if (c==-1) return -1;
 		if (c>0xFFFF)
 		{
 				//needs to be split to surogates.
@@ -202,62 +205,78 @@ public abstract class AUnescapingEngine
 	*/
 	public int read()throws IOException
 	{
-		//handle pending surogate.
-		if (is_pending_lower_surogate)
+		scanning:
+		for(;;)
 		{
-			is_pending_lower_surogate = false;
-			int c = pending_lower_surogate;
-			pending_lower_surogate = 0;
-			return c;
-		};
-		is_escaped = false;	//always, for pending, regulars and eof
-		//ask downstream.
-		int ci = readImpl();
-		assert((ci>=-1)&&(ci<=0xFFFF));
-		if (ci==-1) return -1;
-		//qualify it
-		char c = (char) ci;
-		TEscapeCharType t = isEscape(c, -1, 0 );
-		if (t==TEscapeCharType.REGULAR_CHAR) return ci; //not initiate anything.
-		try{
-				is_escaped = true;
-				//now loop collecting
-				for(int sequence_char=1;;sequence_char++)
-				{
-					switch(t)
+			//handle pending surogate.
+			if (is_pending_lower_surogate)
+			{
+				is_pending_lower_surogate = false;
+				int c = pending_lower_surogate;
+				pending_lower_surogate = 0;
+				return c;
+			};
+			is_escaped = false;	//always, for pending, regulars and eof
+			//ask downstream.
+			int ci = readImpl();
+			assert((ci>=-1)&&(ci<=0xFFFF));
+			if (ci==-1) return -1;
+			//qualify it
+			char c = (char) ci;
+			TEscapeCharType t = isEscape(c, -1, 0 );
+			if (t==TEscapeCharType.REGULAR_CHAR) return ci; //not initiate anything.
+			try{
+					is_escaped = true;
+					//now loop collecting
+					for(int sequence_char=1;;sequence_char++)
 					{
-						case REGULAR_CHAR: 
-								//not add, terminate, keep for later return 
-								unread(c);
-								return unescapeCodePoint(collection_buffer);
-						case ESCAPE_BODY:
-								//collect, continue
-								collection_buffer.append(c);
-								break;
-						case ESCAPE_LAST_BODY:
-								//collect, terminate
-								collection_buffer.append(c);
-								return unescapeCodePoint(collection_buffer);
-						case ESCAPE_LAST_BODY_VOID:
-								//not collect, process
-								return unescapeCodePoint(collection_buffer);
-						case ESCAPE_BODY_VOID:
-								//drop it 
-								break;
-						default: throw new AssertionError(t);
-					};				
-					//fetch next.
-					ci = readImpl();
-					assert((ci>=-1)&&(ci<=0xFFFF));
-					if (ci==-1) throw new EUnexpectedEof("Eof inside escape sequence!");
-					//qualify
-					c = (char) ci;
-					t = isEscape(c, collection_buffer.length(),sequence_char );
-				}
-		}finally
-		{
-			//purge collection buffer.
-			collection_buffer.setLength(0); 
+						switch(t)
+						{
+							case REGULAR_CHAR: 
+									//not add, terminate, keep for later return
+									{
+										unread(c);
+										int r= unescapeCodePoint(collection_buffer);
+										if (r==-1) continue scanning;
+										return r;
+									}
+							case ESCAPE_BODY:
+									//collect, continue
+									collection_buffer.append(c);
+									break;
+							case ESCAPE_LAST_BODY:
+									//collect, terminate									
+									collection_buffer.append(c);
+									{
+										int r= unescapeCodePoint(collection_buffer);
+										if (r==-1) continue scanning;
+										return r;
+									}
+							case ESCAPE_LAST_BODY_VOID:
+									//not collect, process
+									{
+										int r= unescapeCodePoint(collection_buffer);
+										if (r==-1) continue scanning;
+										return r;
+									}
+							case ESCAPE_BODY_VOID:
+									//drop it 
+									break;
+							default: throw new AssertionError(t);
+						};				
+						//fetch next.
+						ci = readImpl();
+						assert((ci>=-1)&&(ci<=0xFFFF));
+						if (ci==-1) throw new EUnexpectedEof("Eof inside escape sequence!");
+						//qualify
+						c = (char) ci;
+						t = isEscape(c, collection_buffer.length(),sequence_char );
+					}
+			}finally
+			{
+				//purge collection buffer.
+				collection_buffer.setLength(0); 
+			}
 		}
 	};
 };

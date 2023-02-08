@@ -1,4 +1,5 @@
 package sztejkat.abstractfmt.txt;
+import sztejkat.abstractfmt.utils.SStringUtils;
 import sztejkat.abstractfmt.*;
 import sztejkat.abstractfmt.logging.SLogging;
 import java.io.IOException;
@@ -300,54 +301,6 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 		return token_completion_buffer;
 	};
 	
-	/* --------------------------------------------------------------------------
-				Token comparison
-	--------------------------------------------------------------------------*/
-	/** Compares content of string buffer, case insensitive, with specified text. 
-	@param buffer non-null buffer to compare with <code>text</code>
-	@param text text to compare
-	@return true if identical
-	*/
-	protected static boolean equalsCaseInsensitive(StringBuilder buffer, String text)
-	{
-		if (buffer.length()!=text.length()) return false;
-		for(int i=0,n=buffer.length(); i<n; i++)
-		{
-			char bc = buffer.charAt(i);
-			char tc = text.charAt(i);
-			//Since to-lower/upper may be inconsistent in some langs avoid them
-			if (
-				(Character.isLowerCase(bc) && Character.isLowerCase(tc))
-					||
-				(Character.isUpperCase(bc) && Character.isUpperCase(tc))
-			   )
-			   {
-			   	   	//compare directly
-			   	   	if (bc!=tc) return false;
-			   }else
-			   {
-			   	   //compare lower case
-			   	   if (Character.toLowerCase(bc)!=Character.toLowerCase(tc)) return false;
-			   };
-		};
-		return true;
-	};
-	/** Compares content of string buffer, case ssnsitive, with specified text. 
-	@param buffer non-null buffer to compare with <code>text</code>
-	@param text text to compare
-	@return true if identical
-	*/
-	protected static boolean equalsCaseSensitive(StringBuilder buffer, String text)
-	{
-		if (buffer.length()!=text.length()) return false;
-		for(int i=0,n=buffer.length(); i<n; i++)
-		{
-			char bc = buffer.charAt(i);
-			char tc = text.charAt(i);
-			if (bc!=tc) return false;
-		};
-		return true;
-	};
 	
 	
 	/* --------------------------------------------------------------------------------
@@ -384,12 +337,12 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 		StringBuilder b = collectToken(); //this will throw on Eof/ENoMoreData if nothing is collected.
 		//Detect special texts
 		if (b.length()==0) return false;
-		if (equalsCaseInsensitive(b,"true")) return true;
-		if (equalsCaseInsensitive(b,"t")) return true;
-		if (equalsCaseInsensitive(b,"1")) return true;
-		if (equalsCaseInsensitive(b,"false")) return false;
-		if (equalsCaseInsensitive(b,"f")) return false;
-		if (equalsCaseInsensitive(b,"0")) return false;
+		if (SStringUtils.equalsCaseInsensitive(b,"true")) return true;
+		if (SStringUtils.equalsCaseInsensitive(b,"t")) return true;
+		if (SStringUtils.equalsCaseInsensitive(b,"1")) return true;
+		if (SStringUtils.equalsCaseInsensitive(b,"false")) return false;
+		if (SStringUtils.equalsCaseInsensitive(b,"f")) return false;
+		if (SStringUtils.equalsCaseInsensitive(b,"0")) return false;
 		String sb = b.toString();
 		try{
 				//Now Double parses hex string is a limitted manner.

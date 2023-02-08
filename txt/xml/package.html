@@ -198,10 +198,14 @@
       an XML file is encoded as:
       <pre>
       	_HHHH
+      	<i>or</i>
+      	_<i>white space character</i>
       </pre>
       where H are <u>exactly</u> four hexadecimal digits representing
       the Java <code>char</code> in question. Upper case is used during generation, but
       both upper and lower case is accepted during parsing.
+      <p>
+      The _ followed by white-space character is understood as "void", zero size character.
       <p>
       The '_' can be encoded in three forms:
       <ul>
