@@ -17,6 +17,7 @@ public abstract class AXMLWriteFormat0 extends ATxtWriteFormat1
 					{
 						AXMLWriteFormat0.this.outXML(c);
 					};
+					@Override protected IXMLCharClassifier getClassifier(){ return classifier; };
 				};
 				/** An escaping engine used to write string token content
 				inside an XML element body */
@@ -26,6 +27,7 @@ public abstract class AXMLWriteFormat0 extends ATxtWriteFormat1
 					{
 						AXMLWriteFormat0.this.outXML(c);
 					};
+					@Override protected IXMLCharClassifier getClassifier(){ return classifier; };
 				};
 				/** An escaping engine used to write comments */
 				private final AEscapingEngine comment_escaper = new AXMLBodyEscapingEngine()
@@ -34,11 +36,14 @@ public abstract class AXMLWriteFormat0 extends ATxtWriteFormat1
 					{
 						AXMLWriteFormat0.this.outXML(c);
 					};
+					@Override protected IXMLCharClassifier getClassifier(){ return classifier; };
 				};
 				/** A signals stack necessary for tracking opening and closing XML tags.
 				Notice I intentionally do not use own CBoundStack because the depth 
 				limiting is handled by AFormatLimits.*/
 				private final ArrayDeque<String> signals_stack;
+				/** XML classifier */
+				private final IXMLCharClassifier classifier;
 				
 	/* ****************************************************************
 	
@@ -46,16 +51,26 @@ public abstract class AXMLWriteFormat0 extends ATxtWriteFormat1
 	
 	
 	*****************************************************************/
-	/** Creates
+	/** Creates, using XML 1.0 E4
 	*/
 	protected AXMLWriteFormat0()
+	{
+		this(new CXMLChar_classifier_1_0_E4());
+	};
+	/** Creates
+	@param classifier classifier to use, non null. Remember to get in sync the necessary
+			prolog.
+	*/
+	protected AXMLWriteFormat0(IXMLCharClassifier classifier )
 	{
 		super(0);	//We do not support registered names.
 					//Due to JAVA lacking virtual multiple inheritance
 					//it was for me easier to inherite the ARegisteringStructWriteFormat
 					//in generic text support and then disable it here rather
 					//than playing with class composition.
-		signals_stack = new ArrayDeque<String>();
+		assert(classifier!=null);
+		this.classifier = classifier;
+		this.signals_stack = new ArrayDeque<String>();
 	};
 	/* *****************************************************************
 	
@@ -88,16 +103,16 @@ public abstract class AXMLWriteFormat0 extends ATxtWriteFormat1
 	write an XML file prolog and open the master element enclosing the
 	content of the file.
 	<p>
-	Standard implementation writes a single XML token:
+	Standard implementation writes following XML:
 	<pre>
-	&lt;?xml version="1.1" encoding="UTF-8"?&gt;
+	&lt;?xml version="<i>from classifier</i>" encoding="UTF-8"?&gt;
 	&lt;xml&gt;
 	</pre>
 	@see #outXML(String)	
 	*/
 	protected void writeXMLProlog()throws IOException
 	{
-		outXML("<?xml version=\"1.1\" encoding=\"UTF-8\" ?><xml>");
+		outXML("<?xml version=\""+classifier.getXMLVersion()+"\" encoding=\"UTF-8\" ?><xml>");
 	};
 	/** A method which will be called by {@link #closeImpl} to
 	terminate the element started by {@link #writeXMLProlog}.

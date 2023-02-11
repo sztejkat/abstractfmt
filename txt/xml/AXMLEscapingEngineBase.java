@@ -39,7 +39,6 @@ abstract class AXMLEscapingEngineBase extends AEscapingEngine
 	{
 		//We do encode it as &#xHHHHH...;
 		assert((c>=0)&&(c<=0x10FFFF)):"not a code point 0x"+Integer.toHexString(c);
-		assert(SXMLChar_classifier_1_1_E2.isXMLChar(c));
 		out('&');out('#');out('x');
 		boolean was_emited = false;
 		//Up to 6 digits so we dig out just a part of it

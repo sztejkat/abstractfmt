@@ -16,7 +16,7 @@ public class CXMLWriteFormat extends AXMLWriteFormat0
 				Creation
 	
 	******************************************************************/
-	/** Creates.
+	/** Creates using XML 1.0 E4
 	<p>
 	Note: This format <u>does</u> consume memory on each struct recursion level
 	so it will be wise for You to set {@link #setMaxStructRecursionDepth} to
@@ -27,6 +27,21 @@ public class CXMLWriteFormat extends AXMLWriteFormat0
 	*/
 	public CXMLWriteFormat(Writer out)
 	{
+		this(out,new CXMLChar_classifier_1_0_E4());
+	};
+	/** Creates using specified XML
+	<p>
+	Note: This format <u>does</u> consume memory on each struct recursion level
+	so it will be wise for You to set {@link #setMaxStructRecursionDepth} to
+	prevent out-of-memory problems.
+	
+	@param out non null writer which must support the whole Unicode characters
+			set. Any actuall writing will happen after {@link #open}.
+	@param IXMLCharClassifier xml classifier to use for version and escapes.
+	*/
+	public CXMLWriteFormat(Writer out, IXMLCharClassifier xml_classifier)
+	{
+		super(xml_classifier);
 		assert(out!=null);
 		this.out = out;
 	};

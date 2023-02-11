@@ -25,6 +25,8 @@ public class Test_AXMLUnescapingEngine extends sztejkat.abstractfmt.test.ATest
 				};
 				@Override protected int readImpl()throws IOException{ return i.read(); };
 				@Override protected void unread(char c)throws IOException{ i.unread(c); };
+				private static final IXMLCharClassifier c = new CXMLChar_classifier_1_0_E4();
+				@Override protected IXMLCharClassifier getClassifier(){ return c; };
 			};
 		
 	@Test public void readEmpty()throws IOException

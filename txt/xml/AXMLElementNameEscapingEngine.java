@@ -13,6 +13,15 @@ import java.io.IOException;
 abstract class AXMLElementNameEscapingEngine extends AXMLEscapingEngineBase
 {
 				private boolean is_first_char = true;
+	
+	/* *************************************************************************
+	
+				Services required from subclasses.
+	
+	* *************************************************************************/
+	/** Returns XML classifier 
+	@return a classifier to use for XML chars recognition */
+	protected abstract IXMLCharClassifier getClassifier();
 	/* *************************************************************************
 	
 				AEscapingEngine
@@ -25,9 +34,9 @@ abstract class AXMLElementNameEscapingEngine extends AXMLEscapingEngineBase
 		is_first_char = false;
 		return  (code_point=='_') || 
 				(!(f  ?
-					SXMLChar_classifier_1_1_E2.isNameStartChar(code_point)
+					getClassifier().isNameStartChar(code_point)
 					:
-					SXMLChar_classifier_1_1_E2.isNameChar(code_point)));
+					getClassifier().isNameChar(code_point)));
 	};
 	@Override protected void escape(char c)throws IOException
 	{

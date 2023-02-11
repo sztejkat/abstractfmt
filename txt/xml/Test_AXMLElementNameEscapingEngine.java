@@ -8,11 +8,14 @@ import org.junit.Assert;
 */
 public class Test_AXMLElementNameEscapingEngine extends sztejkat.abstractfmt.test.ATest
 {
-			static final class DUT extends AXMLElementNameEscapingEngine
+			static class DUT extends AXMLElementNameEscapingEngine
 			{
+					
 					final StringWriter o = new StringWriter();
 					
 				@Override protected void out(char c)throws IOException{ o.write(c); };
+					private static final IXMLCharClassifier c = new CXMLChar_classifier_1_0_E4();
+				@Override protected IXMLCharClassifier getClassifier(){ return c; };
 			};
 		
 	@Test public void escapeEmpty()throws IOException
@@ -131,7 +134,14 @@ public class Test_AXMLElementNameEscapingEngine extends sztejkat.abstractfmt.tes
 	@Test public void test_surogateAtStart()throws IOException
 	{
 		enter();
-			DUT d = new DUT();
+			//Note: This surogate must represent a valid name char,
+			//      so we need to force it to use XML 1.1 / 1.0E5
+			//		since 1.0 E4 does not allow upper page chars in names.
+			DUT d = new DUT()
+			{
+					private final IXMLCharClassifier c = new CXMLChar_classifier_1_1_E2();
+				@Override protected IXMLCharClassifier getClassifier(){ return c; };
+			};
 			
 			d.append("\uD830\uDC30<>");
 			d.flush();

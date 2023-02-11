@@ -16,13 +16,40 @@ import sztejkat.abstractfmt.txt.*;
 	W3C Recommendation 16 August 2006, edited in place 29 September 2006</a>
 	<p>
 */
-class SXMLChar_classifier_1_1_E2
+public class CXMLChar_classifier_1_1_E2 implements IXMLCharClassifier 
 {
+	/* *****************************************************************
+	
+					IXMLCharClassifier
+					
+	 ******************************************************************/
+	@Override public boolean isXMLRecommendedChar(int c)
+	{
+		return _isXMLRecommendedChar(c);
+	};
+	@Override public boolean isNameStartChar(int c)
+	{
+		return _isNameStartChar(c);
+	}
+	@Override public boolean isNameChar(int c)
+	{
+		return _isNameChar(c);
+	}
+	@Override public boolean isXMLSpace(int c)
+	{
+		return _isXMLSpace(c);
+	}
+	@Override public String getXMLVersion(){ return "1.1"; };
+	 /* *****************************************************************
+	
+					Support
+					
+	 ******************************************************************/
 	/** Tests against 2.2 of XML specs
 	@param c unicode code-point.
 	@return true if c represents allowed XML character.
 	*/
-	static boolean isXMLChar(int c)
+	private static boolean isXMLChar(int c)
 	{
 		return ((c>=0x1)&&(c<=0xD7FF)) || ((c>=0xE000)&&(c<=0xFFFD)) ||
 			   ((c>=0x10000)&&(c<=0x10FFFF));
@@ -31,7 +58,7 @@ class SXMLChar_classifier_1_1_E2
 	@param c unicode code-point.
 	@return true if c represents a restricted character as XML calls it. 
 	*/
-	static boolean isRestricedChar(int c)
+	private static boolean isRestricedChar(int c)
 	{
 		return  ((c>=0x1)&(c<=0x8)) || ((c>=0xB)&(c<=0xC)) || ((c>=0xE)&(c<=0x1F)) || ((c>=0x7F)&(c<=0x84)) || ((c>=0x86)&(c<=0x9F));
 	};
@@ -39,7 +66,7 @@ class SXMLChar_classifier_1_1_E2
 	@param c unicode code-point.
 	@return true if c represents character which is unrecommended. 
 	*/
-	static boolean isUnrecommendedChar(int c)
+	private static boolean isUnrecommendedChar(int c)
 	{
 		return 
 		((c>=0x1)&&(c<=0x8))|| ((c>=0xB)&&(c<=0xC))|| ((c>=0xE)&&(c<=0x1F))|| ((c>=0x7F)&&(c<=0x84))|| ((c>=0x86)&&(c<=0x9F))|| ((c>=0xFDD0)&&(c<=0xFDDF))||
@@ -54,7 +81,7 @@ class SXMLChar_classifier_1_1_E2
 	@param c unicode code-point.
 	@return true if c represents character which allowed xml char and is not unrecommended 
 	*/
-	static boolean isXMLRecommendedChar(int c)
+	private static boolean _isXMLRecommendedChar(int c)
 	{
 		return isXMLChar(c) && !isUnrecommendedChar(c);
 	};
@@ -62,7 +89,7 @@ class SXMLChar_classifier_1_1_E2
 	@param c unicode code-point.
 	@return true if c represents XML "space"
 	*/
-	static boolean isXMLSpace(int c)
+	private static boolean _isXMLSpace(int c)
 	{
 		return (c==0x20)||(c==0x9)||(c==0xD)||(c==0xA);
 	};
@@ -72,7 +99,7 @@ class SXMLChar_classifier_1_1_E2
 			name, except that we intentionally removed ':' which is 
 			reserved in that chapter for namespace.
 	*/
-	static boolean isNameStartChar(int c)
+	private static boolean _isNameStartChar(int c)
 	{
 		return /*(c==':') || */
 					(c=='_') ||
@@ -88,9 +115,9 @@ class SXMLChar_classifier_1_1_E2
 	@return true if c represents a character which may be second
 			and later character in xml element name.
 	*/
-	static boolean isNameChar(int c)
+	private static boolean _isNameChar(int c)
 	{
-		return isNameStartChar(c)
+		return _isNameStartChar(c)
 				||
 				(c=='-')|| (c=='.') ||
 				((c>='0')&&(c<='9')) || 
@@ -98,51 +125,7 @@ class SXMLChar_classifier_1_1_E2
 				((c>=0x0300)&&(c<=036F)) || ((c>=0x203F)&&(c<=2040));
 	};
 		
-			/* Note: I decided to use int instead of enum because
-			ints are significantly faster and clear enough in this
-			situation since we won't be using any possibly conflicting
-			sets in here.
-			*/
-			/** See {@link #isDataChar}. A valid body character. */
-			static final int XML_DATA_CHAR = 0;
-			/** See {@link #isDataChar}. Not a body character, but allowed in XML */
-			static final int XML_ENTITY = 1;
-			/** See {@link #isDataChar}. Not a body character, and NOT allowed in XML */
-			static final int NON_XML_COMPATIBLE = 2;
-			
-	/** Tests against 2.4 of XML specs, if character is a valid element body character.
-	@param c unicode code-point.
-	@return
-			<ul>
-				<li>0 ({@link #XML_DATA_CHAR})if c represents a character which may contained
-				in XML element body WITHOUT the need of escaping
-				either with XML entity or our custom escaping.
-				<p>
-				Since the specs is slightly flexible int that point here we harden
-				it to:
-				<ul>
-					<li>the c must be {@link #isXMLRecommendedChar};</li>
-					<li>it must not contain &lt; &gt; nor &amp;</li>
-				</ul>
-				</li>
-				
-				<li>if this method returns <code>1</code> ({@link #XML_ENTITY}) the 
-				<code>c</code> must be escaped using schema pointed
-				in 4.1/4.6 of XML specs;</li>
-				
-				<li>if this method retrns <code>2</code> ({@link #NON_XML_COMPATIBLE})
-				the <code>c</code> must be escaped using custom schema which 
-				allows for absolutely any character.
-				</li>
-				
-			</ul>
-	*/
-	static int isCharData(int c)
-	{
-		if ((c=='<')||(c=='>')||(c=='&')) return XML_ENTITY;
-		if (!isXMLRecommendedChar(c)) return  NON_XML_COMPATIBLE;
-		return XML_DATA_CHAR;
-	};
+		
 	
 };
 

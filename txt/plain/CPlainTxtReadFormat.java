@@ -449,7 +449,6 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 			  );
 		assert(in!=null);
 		this.in = new CAdaptivePushBackReader(in,1,1);
-		setStateHandler(NOTHING);
 	}
 	private String getLineInfoMessage()
 	{
@@ -481,10 +480,6 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 				(c==CPlainTxtWriteFormat.BEGIN_SIGNAL_CHAR)
 				);
 	};
-	/*private static boolean isStringTokenBodyChar(char c)
-	{
-		return c!=CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR;
-	};*/
 	
 	/* ********************************************************************
 	
@@ -493,13 +488,17 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 	
 	
 	*********************************************************************/
-	/** Closes input */
+	/** Closes input, abandons state handler. */
 	@Override protected void closeImpl()throws IOException
 	{
+		setStateHandler(null);
 		in.close();
 	};
-	/** Empty */
-	@Override protected void openImpl()throws IOException{};
+	/** Initializes state handler */
+	@Override protected void openImpl()throws IOException
+	{		
+		setStateHandler(NOTHING);
+	};
 	/* ********************************************************************
 	
 		

@@ -13,6 +13,8 @@ public class Test_AStringTokenEscapingEngine extends sztejkat.abstractfmt.test.A
 					final StringWriter o = new StringWriter();
 					
 				@Override protected void out(char c)throws IOException{ o.write(c); };
+					private static final IXMLCharClassifier c = new CXMLChar_classifier_1_0_E4();
+				@Override protected IXMLCharClassifier getClassifier(){ return c; };
 			};
 		
 	@Test public void escapeEmpty()throws IOException

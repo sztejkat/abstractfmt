@@ -258,7 +258,7 @@ abstract class AXMLUnescapingEngine extends AUnescapingEngine
 												current_isEscape= IS_ESCAPE_CUSTOM_HEX;
 												return TEscapeCharType.ESCAPE_BODY;											
 										}else
-										if (SXMLChar_classifier_1_1_E2.isXMLSpace(c))
+										if (getClassifier().isXMLSpace(c))
 										{
 												//The stand-alone _ is void 
 												current_isEscape= IS_ESCAPE_REGULAR;
@@ -324,7 +324,15 @@ abstract class AXMLUnescapingEngine extends AUnescapingEngine
 							private AIsEscapeMode current_isEscape = IS_ESCAPE_REGULAR;
 							/** Current handler for {@link #unescape} */
 							private AUnescapeMode current_unescape = UNESCAPE_REJECT;
+							
+	/* *************************************************************************
 	
+				Services required from subclasses.
+	
+	* *************************************************************************/
+	/** Returns XML classifier 
+	@return a classifier to use for XML chars recognition */
+	protected abstract IXMLCharClassifier getClassifier();
 	/* *********************************************************************************
 	
 		AUnescapingEngine

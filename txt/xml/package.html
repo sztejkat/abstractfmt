@@ -10,11 +10,11 @@
       This package defines how signal format is projected on XML file.
 
       <h1>Use of XML standard</h1>
-      This format do produce "well formed XML 1.1", but cannot parse all
+      This format do produce "well formed XML 1.0 ed 4", but cannot parse all
       "well formed" XMLs.
       <p>
       Note: Refer to XML specification <a href="https://www.w3.org/TR/xml/">there</a>
-      or a <a href="doc-files/xml1.1/XML_specification.html">copy</a> provided with this package
+      or a <a href="doc-files/xml1.0e4/XML_specification.html">copy</a> provided with this package
       for Your convinience.
       
       <h3>Breaking change</h3>
@@ -29,7 +29,8 @@
       miss that? I can't imagine. 
       <p>
       Thous I actually had a choice: to stay at 1.0 Ed4 or to select 1.1. The last choice seems
-      to be more logic and coherent as up to now (2023) it does not generated any "breaking changes". 
+      to be more logic and coherent as up to now (2023) it does not generated any "breaking changes",
+      however 1.1 is NOT implemented by Microsoft NET nor Firefox while it IS implemented by JAVA.
       
       <h1>Restrictions on parsing</h1>
       During parsing the classes implementing signal format over the XML

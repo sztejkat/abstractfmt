@@ -15,6 +15,14 @@ abstract class AXMLBodyEscapingEngine extends AXMLEscapingEngineBase
 				
 	/* *************************************************************************
 	
+				Services required from subclasses.
+	
+	* *************************************************************************/
+	/** Returns XML classifier 
+	@return a classifier to use for XML chars recognition */
+	protected abstract IXMLCharClassifier getClassifier();
+	/* *************************************************************************
+	
 				AEscapingEngine
 	
 	* *************************************************************************/
@@ -22,7 +30,7 @@ abstract class AXMLBodyEscapingEngine extends AXMLEscapingEngineBase
 	{
 		//We need to escape _ to make sure it is an unique escape marker.
 		return (code_point=='_') || 
-			   (SXMLChar_classifier_1_1_E2.isCharData(code_point)!=SXMLChar_classifier_1_1_E2.XML_DATA_CHAR);
+			   (getClassifier().isCharData(code_point)!=IXMLCharClassifier.XML_DATA_CHAR);
 	};
 	@Override protected void escape(char c)throws IOException
 	{
@@ -31,17 +39,17 @@ abstract class AXMLBodyEscapingEngine extends AXMLEscapingEngineBase
 			escapeAsCustomEscape(c);
 		}else
 		{
-			switch(SXMLChar_classifier_1_1_E2.isCharData(c))
+			switch(getClassifier().isCharData(c))
 			{
-				case SXMLChar_classifier_1_1_E2.XML_DATA_CHAR:
+				case IXMLCharClassifier.XML_DATA_CHAR:
 							//This should NOT be escape, but hell why not?
 							escapeCodePointAsEntity(c);
 							break;
-				case SXMLChar_classifier_1_1_E2.XML_ENTITY:
+				case IXMLCharClassifier.XML_ENTITY:
 							//This can be expressed by XML entity, so let us do it.
 							escapeCodePointAsEntity(c);
 							break;
-				case SXMLChar_classifier_1_1_E2.NON_XML_COMPATIBLE:
+				case IXMLCharClassifier.NON_XML_COMPATIBLE:
 							//This must be escaped using our custom escape system
 							//Single char version
 							escapeAsCustomHexEscape(c);
@@ -53,17 +61,17 @@ abstract class AXMLBodyEscapingEngine extends AXMLEscapingEngineBase
 	@Override protected void escapeCodepoint(int c, char upper_surogate, char lower_surogate)throws IOException
 	{
 		assert(c>0xFFFF);
-		switch(SXMLChar_classifier_1_1_E2.isCharData(c))
+		switch(getClassifier().isCharData(c))
 		{
-			case SXMLChar_classifier_1_1_E2.XML_DATA_CHAR:
+			case IXMLCharClassifier.XML_DATA_CHAR:
 						//This should NOT be escape, but hell why not?
 						escapeCodePointAsEntity(c);
 						break;
-			case SXMLChar_classifier_1_1_E2.XML_ENTITY:
+			case IXMLCharClassifier.XML_ENTITY:
 						//This can be expressed by XML entity, so let us do it.
 						escapeCodePointAsEntity(c);
 						break;
-			case SXMLChar_classifier_1_1_E2.NON_XML_COMPATIBLE:
+			case IXMLCharClassifier.NON_XML_COMPATIBLE:
 						//This must be escaped using our custom escape system,
 						//surogate by surogate.
 						escapeAsCustomHexEscape(upper_surogate);
