@@ -327,4 +327,314 @@ public class Test_ATxtReadFormatStateBase0_Syntax extends ATest
 		leave();
 	};
 	
+	
+	@Test public void testRepeatElementInNext()throws IOException
+	{
+		enter();
+		/*
+			This is a simple test in which we do define
+			a syntax which consist of one repeating element
+			followed by required element
+		*/
+		
+		DUT d = new DUT();
+		DUT.CRecognizedNTimes recognized_0 = d.new CRecognizedNTimes(3,2);
+		DUT.CRecognized recognized_1 = d.new CRecognized(2);
+		
+		d.pushStateHandler(d.new CCannotReadHandler("No more syntax"));
+		d.pushStateHandler(			
+						d.new CNextHandler(
+									d.new CRepeatHandler(recognized_0),
+									d.new CRequiredHandler(recognized_1)
+									)
+						);
+		
+		d.toNextChar();d.toNextChar();d.toNextChar();
+		Assert.assertTrue(recognized_0.times==1);
+		d.toNextChar();d.toNextChar();d.toNextChar();
+		Assert.assertTrue(recognized_0.calls==6);
+		Assert.assertTrue(recognized_0.times==0);
+		d.toNextChar();d.toNextChar();
+		Assert.assertTrue(recognized_1.calls==2);
+		try{
+			d.toNextChar();
+			Assert.fail();
+		}catch(EBrokenFormat ex)
+		{
+			System.out.println(ex);
+			Assert.assertTrue(ex.getMessage().equals("No more syntax"));
+		};
+		
+		leave();
+	};
+	
+	
+	
+	@Test public void testOptionalElement()throws IOException
+	{
+		enter();
+		/*
+			This is a simple test in which we do define
+			a syntax which consist of one optional element
+			followed by one required element.
+		*/
+		
+		DUT d = new DUT();
+		DUT.CRecognized recognized_0 = d.new CRecognized(2);
+		DUT.CRecognized recognized_1 = d.new CRecognized(2);
+		
+		d.pushStateHandler(d.new CCannotReadHandler("No more syntax"));
+		d.pushStateHandler(			
+						d.new CNextHandler(
+									d.new COptionalHandler(recognized_0),
+									d.new CRequiredHandler(recognized_1)
+									)
+						);
+		d.toNextChar();	d.toNextChar();
+		Assert.assertTrue(recognized_0.calls==2);		
+		d.toNextChar();	d.toNextChar();
+		Assert.assertTrue(recognized_1.calls==2);
+		
+		try{
+			d.toNextChar();
+			Assert.fail();
+		}catch(EBrokenFormat ex)
+		{
+			System.out.println(ex);
+			Assert.assertTrue(ex.getMessage().equals("No more syntax"));
+		};
+		
+		leave();
+	};
+	
+	@Test public void testOptionalElementNotPresent()throws IOException
+	{
+		enter();
+		/*
+			This is a simple test in which we do define
+			a syntax which consist of one optional element
+			followed by one required element.
+		*/
+		
+		DUT d = new DUT();
+		DUT.CNotRecognized recognized_0 = d.new CNotRecognized();
+		DUT.CRecognized recognized_1 = d.new CRecognized(2);
+		
+		d.pushStateHandler(d.new CCannotReadHandler("No more syntax"));
+		d.pushStateHandler(			
+						d.new CNextHandler(
+									d.new COptionalHandler(recognized_0),
+									d.new CRequiredHandler(recognized_1)
+									)
+						);
+		d.toNextChar();	d.toNextChar();
+		Assert.assertTrue(recognized_0.calls==1);
+		Assert.assertTrue(recognized_1.calls==2);
+		
+		try{
+			d.toNextChar();
+			Assert.fail();
+		}catch(EBrokenFormat ex)
+		{
+			System.out.println(ex);
+			Assert.assertTrue(ex.getMessage().equals("No more syntax"));
+		};
+		
+		leave();
+	};
+	
+	
+	@Test public void testOptionalChain()throws IOException
+	{
+		enter();
+		/*
+			This is a simple test in which we do define
+			a syntax which consist of one optional chain
+			followed by one required element.
+		*/
+		
+		DUT d = new DUT();
+		DUT.CRecognized recognized_0 = d.new CRecognized(2);
+		DUT.CRecognized recognized_1 = d.new CRecognized(2);
+		DUT.CRecognized recognized_2 = d.new CRecognized(1);
+		
+		d.pushStateHandler(d.new CCannotReadHandler("No more syntax"));
+		d.pushStateHandler(			
+						d.new CNextHandler(
+									d.new COptionalHandler(
+										d.new CNextHandler( recognized_0, recognized_1)
+														),
+									d.new CRequiredHandler(recognized_2)
+									)
+						);
+		d.toNextChar();	d.toNextChar();
+		Assert.assertTrue(recognized_0.calls==2);		
+		d.toNextChar();	d.toNextChar();
+		Assert.assertTrue(recognized_1.calls==2);
+		d.toNextChar();	
+		Assert.assertTrue(recognized_2.calls==1);
+		try{
+			d.toNextChar();
+			Assert.fail();
+		}catch(EBrokenFormat ex)
+		{
+			System.out.println(ex);
+			Assert.assertTrue(ex.getMessage().equals("No more syntax"));
+		};
+		
+		leave();
+	};
+	
+	@Test public void testOptionalChainNotRecognized()throws IOException
+	{
+		enter();
+		/*
+			This is a simple test in which we do define
+			a syntax which consist of one optional chain, which is not recognized
+			followed by one required element.
+		*/
+		
+		DUT d = new DUT();
+		DUT.CNotRecognized recognized_0 = d.new CNotRecognized();
+		DUT.CRecognized recognized_1 = d.new CRecognized(2);
+		DUT.CRecognized recognized_2 = d.new CRecognized(1);
+		
+		d.pushStateHandler(d.new CCannotReadHandler("No more syntax"));
+		d.pushStateHandler(			
+						d.new CNextHandler(
+									d.new COptionalHandler(
+										d.new CNextHandler( recognized_0, recognized_1)
+														),
+									d.new CRequiredHandler(recognized_2)
+									)
+						);
+		d.toNextChar();
+		Assert.assertTrue(recognized_0.calls==1);
+		Assert.assertTrue(recognized_1.calls==0);
+		Assert.assertTrue(recognized_2.calls==1);
+		try{
+			d.toNextChar();
+			Assert.fail();
+		}catch(EBrokenFormat ex)
+		{
+			System.out.println(ex);
+			Assert.assertTrue(ex.getMessage().equals("No more syntax"));
+		};
+		
+		leave();
+	};
+	
+	
+	@Test public void testAlternate_firstCatches()throws IOException
+	{
+		enter();
+		/*
+			In this test we define a single required alternate with 
+			single syntax element in each alternative
+		*/
+		
+		DUT d = new DUT();
+		DUT.CCountingStateHandler [] alts = new DUT.CCountingStateHandler []
+		{
+			d.new  CRecognized(3),
+			d.new  CNotRecognized(),
+			d.new  CNotRecognized()
+		};
+		
+		d.pushStateHandler(d.new CCannotReadHandler("No more syntax"));
+		d.pushStateHandler(			
+						d.new CAlterinativeHandler( alts)
+						);
+		d.toNextChar();
+		Assert.assertTrue(alts[0].calls == 1);
+		Assert.assertTrue(alts[1].calls == 0);//not tried those
+		Assert.assertTrue(alts[2].calls == 0);
+		d.toNextChar(); d.toNextChar();
+		Assert.assertTrue(alts[0].calls == 3);
+		Assert.assertTrue(alts[1].calls == 0);//not tried those
+		Assert.assertTrue(alts[2].calls == 0);
+		try{
+			d.toNextChar();
+			Assert.fail();
+		}catch(EBrokenFormat ex)
+		{
+			System.out.println(ex);
+			Assert.assertTrue(ex.getMessage().equals("No more syntax"));
+		};
+		
+		leave();
+	};
+	@Test public void testAlternate_thirdCatches()throws IOException
+	{
+		enter();
+		/*
+			In this test we define a single required alternate with 
+			single syntax element in each alternative
+		*/
+		
+		DUT d = new DUT();
+		DUT.CCountingStateHandler [] alts = new DUT.CCountingStateHandler []
+		{
+			d.new  CNotRecognized(),
+			d.new  CNotRecognized(),
+			d.new  CRecognized(3)
+		};
+		
+		d.pushStateHandler(d.new CCannotReadHandler("No more syntax"));
+		d.pushStateHandler(			
+						d.new CAlterinativeHandler( alts)
+						);
+		d.toNextChar();
+		Assert.assertTrue(alts[0].calls == 1);//tried all
+		Assert.assertTrue(alts[1].calls == 1); 
+		Assert.assertTrue(alts[2].calls == 1);
+		d.toNextChar(); d.toNextChar();
+		Assert.assertTrue(alts[0].calls == 1);
+		Assert.assertTrue(alts[1].calls == 1);
+		Assert.assertTrue(alts[2].calls == 3);
+		try{
+			d.toNextChar();
+			Assert.fail();
+		}catch(EBrokenFormat ex)
+		{
+			System.out.println(ex);
+			Assert.assertTrue(ex.getMessage().equals("No more syntax"));
+		};
+		
+		leave();
+	};
+	
+	@Test public void testAlternate_none_but_requried()throws IOException
+	{
+		enter();
+		/*
+			In this test we define a single required alternate with 
+			single syntax element in each alternative. We require it
+			to be present, but none of alternatives matches.
+		*/
+		
+		DUT d = new DUT();
+		DUT.CCountingStateHandler [] alts = new DUT.CCountingStateHandler []
+		{
+			d.new  CNotRecognized(),
+			d.new  CNotRecognized(),
+			d.new  CNotRecognized()
+		};
+		
+		d.pushStateHandler(d.new CCannotReadHandler("No more syntax"));
+		d.pushStateHandler(			
+						d.new CRequiredHandler(d.new CAlterinativeHandler( alts),"U")
+						);
+		
+		try{
+			d.toNextChar();
+			Assert.fail();
+		}catch(EBrokenFormat ex)
+		{
+			System.out.println(ex);
+			Assert.assertTrue(ex.getMessage().equals("U"));
+		};
+		
+		leave();
+	};
 };

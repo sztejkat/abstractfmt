@@ -29,7 +29,128 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase0<ATxtReadF
 						return r;
 					};
 				};
+				/** A handler which requires specific raw character 
+				and reports it as VOID */
+				private abstract class ARequiresSpecificCharHandler extends AStateHandler
+				{
+							private final AStateHandler next;
+					/** Creates
+					@param next next handler to set or null to pop state handler */
+					protected ARequiresSpecificCharHandler(AStateHandler next)
+					{
+						this.required = required;
+						this.next = next;
+					};
+					protected abstract boolean isRequiredChar(char c); 
+					protected void toNextChar()throws IOException
+					{
+						int r = read();
+						if (r!=-1)
+						{
+							char c = (char)r;
+							if (!isRequiredChar(c)) throw new EBrokenFormat("expected unexpected \'"+c+"\'");
+							queueSyntax(c,TIntermediateSyntax.VOID);
+							if (next==null)
+								popStateHandler();
+							else
+								setStateHandler(next);
+						};
+					};
+				};
 				
+				/** A handler which requires specific raw character 
+				and reports it as VOID */
+				private class CRequiresSpecificCharHandler extends ARequiresSpecificCharHandler
+				{
+							private final char required;
+					/** Creates
+					@param required required character
+					@param next next handler to set or null to pop state handler */
+					protected CRequiresSpecificCharHandler(char required, AStateHandler next)
+					{
+						super(next);
+						this.required = required;
+					};
+					@Override protected boolean isRequiredChar(char c){ return c==required; };
+				};
+				/** A handler which requires XML whitespace 
+				and reports it as VOID */
+				private class CRequiresWhitespaceHandler extends ARequiresSpecificCharHandler
+				{
+							private final char required;
+					/** Creates
+					@param required required character
+					@param next next handler to set or null to pop state handler */
+					protected CRequiresWhitespaceHandler(AStateHandler next)
+					{
+						super(next);
+					};
+					@Override protected boolean isRequiredChar(char c){ return classifier.isXMLSpace(c); };
+				};
+					/** A handler which skips characters till it consume a required one 
+				and reports all as VOID */
+				private abstract class ASkipToRequiredCharHandler extends AStateHandler
+				{
+							private final AStateHandler next;
+					/** Creates
+					@param next next handler to set or null to pop state handler */
+					protected ASkipToRequiredCharHandler(AStateHandler next)
+					{
+						this.next = next;
+					};
+					protected abstract boolean isRequiredChar(char c); 
+					protected void toNextChar()throws IOException
+					{
+						int r = read();
+						if (r!=-1)
+						{
+							char c = (char)r;
+							queueSyntax(c,TIntermediateSyntax.VOID);
+							if (isRequiredChar(c))
+							{
+								if (next==null)
+									popStateHandler();
+								else
+									setStateHandler(next);
+							};
+						};
+					};
+				};
+				/** A class which skips what is left in element declaration, that is everything till the
+				&gt;.*/
+				private class CSkipElement extends ASkipToRequiredCharHandler
+				{
+						/** Creates
+						@param next next handler to set or null to pop state handler */
+						protected CSkipElement(AStateHandler next){ super('>'); };	
+				};
+				
+				/**
+					A handler which is "alterantive", that is expressed in BNF syntax by <i>someting | something </i>.
+				*/
+				private abstract class AAltHandler extends AStateHandler
+				{
+								private final AStateHandler [] alternatives;
+								private AStateHandler active;
+								
+					/** Is supposed to check character and recon if handler is
+					supposed to process the content, that is it  do appear 
+					in text.
+					@return true if it stays, false if it does not appear and {@link #next}
+							should be immediately used to process it and become current. 
+							If false character should be un-read and no syntax should be queued.
+					*/
+					protected abstract boolean nextCharOpt()throws IOException;
+					
+					protected final void nextChar()throws IOException
+					{
+						if (!nextCharOpt())
+						{
+							setStateHandler(next);
+							next.nextChar();
+						};
+					};
+				};
 				/* ************************************************************************
 				
 						Implement XML "by the book" 
@@ -39,11 +160,22 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase0<ATxtReadF
 				/*
 					Document:
 					document	   ::=   	( prolog element Misc* ) - ( Char* RestrictedChar Char* ) 
+						prolog	   ::=   	XMLDecl? Misc* (doctypedecl Misc*)?
+						XMLDecl	   ::=   	'<?xml' VersionInfo EncodingDecl? SDDecl? S? '?>'
+				*/
+				private final XMLDECL_SKIP = new CSkipElement(XML_ELEMENT_LOOKUP);
+				private final XMLDECL_5 = new CRequiresWhitespaceHandler(XMLDECL_SKIP);
+				private final XMLDECL_4 = new CRequiresSpecificCharHandler('l',XMLDECL_5);
+				private final XMLDECL_3 = new CRequiresSpecificCharHandler('m',XMLDECL_4);
+				private final XMLDECL_2 = new CRequiresSpecificCharHandler('x',XMLDECL_3);
+				private final XMLDECL_1 = new CRequiresSpecificCharHandler('?',XMLDECL_2);
+				private final XMLDECL_0 = new CRequiresSpecificCharHandler('<',XMLDECL_1);
+				/* 
+					element	   ::=   	EmptyElemTag
+										| STag content ETag 
+					EmptyElemTag	   ::=   	'<' Name (S Attribute)* S? '/>'
 				*/
 				
-			
-	
-	
 				/** An un-escaping engine */
 				private final AXMLUnescapingEngine unescaper = new AXMLUnescapingEngine()
 				{
