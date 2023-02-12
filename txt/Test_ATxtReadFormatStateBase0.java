@@ -85,6 +85,7 @@ public class Test_ATxtReadFormatStateBase0 extends ATest
 						};
 					};
 					
+					
 					final H H1   = new H(1,ATxtReadFormat1.TIntermediateSyntax.VOID);
 					final H Heof = new H(-1,null);
 					final Hqueues Hqueues2 = new Hqueues(
@@ -287,5 +288,8 @@ public class Test_ATxtReadFormatStateBase0 extends ATest
 			Assert.assertTrue(d.H1.calls==1);
 		leave();
 	};
+	
+	
+	
 	
 };

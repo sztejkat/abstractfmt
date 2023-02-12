@@ -29,6 +29,26 @@ import java.io.IOException;
 			</ul>
 		</li>
 	</ul>
+	
+	<h1>Syntax definition with handlers</h1>
+	Except of what is specified above the syntax may be defined
+	with the help of {@link COptionalHandler},
+	{@link CRequiredHandler},{@link CAlterinativeHandler},
+	{@link CNextHandler}, {@link CRepeatHandler}.
+	<p>
+	All those handlers do delegate job tu sub-handlers and use folowing convention:
+	<ul>
+		<li>if they delegate a job to other handler they will always
+		make them current;</li>
+		<li>if handler does not regonize a syntax it should
+		un-read everything, NOT call {@link #queueNextChar}/{@link #setNextChar}
+		and {@link #popStateHandler};
+		</li>
+		<li>if handler do process element it should call {@link #queueNextChar}/{@link #setNextChar}
+		an stay current;</li>
+		<li>if handler does completes processing of its syntax element
+		it should call {@link #popStateHandler};</li>
+	</ul>
 */
 public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.ISyntax> 
 						extends ATxtReadFormat1<TSyntax>
@@ -52,7 +72,11 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 				If after return from this method syntax queue is empty
 				the {@link ATxtReadFormatStateBase0#toNextChar}
 				will invoke again this method of currently active handler.
-				
+				<p>
+				This can be used to implement alternatives o optinal elements
+				since this method is called only when {@link #syntaxQueueEmpty}
+				gives true.
+			
 				@throws IOException if failed.
 				@see ATxtReadFormatStateBase0#queueNextChar
 				@see ATxtReadFormatStateBase0#pushStateHandler
@@ -65,6 +89,240 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 				/** Invoked when is no longer current. Default is empty. */
 				protected void onLeave(){};
 			};
+			
+			
+			/**
+				A handler which always throws informing that nothing can be read
+				anymore. This should be first handler pushed on syntax stack
+				or You may expect {@link NoSuchElementException} to be thrown
+				by various handlers.
+			*/
+			protected final class CCannotReadHandler extends AStateHandler
+			{
+							/** An error message if not found */
+							private final String message;
+				/** Creates.	
+				@param message an error message to be thrown if element is
+							not recognized.
+				*/
+				protected CCannotReadHandler(String message)
+				{
+					assert(message!=null);
+					this.message = message;
+				};
+				protected final void toNextChar()throws IOException
+				{
+					if (TRACE) TOUT.println("CCannotReadHandler.toNextChar()");
+					throw new EBrokenFormat(message);
+				};
+			};
+			
+			
+			/**
+				A handler which do require certain syntax element to appear exactly one time.
+			*/
+			protected final class CRequiredHandler extends AStateHandler
+			{
+							/** Current handler */
+							private AStateHandler required;
+							/** An error message if not found */
+							private final String message;
+				/** Creates.					
+				@param required non null, an element which must recognize
+							a syntax or an exception will be thrown.
+				@param message an error message to be thrown if element is
+							not recognized.
+				*/
+				protected CRequiredHandler(AStateHandler required, String message)
+				{
+					assert(required!=null);
+					assert(message!=null);
+					this.required = required;
+					this.message = message;
+				};
+				/** Creates, forming default message from <code>required.toString</code>				
+				@param required non null, an element which must recognize
+							a syntax or an exception will be thrown.
+				*/
+				protected CRequiredHandler(AStateHandler required)
+				{
+					this(required,"Required element "+required+"  not found");
+				};
+				protected final void toNextChar()throws IOException
+				{
+					if (TRACE) TOUT.println("CRequiredHandler.toNextChar() ENTER");
+					//make it current, replacing ourselves.
+					setStateHandler(required);
+					//call to be sure, that syntax element is recognized.
+					if (TRACE) TOUT.println("CRequiredHandler.toNextChar()->"+required);
+					required.toNextChar();
+					if (syntaxQueueEmpty())
+					{
+						throw new EBrokenFormat(message);
+					};
+					if (TRACE) TOUT.println("CRequiredHandler.toNextChar() LEAVE");
+				};
+			};
+			
+			/**
+				A handler which can be used to implement repetition
+				of certain element.
+			*/
+			protected final class CRepeatHandler extends AStateHandler
+			{
+							/** Current handler */
+							private final AStateHandler repeat;
+				/** Creates.					
+				@param repeat non null a "current handler" which recognizes  
+								single occurence of syntax element.
+				*/
+				protected CRepeatHandler(AStateHandler repeat )
+				{
+					assert(repeat!=null);
+					this.repeat = repeat;
+				};
+				protected final void toNextChar()throws IOException
+				{
+					if (TRACE) TOUT.println("CRepeatHandler.next() ENTER");
+					//Push it and make current
+					pushStateHandler(repeat);
+					//call to be sure, that syntax element is recognized.
+					repeat.toNextChar();
+					if (syntaxQueueEmpty())
+					{
+						//we failed to recognize it.
+						assert(getStateHandler()==this);
+						popStateHandler();
+						if (TRACE) TOUT.println("CRepeatHandler.next() not repeating anymore");
+					};
+					if (TRACE) TOUT.println("CRepeatHandler.next() LEAVE");
+				};
+			};
+			
+			/**
+				A handler which can be used to implement "optional" syntax elemement
+				with a regular element handler.
+			*/
+			protected final class COptionalHandler extends AStateHandler
+			{
+							/** Should become current if {@link #optional} does not recognize a syntax */
+							private final AStateHandler next;
+							/** Will be used to regonize syntax */
+							private final AStateHandler optional;
+				/** Creates.					
+				@param optional non null. If this handler does not recognize any syntax 
+							({@link #syntaxQueueEmpty} gives true) the {@link #next} is set
+							as current and tried. If {@link #next} also fails {@link #popStateHandler}
+							is called.
+				@param next non null.
+				*/
+				protected COptionalHandler(AStateHandler optional, AStateHandler next)
+				{
+					assert(optional!=null);
+					assert(next!=null);
+					this.next = next;
+					this.optional = optional;
+				};
+				protected final void toNextChar()throws IOException
+				{
+					//replace self with next
+					setStateHandler(next);
+					//Make optional current
+					pushStateHandler(optional);
+					optional.toNextChar();
+					if (syntaxQueueEmpty())
+					{
+						assert(getStateHandler()==next);
+						//try next
+						next.toNextChar();
+					};
+				};
+			};
+			
+			/**
+				A handler which can be used to implement "alternative" syntax elemements
+				by a regular element handler.
+			*/
+			protected final class CAlterinativeHandler extends AStateHandler
+			{
+							/** Set of alternatives, tried in order of appearance*/
+							private final AStateHandler  [] alternatives;
+				/** Creates.					
+				@param alternatives non null, cannot carry nulls.
+							Handlers in this array are tried one by one,
+							until a handler which recognize syntax 
+							({@link #syntaxQueueEmpty} gives false) is found. This
+							handler is becoming current handler.
+							If none produced any syntax {@link #popStateHandler} is called.
+				*/
+				protected CAlterinativeHandler(AStateHandler  [] alternatives)
+				{
+					assert(alternatives!=null);
+					this.alternatives = alternatives;
+				};
+				protected final void toNextChar()throws IOException
+				{
+					for(AStateHandler H : alternatives)
+					{
+						pushStateHandler(H);
+						H.toNextChar();
+						if (!syntaxQueueEmpty())
+						{
+							return;
+						}else
+						{
+							assert(getStateHandler()==this);
+						};
+					}
+					assert(getStateHandler()==this);
+					popStateHandler();
+				};
+			};
+			
+			/**
+				A handler which can be used to implement sequence of
+				required elements.
+			*/
+			protected final class CNextHandler extends AStateHandler
+			{
+							/** Current handler */
+							private final AStateHandler current;
+							/** Next handler */
+							private final AStateHandler next;
+				/** Creates.					
+				@param current non null a "current handler" which implements 
+								first element in this chain.
+								<p>
+								This handler is expected to call {@link #popStateHandler}
+								once it completes its job.
+				@param next non null, next state handler. Will become current after
+								<code>current</code> detects that there is nothing more 
+								to do.
+				*/
+				protected CNextHandler(AStateHandler current, AStateHandler next )
+				{
+					assert(current!=null);
+					assert(next!=null);
+					this.current = current;
+					this.next = next;
+				};
+				protected final void toNextChar()throws IOException
+				{
+					if (TRACE) TOUT.println("CNextHandler.toNextChar() ENTER");
+					//prepare the processing chain, replacing self
+					setStateHandler(next);
+					//Make current "current"
+					pushStateHandler(current);
+					//ask it to be run. This allows chains to be efficiently 
+					//used in in optional/alternative because it will detect the syntax.
+					current.toNextChar();
+					if (TRACE) TOUT.println("CNextHandler.toNextChar() LEAVE");
+				};
+			};
+			
+			
+			
+			
 				/** Lazy initialized handler stack */
 				private CBoundStack<AStateHandler> states;
 				/** A current handler */
@@ -133,7 +391,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 	{
 		return current;
 	};
-	/** Sets state handler
+	/** Sets state handler, invokes {@link AStateHandler#onLeave}/{@link AStateHandler#onEnter}
 	@param h can be null only when closing.
 	*/
 	protected void setStateHandler(AStateHandler h)
@@ -144,7 +402,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 		if (this.current!=null) this.current.onEnter();
 	};
 	/** Pushes current state handler (if not null) on stack and
-	makes h current
+	makes h current, invokes {@link AStateHandler#onLeave}/{@link AStateHandler#onEnter}
 	@param h non null.
 	@throws EFormatBoundaryExceeded if exceeded {@link #setHandlerStackLimit}
 	*/
@@ -161,7 +419,8 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 		current = h;
 		if (this.current!=null) this.current.onEnter();
 	};
-	/** Pops state handler from a stack and makes it current 
+	/** Pops state handler from a stack and makes it current,
+	invokes {@link AStateHandler#onLeave}/{@link AStateHandler#onEnter}
 	@throws NoSuchElementException if stack is empty */
 	protected void popStateHandler()
 	{
@@ -193,9 +452,11 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 	/* -----------------------------------------------------------------
 				toNextCharRelated
 	-----------------------------------------------------------------*/
-	/** Tests if syntax queue is empty 
+	/** Tests if syntax queue is empty. Can
+	be used to test if handler did recognize the
+	syntax element or not. 
 	@return true if empty*/
-	private boolean syntaxQueueEmpty()
+	protected final boolean syntaxQueueEmpty()
 	{
 		return next_queue_rptr==next_queue_wptr;
 	};
@@ -296,11 +557,14 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 			ATxtReadFormat1
 			
 	*******************************************************************/
+	/** Makes in loop attempt to ask <code>{@link #current}.toNextChar</code>
+	to produce someting in syntax queue. */
 	@Override protected final void toNextChar()throws IOException
 	{
 		assert(current!=null):"state handler not initialized. Call setStateHandler()";
 		//Now first call may be with an empty, but subsequent needs to 
 		//drop what is in queue and eventually update.
+		if (DUMP) TOUT.println("toNextChar() ENTER");
 		if (!syntaxQueueEmpty())
 					dropQueueSyntax();
 		//Now test again and produce eventually new data.
@@ -309,6 +573,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 			if (DUMP) TOUT.println("toNextChar()->"+current);
 			current.toNextChar();
 		}
+		if (DUMP) TOUT.println("toNextChar() LEAVE");
 	};
 	@SuppressWarnings("unchecked")
 	@Override protected final TSyntax getNextSyntaxElement()
