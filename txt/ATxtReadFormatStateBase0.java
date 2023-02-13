@@ -335,8 +335,20 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 			{
 							/** Set of alternatives, tried in order of appearance*/
 							private final AStateHandler  [] alternatives;
+							
+				/*
+					Design notes:
+					
+						The AStateHandler is seen as a generic class, even tough it
+						is not using any parameters. To void generic array creation
+						use
+						
+						new ATxtReadFormatStateBase0.AStateHandler [] {....}
+						
+						and suppress warnings.
+				*/
 				/** Creates.					
-				@param alternatives non null, cannot carry nulls.
+				@param alternatives array form can't be null, cannot carry nulls.
 							Handlers in this array are tried one by one, in order of appearance,
 							until a handler which recognize syntax 
 							({@link #syntaxQueueEmpty} gives false) is found. This
@@ -345,7 +357,9 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 							<p>
 							This array is taken, not copied.
 				*/
-				protected CAlterinativeHandler(AStateHandler  [] alternatives)
+				@SafeVarargs 
+				@SuppressWarnings("varargs")
+				protected CAlterinativeHandler(AStateHandler... alternatives)
 				{
 					assert(alternatives!=null);
 					this.alternatives = alternatives;
@@ -551,7 +565,8 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 			};
 			
 			/** A "catch phrase" state which collects some characters during "recognition phase"
-			and tests them against a "catch phrase".
+			and tests them against a "catch phrase". The catch phrase is consumed
+			and {@link #onCatchPhraseCompleted} is called.
 			*/
 			protected abstract class ACatchPhrase extends AConsumingHandler
 			{		
@@ -675,6 +690,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 					};
 			};
 			
+			
 				/** Lazy initialized handler stack */
 				private CBoundStack<AStateHandler> states;
 				/** A current handler */
@@ -729,6 +745,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 		super( name_registry_capacity,token_size_limit);
 		if (TRACE) TOUT.println("new ATxtReadFormatStateBase0()");
 	};
+	
 	/* *****************************************************************
 	
 			Services for subclasses
