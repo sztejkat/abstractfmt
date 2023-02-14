@@ -16,9 +16,37 @@ public class Test_ATxtReadFormatStateBase0 extends ATest
 					{		
 							public int enters;
 							public int leaves;
+							public int activated;
+							public int deactivated;
 							
-						@Override protected void onEnter(){ enters++; };
-						@Override protected void onLeave(){ leaves++;};
+						@Override protected void onEnter()
+						{
+							super.onEnter();
+							Assert.assertTrue(activated==deactivated);//must be inactive
+							enters++; 
+						};
+						@Override protected void onLeave()
+						{ 
+							super.onLeave();
+							Assert.assertTrue(activated==deactivated);//must be inactive							
+							leaves++;
+							Assert.assertTrue(enters==leaves);
+						};
+						@Override protected void onActivated()
+						{
+							super.onActivated();
+							Assert.assertTrue(enters>leaves); //must be entered
+							Assert.assertTrue(activated==deactivated);//must be inactive
+							activated++; 
+						};
+						@Override protected void onDeactivated()
+						{
+							super.onDeactivated();
+							Assert.assertTrue(enters>leaves); //must be entered
+							Assert.assertTrue(activated>deactivated);//must be active
+							deactivated++;
+							Assert.assertTrue(activated==deactivated);//must be inactive
+						};
 					};
 					class H extends ACountingStateHandler
 					{
@@ -153,20 +181,42 @@ public class Test_ATxtReadFormatStateBase0 extends ATest
 			d.pushStateHandler(d.H1);
 				Assert.assertTrue(d.H1.enters==1);
 				Assert.assertTrue(d.H1.leaves==0);
+				Assert.assertTrue(d.H1.activated==1);
+				Assert.assertTrue(d.H1.deactivated==0);
 			d.pushStateHandler(d.Heof);
 				Assert.assertTrue(d.H1.enters==1);
-				Assert.assertTrue(d.H1.leaves==1);
+				Assert.assertTrue(d.H1.leaves==0);
+				Assert.assertTrue(d.H1.activated==1);
+				Assert.assertTrue(d.H1.deactivated==1);
 				
 				Assert.assertTrue(d.Heof.enters==1);
 				Assert.assertTrue(d.Heof.leaves==0);
+				Assert.assertTrue(d.Heof.activated==1);
+				Assert.assertTrue(d.Heof.deactivated==0);
 				
 			d.popStateHandler();
 			
-				Assert.assertTrue(d.H1.enters==2);
-				Assert.assertTrue(d.H1.leaves==1);
+				Assert.assertTrue(d.H1.enters==1);
+				Assert.assertTrue(d.H1.leaves==0);
+				Assert.assertTrue(d.H1.activated==2);
+				Assert.assertTrue(d.H1.deactivated==1);
 				
 				Assert.assertTrue(d.Heof.enters==1);
 				Assert.assertTrue(d.Heof.leaves==1);
+				Assert.assertTrue(d.Heof.activated==1);
+				Assert.assertTrue(d.Heof.deactivated==1);
+				
+			d.setStateHandler(d.Heof);
+			
+				Assert.assertTrue(d.Heof.enters==2);
+				Assert.assertTrue(d.Heof.leaves==1);
+				Assert.assertTrue(d.Heof.activated==2);
+				Assert.assertTrue(d.Heof.deactivated==1);
+				
+				Assert.assertTrue(d.H1.enters==1);
+				Assert.assertTrue(d.H1.leaves==1);
+				Assert.assertTrue(d.H1.activated==2);
+				Assert.assertTrue(d.H1.deactivated==2);
 			
 		leave();
 	};

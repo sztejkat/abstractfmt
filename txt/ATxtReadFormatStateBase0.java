@@ -7,9 +7,9 @@ import java.util.NoSuchElementException;
 import java.io.IOException;
 
 /**
-	A state based, handler organized text parsing.
+	A "state graph" based parser.
 	
-	<h1>State handler</h1>
+	<h1>State graph</h1>
 	This class assumes that threre is a certain "state graph" represented by a graph
 	of instances of {@link ATxtReadFormatStateBase0.AStateHandler} class.
 	<p>
@@ -31,63 +31,34 @@ import java.io.IOException;
 		</li>
 	</ul>
 	
-	<h1>Syntax definition with handlers</h1>
-	Except of what is specified above the syntax may be defined
-	with the help of "control handlers": 
-	{@link CCannotReadHandler}, {@link CRequiredHandler},
-	{@link CRepeatHandler},{@link COptionalHandler},
-	{@link CAlterinativeHandler}, {@link CNextHandler} and 
-	"catch handlers":
+	<h2>Extended state handler</h2>
+	 A basic state handler is {@link ATxtReadFormatStateBase0.AStateHandler}.
+	 You can do absolutely anything with it.
+	 <p>
+	 You will however find it a bit tricky to express the syntax using just this class 
+	 alone. You need a bit more helpfull framework.
+	 <p>
+	 This framework is defined for You by {@link ATxtReadFormatStateBase0.ASyntaxHandler}
 	
 	
-	<h2>Control handlers</h2>
-	All those handlers do delegate job to delegate-handlers and use folowing convention:
-	<ul>
-		<li>delegate handlers:
-			<ul>
-				<li>whenever delegate {@link AStateHandler#toNextChar} is called 
-				it may assuem it is the current handler;</li>
-				<li>the delegate handler does not decide about state transition,
-				except inside it's own sub-set of states. All the syntax state
-				transition is controlled by <i>control handlers</i>;</li>
-				<li>first call to delegate {@link AStateHandler#toNextChar} 
-				after {@link AStateHandler#onEnter} is the "recognition"
-				call. The recognition process must complete in first call even
-				if it requires more than one character to be processed.
-				<p>
-				If delegate does recognize that what is in stream is its own syntax 
-				it calls {@link #queueNextChar} to indicate that it recognized a syntax.
-				<p>
-				If it does not recognize own syntax element it doesn't queue anything,
-				unread all read characters and calls {@link #popStateHandler};
-				</li>
-				<li>during subsequent calls, called "consumption" phase,
-				it invokes {@link #queueNextChar} to indicate what it is processing
-				and invokes {@link #popStateHandler} when it finished processing the element.
-				</li>
-			</ul>
-		</li>
-		<li>control handlers:
-			<ul>
-				<li>a control handler always makes delegate current and performs
-					the "recognition" call inside own {@link AStateHandler#toNextChar};</li>
-				<li>if delegate did not recognize syntax element control handler
-					acts accordingly to own definition. The action may be:
-					<ul>
-						<li>throw if this is a "required" syntax element;</li>
-						<li>try other alternative;</li>
-						<li>skip to next element;</li>
-					</ul>
-				</li>
-				<li>control handler which did it's job is removed from stack;</li>
-			</ul>
-		</li>
-	</ul>
-	
-	<h2>Catch handlers</h2>
-	Those handlers are expected to be enclosed in "control handlers" 
-	and serves just one purpose: to consume up to some limit of characters
-	and test if they do match the requested text.
+	<h1>State graph is not grammar</h1>
+	There is one significant difference between "state graph" and "grammar" approach.
+	<p>
+	The state graph is a direct method where the parser is at certain "state" and with each
+	character processed it decides wheter to stay in that state or transit to another state.
+	The side effect of this decission is producing {@link #queueNextChar}.
+	<p>
+	The "grammar" approach is different - the parser has been given a certain grammar,
+	"makes" the attempt to match it with input and the result of that "match" triggers 
+	some action.
+	<p>
+	The first problem with "grammar" apprach is, that to match a complex grammar it must consume
+	a lot of input data, roll back if fails to match and try an another path. Grammar is excellent
+	when performing a "callback" based processing. 
+	<p>
+	The second problem with "grammar" is that to match something to a definition it must consume
+	it. At least in most generic approach. It will be then problematic to handle elements of
+	infinite length as we require it to be able to handle.
 */
 public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.ISyntax> 
 						extends ATxtReadFormat1<TSyntax>
@@ -132,564 +103,122 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 				@see ATxtReadFormatStateBase0#setStateHandler
 				*/
 				protected abstract void toNextChar()throws IOException;
-				/** Invoked when state becomes current. Default is empty. */
-				protected void onEnter(){};
-				/** Invoked when is no longer current. Default is empty. */
-				protected void onLeave(){};
-			};
-			
-			/* ------------------------------------------------------------------------
-			
-         				Control state handlers
-         				
-         	------------------------------------------------------------------------*/
-			/**
-				A control handler which always throws informing that nothing can be read
-				anymore. 
+				/** Invoked when state is "entered". Default implementation logs trace.
 				<p>
-				This should be first handler pushed on syntax stack	or You may
-				expect {@link NoSuchElementException} to be thrown by various handlers.
-			*/
-			protected final class CCannotReadHandler extends AStateHandler
-			{
-							/** An error message if not found */
-							private final String message;
-				/** Creates.	
-				@param message an error message to be thrown if element is
-							not recognized.
-				*/
-				protected CCannotReadHandler(String message)
+				State is "entered" when it is either replacing current
+				state with {@link #setStateHandler} or is pushed on top
+				of current state with {@link #pushStateHandler}. */
+				protected void onEnter()
 				{
-					assert(message!=null);
-					this.message = message;
+					if (TRACE) TOUT.println("entered "+this.getClass().getSimpleName());
 				};
-				/** Always throws */
-				@Override protected final void toNextChar()throws IOException
+				/** Invoked when is "left". Default implementation logs trace.
+				<p>
+				State is "left" when is it replaced by an
+				another state with {@link #setStateHandler} or removed
+				from stack by {@link #popStateHandler}.
+				*/
+				protected void onLeave()
 				{
-					if (TRACE) TOUT.println("CCannotReadHandler.toNextChar()");
-					assert( getStateHandler()==this);
-					throw new EBrokenFormat(message);
+					if (TRACE) TOUT.println("left "+this.getClass().getSimpleName());
+				};
+				/** Invoked when state is "activated" (becomes current). Default implementation logs trace.
+				<p>
+				State is "activated" after it is "entered". Activation happens
+				if state replaces preivously active state with {@link #setStateHandler},
+				is pushed on stack with {@link #pushStateHandler} <u>or</u> returns 
+				to the top of stack as a side effect of {@link #popStateHandler} */
+				protected void onActivated()
+				{
+					if (TRACE) TOUT.println("activated "+this.getClass().getSimpleName());
+				};
+				/** Invoked when state is "de-activated" (no longer current). Default implementation logs trace.
+				<p>
+				State is "de-activated" after it is "entered" and before it is "left".
+				Deactivation happens if state is replaced with {@link #setStateHandler}
+				or an another state is pushed over it with {@link #pushStateHandler}.
+				*/
+				protected void onDeactivated()
+				{
+					if (TRACE) TOUT.println("deactivated "+this.getClass().getSimpleName());
 				};
 			};
-			
-			
-			/**
-				A control handler which do require certain syntax element to appear exactly one time.
-			*/
-			protected final class CRequiredHandler extends AStateHandler
+			/* ------------------------------------------------------------------------
+         				Syntax
+         	------------------------------------------------------------------------*/
+         	/**
+         		A syntax state handler.
+         		<p>
+         		This handler defines a basic framework focused around a concept that
+         		each state must be able to perform following actions:
+         		<ul>
+         			<li>to become activated by transition from an another state.
+         			This is handled by {@link #onEnter}+{@link #onActivated};</li>
+         			<li>to become hidden by pushing an another state.
+         			This is handled by {@link #onDeactivated};</li>
+         			<li>to become active again by removing pushed state.
+         			This is handled by {@link #onActivated};</li>
+         			<li>to be left by transtion to an another state.
+         			This is handled by {@link #onDeactived}+{@link #onLeft};</li>
+         		</ul>
+         		When state is "active" it is receving calls to {@link #toNextChar}
+         		and must decide if and in what condition to transit to another state.
+         		<p>
+         		We may say, that we have two kinds of states:
+         		<ul>
+         			<li>"consumers" which do process characters in {@link #toNextChar}
+         			and once they detect that all is processed do either {@link #popStateHandler}
+         			(if they do not know what state is next)
+         			or {@link #setStateHandler} (if they now what state is next);</li>
+         			<li>"catchers" which instead of processing characters actively look
+         			for answer to the question which state should be entered next;</li>
+         		</ul>
+         		
+         		<h2>Consumers</h2>
+         		Consumers concept is fully handler by a superclass. Nothing special 
+         		to add here.
+         			
+         		<h2>Catchers</h2>
+         		Catchers will usually read some characters and match them with "catch phrases"
+         		of subsequent states. For an example XML catcher may react on "&lt;" to transit
+         		to "XML element" state.
+         		<p>
+         		The process of "catching" the phrase is trivial for single character phrases,
+         		but may be significantly complex and messy for multi-character phrases and will
+         		require own state graph to handle different lengths of phrases.
+         		<p>
+         		To make things easier we define one additional action:
+         		<ul>
+         			<li>{@link #tryEnter} which is responsible for detecting if the cursor
+         			in stream is at the location in which the state should be entered;</li>
+         		</ul>
+         		With that the "catcher" can be just:
+         		<pre>
+         			if (!X.tryEnter()) if (!Y.tryEnter()) nothing_catched;
+         		</pre>
+         	*/
+			protected abstract class ASyntaxHandler extends AStateHandler
 			{
-							/** Current handler */
-							private AStateHandler required;
-							/** An error message if not found */
-							private final String message;
-				/** Creates.					
-				@param required non null, an element which must recognize
-							a syntax or an exception will be thrown.
-				@param message an error message to be thrown if element is
-							not recognized.
-				*/
-				protected CRequiredHandler(AStateHandler required, String message)
-				{
-					assert(required!=null);
-					assert(message!=null);
-					this.required = required;
-					this.message = message;
-				};
-				/** Creates, forming default message from <code>required.toString</code>				
-				@param required non null, an element which must recognize
-							a syntax or an exception will be thrown.
-				*/
-				protected CRequiredHandler(AStateHandler required)
-				{
-					this(required,"Required element "+required+"  not found");
-				};
-				@Override protected final void toNextChar()throws IOException
-				{
-					if (TRACE) TOUT.println("CRequiredHandler.toNextChar() ENTER");
-					assert( getStateHandler()==this);
-					//make it current, replacing ourselves.
-					setStateHandler(required);
-					//run the recognition phase.
-					if (TRACE) TOUT.println("CRequiredHandler.toNextChar()->"+required);
-					required.toNextChar();
-					//Test if recognized?
-					if (syntaxQueueEmpty())
-					{
-						throw new EBrokenFormat(message);
-					};
-					if (TRACE) TOUT.println("CRequiredHandler.toNextChar() LEAVE");
-				};
-			};
-			
-			/**
-				A control handler which can be used to implement repetition
-				of certain element, from zero to infinite number of times.
-			*/
-			protected final class CRepeatHandler extends AStateHandler
-			{
-							/** Current handler */
-							private AStateHandler repeat;
-				/** Creates.					
-				@param repeat non null a "current handler" which recognizes  
-								single occurence of syntax element.
-				*/
-				protected CRepeatHandler(AStateHandler repeat )
-				{
-					assert(repeat!=null);
-					this.repeat = repeat;
-				};
-				/** Creates. You must call {@link #initialize} */
-				protected CRepeatHandler(){};
-				/** Initializes. Can be called only once  
-				@param repeat see constructor
-				*/
-				protected void initialize(AStateHandler repeat )
-				{
-					assert(repeat!=null);
-					this.repeat = repeat;
-				};
-				@Override protected final void toNextChar()throws IOException
-				{
-					if (TRACE) TOUT.println("CRepeatHandler.next() ENTER");
-					assert( repeat!=null ):"not initialized";
-					assert( getStateHandler()==this);
-					//Push delegate and make current
-					pushStateHandler(repeat);
-					//call to be sure, that syntax element is recognized.
-					repeat.toNextChar();
-					//Test if recognized?
-					if (syntaxQueueEmpty())
-					{
-						//we failed to recognize it.
-						assert(getStateHandler()==this);
-						//remove self from stack.
-						popStateHandler();
-						if (TRACE) TOUT.println("CRepeatHandler.next() not repeating anymore");
-					};
-					//else
-					//	- in this case repeat is current on stack, so we do not control
-					//	  it anymore.
-					if (TRACE) TOUT.println("CRepeatHandler.next() LEAVE");
-				};
-			};
-			
-			/**
-				A control handler which can be used to implement "optional" syntax elemement,
-				that is such which may appear zero or exactly one time.
-			*/
-			protected final class COptionalHandler extends AStateHandler
-			{
-							/** Will be used to regonize syntax */
-							private AStateHandler optional;
-				/** Creates.					
-				@param optional non null. If this handler does not recognize any syntax 
-							({@link #syntaxQueueEmpty} gives true) then this handler
-							is popped from a stack and top of stack is tried.
-				*/
-				protected COptionalHandler(AStateHandler optional)
-				{
-					assert(optional!=null);
-					this.optional = optional;
-				};
-				/** Creates. You must call {@link #initialize} */
-				protected COptionalHandler(){};
-				/** Initializes. Can be called only once  
-				@param optional see constructor
-				*/
-				protected void initialize(AStateHandler optional )
-				{
-					assert(optional!=null);
-					assert(this.optional==null):"already initialized";
-					this.optional = optional;
-				};
-				@Override protected final void toNextChar()throws IOException
-				{
-					if (TRACE) TOUT.println("COptionalHandler.toNextChar() ENTER");
-					assert( optional!=null ):"not initialized";
-					AStateHandler expected_if_not_recognized = null;
-					assert ( (expected_if_not_recognized = peekStateHandler())!=null ):"empty stack, it won't work";
-					assert( getStateHandler()==this);
-					//replace current with optional, so that if it finishes it moves to what
-					setStateHandler(optional);
-					//do recognition call
-					optional.toNextChar();
-					if (syntaxQueueEmpty())
-					{
-						if (TRACE) TOUT.println("COptionalHandler.toNextChar(), optional is not recognized");
-						//Not recognized. In this case optional already popped self from stack
-						assert( getStateHandler()==expected_if_not_recognized);
-						//Now what to do?
-						//If we just return we will inform a caller that we failed recognition
-						//while in fact next could be recognizing syntax.
-						getStateHandler().toNextChar();
-					};
-					if (TRACE) TOUT.println("COptionalHandler.toNextChar() LEAVE");
-				};
-			};
-			
-			/**
-				A control handler which can be used to implement "alternative" syntax elemements
-				by a regular element handler.
-			*/
-			protected final class CAlterinativeHandler extends AStateHandler
-			{
-							/** Set of alternatives, tried in order of appearance*/
-							private final AStateHandler  [] alternatives;
-							
-				/*
-					Design notes:
-					
-						The AStateHandler is seen as a generic class, even tough it
-						is not using any parameters. To void generic array creation
-						use
-						
-						new ATxtReadFormatStateBase0.AStateHandler [] {....}
-						
-						and suppress warnings.
-				*/
-				/** Creates.					
-				@param alternatives array form can't be null, cannot carry nulls.
-							Handlers in this array are tried one by one, in order of appearance,
-							until a handler which recognize syntax 
-							({@link #syntaxQueueEmpty} gives false) is found. This
-							handler is becoming current handler. If non recognized syntax
-							this control handler is removed from stack.
-							<p>
-							This array is taken, not copied.
-				*/
-				@SafeVarargs 
-				@SuppressWarnings("varargs")
-				protected CAlterinativeHandler(AStateHandler... alternatives)
-				{
-					assert(alternatives!=null);
-					this.alternatives = alternatives;
-				};
-				@Override protected final void toNextChar()throws IOException
-				{
-					if (TRACE) TOUT.println("CAlterinativeHandler.toNextChar() ENTER");
-					AStateHandler expected_if_not_recognized = null;
-					assert ( (expected_if_not_recognized = peekStateHandler())!=null ):"empty stack, it won't work";
-					assert( getStateHandler()==this);
-					//remove self.
-					popStateHandler();
-					//try-out all alternatives
-					for(AStateHandler H : alternatives)
-					{
-						//replace self with alternative?
-						if (TRACE) TOUT.println("CAlterinativeHandler.toNextChar() trying "+H);
-						pushStateHandler(H);
-						H.toNextChar();
-						if (!syntaxQueueEmpty())
+				/**
+					Tests if can enter a state and enters it.
+					<p>
+					This method basically does:
+					<pre>
+						...<i>read all characters necessary to say if should enter</i>
+						if (should enter)
 						{
-							//Alternative is recognized, let it be current and work.
-							if (TRACE) TOUT.println("CAlterinativeHandler.toNextChar(), alternative is recognized LEAVE");
-							return;
+							setStateHandler(this) <i>or</i> pushStateHandler(this);
+							return true;
 						}else
 						{
-							assert(getStateHandler()==expected_if_not_recognized);
-						};
-					}
-					//Now we inform caller that nothing is recognized.
-					assert(getStateHandler()==expected_if_not_recognized);
-					if (TRACE) TOUT.println("CAlterinativeHandler.toNextChar(), none of alternatives matched LEAVE");
-				};
-			};
-			
-			/**
-				A control handler which can be used to implement a chain of elements.
-			*/
-			protected final class CNextHandler extends AStateHandler
-			{
-							/** Current handler */
-							private AStateHandler first;
-							/** Next handler */
-							private AStateHandler next;
-				/** Creates.					
-				@param first non null a "current handler" which implements 
-								first element in this chain.
-				@param next non null, next state handler. Will become current after
-								<code>current</code> detects that there is nothing more 
-								to do.
-				*/
-				protected CNextHandler(AStateHandler first, AStateHandler next )
-				{
-					assert(first!=null);
-					assert(next!=null);
-					this.first = first;
-					this.next = next;
-				};
-				/** Creates. You must call {@link #initialize} */
-				protected CNextHandler(){};
-				/** Initializes. Can be called only once  
-				@param first see constructor
-				@param next --//--
-				*/
-				protected void initialize(AStateHandler first, AStateHandler next )
-				{
-					assert(first!=null);
-					assert(next!=null);
-					assert((this.first==null)&&(this.next==null)):"already initialized";
-					this.first = first;
-					this.next = next;
-				};
-				protected final void toNextChar()throws IOException
-				{
-					if (TRACE) TOUT.println("CNextHandler.toNextChar() ENTER");
-					assert( (first!=null)&&(next!=null)):"not initialized";
-					assert( getStateHandler()==this);
-					//replace self with next.
-					setStateHandler(next);
-					//Make current "current"
-					pushStateHandler(first);
-					//ask it to be run. 
-					first.toNextChar();
-					//No we have two possibilities: This element recognized syntax
-					// or it did not.
-					//If it did, we can safely return, because completion will move to next. 
-					//If however it did not we must consider what will the one who
-					//called us see? If we leave stack untouched the caller will see next
-					//and be confused.
-					if (syntaxQueueEmpty())
-					{
-						assert(getStateHandler()==next);
-						popStateHandler();
-						if (TRACE) TOUT.println("CNextHandler.toNextChar(), first failed to recognize sequence");
-					};
-					if (TRACE) TOUT.println("CNextHandler.toNextChar() LEAVE");
-				};
-			};
-			
-			
-			
-			
-			
-			/* -------------------------------------------------------------------
-			
-			
-						Catch handlers
-			
-			
-			
-			
-			-------------------------------------------------------------------*/
-			/** Base for catch handlers and handlers which do consume some text */
-			protected abstract class AConsumingHandler extends AStateHandler
-			{
-							/** A collection buffer. Persistent instance. */
-							protected final StringBuilder collected = new StringBuilder();
-							
-				/* ***********************************************************
-				
-							Services required from subclasses.
-				
-				************************************************************/
-				/** Reads single java character from down stream.
-				@return -1 if end-of-file, 0...0xFFFF if found a character.
-				@throws IOException if failed.
-				*/
-				protected abstract int readImpl()throws IOException;
-				/** Un-reads character back to down-stream
-				@param c what to un-read
-				@throws IOException if failed
-				*/
-				protected abstract void unread(char c)throws IOException;
-				
-				/* ***********************************************************
-				
-							Services for subclasses
-				
-				************************************************************/
-				/** Un-reads specified string buffer
-				@param collected what to un-read
-				@throws IOException if failed
-				*/
-				protected void unread(StringBuilder collected)throws IOException
-				{
-					for(int i=collected.length(); --i>=0;)
-					{
-							unread(collected.charAt(i));
-					};
-				};
-				/** Un-reads all collected characters.
-				@throws IOException if failed
-				*/
-				protected void unreadCollected()throws IOException{ unread(collected); };
-				
-				/** Calls {@link #readImpl}. If finds eof queues eof syntax.
-				@return -1 if end-of-file, 0...0xFFFF if found a character.
-				@throws IOException if failed.
-				*/
-				protected final int read()throws IOException
-				{
-					final int r = readImpl();
-					assert((r>=-1)&&(r<=0xFFFF));
-					if (r==-1)
-					{
-						if (TRACE) TOUT.println("AConsumingHandler.read()-> queues EOF syntax");
-						queueNextChar(-1,null);
-					};
-					return r;
-				};
-				/** Calls {@link #readImpl}. If finds eof throws
-				@return 0...0xFFFF if found a character.
-				@throws IOException if failed.
-				@throws EUnexpectedEof if found end-of-file.
-				*/
-				protected final char readNoEof()throws IOException
-				{
-					final int r = readImpl();
-					assert((r>=-1)&&(r<=0xFFFF));
-					if (r==-1) throw new EUnexpectedEof();
-					return (char)r;
-				};
-				
-				/* ***********************************************************
-				
-							AStateHandler
-				
-				************************************************************/
-				/** Wipes collection buffer */
-				@Override protected void onEnter()
-				{
-					if (TRACE) TOUT.println("AConsumingHandler.onEnter()");
-					collected.setLength(0);
-				};
-				/** Wipes collection buffer. Subclasses should be aware that
-				if they will alter current state handler this method will
-				be called and collection buffer will be wiped.*/
-				@Override protected void onLeave()
-				{
-					if (TRACE) TOUT.println("AConsumingHandler.onLeave()");
-					collected.setLength(0);
-				};
-			};
-			
-			/** A "catch phrase" state which collects some characters during "recognition phase"
-			and tests them against a "catch phrase". The catch phrase is consumed
-			and {@link #onCatchPhraseCompleted} is called.
-			*/
-			protected abstract class ACatchPhrase extends AConsumingHandler
-			{		
-				/* ***********************************************************
-				
-							Services required from subclasses.
-				
-				************************************************************/
-				/** Should test if collected buffer represents a catch-phrase.
-				@param collected the {@link #collected} containig catch phrase
-				@return state of collection process:
-						<ul>
-							<li>-1 if this can't be a catch phrase;</li>
-							<li>0 if needs more characters;</li>
-							<li>1 if it is a catch phrase;</li>
-						</ul>
-				*/
-				protected abstract int isCatchPhrase(StringBuilder collected)throws IOException;
-				/** Called right after {@link #isCatchPhrase} returned 1. Should queue a proper
-				syntax, at least <code>queueNextChar(0,TIntermediateSyntax.VOID)</code>
-				to indicate that it recognized it and alter state according to what
-				should happen next.
-				<p>
-				Default implementations queues 0,VOID and pop state handler
-				thous moving to next element. This is a behavior for required but meaning-less
-				catch-phrases.
-				<p>
-				After returns from this method collection buffer is wiped out.
-				@param collected the buffer with collected catch-phrase
-				@throws IOException if failed.
-				*/
-				@SuppressWarnings("unchecked")
-				protected void onCatchPhraseCompleted(StringBuilder collected)throws IOException
-				{
-					if (TRACE) TOUT.println("ACatchPhrase.onCatchPhraseCompleted() ENTER");
-					queueNextChar(0,(TSyntax)TIntermediateSyntax.VOID);
-					popStateHandler();
-					if (TRACE) TOUT.println("ACatchPhrase.onCatchPhraseCompleted() LEAVE");
-				};
-				/* ***********************************************************
-				
-							AStateHandler
-				
-				************************************************************/
-				/** Processes, trying to match catch-phrase. Will throw if
-				finds end-of-file during this process.
-				*/
-				@Override protected void toNextChar()throws IOException
-				{
-					if (TRACE) TOUT.println("ACatchPhrase.toNextChar() ENTER");
-					//it must be a recognition phase.
-					assert(collected.length()==0);
-					for(;;)
-					{
-						collected.append(readNoEof());
-						switch(isCatchPhrase(collected))
-						{
-							case -1:
-										assert(syntaxQueueEmpty());//must indicate no recognition.
-										//cannot be, un-read it in proper order.
-										unreadCollected();
-										popStateHandler();
-										if (TRACE) TOUT.println("ACatchPhrase.toNextChar(), not a catch phrase LEAVE");
-										return;
-							case  0:	
-										//needs to read more;
-										if (TRACE) TOUT.println("ACatchPhrase.toNextChar(), needs more");
-										break;
-							case  1:
-										//is catch-phrase
-										if (TRACE) TOUT.println("ACatchPhrase.toNextChar(), found a catch phrase");
-										onCatchPhraseCompleted(collected);
-										assert(!syntaxQueueEmpty());//must indidicate that we recognized phrase.
-										if (TRACE) TOUT.println("ACatchPhrase.toNextChar() LEAVE");
-										return;
+							...<i>unread all characters restoring downstream
+							    to state at entrance</i>
+						    return false;
 						}
-					}
-				};
+					</pre>
+				*/
+				protected abstract boolean tryEnter()throws IOException;
 			};
-			
-			/** A "catch phrase" state which recognizes a specific text.
-			*/
-			protected abstract class ARequiredPhrase extends ACatchPhrase
-			{
-								/** Text to recognized, case sensitive */
-								private final String required;
-					
-					/** Creates
-					@param required text to recognize, case sensitive, non null 
-					*/
-					protected ARequiredPhrase(String required)
-					{
-						assert(required!=null);
-						this.required = required;
-					};
-					
-					@Override protected int isCatchPhrase(StringBuilder collected)throws IOException
-					{
-						return SStringUtils.canStartWithCaseSensitive(required,collected);
-					};
-			};
-			/** A "catch phrase" state which recognizes a specific text.
-			*/
-			protected abstract class ARequiredPhraseCaseInsensitive extends ACatchPhrase
-			{
-								/** Text to recognized, case insensitive */
-								private final String required;
-					
-					/** Creates
-					@param required text to recognize, case insensitive, non null 
-					*/
-					protected ARequiredPhraseCaseInsensitive(String required)
-					{
-						assert(required!=null);
-						this.required = required;
-					};
-					
-					@Override protected int isCatchPhrase(StringBuilder collected)throws IOException
-					{
-						return SStringUtils.canStartWithCaseInsensitive(required,collected);
-					};
-			};
-			
 			
 				/** Lazy initialized handler stack */
 				private CBoundStack<AStateHandler> states;
@@ -761,17 +290,28 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 		return current;
 	};
 	/** Sets state handler, invokes {@link AStateHandler#onLeave}/{@link AStateHandler#onEnter}
-	@param h can be null only when closing.
+	and {@link AStateHandler#onActivated}/{@link AStateHandler#onDeactivated}.
+	@param h can be null. Reasonable only when closing stream.
 	*/
 	protected void setStateHandler(AStateHandler h)
 	{
 		if (TRACE) TOUT.println("setStateHandler("+h+")");
-		if (this.current!=null) this.current.onLeave();
-		this.current = h;
-		if (this.current!=null) this.current.onEnter();
+		AStateHandler c = this.current; 
+		if (c!=null)
+		{
+			c.onDeactivated();
+			c.onLeave();
+		}
+			this.current = h;
+		if (h!=null)
+		{
+			h.onEnter();
+			h.onActivated();
+		};
 	};
 	/** Pushes current state handler (if not null) on stack and
 	makes h current, invokes {@link AStateHandler#onLeave}/{@link AStateHandler#onEnter}
+	and {@link AStateHandler#onActivated}/{@link AStateHandler#onDeactivated}.
 	@param h non null.
 	@throws EFormatBoundaryExceeded if exceeded {@link #setHandlerStackLimit}
 	*/
@@ -779,14 +319,20 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 	{
 		if (TRACE) TOUT.println("pushStateHandler("+h+")");
 		assert(h!=null);
-		if (current!=null)
+		
+		AStateHandler c = this.current; 
+		if (c!=null)
 		{
 			if (states==null) states = new CBoundStack<AStateHandler>();
-			states.push(current);
-			if (this.current!=null) this.current.onLeave();
+			states.push(c);
+			c.onDeactivated();
 		};
 		current = h;
-		if (this.current!=null) this.current.onEnter();
+		if (h!=null)
+		{
+			h.onEnter();
+			h.onActivated();
+		};
 	};
 	/** Pops state handler from a stack and makes it current,
 	invokes {@link AStateHandler#onLeave}/{@link AStateHandler#onEnter}
@@ -794,9 +340,17 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 	protected void popStateHandler()
 	{
 		if (states==null) throw new NoSuchElementException();
-		if (this.current!=null) this.current.onLeave();
-		current = states.pop();
-		if (this.current!=null) this.current.onEnter();
+		AStateHandler c = this.current;
+		if (c!=null)
+		{
+			c.onDeactivated();
+			c.onLeave();
+		}
+		c = current = states.pop();
+		if (c!=null)
+		{
+			c.onActivated();
+		};
 		if (TRACE) TOUT.println("popStateHandler()->"+current);
 	};
 	/** Returns state handler which would become current after {@link #popStateHandler}

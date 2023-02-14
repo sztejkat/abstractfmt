@@ -1,0 +1,74 @@
+Question:
+
+	The method of defining syntax by a sequence of new....
+	constructors seems to be rather not easy.
+	
+	We need something what will be super easy and reflect the
+	BNF notation as much as possible.
+	
+	We need something like chained or nested definition
+	
+		word = new Definition().character(wordset).once().character(wordset).rept().character(spaceset)
+		
+		two_words = new Definition().element(word).once().character(spaceset).rept().element(word)
+		
+	or alternative	
+	
+		number = new Definition().alt(
+								new Definition().character('0').once().character('x').once().character(hexset).once().character(hexset).repeated(),
+								new Definition().character(decimalset).once().character(decimalset).repeated()
+								)
+		
+	Notice, that our syntax stack concept and "syntax handlers" do not match with this syntax presentation model.
+	We need very different mechanism which seems to be much more elegant and flexible than syntax handler model.
+	
+	How do we do it?
+	
+	There is a conceptual problem: we need to not only test if stream matches definition, but also act according to
+	definition. 
+	
+	Our parser model is based around assigning classes to characters and is code driven.
+	
+	The BNF on the other hand is best suited for "content driven": definition is applied, it is sucking in all characters
+	and once each definition is fully catched it calls own "on some shit" handler.
+	
+	We, on the other hand, do require that a minimum amount of data should be read, this minimum must be qualified to
+	what it is and if it is something else what required we do act.
+	
+	And we are in pinch, since those two models are far, far away from each other.
+	
+	-------------
+	What we need it is an ability to use BNF syntax to actually build a state machine which will be able to
+	move from one "qualified" character to another on demand.
+	-------------
+	
+	Assume now, that our number must qualify chars to two categories: HEX or DEC.
+	
+	number = new Definition().alt(
+								new Definition(HEX).character('0').once().character('x').once().character(hexset).once().character(hexset)..repeated(),
+								new Definition(DEC).character(decimalset).once().character(decimalset).repeated()
+								)
+	
+	Obviously there is a syntactic problem with BNF because:
+	
+		- we can't use reluctant, shallow processing because "0x3" would catch both hext and decimal in the example
+		and only order of testing would tell us which will catch.
+		- in fact the "greedy" method must be used and we need to make attempts to consume as much characters as possible
+		from a stream by each definition before we can say if it matches or not and which one matches.
+		
+		
+		For an example for input "0x33+" the first alternative will stop consuming at the '+' while second definition
+		at the 'x'. Thous first definition matches better, but to tell it we had to run them both and tell both to
+		consume till the end. Only then we can again use chosen definition to actually apply category to 
+		characters.
+		
+		- if we need to pass data through some escaping we may have even more problems.
+		  
+	I have to conclude, sadly, that BNF cannot be applied by forward means to what we need. But it is hell tempting!
+	
+	I have to think about it and finally get the way of mapping from one syntax to another in the easiest yet formal
+	way.
+	
+	
+			
+	
