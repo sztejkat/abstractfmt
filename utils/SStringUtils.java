@@ -61,7 +61,7 @@ public final class SStringUtils
 	@param buffer buffer to compare
 	@return <ul>
 				<li>-1 if buffer cannot represent text;</li>
-				<li>0 if buffer do represent a starting portion if the text, but not full text;</li>
+				<li>0 if buffer do represent a starting portion of the text, but not full text;</li>
 				<li>1 if buffer do represent text;</li>
 			</ul>
 	*/
@@ -81,7 +81,7 @@ public final class SStringUtils
 			and knowing that previous test returned 0.
 	@return <ul>
 				<li>-1 if buffer cannot represent text;</li>
-				<li>0 if buffer do represent a starting portion if the text, but not full text;</li>
+				<li>0 if buffer do represent a starting portion of the text, but not full text;</li>
 				<li>1 if buffer do represent text;</li>
 			</ul>
 	*/
@@ -107,7 +107,7 @@ public final class SStringUtils
 	@param buffer buffer to compare
 	@return <ul>
 				<li>-1 if buffer cannot represent text;</li>
-				<li>0 if buffer do represent a starting portion if the text, but not full text;</li>
+				<li>0 if buffer do represent a starting portion of the text, but not full text;</li>
 				<li>1 if buffer do represent text;</li>
 			</ul>
 	*/
@@ -129,7 +129,7 @@ public final class SStringUtils
 			and knowing that previous test returned 0.
 	@return <ul>
 				<li>-1 if buffer cannot represent text;</li>
-				<li>0 if buffer do represent a starting portion if the text, but not full text;</li>
+				<li>0 if buffer do represent a starting portion of the text, but not full text;</li>
 				<li>1 if buffer do represent text;</li>
 			</ul>
 	*/

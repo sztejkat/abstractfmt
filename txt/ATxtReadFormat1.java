@@ -12,13 +12,15 @@ import java.io.Reader;
 	
 	<h1>Text parsing</h1>
 	<h2>Required services</h2>
-	As You probably noticed the {@link ATxtReadFormat0}
-	turns around two methods:
+	As You probably noticed the superclass ({@link ATxtReadFormat0})
+	does the job using two methods:
 	<ul>
 		<li>{@link ATxtReadFormat0#tokenIn} and;</li>
 		<li>{@link ATxtReadFormat0#hasUnreadToken};</li>
 	</ul>
-	Both are practically the same and could be replaced with <code>peek()/drop()</code> model.
+	Both are practically the same and do represent a slightly 
+	different variant of <code>peek() <i>what is next</i> /drop() <i>what is next</i></code> processing
+	model.
 	<p>
 	Those methods do work on "per-character" basis. The "per-character"
 	basis, instead of "per-word" or "per-token", is intentional since
@@ -38,8 +40,8 @@ import java.io.Reader;
 	a lot of decoding in a background.
 	
 	<h2>Parsing state machine</h2>
-	The most clean concept which can present a text parsing to a user
-	is to present him with following API (see {@link ATxtReadFormat1}:
+	The most clean character based concept which can be used to process
+	the text can be, in my opinion, built around below three methods:
 	<pre>
 		void toNextChar()
 		TSyntax getNextSyntaxElement()
@@ -83,8 +85,7 @@ import java.io.Reader;
 	if it is not: <code>&lt;</code> nor <code>&lt;!--</code>.
 	<p>
 	This is a relatively simple and well isolated syntax processing machine You may provide
-	for Your format and encode in this class. I don't make any assumption if You provide it
-	by subclassing or by a separate engine object.
+	for Your format. 
 	
 	<h2>Parsing support provided for subclasses</h2>
 	This class does not provide tools, but assume that some parsing concepts are followed
@@ -103,12 +104,12 @@ import java.io.Reader;
 				<li>{@link CBoundStack#push} - which pushes syntax element on syntax stack;</li>
 				<li>{@link CBoundStack#pop} - which pops from stack.
 				<p>
-				Both can be used for maintaining syntaxt recognition in case of formats
+				Both can be used for maintaining syntax recognition in case of formats
 				which are defined by state graphs with sub-graphs or recursive state graphs.
-				Notice however, that it is best to avoid state stack if possible (for an example 
-				use objects counter in JSON or nested elements counter in XML), since 
-				in case of heavily recusrive data structures the stack will consume significant
-				amount of memory and will be a limiting factor which may lead to <code>OutOfMemoryError</code>.
+				<br>
+				Notice however, that it is best to avoid state stack if possible since 
+				in case of heavily recusrive data structures the stack will be a limiting 
+				factor which may lead to <code>OutOfMemoryError</code>.
 				</li>
 				<li>{@link CBoundStack#setStackLimit}/{@link CBoundStack#getStackLimit} - which do allow to 
 				set up a barrier against <code>OutOfMemoryError</code>;</li>
@@ -117,9 +118,9 @@ import java.io.Reader;
 	</ul>
 	
 	<h1>Syntax definition</h1>
-	The syntax is defined by {@link ATxtReadFormat1.ISyntax} 
-	which transforms Your specific syntax to syntax known
-	by this class which is {@link ATxtReadFormat1.TIntermediateSyntax}
+	The syntax is defined by {@link ATxtReadFormat1.ISyntax}. This may be any syntax
+	You like, but for sake of this class it must transforms Your syntax to syntax known
+	by this class ({@link ATxtReadFormat1.TIntermediateSyntax})
 	
 */	
 public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
@@ -130,12 +131,26 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
          private static final boolean DUMP = (TLEVEL>=2);
          private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("ATxtReadFormat1.",ATxtReadFormat1.class) : null;
   
-			/** A contract which allows to provide a kind of "enum"
-			extension.
+			/**
+			A customizable syntax definition.
 			<p>
-			If You don't need more syntax elements than 
-			{@link TIntermediateSyntax} You may just use that
-			enum since it implements {@link ISyntax}
+			You should look at this class as at an "extendable enum", that 
+			is a rather dumb method of opening a gateway for extening the
+			enumeration defined in {@link TIntermediateSyntax}.
+			<p>
+			The {@link ATxtReadFormat1} uses {@link TIntermediateSyntax}
+			to qualify each of read character and act according to a category 
+			assigned to character. Your subclasses may however need
+			a bit more information or maybe a bit more detailed information.
+			If this is the case subclass the {@link ISyntax},
+			return it from {@link ATxtReadFormat1#getNextSyntaxElement}
+			and You are done. The {@link ATxtReadFormat1} will ask 
+			<code>ISyntax.{@link #syntax}</code>, Your code may use
+			it directly.
+			<p>
+			If however You don't need extended syntax then You may 
+			use {@link TIntermediateSyntax} directly since that
+			enum does implement {@link ISyntax}.
 			*/
 			public interface ISyntax
 			{
@@ -149,8 +164,9 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 			};
 			/**
 				A syntax definition for {@link #getNextSyntaxElement}
-				used to perform all remaining decoding. Used to give 
-				a meaning to a character fetched by {@link #toNextChar}.
+				used to perform all decoding. 
+				<p>
+				Used to tell what the character returns from {@link #toNextChar} means.
 			*/
 			public static enum TIntermediateSyntax implements ISyntax
 			{
@@ -292,13 +308,13 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 	@throws IOException if failed to deduce. End-of-file is explicite excluded.
 	*/
 	protected abstract void toNextChar()throws IOException;
-	/** Tells what the character fetched by most recent call to do mean.
+	/** Tells what the character fetched by most recent call to {@link #toNextChar} does mean.
 	@return syntax element describing the meaning of character or null
 			to indicate end-of-file condition.
 	@throws AssertionError if {@link #toNextChar} was never called.
 	*/
 	protected abstract TSyntax getNextSyntaxElement();
-	/** Returns the character fetched by most recent call to do mean.
+	/** Returns the character fetched by most recent call to {@link #toNextChar}.
 	@return a character read 0...0xFFFF, or -1 to indicate end-of-file
 			condition (together with {@link #getNextSyntaxElement} returning null.
 	@throws AssertionError if {@link #toNextChar} was never called.

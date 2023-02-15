@@ -9,7 +9,10 @@ import java.io.IOException;
 import java.io.Reader;
 
 /**
-	 A "state graph" based parser with a {@link Reader} as a down-stream
+	 A "state graph" based parser with a {@link Reader} as a down-stream.
+	 <p>
+	 Basically adds a lot of character focused methods which should help You
+	 in creating "consumers" and "catchers". 
 */
 public abstract class ATxtReadFormatStateBase1<TSyntax extends ATxtReadFormat1.ISyntax> 
 			    extends ATxtReadFormatStateBase0<TSyntax>
@@ -19,7 +22,9 @@ public abstract class ATxtReadFormatStateBase1<TSyntax extends ATxtReadFormat1.I
          private static final boolean DUMP = (TLEVEL>=2);
          private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("ATxtReadFormatStateBase1.",ATxtReadFormatStateBase1.class) : null;
  
-         	/** Adds ability to directly act on {@link ATxtReadFormatStateBase1#in} */
+         	/** Adds functions focused on consuming
+         	characters provided by {@link ATxtReadFormatStateBase1#in}.
+         	*/
          	protected abstract class AStateHandler extends ATxtReadFormatStateBase0<TSyntax>.AStateHandler
 			{
 				/** Reads data from {@link ATxtReadFormatStateBase1#in}.
@@ -43,19 +48,19 @@ public abstract class ATxtReadFormatStateBase1<TSyntax extends ATxtReadFormat1.I
 				{
 					return ATxtReadFormatStateBase1.this.readAlways();
 				};
-				/** Calls <code>{@link #in}.unread</code>
+				/** Calls <code>{@link #in}.unread(...).</code>
 				@param c --//--
 				@throws IOException --//--
 				@see CAdaptivePushBackReader#unread(char)
 				*/
 				protected final void unread(char c)throws IOException{ in.unread(c); };
-				/** Calls <code>{@link #in}.unread</code>
+				/** Calls <code>{@link #in}.unread(...).</code>
 				@param chars --//--
 				@throws IOException --//--
 				@see CAdaptivePushBackReader#unread(CharSequence)
 				*/
 				protected final void unread(CharSequence chars)throws IOException{ in.unread(chars); };
-				/** Calls <code>{@link #in}.unread</code>
+				/** Calls <code>{@link #in}.unread(...).</code>
 				@param chars --//--
 				@param from --//--
 				@param length --//--
@@ -68,37 +73,43 @@ public abstract class ATxtReadFormatStateBase1<TSyntax extends ATxtReadFormat1.I
 				}
 			};
 			
-			/** Adds ability to directly act on {@link ATxtReadFormatStateBase1#in} 
-			and various method which can be used to collect some text from stream
-			and compare it with expected pattern.
+			/** Adds functions focused on consuming and matching
+         	characters read from {@link ATxtReadFormatStateBase1#in} by providing
+         	various methods which can be used to collect some text from the down-stream
+			and compare it with expected pattern(s).
+			<p>
+			Since the <code>ASyntaxHandler</code> is focused on "catcher"
+			part of syntax processing described in {@link ATxtReadFormatStateBase0.ASyntaxHandler}
+			this class focuses on supporting detection of "catch phrases".
 			<p>
 			If the "catch phrase" for the syntax handler is known and fixed the
 			{@link #tryEnter} may look like:
 			<pre>
-			protected boolean tryEnter()throws IOException
-			{
-				if (!looksAt("phrase")) //<i>or other variants of looksAt</i>
-				{
-					unread();
-					return false;
-				}else
-				{
-					setStateHandler(this); //<i>or pushStateHandler(this)</i>
-					return true;
-				}
-			}
+	protected boolean tryEnter()throws IOException
+	{
+		if (!looksAt("phrase")) //<i>or other variants of looksAt</i>
+		{
+			unread();
+			return false;
+		}else
+		{
+			setStateHandler(this); //<i>or pushStateHandler(this)</i>
+			return true;
+		}
+	}
 			</pre>
 			We intentionally do NOT provide this as default implementation because
 			we would have to provice eight variants of them what would be rather
-			confusing to a person subclassing it, there may be more than one
-			"catch-phrase" or a totally different method will have to be used.
+			confusing to a person subclassing it, because there may be more than one
+			"catch-phrase" or because a totally different way of finding a match
+			will have to be used.
 			*/
          	protected abstract class ASyntaxHandler extends ATxtReadFormatStateBase0<TSyntax>.ASyntaxHandler
 			{
 							/** A "collected token" buffer. 
 							    It is wiped out on {@link #onLeave}, so be sure to 
 							    pick up all data before making a state transition which 
-							    will trigger this operation.
+							    will trigger {@link #onLeave}.
 							*/
 							protected final StringBuilder collected = new StringBuilder(); 
 							
@@ -122,19 +133,19 @@ public abstract class ATxtReadFormatStateBase1<TSyntax extends ATxtReadFormat1.I
 				{
 					return ATxtReadFormatStateBase1.this.readAlways();
 				};
-				/** Calls <code>{@link #in}.unread</code>
+				/** Calls <code>{@link #in}.unread(...).</code>
 				@param c --//--
 				@throws IOException --//--
 				@see CAdaptivePushBackReader#unread(char)
 				*/
 				protected final void unread(char c)throws IOException{ in.unread(c); };
-				/** Calls <code>{@link #in}.unread</code>
+				/** Calls <code>{@link #in}.unread(...).</code>
 				@param chars --//--
 				@throws IOException --//--
 				@see CAdaptivePushBackReader#unread(CharSequence)
 				*/
 				protected final void unread(CharSequence chars)throws IOException{ in.unread(chars); };
-				/** Calls <code>{@link #in}.unread</code>
+				/** Calls <code>{@link #in}.unread(...).</code>
 				@param chars --//--
 				@param from --//--
 				@param length --//--
@@ -148,13 +159,13 @@ public abstract class ATxtReadFormatStateBase1<TSyntax extends ATxtReadFormat1.I
 				/* ************************************************************************
 							recognition phrase collection API
 				************************************************************************ */
-				/** Performs character collection in {@link #collected} buffer.
+				/** Performs character collection into a {@link #collected} buffer.
 				@return <ul>
 							<li>if {@link #collected} is empty:
 								<ul>
 									<li>-1(eof). <u>Nothing</u> is done;</li>
 									<li>0...0xFFFF - a collected character. This character
-										is appended to {@link #collected} buffer;
+										is automatically appended to {@link #collected} buffer;
 									</li>
 								</ul>
 							</li>
@@ -162,7 +173,7 @@ public abstract class ATxtReadFormatStateBase1<TSyntax extends ATxtReadFormat1.I
 								<ul>
 									<li>if encounters an end-of-file throws {@link EUnexpectedEof};</li>
 									<li>0...0xFFFF - a collected character. This character
-										is appended to {@link #collected} buffer;
+										is automatically appended to {@link #collected} buffer;
 									</li>
 								</ul>
 							</li>
@@ -183,11 +194,11 @@ public abstract class ATxtReadFormatStateBase1<TSyntax extends ATxtReadFormat1.I
 					collected.append((char)r);
 					return r;
 				};
-				/** Performs character collection in {@link #collected} buffer.
+				/** Performs character collection into a {@link #collected} buffer.
 				@return <ul>
 							<li>-1(eof). <u>Nothing</u> is done;</li>
 							<li>0...0xFFFF - a collected character. This character
-								is appended to {@link #collected} buffer;
+								is automatically appended to {@link #collected} buffer;
 							</li>
 						</ul>
 					@throws IOException if failed.
@@ -220,12 +231,12 @@ public abstract class ATxtReadFormatStateBase1<TSyntax extends ATxtReadFormat1.I
 				@param text text which should be compared with buffer
 				@return <ul>
 							<li>-1 if {@link #collected} cannot represent text;</li>
-							<li>0 if {@link #collected} do represent a starting portion if the text, but not full text;</li>
+							<li>0 if {@link #collected} do represent a starting portion of the text, but not full text;</li>
 							<li>1 if {@link #collected} do represent text;</li>
 					</ul>
 				@see SStringUtils
 				*/
-				protected final int canCollectedStartWith(String text)
+				protected final int canStartWithCollected(String text)
 				{
 					return SStringUtils.canStartWithCaseSensitive(collected,text);
 				};
@@ -235,28 +246,28 @@ public abstract class ATxtReadFormatStateBase1<TSyntax extends ATxtReadFormat1.I
 				@param text text which should be compared with buffer
 				@return <ul>
 							<li>-1 if {@link #collected} cannot represent text;</li>
-							<li>0 if {@link #collected} do represent a starting portion if the text, but not full text;</li>
+							<li>0 if {@link #collected} do represent a starting portion of the text, but not full text;</li>
 							<li>1 if {@link #collected} do represent text;</li>
 					</ul>
 				@see SStringUtils
 				*/
-				protected final int canCollectedStartWithCaseInsensitive(String text)
+				protected final int canStartWithCollectedCaseInsensitive(String text)
 				{
 					return SStringUtils.canStartWithCaseInsensitive(collected,text);
 				};
-				/** Collects up to <code>text</code> characters and passes the collected
-				data through {@link #canCollectedStartWith} with each collected character.
+				/** Collects up to <code>text.length()</code> characters and passes the collected
+				data through {@link #canStartWithCollected} with each collected character.
 				<p>
-				Collection stops if {@link #canCollectedStartWith} returns 1 or -1
+				Collection stops if {@link #canStartWithCollected} returns 1 or -1
 				or end-of-file is reached.
 				<p>
 				Nothing is reported through {@link #queueNextChar}.
 				<p>
-				After return the {@link #collected} do carry whats was collected
+				After return the {@link #collected} do carry what was collected
 				during the process.
 				
 				@param text to compare with what.
-				@return true if {@link #canCollectedStartWith} returned 1,
+				@return true if {@link #canStartWithCollected} returned 1,
 						false if returned -1 or could not read even one character.
 				@throws IOException if failed at low level
 				@throws EUnexpectedEof if end-of-file is reached at any character except the
@@ -298,6 +309,7 @@ public abstract class ATxtReadFormatStateBase1<TSyntax extends ATxtReadFormat1.I
 					}
 				};
 				/** A variant of {@link #looksAt} which never throws {@link EUnexpectedEof}
+				returning false instead.
 				@param text text to compare with
 				@return see {@link #looksAt}
 				@throws IOException --//--
@@ -317,6 +329,7 @@ public abstract class ATxtReadFormatStateBase1<TSyntax extends ATxtReadFormat1.I
 					}
 				};
 				/** A variant of {@link #looksAtCaseInsensitive} which never throws {@link EUnexpectedEof}
+				returning false instead.
 				@param text text to compare with
 				@return see {@link #looksAt}
 				@throws IOException --//--
@@ -350,10 +363,17 @@ public abstract class ATxtReadFormatStateBase1<TSyntax extends ATxtReadFormat1.I
 					capable buffer. 
 					<p>
 					This buffer is able to adaptively grow when data
-					area pushed back to it and to make line and character
-					in line accounting.
+					area pushed back to it and to make "line number" and "character
+					in line" accounting".
 					<p>
 					This buffer is closed when {@link #close} is called.
+					<p>
+					<i>Note: Why not a standard {@link java.io.PushbackReader}?
+					Beacuse standard is using a fixed size push-back buffer
+					and cannot addapt to changing scenarios. Why not 
+					<code>mark()/reset()</code> of {@link java.io.BufferedReader}? Because
+					it is also bound with buffer size and does not allow
+					a multiple "marks" to be placed. </i>
 					*/
 					protected final CAdaptivePushBackReader in;
 	/* ***************************************************************************

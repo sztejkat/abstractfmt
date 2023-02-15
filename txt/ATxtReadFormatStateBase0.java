@@ -37,7 +37,7 @@ import java.io.IOException;
 	 You will however find it a bit tricky to express the syntax using just this class 
 	 alone. You need a bit more helpfull framework.
 	 <p>
-	 This framework is defined for You by {@link ATxtReadFormatStateBase0.ASyntaxHandler}
+	 This framework is defined for You by {@link ATxtReadFormatStateBase0.ASyntaxHandler}.
 	
 	
 	<h1>State graph is not grammar</h1>
@@ -83,7 +83,28 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
          				Generic
          	------------------------------------------------------------------------*/
 			/** A state handler class used to implement {@link ATxtReadFormat1#toNextChar}
-			Invoked by {@link ATxtReadFormatStateBase0#toNextChar} */
+			and is invoked by {@link ATxtReadFormatStateBase0#toNextChar}.
+			<p>
+			Only one state handler is active (that is <i>current</i>).
+			This state handler is on the same top of state handlers stack.
+			<p>
+			A state handler can replace current state handler 
+			or be pushed on state handlers stack over the existing current handler.
+			<p>
+			A state handler life is controlled by following states:
+			<ul>
+				<li>state handler is left - the state handler is neither current
+					nor on state handlers stack;</li>
+				<li>state handler is entered - the state handler is on state handlers
+					stack but not necessairly it is a <i>current</i> state handler;</li>
+				<li>state handler is deactivated - the state handler is on state handlers
+					stack but is NOT a <i>current</i> state handler;</li>
+				<li>state handler is active - it is on state handlers stack,
+					on the same top of it and thous is <i>current</i>.
+					Only current state handler do receive calls to 
+					{@link #toNextChar};</li>
+			</ul>
+			*/
 			protected abstract class AStateHandler
 			{
 				/** Invoked by {@link ATxtReadFormatStateBase0#toNextChar}
@@ -97,7 +118,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 				the {@link ATxtReadFormatStateBase0#toNextChar}
 				will invoke again this method of currently active handler.
 				<p>
-				This can be used to implement alternatives o optinal elements
+				This can be used to implement alternatives or optional elements
 				since this method is called only when {@link #syntaxQueueEmpty}
 				gives true.
 			
@@ -209,17 +230,17 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 					<p>
 					This method basically does:
 					<pre>
-						...<i>read all characters necessary to say if should enter</i>
-						if (should enter)
-						{
-							setStateHandler(this) <i>or</i> pushStateHandler(this);
-							return true;
-						}else
-						{
-							...<i>unread all characters restoring downstream
-							    to state at entrance</i>
-						    return false;
-						}
+			...<i>read all characters necessary to say if should enter</i>
+			if (should enter)
+			{
+				setStateHandler(this) <i>or</i> pushStateHandler(this);
+				return true;
+			}else
+			{
+				...<i>unread all characters restoring downstream
+					to state from at entrance</i>
+				return false;
+			}
 					</pre>
 					@return <ul>
 							<li>
@@ -509,8 +530,12 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 			ATxtReadFormat1
 			
 	*******************************************************************/
-	/** Makes in loop attempt to ask <code>{@link #current}.toNextChar</code>
-	to produce someting in syntax queue. */
+	/** Ask <code>{@link #current}.toNextChar</code>
+	to produce someting in syntax queue. This operation
+	is repeated in loop until somethig is put in syntax queue.
+	
+	@see AStateHandler#toNextChar
+	*/
 	@Override protected final void toNextChar()throws IOException
 	{
 		assert(current!=null):"state handler not initialized. Call setStateHandler()";
