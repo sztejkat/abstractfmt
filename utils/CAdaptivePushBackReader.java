@@ -68,21 +68,44 @@ public class CAdaptivePushBackReader extends Reader
 	};
 	/** 
 	Creates
-	@param in source to read from
+	@param in source to read from. This class will synchronize
+			on this object as a lock. Usually it will be the same
+			object as <code>in.lock</code> but not always.
+			Mainly due to performance reasons, since re-locking
+			is facter than acquiring full lock and this class
+			will frequently delegate operations to the source stream.
 	@param initial_size intial buffer capacity
 	@param size_increment buffer growth increment.
 	*/
 	public CAdaptivePushBackReader(Reader in, int initial_size,int size_increment)
 	{
-		assert(in!=null);
+		//Note: I am a bit surprised that I can't get to in.lock
+		//		even tough I am a reader. If I would belong to java.io. I could do it.
+		super(in);
+		assert(in!=null);		
 		assert(initial_size>0);
 		assert(size_increment>0);
 		this.in = in;
 		this.size_increment = size_increment;
 		this.buffer = new char[initial_size];
 	};
-	
-	
+	/** 
+	Creates
+	@param in source to read from. 
+	@param lock This class will synchronize on this object as a lock.
+	@param initial_size intial buffer capacity
+	@param size_increment buffer growth increment.
+	*/
+	public CAdaptivePushBackReader(Reader in, Object lock, int initial_size,int size_increment)
+	{
+		super(lock);
+		assert(in!=null);		
+		assert(initial_size>0);
+		assert(size_increment>0);
+		this.in = in;
+		this.size_increment = size_increment;
+		this.buffer = new char[initial_size];
+	};
 	/* -------------------------------------------------------------------
 	
 		Buffer managment
@@ -297,9 +320,10 @@ public class CAdaptivePushBackReader extends Reader
 		{
 			buffer=null;
 			read_ptr=-1;
-			end_ptr=-1;			
+			end_ptr=-1;
+			
+			in.close();
 		}
-		in.close();
 	};
 	
 	public boolean ready()throws IOException
@@ -321,16 +345,19 @@ public class CAdaptivePushBackReader extends Reader
 	*/
 	public int read(Appendable cbuf, int length)throws IOException
 	{
-		int r = 0;
-		while(--length>0)
+		synchronized(lock)
 		{
-			int c = read();
-			assert((c>=-1)&&(c<=0xFFFF));
-			if (c==-1) return r==0 ? -1 : r;
-			cbuf.append((char)c);
-			r++;
-		};	
-		return r;
+			int r = 0;
+			while(--length>0)
+			{
+				int c = read();
+				assert((c>=-1)&&(c<=0xFFFF));
+				if (c==-1) return r==0 ? -1 : r;
+				cbuf.append((char)c);
+				r++;
+			};	
+			return r;
+		}
 	}
 	
 	/* -------------------------------------------------------------------
@@ -465,7 +492,13 @@ public class CAdaptivePushBackReader extends Reader
 	@return number of lines processed, starting from 0.
 			This number is incremented at each eol found.
 	*/
-	public final int getLineNumber(){ return line_number; };
+	public final int getLineNumber()
+	{ 
+		synchronized(lock)
+		{
+			return line_number; 
+		}
+	};
 	/** Returns a position in line of most recent character.
 	For end-of-line characters this position is zero.
 	<p>
@@ -479,7 +512,13 @@ public class CAdaptivePushBackReader extends Reader
 		incremented at each read non-eol character and decremented
 		at each un-read non-eol character.
 	*/
-	public final int getCharNumber(){ return char_number; };
+	public final int getCharNumber()
+	{ 
+		synchronized(lock)
+		{
+			return char_number; 
+		}
+	};
 	/* -------------------------------------------------------------------
 	
 	
