@@ -42,7 +42,12 @@ public abstract class AEscapingEngine implements Appendable,Flushable
 				do carry the surogate in question*/
 				private boolean is_upper_surogate_pending;
 				private char upper_surogate_pending;
+	/* ***************************************************************************
 	
+			Construction
+	
+	
+	*****************************************************************************/
 	protected AEscapingEngine()
 	{
 	};
@@ -203,7 +208,7 @@ public abstract class AEscapingEngine implements Appendable,Flushable
 	@param c char to write
 	@throws IOException if failed.
 	@see #flush
-	@see #isCharacterPending
+	@see #isCodepointPending
 	*/
 	protected void appendImpl(char c)throws IOException
 	{

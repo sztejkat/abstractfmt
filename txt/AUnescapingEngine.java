@@ -78,13 +78,18 @@ public abstract class AUnescapingEngine
 				
 				/** Used to process {@link #isEscaped} */
 				private boolean is_escaped;
-				/** Set to true if {@link #unescpae} returned 
+				/** Set to true if {@link #unescape} returned 
 				value greater than 0xFFFF which needs to be 
 				turned into a surogate pair. The lower part
 				of it is left pending. */
 				private boolean is_pending_lower_surogate;
 				private char pending_lower_surogate;
-				
+	/* ***************************************************************************
+	
+			Construction
+	
+	
+	*****************************************************************************/			
 	public AUnescapingEngine()
 	{
 		collection_buffer = new StringBuilder();
@@ -169,7 +174,9 @@ public abstract class AUnescapingEngine
 		collection_buffer.setLength(0); 
 	};
 	/** Returns if a last character returned by 
-	{@link #read} was produced by un-escaping */
+	{@link #read} was produced by un-escaping 
+	@return true if escaping was used to produce last character.
+	*/
 	public final boolean isEscaped()
 	{
 		return is_escaped;
@@ -178,6 +185,7 @@ public abstract class AUnescapingEngine
 	@param collection_buffer see {@link #unescape}
 	@return --//--
 	@see #is_pending_lower_surogate
+	@throws IOException if {@link #unescape} failed.
 	*/
 	private int unescapeCodePoint(StringBuilder collection_buffer)throws IOException
 	{

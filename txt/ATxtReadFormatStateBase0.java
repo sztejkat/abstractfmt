@@ -2,7 +2,6 @@ package sztejkat.abstractfmt.txt;
 import sztejkat.abstractfmt.*;
 import sztejkat.abstractfmt.logging.SLogging;
 import sztejkat.abstractfmt.utils.CBoundStack;
-import sztejkat.abstractfmt.utils.SStringUtils;
 import java.util.NoSuchElementException;
 import java.io.IOException;
 
@@ -46,23 +45,29 @@ import java.io.IOException;
 	<p>
 	The state graph is a direct method where the parser is at certain "state" and with each
 	character processed it decides wheter to stay in that state or transit to another state.
-	The side effect of this decission is producing {@link #queueNextChar}.
+	The side effect of this decission making is production of {@link #queueNextChar}.
 	<p>
 	The "grammar" approach is different - the parser has been given a certain grammar,
-	"makes" the attempt to match it with input and the result of that "match" triggers 
+	makes an attempt to "match" it with input and the result of that "match" triggers 
 	some action.
 	<p>
-	The first problem with "grammar" apprach is, that to match a complex grammar it must consume
+	The first problem with "grammar" approch is that to match a complex grammar it must consume
 	a lot of input data, roll back if fails to match and try an another path. Grammar is excellent
 	when performing a "callback" based processing. 
 	<p>
 	The second problem with "grammar" is that to match something to a definition it must consume
 	it. At least in most generic approach. It will be then problematic to handle elements of
-	infinite length as we require it to be able to handle.
+	infinite length as we require to be able to handle them.
 */
 public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.ISyntax> 
 						extends ATxtReadFormat1<TSyntax>
 {
+	/*
+		Notes: The sad truth is that I do seems to be too dumb to efficiently
+				implement the "grammar" based approach with assumed boundary 
+				conditions of minumim read-forwarad and infinitie size of some
+				elements.
+	*/
 		 private static final long TLEVEL = SLogging.getDebugLevelForClass(ATxtReadFormatStateBase0.class);
          private static final boolean TRACE = (TLEVEL!=0);
          private static final boolean DUMP = (TLEVEL>=2);
@@ -159,7 +164,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
          			<li>to become active again by removing pushed state.
          			This is handled by {@link #onActivated};</li>
          			<li>to be left by transtion to an another state.
-         			This is handled by {@link #onDeactived}+{@link #onLeft};</li>
+         			This is handled by {@link #onDeactivated}+{@link #onLeave};</li>
          		</ul>
          		When state is "active" it is receving calls to {@link #toNextChar}
          		and must decide if and in what condition to transit to another state.
@@ -216,6 +221,19 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 						    return false;
 						}
 					</pre>
+					@return <ul>
+							<li>
+								<code>true</code> if performed required state transition either by
+								replacing current state handler with self or pushing
+								self on the stack;
+							</li>
+							<li>
+								<code>false</code> if figured out that this state
+								does not match input, un-read all characters read and 
+								left state unchanged;
+							</li>
+							</ul>
+					@throws IOException if failed.
 				*/
 				protected abstract boolean tryEnter()throws IOException;
 			};
@@ -258,7 +276,12 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 				With each write pointer moves towards zero.*/
 				private int next_queue_wptr;
 
-				
+	/* ***************************************************************************
+	
+			Construction
+	
+	
+	*****************************************************************************/			
 	/** Creates. Subclass must initialize state handler by calling
 	{@link #setStateHandler} and adjust stack limit with {@link #setHandlerStackLimit}.
 	
