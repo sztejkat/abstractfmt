@@ -264,7 +264,7 @@ public abstract class ATxtReadFormatStateBase1<TSyntax extends ATxtReadFormat1.I
 				Nothing is reported through {@link #queueNextChar}.
 				<p>
 				After return the {@link #collected} do carry what was collected
-				during the process.
+				during the process, what includes first not-matching character.
 				
 				@param text to compare with what.
 				@return true if {@link #canStartWithCollected} returned 1,
