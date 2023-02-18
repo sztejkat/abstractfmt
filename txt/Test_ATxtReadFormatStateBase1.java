@@ -13,17 +13,19 @@ public class Test_ATxtReadFormatStateBase1 extends ATest
 {
 		private static final class DUT extends ATxtReadFormatStateBase1<ATxtReadFormat1.TIntermediateSyntax>
 		{
-					final AStateHandler no_state_handler = new AStateHandler()
+					final AStateHandler<ATxtReadFormat1.TIntermediateSyntax> no_state_handler = 
+						new AStateHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
 					{
-						@Override protected void toNextChar(){ throw new AbstractMethodError(); };
+						@Override public void toNextChar(){ throw new AbstractMethodError(); };
 					};
-					final class XSyntaxHandler extends ASyntaxHandler
+					final class XSyntaxHandler extends ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>
 					{
+						XSyntaxHandler(ATxtReadFormatStateBase1<ATxtReadFormat1.TIntermediateSyntax> s){super(s); };
 						protected String getCollected(){ return collected.toString(); };
-						@Override protected void toNextChar(){ throw new AbstractMethodError(); };
-						@Override protected boolean tryEnter()throws IOException{ throw new AbstractMethodError(); };
+						@Override public void toNextChar(){ throw new AbstractMethodError(); };
+						@Override public boolean tryEnter()throws IOException{ throw new AbstractMethodError(); };
 					};
-					final XSyntaxHandler no_syntax_handler = new XSyntaxHandler();
+					final XSyntaxHandler no_syntax_handler = new XSyntaxHandler(this);
 				DUT(String text)
 				{
 					super(new StringReader(text),0,100); 
@@ -519,13 +521,13 @@ public class Test_ATxtReadFormatStateBase1 extends ATest
     ----------------------------------------------------------------*/
     	private static final class DUT2 extends ATxtReadFormatStateBase1<ATxtReadFormat1.TIntermediateSyntax>
 		{	
-				final ASyntaxHandler ABACUS = new ASyntaxHandler()
+				final ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax> ABACUS = new ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
 				{
-					@Override protected void toNextChar()throws IOException
+					@Override public void toNextChar()throws IOException
 					{
 						queueNextChar('A',ATxtReadFormat1.TIntermediateSyntax.VOID);
 					};
-					@Override protected boolean tryEnter()throws IOException
+					@Override public boolean tryEnter()throws IOException
 					{
 						if (looksAt("abacus"))
 						{
@@ -539,13 +541,13 @@ public class Test_ATxtReadFormatStateBase1 extends ATest
 					}
 				};
 				
-				final ASyntaxHandler ZORRO = new ASyntaxHandler()
+				final ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax> ZORRO = new ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
 				{
-					@Override protected void toNextChar()throws IOException
+					@Override public void toNextChar()throws IOException
 					{
 						queueNextChar('Z',ATxtReadFormat1.TIntermediateSyntax.VOID);
 					};
-					@Override protected boolean tryEnter()throws IOException
+					@Override public boolean tryEnter()throws IOException
 					{
 						if (looksAt("zorro"))
 						{
@@ -559,9 +561,9 @@ public class Test_ATxtReadFormatStateBase1 extends ATest
 					}
 				};
 				
-				final AStateHandler zero = new AStateHandler()
+				final AStateHandler<ATxtReadFormat1.TIntermediateSyntax> zero = new AStateHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
 				{
-					@Override protected void toNextChar()throws IOException
+					@Override public void toNextChar()throws IOException
 					{
 						if (!ZORRO.tryEnter()) if (!ABACUS.tryEnter()) { throw new EBrokenFormat(); };
 					};

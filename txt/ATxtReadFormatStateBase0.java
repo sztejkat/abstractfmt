@@ -10,7 +10,7 @@ import java.io.IOException;
 	
 	<h1>State graph</h1>
 	This class assumes that threre is a certain "state graph" represented by a graph
-	of instances of {@link ATxtReadFormatStateBase0.AStateHandler} class.
+	of instances of {@link ATxtReadFormatStateBase0.IStateHandler} class.
 	<p>
 	One of such states is "current" and initialized during a class construction.
 	<p>
@@ -31,13 +31,13 @@ import java.io.IOException;
 	</ul>
 	
 	<h2>Extended state handler</h2>
-	 A basic state handler is {@link ATxtReadFormatStateBase0.AStateHandler}.
+	 A basic state handler is {@link ATxtReadFormatStateBase0.IStateHandler}.
 	 You can do absolutely anything with it.
 	 <p>
 	 You will however find it a bit tricky to express the syntax using just this class 
 	 alone. You need a bit more helpfull framework.
 	 <p>
-	 This framework is defined for You by {@link ATxtReadFormatStateBase0.ASyntaxHandler}.
+	 This framework is defined for You by {@link ATxtReadFormatStateBase0.ISyntaxHandler}.
 	
 	
 	<h1>State graph is not grammar</h1>
@@ -105,7 +105,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 					{@link #toNextChar};</li>
 			</ul>
 			*/
-			protected abstract class AStateHandler
+			public interface IStateHandler
 			{
 				/** Invoked by {@link ATxtReadFormatStateBase0#toNextChar}
 				when syntax queue is empty.
@@ -128,13 +128,13 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 				@see ATxtReadFormatStateBase0#popStateHandler
 				@see ATxtReadFormatStateBase0#setStateHandler
 				*/
-				protected abstract void toNextChar()throws IOException;
+				public void toNextChar()throws IOException;
 				/** Invoked when state is "entered". Default implementation logs trace.
 				<p>
 				State is "entered" when it is either replacing current
 				state with {@link #setStateHandler} or is pushed on top
 				of current state with {@link #pushStateHandler}. */
-				protected void onEnter()
+				default public void onEnter()
 				{
 					if (TRACE) TOUT.println("entered "+this.getClass().getSimpleName());
 				};
@@ -144,7 +144,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 				another state with {@link #setStateHandler} or removed
 				from stack by {@link #popStateHandler}.
 				*/
-				protected void onLeave()
+				default public void onLeave()
 				{
 					if (TRACE) TOUT.println("left "+this.getClass().getSimpleName());
 				};
@@ -154,7 +154,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 				if state replaces preivously active state with {@link #setStateHandler},
 				is pushed on stack with {@link #pushStateHandler} <u>or</u> returns 
 				to the top of stack as a side effect of {@link #popStateHandler} */
-				protected void onActivated()
+				default public void onActivated()
 				{
 					if (TRACE) TOUT.println("activated "+this.getClass().getSimpleName());
 				};
@@ -164,7 +164,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 				Deactivation happens if state is replaced with {@link #setStateHandler}
 				or an another state is pushed over it with {@link #pushStateHandler}.
 				*/
-				protected void onDeactivated()
+				default public void onDeactivated()
 				{
 					if (TRACE) TOUT.println("deactivated "+this.getClass().getSimpleName());
 				};
@@ -223,7 +223,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
          			if (!X.tryEnter()) if (!Y.tryEnter()) nothing_catched;
          		</pre>
          	*/
-			protected abstract class ASyntaxHandler extends AStateHandler
+			public interface ISyntaxHandler extends IStateHandler
 			{
 				/**
 					Tests if can enter a state and enters it.
@@ -256,13 +256,13 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 							</ul>
 					@throws IOException if failed.
 				*/
-				protected abstract boolean tryEnter()throws IOException;
+				public boolean tryEnter()throws IOException;
 			};
 			
 				/** Lazy initialized handler stack */
-				private CBoundStack<AStateHandler> states;
+				private CBoundStack<IStateHandler> states;
 				/** A current handler */
-				private AStateHandler current;
+				private IStateHandler current;
 				
 				private static final int SYNTAX_QUEUE_INIT_SIZE = 8;
 				private static final int SYNTAX_QUEUE_SIZE_INCREMENT = 32;
@@ -272,7 +272,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 				We need a relatively fast, but shallow FIFO of
 				pairs <code>TSyntax</code>-<code>int</code> to allow
 				more than one syntax element to be produced by a
-				single call to {@link AStateHandler#toNextChar}
+				single call to {@link IStateHandler#toNextChar}
 				since sometimes a single characte would have to
 				trigger faked multi-char syntax results. 
 				<p>
@@ -329,18 +329,18 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 	-----------------------------------------------------------------*/
 	/** Returns current state handler
 	@return can be null */
-	protected final AStateHandler getStateHandler()
+	public final IStateHandler getStateHandler()
 	{
 		return current;
 	};
-	/** Sets state handler, invokes {@link AStateHandler#onLeave}/{@link AStateHandler#onEnter}
-	and {@link AStateHandler#onActivated}/{@link AStateHandler#onDeactivated}.
+	/** Sets state handler, invokes {@link IStateHandler#onLeave}/{@link IStateHandler#onEnter}
+	and {@link IStateHandler#onActivated}/{@link IStateHandler#onDeactivated}.
 	@param h can be null. Reasonable only when closing stream.
 	*/
-	protected void setStateHandler(AStateHandler h)
+	public void setStateHandler(IStateHandler h)
 	{
 		if (TRACE) TOUT.println("setStateHandler("+h+")");
-		AStateHandler c = this.current; 
+		IStateHandler c = this.current; 
 		if (c!=null)
 		{
 			c.onDeactivated();
@@ -354,20 +354,20 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 		};
 	};
 	/** Pushes current state handler (if not null) on stack and
-	makes h current, invokes {@link AStateHandler#onLeave}/{@link AStateHandler#onEnter}
-	and {@link AStateHandler#onActivated}/{@link AStateHandler#onDeactivated}.
+	makes h current, invokes {@link IStateHandler#onLeave}/{@link IStateHandler#onEnter}
+	and {@link IStateHandler#onActivated}/{@link IStateHandler#onDeactivated}.
 	@param h non null.
 	@throws EFormatBoundaryExceeded if exceeded {@link #setHandlerStackLimit}
 	*/
-	protected void pushStateHandler(AStateHandler h)throws EFormatBoundaryExceeded
+	public void pushStateHandler(IStateHandler h)throws EFormatBoundaryExceeded
 	{
 		if (TRACE) TOUT.println("pushStateHandler("+h+")");
 		assert(h!=null);
 		
-		AStateHandler c = this.current; 
+		IStateHandler c = this.current; 
 		if (c!=null)
 		{
-			if (states==null) states = new CBoundStack<AStateHandler>();
+			if (states==null) states = new CBoundStack<IStateHandler>();
 			states.push(c);
 			c.onDeactivated();
 		};
@@ -379,12 +379,12 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 		};
 	};
 	/** Pops state handler from a stack and makes it current,
-	invokes {@link AStateHandler#onLeave}/{@link AStateHandler#onEnter}
+	invokes {@link IStateHandler#onLeave}/{@link IStateHandler#onEnter}
 	@throws NoSuchElementException if stack is empty */
-	protected void popStateHandler()
+	public void popStateHandler()
 	{
 		if (states==null) throw new NoSuchElementException();
-		AStateHandler c = this.current;
+		IStateHandler c = this.current;
 		if (c!=null)
 		{
 			c.onDeactivated();
@@ -399,7 +399,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 	};
 	/** Returns state handler which would become current after {@link #popStateHandler}
 	@return null if stack is empty */
-	protected final AStateHandler peekStateHandler()
+	public final IStateHandler peekStateHandler()
 	{
 		return states.peek();
 	}
@@ -412,7 +412,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 	protected void setHandlerStackLimit(int limit)
 	{
 		if (TRACE) TOUT.println("setHandlerStackLimit("+limit+")");
-		if (states==null) states = new CBoundStack<AStateHandler>();
+		if (states==null) states = new CBoundStack<IStateHandler>();
 		states.setStackLimit(limit);
 	};
 	/** Returns current limit of  stack
@@ -492,7 +492,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 	@throws AssertionError if syntax is null and character is not -1 or
 			if syntax is not null and character is -1
 	*/
-	protected void setNextChar(int character, TSyntax syntax)
+	public void setNextChar(int character, TSyntax syntax)
 	{
 		assert((character>=-1)&&(character<=0xFFFF));
 		assert( ((syntax==null)&&(character==-1))
@@ -516,7 +516,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 	@throws AssertionError if syntax is null and character is not -1 or
 			if syntax is not null and character is -1
 	*/
-	protected void queueNextChar(int character, TSyntax syntax)
+	public void queueNextChar(int character, TSyntax syntax)
 	{
 		assert((character>=-1)&&(character<=0xFFFF));
 		assert( ((syntax==null)&&(character==-1))
@@ -534,7 +534,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 	to produce someting in syntax queue. This operation
 	is repeated in loop until somethig is put in syntax queue.
 	
-	@see AStateHandler#toNextChar
+	@see IStateHandler#toNextChar
 	*/
 	@Override protected final void toNextChar()throws IOException
 	{

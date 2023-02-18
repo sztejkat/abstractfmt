@@ -12,36 +12,36 @@ public class Test_ATxtReadFormatStateBase0 extends ATest
 {
 		private static final class DUT extends ATxtReadFormatStateBase0<ATxtReadFormat1.TIntermediateSyntax>
 		{
-					abstract class ACountingStateHandler extends AStateHandler
+					abstract class ACountingStateHandler implements IStateHandler
 					{		
 							public int enters;
 							public int leaves;
 							public int activated;
 							public int deactivated;
 							
-						@Override protected void onEnter()
+						@Override public void onEnter()
 						{
-							super.onEnter();
+							IStateHandler.super.onEnter();
 							Assert.assertTrue(activated==deactivated);//must be inactive
 							enters++; 
 						};
-						@Override protected void onLeave()
+						@Override public void onLeave()
 						{ 
-							super.onLeave();
+							IStateHandler.super.onLeave();
 							Assert.assertTrue(activated==deactivated);//must be inactive							
 							leaves++;
 							Assert.assertTrue(enters==leaves);
 						};
-						@Override protected void onActivated()
+						@Override public void onActivated()
 						{
-							super.onActivated();
+							IStateHandler.super.onActivated();
 							Assert.assertTrue(enters>leaves); //must be entered
 							Assert.assertTrue(activated==deactivated);//must be inactive
 							activated++; 
 						};
-						@Override protected void onDeactivated()
+						@Override public void onDeactivated()
 						{
-							super.onDeactivated();
+							IStateHandler.super.onDeactivated();
 							Assert.assertTrue(enters>leaves); //must be entered
 							Assert.assertTrue(activated>deactivated);//must be active
 							deactivated++;
@@ -58,7 +58,7 @@ public class Test_ATxtReadFormatStateBase0 extends ATest
 							this.c=c;
 							this.s=s;
 						};
-						protected void toNextChar()throws IOException
+						@Override public void toNextChar()throws IOException
 						{
 							calls++;
 							System.out.println("called H("+c+")");
@@ -79,7 +79,7 @@ public class Test_ATxtReadFormatStateBase0 extends ATest
 							this.c=c;
 							this.s=s;
 						};
-						protected void toNextChar()throws IOException
+						@Override public void toNextChar()throws IOException
 						{
 							System.out.println("called Hqueues()");
 							for(int i=0;i<c.length;i++)
@@ -94,14 +94,14 @@ public class Test_ATxtReadFormatStateBase0 extends ATest
 					class Hswitching extends ACountingStateHandler
 					{
 								final int c;
-								final AStateHandler next;
+								final IStateHandler next;
 								int calls;
-						Hswitching(int c, AStateHandler next)
+						Hswitching(int c, IStateHandler next)
 						{
 							this.c=c;
 							this.next = next;
 						};
-						protected void toNextChar()throws IOException
+						@Override public void toNextChar()throws IOException
 						{
 							calls++;
 							System.out.println("called Hswitching("+c+")");
