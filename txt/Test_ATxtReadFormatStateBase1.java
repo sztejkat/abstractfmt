@@ -574,7 +574,6 @@ public class Test_ATxtReadFormatStateBase1 extends ATest
 				{
 					super(new StringReader(text),0,100); 
 				};
-				@Override protected void closeImpl(){};
 				@Override protected void openImpl(){};
 				@Override public int getMaxSupportedStructRecursionDepth(){ return -1; };
 				@Override public int getMaxSupportedSignalNameLength(){ return 10000; };

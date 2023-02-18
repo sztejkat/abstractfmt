@@ -129,6 +129,9 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 				@see ATxtReadFormatStateBase0#setStateHandler
 				*/
 				public void toNextChar()throws IOException;
+				/** Used for logging 
+				@return by default a class name */
+				public default String getName(){ return this.getClass().getName(); };
 				/** Invoked when state is "entered". Default implementation logs trace.
 				<p>
 				State is "entered" when it is either replacing current
@@ -136,7 +139,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 				of current state with {@link #pushStateHandler}. */
 				default public void onEnter()
 				{
-					if (TRACE) TOUT.println("entered "+this.getClass().getSimpleName());
+					if (TRACE) TOUT.println("entered "+this.getName());
 				};
 				/** Invoked when is "left". Default implementation logs trace.
 				<p>
@@ -146,7 +149,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 				*/
 				default public void onLeave()
 				{
-					if (TRACE) TOUT.println("left "+this.getClass().getSimpleName());
+					if (TRACE) TOUT.println("left "+this.getName());
 				};
 				/** Invoked when state is "activated" (becomes current). Default implementation logs trace.
 				<p>
@@ -156,7 +159,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 				to the top of stack as a side effect of {@link #popStateHandler} */
 				default public void onActivated()
 				{
-					if (TRACE) TOUT.println("activated "+this.getClass().getSimpleName());
+					if (TRACE) TOUT.println("activated "+this.getName());
 				};
 				/** Invoked when state is "de-activated" (no longer current). Default implementation logs trace.
 				<p>
@@ -166,7 +169,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 				*/
 				default public void onDeactivated()
 				{
-					if (TRACE) TOUT.println("deactivated "+this.getClass().getSimpleName());
+					if (TRACE) TOUT.println("deactivated "+this.getName());
 				};
 			};
 			/* ------------------------------------------------------------------------
@@ -324,6 +327,7 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 			Services for subclasses
 			
 	*******************************************************************/
+	
 	/* -----------------------------------------------------------------
 				Handler related
 	-----------------------------------------------------------------*/
@@ -511,8 +515,8 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 		};
 	};
 	/** Puts next value, to be read after current, from  syntax queue 
-	@param character from {@link #getNextChar}
-	@param syntax from {@link #getNextSyntaxElement}
+	@param character for {@link #getNextChar} -1 or 0...0xFFFF
+	@param syntax for {@link #getNextSyntaxElement}
 	@throws AssertionError if syntax is null and character is not -1 or
 			if syntax is not null and character is -1
 	*/
@@ -524,6 +528,36 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 				((syntax!=null)&&(character>=0))
 				):"inconsistent syntax ="+syntax+" with character=0x"+Integer.toHexString(character);
 		queueSyntax(character, syntax);
+	};
+	/**
+		Turns specified unicode code point into surogates pair, if necessary
+		and puts them into character queue under a specified syntax.
+		@param c unicode code point or single java character or -1. 
+				Full set of unicode code-points	and full set of  characters is allowed here,
+				including bad surogates.
+		@param syntax syntax to queue, null allowed only if code_point is -1.
+		@see ATxtReadFormatStateBase0#queueNextChar
+	*/
+	public void queueNextCodepoint(int c, TSyntax syntax)
+	{
+		assert((c>=-1)&&(c<=0x10FFFF)):"0x"+Integer.toHexString(c)+"("+c+") is not Unicode";
+		if (c==-1)
+		{
+			assert(syntax==null);
+			queueNextChar(-1,syntax);
+		}else
+		if (c>0xFFFF)
+		{
+				//needs to be split to surogates.
+				c = c - 0x1_0000;
+				char upper = (char)( (c >> 10)+0xD800);
+				char lower = (char)( (c & 0x3FF)+0xDC00);
+				queueNextChar(upper,syntax);
+				queueNextChar(lower,syntax);
+		}else
+		{
+			queueNextChar(c,syntax);
+		}
 	};
 	/* *****************************************************************
 	
@@ -562,5 +596,24 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 	{
 		assert(!syntaxQueueEmpty());
 		return next_char[next_queue_rptr]; 
+	};
+	/* ********************************************************************
+	
+		
+			AStructReadFormatBase0
+	
+	
+	*********************************************************************/
+	/** Overriden to brutally drop all the state handlers and queue 
+	to make garbage collection easier.*/ 
+	@Override protected void closeImpl()throws IOException
+	{
+		states = null;
+		next_char = null;
+		current = null;
+		next_queue_rptr=0;
+		next_queue_wptr=0;
+		next_syntax_element=null;
+		next_char=null;
 	};
 };

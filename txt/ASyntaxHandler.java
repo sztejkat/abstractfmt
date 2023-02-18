@@ -9,8 +9,8 @@ import sztejkat.abstractfmt.utils.CAdaptivePushBackReader;
 	various methods which can be used to collect some text from the down-stream
 	and compare it with expected pattern(s).
 	<p>
-	Since the <code>ASyntaxHandler</code> is focused on "catcher"
-	part of syntax processing described in {@link ATxtReadFormatStateBase0.ASyntaxHandler}
+	Since the {@link ASyntaxHandler} is focused on "consumer"
+	part of syntax processing described in {@link ATxtReadFormatStateBase0.ISyntaxHandler}
 	this class focuses on supporting detection of "catch phrases".
 	<p>
 	If the "catch phrase" for the syntax handler is known and fixed the
@@ -93,7 +93,7 @@ public abstract class ASyntaxHandler<TSyntax extends ATxtReadFormat1.ISyntax>
 	*/
 	protected int collect()throws EUnexpectedEof,IOException
 	{
-		int r = in().read();
+		int r = tryRead();
 		assert((r>=-1)&&(r<=0xFFFF));
 		if (r==-1)
 		{
@@ -114,7 +114,7 @@ public abstract class ASyntaxHandler<TSyntax extends ATxtReadFormat1.ISyntax>
 	*/
 	protected int tryCollect()throws IOException
 	{
-		int r = in().read();
+		int r = tryRead();
 		assert((r>=-1)&&(r<=0xFFFF));
 		if (r==-1)
 		{
@@ -123,6 +123,18 @@ public abstract class ASyntaxHandler<TSyntax extends ATxtReadFormat1.ISyntax>
 		collected.append((char)r);
 		return r;
 	};
+	/** Performs character collection into a {@link #collected} buffer.
+	@return collected character
+	@throws IOException if failed.
+	@throws EUnexpectedEof if could not collect
+	*/
+	protected char collectAlways()throws IOException,EUnexpectedEof
+	{
+		char r = readAlways();
+		collected.append(r);
+		return r;
+	};
+	
 	/** Un-reads entire collected buffer to the down-stream and 
 	clears the collected buffer.
 	@throws IOException if failed.
@@ -164,7 +176,7 @@ public abstract class ASyntaxHandler<TSyntax extends ATxtReadFormat1.ISyntax>
 	{
 		return SStringUtils.canStartWithCaseInsensitive(collected,text);
 	};
-	/** Collects up to <code>text.length()</code> characters and passes the collected
+	/** Clears collection buffer and collects up to <code>text.length()</code> characters and passes the collected
 	data through {@link #canStartWithCollected} with each collected character.
 	<p>
 	Collection stops if {@link #canStartWithCollected} returns 1 or -1
@@ -184,6 +196,7 @@ public abstract class ASyntaxHandler<TSyntax extends ATxtReadFormat1.ISyntax>
 	*/
 	protected final boolean looksAt(String text)throws IOException, EUnexpectedEof
 	{
+		collected.setLength(0);
 		for(int at=0;;at++)
 		{
 			if (collect()==-1) return false;
@@ -204,8 +217,9 @@ public abstract class ASyntaxHandler<TSyntax extends ATxtReadFormat1.ISyntax>
 	@throws EUnexpectedEof --//--
 	*/
 	protected final boolean looksAtCaseInsensitive(String text)throws IOException, EUnexpectedEof
-	{
+	{		
 		//See comments in looksAt(...)
+		collected.setLength(0);
 		for(int at=0;;at++)
 		{
 			if (collect()==-1) return false;
@@ -226,6 +240,7 @@ public abstract class ASyntaxHandler<TSyntax extends ATxtReadFormat1.ISyntax>
 	protected final boolean tryLooksAt(String text)throws IOException
 	{
 		//See comments in looksAt(...)
+		collected.setLength(0);
 		for(int at=0;;at++)
 		{
 			if (tryCollect()==-1) return false;
@@ -246,6 +261,7 @@ public abstract class ASyntaxHandler<TSyntax extends ATxtReadFormat1.ISyntax>
 	protected final boolean tryLooksAtCaseInsensitive(String text)throws IOException
 	{
 		//See comments in looksAt(...)
+		collected.setLength(0);
 		for(int at=0;;at++)
 		{
 			if (tryCollect()==-1) return false;

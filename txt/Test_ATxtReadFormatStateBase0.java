@@ -128,7 +128,6 @@ public class Test_ATxtReadFormatStateBase0 extends ATest
 				{
 					super(0,100); 
 				};
-				@Override protected void closeImpl(){};
 				@Override protected void openImpl(){};
 				@Override public int getMaxSupportedStructRecursionDepth(){ return -1; };
 				@Override public int getMaxSupportedSignalNameLength(){ return 10000; };

@@ -26,6 +26,13 @@ abstract class APlainEscapingEngine extends AEscapingEngine
 											'0','1','2','3','4','5','6','7','8','9',
 											'A','B','C','D','E','F'
 										};
+										
+	/* ***************************************************************************
+	
+			Construction
+	
+	
+	*****************************************************************************/
 	protected APlainEscapingEngine(){};
 	
 	/* **********************************************************
@@ -34,6 +41,7 @@ abstract class APlainEscapingEngine extends AEscapingEngine
 	
 	***********************************************************/
 	/** Forces escaping " and \  
+	@param c what to generate
 	*/
 	@Override protected boolean mustEscape(char c)
 	{
@@ -47,7 +55,10 @@ abstract class APlainEscapingEngine extends AEscapingEngine
 	/** Always false, no additional escapes */
 	@Override protected boolean mustEscapeCodepoint(int code_point){ return false; };
 	
-	/** Performs either short escape or hex escape depending on character. */
+	/** Performs either short escape or hex escape depending on character.
+	@param c what to generate
+	@throws IOException if failed.
+	*/
 	@Override protected void escape(char c)throws IOException
 	{
 		
@@ -61,7 +72,10 @@ abstract class APlainEscapingEngine extends AEscapingEngine
 		}
 	};
 	
-	/** Generates \XXXX; hex escape for character, stripping ALL leading zeroes */
+	/** Generates \XXXX; hex escape for character, stripping ALL leading zeroes 
+	@param c what to generate
+	@throws IOException if failed.
+	*/
 	protected void hex_escape(char c)throws IOException
 	{
 		out('\\');

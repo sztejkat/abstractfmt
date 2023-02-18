@@ -1,6 +1,5 @@
 package sztejkat.abstractfmt.txt.plain;
-import sztejkat.abstractfmt.txt.ATxtReadFormatStateBase0;
-import sztejkat.abstractfmt.txt.ATxtReadFormat1;
+import sztejkat.abstractfmt.txt.*;
 import sztejkat.abstractfmt.*;
 import sztejkat.abstractfmt.utils.CAdaptivePushBackReader;
 import sztejkat.abstractfmt.logging.SLogging;
@@ -9,431 +8,867 @@ import java.io.Reader;
 
 /**
 	A reference plain text format implementation, reading side.
+	<p>
 	This is also a code template which shows the easiest and cleaniest 
-	path to parsing text files into format readers.
+	path to parsing text files into format readers with the help of
+	"state-graph" concept presented in {@link ATxtReadFormatStateBase0}
+	and extended in {@link ATxtReadFormatStateBase1}.
 */
-public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat1.TIntermediateSyntax>
+public class CPlainTxtReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TIntermediateSyntax>
 {
-			/** Used to  {@link CPlainTxtReadFormat#toNextChar} in a state dependent way,
-			using a separate class per state.
+						/** Debug logging level */
+						private static final long TLEVEL = SLogging.getDebugLevelForClass(CPlainTxtReadFormat.class);
+						private static final boolean TRACE = (TLEVEL!=0);
+						private static final boolean DUMP = (TLEVEL>=2);
+						private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("CPlainTxtReadFormat.",CPlainTxtReadFormat.class) : null;
+
+		  	/* ***********************************************************************************************************
+		  	
+		  	
+		  	
+		  	
+		  			Tooling related to state graph.
+		  	
+		  	
+		  	
+		  	
+		  	
+		  	************************************************************************************************************/
+		  	
+			/** 
+				Base for plain and string token handlers.
+				<p>
+				This base keeps information about how to report characters and
+				how to transit to next state.
 			*/
-			private abstract class AStateHandler extends ATxtReadFormatStateBase0<ATxtReadFormat1.TIntermediateSyntax>.AStateHandler
+			private static abstract class ATokenHandler extends ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>
 			{
-				/** Reads from {@link #in} semi transparently handles eof 
-				@return -1 or 0...0xFFFF. If -1 eof is already send to {@link #queueNextChar} 
-				@throws IOException if {@link #in} thrown.*/
-				protected int read()throws IOException
-				{
-					int c = in.read();
-					assert((c>=-1)&&(c<=0xFFFF));
-					if (c==-1)
-					{
-						queueNextChar(-1,null);
-						return -1;
-					}else
-						return c;
-				};
+							/** How to report character which is a part of a token */
+							protected final ATxtReadFormat1.TIntermediateSyntax syntax_for_character;
+							/** How to report character which belongs to a token, but is not a part of its body */
+							protected final ATxtReadFormat1.TIntermediateSyntax syntax_for_void;
+							
+				/* *****************************************************************************
 				
-				/** Arms exception for invalid, unexpected character
-				and additional message.
-				@param c char to show
-				@param explain explanation
-				@return exception armed with line info.
+							Construction
+				
+				******************************************************************************/
+				/**
+					Creates.
+					@param parser parser, non null
+					@param syntax_for_character syntax to report for characters in token, non null
+					@param syntax_for_void syntax to report for void characters in token, non null
 				*/
-				protected EBrokenFormat unexpectedCharException(char c,String explain)
+				protected ATokenHandler(ATxtReadFormatStateBase1<ATxtReadFormat1.TIntermediateSyntax> parser,
+									  ATxtReadFormat1.TIntermediateSyntax syntax_for_character,
+									  ATxtReadFormat1.TIntermediateSyntax syntax_for_void
+									  )
 				{
-					assert(explain!=null);
-					return new EBrokenFormat("Unexpected character \'"+c+"\'(0x"+Integer.toHexString(c)+")"+getLineInfoMessage()+"\n"+explain);
-				};
-			};
-			
-			/** Initial state, equal to TOKEN_BODY_LOOKUP */
-			private final class NOTHING_StateHandler extends TOKEN_BODY_LOOKUP_StateHandler
-			{
-			}
-			
-			private final class COMMENT_StateHandler extends AStateHandler
-			{
-				/** Tests if we have double eol sequence
-				@param current_eol char to report, current recognized eol sequence start.
-				@param next_eol expected next part of eol sequence
-				@throws IOException if failed */
-				private void handlePossibleNextEol(char current_eol,char next_eol)throws IOException
-				{
-					 assert(current_eol!=next_eol);
-					 int j = in.read();
-					 if (j==-1)
-					 {
-						 //in this case this is just an end of a comment
-						 queueNextChar(current_eol,ATxtReadFormat1.TIntermediateSyntax.VOID);
-						 popStateHandler();
-					 }else
-					 if (j==next_eol)
-					 {
-						 //this is a part of a a comment, eat it.
-						 queueNextChar(current_eol,ATxtReadFormat1.TIntermediateSyntax.VOID);
-						 popStateHandler();
-					 }else
-					 {
-						 //this is not a part of a comment.
-						 in.unread((char)j);	//leave for future processing.
-						 queueNextChar(current_eol,ATxtReadFormat1.TIntermediateSyntax.VOID);
-						 popStateHandler();
-					 };
-				};
-				@Override protected void toNextChar()throws IOException
-				{
-					final int i= in.read();
-					//Note: For comments to be fully transparent the EOL must
-					//belong to comment and reported as VOID. We need to handle
-					//all eols: \r \n \r\n \n\r
-					switch(i)
-					{	
-						case -1: popStateHandler();  //eof terminates comment.
-								 queueNextChar(-1,null);
-								 break;
-						//handle possible double eol termination.
-						case '\r':handlePossibleNextEol((char)i,'\n'); break;
-						case '\n':handlePossibleNextEol((char)i,'\r'); break;
-						default:
-							//this is a comment, dump it to trash.
-							queueNextChar(i,ATxtReadFormat1.TIntermediateSyntax.VOID);
-					}
-				};
-			};
-			/**  We collected {@link CPlainTxtWriteFormat#TOKEN_SEPARATOR_CHAR}
-			     or we started the file, or we collected begin signal completely,
-			     or we collected end signal.
-			     <p>
-				 Now are actively looking for a token body.
-				 We expect {@link CPlainTxtWriteFormat#TOKEN_SEPARATOR_CHAR} 
-				 or {@link CPlainTxtWriteFormat#BEGIN_SIGNAL_CHAR} 
-				 or {@link CPlainTxtWriteFormat#END_SIGNAL_CHAR}
-				 or {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR}
-				 or {@link #isTokenBodyChar}
-				 or {@link #isEmptyChar}
-				 */
-			private class TOKEN_BODY_LOOKUP_StateHandler extends AStateHandler
-			{
-				@Override protected void toNextChar()throws IOException
-				{
-					final int i= read();
-					if (i==-1) return;
-					final char c=(char)i;
-					if (c==CPlainTxtWriteFormat.COMMENT_CHAR)
-					{
-						pushStateHandler(COMMENT);
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
-					}else
-					if (c==CPlainTxtWriteFormat.TOKEN_SEPARATOR_CHAR)
-					{
-						//This is an empty token since we have found separator instead
-						//of token body.
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.TOKEN_VOID);
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
-						//No state change
-					}else
-					if (c==CPlainTxtWriteFormat.BEGIN_SIGNAL_CHAR)
-					{
-						setStateHandler(COLLECTED_BEGIN);
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_BEGIN);
-					}else
-					if (c==CPlainTxtWriteFormat.END_SIGNAL_CHAR)
-					{
-						//We don't change state, we indicate to superclass we got end.
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_END);
-					}else
-					if (c==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)
-					{
-						setStateHandler(STRING_TOKEN_BODY);
-						//Sending TOKEN_VOID will trigger collection of a token body
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.TOKEN_VOID);
-					}else					
-					if (isTokenBodyChar(c))
-					{
-						setStateHandler(PLAIN_TOKEN_BODY);
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.TOKEN);
-					}else
-					if (isEmptyChar(c))
-					{
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
-					}else
-						throw unexpectedCharException(c,"while looking for next token body");
-				};
-			}
-			/**  We finished collecting token body, either string or plain.
-				 We are now on look-up for a token separator or signal.
-				 We do expect {@link #isEmptyChar} or {@link CPlainTxtWriteFormat#TOKEN_SEPARATOR_CHAR}
-				 or {@link CPlainTxtWriteFormat#BEGIN_SIGNAL_CHAR} or {@link CPlainTxtWriteFormat#END_SIGNAL_CHAR}
-		    */
-			private class TOKEN_LOOKUP_StateHandler extends AStateHandler
-			{
-				@Override protected void toNextChar()throws IOException
-				{
-					final int i= read();
-					if (i==-1) return;
-					final char c=(char)i;
-					if (c==CPlainTxtWriteFormat.COMMENT_CHAR)
-					{
-						pushStateHandler(COMMENT);
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
-					}else
-					if (c==CPlainTxtWriteFormat.TOKEN_SEPARATOR_CHAR)
-					{
-						setStateHandler(TOKEN_BODY_LOOKUP);
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
-					}else
-					if (c==CPlainTxtWriteFormat.END_SIGNAL_CHAR)
-					{
-						setStateHandler(TOKEN_BODY_LOOKUP);
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_END);
-					}else
-					if (c==CPlainTxtWriteFormat.BEGIN_SIGNAL_CHAR)
-					{
-						setStateHandler(COLLECTED_BEGIN);
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_BEGIN);
-					}else
-					if (isEmptyChar(c))
-					{
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
-					}else
-						throw unexpectedCharException(c,"while looking for next token separator or signal");
-				};
-			};
-			 /** Collected the {@link CPlainTxtWriteFormat#BEGIN_SIGNAL_CHAR},
-				 now expecting either 
-				 {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR} for "" enclosed name,
-				 or {@link #isTokenBodyChar} for plain name or 
-				 or {@link #isEmptyChar},
-				  {@link CPlainTxtWriteFormat#END_SIGNAL_CHAR},
-				  {@link CPlainTxtWriteFormat#BEGIN_SIGNAL_CHAR} for empty non name signal.
-				 */
-			private final class COLLECTED_BEGIN_StateHandler extends AStateHandler
-			{
-				@Override protected void toNextChar()throws IOException
-				{
-					final int i= read();
-					if (i==-1) return;
-					final char c=(char)i;
-					if (c==CPlainTxtWriteFormat.COMMENT_CHAR)
-					{
-						setStateHandler(TOKEN_BODY_LOOKUP);
-						pushStateHandler(COMMENT);
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
-					}else
-					if (c==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)
-					{
-						setStateHandler(COLLECTING_STRING_BEGIN_NAME);
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_NAME_VOID);
-					}else
-					if (c==CPlainTxtWriteFormat.END_SIGNAL_CHAR)
-					{
-						setStateHandler(TOKEN_LOOKUP);
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_END);
-					}else
-					if (c==CPlainTxtWriteFormat.BEGIN_SIGNAL_CHAR)
-					{
-						setStateHandler(COLLECTED_BEGIN);
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_BEGIN);
-					}else
-					if (isTokenBodyChar(c))
-					{
-						setStateHandler(COLLECTING_BEGIN_NAME);
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_NAME);
-					}else
-					if (isEmptyChar(c))
-					{
-						setStateHandler(TOKEN_BODY_LOOKUP);
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_NAME_VOID);
-						queueNextChar(' ',ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
-					}else
-						throw unexpectedCharException(c,"while looking for begin signal name");
-				};
-			};
-			/** Collected first character of begin signal name, un-quoted. 
-				Expecting more {@link #isTokenBodyChar} or any character which is not 
-				a body char to terminate a name. 
-		    */
-			private final class COLLECTING_BEGIN_NAME_StateHandler extends AStateHandler
-			{
-				@Override protected void toNextChar()throws IOException
-				{
-					final int i= read();
-					if (i==-1) return;
-					final char c=(char)i;
-					if (c==CPlainTxtWriteFormat.COMMENT_CHAR)
-					{
-						setStateHandler(TOKEN_BODY_LOOKUP);
-						pushStateHandler(COMMENT);
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
-					}else
-					if (isTokenBodyChar(c))
-					{
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_NAME);
-					}else
-					{
-						//Now basically we go to lookup. Easiest way is to un-read it, because
-						//it may be a signal.
-						in.unread(c);
-						setStateHandler(TOKEN_BODY_LOOKUP);
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
-					}
+					super(parser);
+					assert(syntax_for_character!=null);
+					assert(syntax_for_void!=null);
+					this.syntax_for_character=syntax_for_character;
+					this.syntax_for_void=syntax_for_void;
 				}
+				/* *****************************************************************************
+				
+							Services required from subclasses
+				
+				******************************************************************************/
+				/** A next handler to use.
+					<p>
+					Note: This method is necessary to allow breaking "cyclic construction" of cyclic state machines
+						by referencing to a common outer class field.
+					@return if non null state will move to that handler. If null
+							state will be popped. Also controls if state is set or pushed on {@link #enterStateHandler}.
+							
+					@see #enterStateHandler
+					@see #leaveStateHandler
+				*/
+				protected abstract IStateHandler getNextHandler(); 
+				
+				/* *****************************************************************************
+				
+							Services for subclasses
+				
+				******************************************************************************/
+				/** Acts on {@link #tryEnter()}==true and manages state according to {@link #getNextHandler} 
+				@throws EFormatBoundaryExceeded if {@link #pushStateHandler} thrown.*/
+				protected final void enterStateHandler()throws EFormatBoundaryExceeded
+				{
+					if (TRACE) TOUT.println("enterStateHandler("+this+")");
+					if (getNextHandler()==null) 
+								pushStateHandler(this);
+							else
+								setStateHandler(this);
+				};
+				/** Acts on {@link #toNextChar()} figuring out that needs to move to next state
+				and manages state according to {@link #getNextHandler}.
+				*/
+				protected final void leaveStateHandler()
+				{
+					if (TRACE) TOUT.println("leaveStateHandler("+this+")->"+getNextHandler());
+					if (getNextHandler()==null) 
+								popStateHandler();
+							else
+								setStateHandler(getNextHandler());
+				};
 			};
-			/**  A string body collector.
-				 <p>
-				 Collected {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR}
-				 opening string token. Now expecting un-escaped
-				 {@link CPlainTxtWriteFormat#STRING_TOKEN_SEPARATOR_CHAR}
-				 or any other char forming the string.
-				 <p>
-				 Will correctly handle all escapes.
-		    */
-			private abstract class AStringBody_StateHandler extends AStateHandler
+			
+			
+			
+			
+			/** 
+				A plain token handler.
+				<p>
+				This class is responsible for detecting a plain token or a plain begin name
+				and process it. It does not handle empty tokens and their detection
+				depends on the context.
+			*/
+			private static abstract class APlainTokenHandler extends ATokenHandler
 			{
-						private final ATxtReadFormat1.TIntermediateSyntax body_syntax;
-						private final ATxtReadFormat1.TIntermediateSyntax terminator_syntax;
-						private final AStateHandler next_handler;
-						private final APlainUnescapingEngine escaper = new APlainUnescapingEngine()
+				/* *****************************************************************************
+				
+							Construction
+				
+				******************************************************************************/
+				/**
+					Creates
+					@param parser parser
+					@param syntax_for_character syntax to report for characters in token
+					@param syntax_for_void syntax to report for void characters in token
+				*/
+				protected APlainTokenHandler(ATxtReadFormatStateBase1<ATxtReadFormat1.TIntermediateSyntax> parser,
+									  ATxtReadFormat1.TIntermediateSyntax syntax_for_character,
+									  ATxtReadFormat1.TIntermediateSyntax syntax_for_void
+									  )
+				{
+					super(parser, syntax_for_character, syntax_for_void);
+				}
+				/* *****************************************************************************
+				
+							ASyntaxHandler
+				
+				******************************************************************************/
+				@Override public boolean tryEnter()throws IOException
+				{
+					if (TRACE) TOUT.println("APlainTokenHandler.tryEnter() ENTER");
+					int r = tryRead();
+					if (r==-1)
+					{
+						if (TRACE) TOUT.println("APlainTokenHandler.tryEnter()=false, eof LEAVE");
+						return false;
+					};
+					char c = (char)r;
+					if (TRACE) TOUT.println("APlainTokenHandler.tryEnter() checking \'"+c+"\'");
+					if (isTokenBodyChar(c))
+					{
+						//Non empty token						
+						enterStateHandler();
+						queueNextChar(c,syntax_for_character);
+						if (TRACE) TOUT.println("APlainTokenHandler.tryEnter()=true, LEAVE");
+						return true;
+					}else
+					{
+						//Note: There is no possibility for looking for empty token
+						//		at this stage because there is a different way 
+						//		of saying "empty name" and "empty token" and we can't do
+						//		it out of context.
+						unread(c);
+						if (TRACE) TOUT.println("APlainTokenHandler.tryEnter()=false, LEAVE");
+						return false;
+					}
+				};
+				@Override public void toNextChar()throws IOException
+				{
+					if (TRACE) TOUT.println("APlainTokenHandler.toNextChar() ENTER");
+					int r = read();
+					if (r==-1) return;
+					char c = (char)r;
+					if (isTokenBodyChar(c))
+					{
+						if (DUMP) TOUT.println("APlainTokenHandler.toNextChar(), consuming \'"+c+"\' LEAVE");
+						queueNextChar(c,syntax_for_character);
+					}else
+					{
+						unread(c);
+						leaveStateHandler();
+						if (TRACE) TOUT.println("APlainTokenHandler.toNextChar(), finished due to  \'"+c+"\' LEAVE");
+					};
+				};
+			}
+			
+			
+			
+			
+			/** 
+				A string token handler.
+				<p>
+				This class is responsible for detecting a string token or a quoted begin name
+				and process it. It does handle empty tokens. It does un-escaping of escape squences.
+			*/
+			private abstract static class AStringTokenHandler extends ATokenHandler
+			{
+							/** A hex-escape sequence handler */
+							private final ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax> HEX_ESCAPE_SEQUENCE = 
+								new ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>(parser)
+								{
+												/** Counts digits */
+												int count = 0;
+												/** Preserves un-escaped value */
+												char unescaped = 0;
+									/* **********************************************************
+												AStateHandler
+									***********************************************************/
+									@Override public void onEnter(){ count=0; unescaped=0; };
+									/* **********************************************************
+												ASyntaxHandler
+									***********************************************************/
+									@Override public boolean tryEnter()throws IOException
+									{
+										if (TRACE) TOUT.println("AStringTokenHandler.HEX_ESCAPE_SEQUENCE.tryEnter() ENTER");
+										int r = tryRead();
+										if (r==-1)
+										{
+											if (TRACE) TOUT.println("AStringTokenHandler.HEX_ESCAPE_SEQUENCE.tryEnter()=false, eof LEAVE");
+											return false;
+										};
+										char c = (char)r;
+										if (TRACE) TOUT.println("AStringTokenHandler.HEX_ESCAPE_SEQUENCE.tryEnter() checking \'"+c+"\'");
+										if (c==CPlainTxtWriteFormat.ESCAPE_CHAR)
+										{
+											pushStateHandler(this);
+											if (TRACE) TOUT.println("AStringTokenHandler.HEX_ESCAPE_SEQUENCE.tryEnter()=true LEAVE");
+											return true;
+										}else
+										{
+											unread(c);
+											if (TRACE) TOUT.println("AStringTokenHandler.HEX_ESCAPE_SEQUENCE.tryEnter()=false LEAVE");
+											return false;
+										}
+									};
+									@Override public void toNextChar()throws IOException
+									{
+										if (TRACE) TOUT.println("AStringTokenHandler.HEX_ESCAPE_SEQUENCE.toNextChar() ENTER");
+										char c = readAlways();
+										if (TRACE) TOUT.println("AStringTokenHandler.HEX_ESCAPE_SEQUENCE.toNextChar() unescaping \'"+c+"\'");
+										if (c==';')
+										{
+											queueNextChar(unescaped,syntax_for_character);
+											popStateHandler();
+											if (TRACE) TOUT.println("AStringTokenHandler.HEX_ESCAPE_SEQUENCE.toNextChar(), unescaped LEAVE");
+										}else
+										if (count<4)
+										{
+											final char digit = c;
+											final int nibble;
+											if ((digit>='0')&&(digit<='9'))
+											{
+												nibble = digit - '0';
+											}else
+											if ((digit>='A')&&(digit<='F'))
+											{
+												nibble = digit - 'A'+10;
+											}else
+											if ((digit>='a')&&(digit<='f'))
+											{
+												nibble = digit - 'a'+10;
+											}else
+												throw new EBrokenFormat("Not a hex digit '"+digit+"\'"+getLineInfoMessage());
+											unescaped<<=4;
+											unescaped|=nibble;
+											count++;
+										}else
+											throw new EBrokenFormat("Too long escape"+getLineInfoMessage());
+									};
+								};
+								
+							/** A \\ escape handler */
+							private final ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax> SELF_ESCAPE_SEQUENCE = 
+								new ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>(parser)
+								{
+									/* **********************************************************
+												ASyntaxHandler
+									***********************************************************/
+									@Override public boolean tryEnter()throws IOException
+									{
+										if (TRACE) TOUT.println("AStringTokenHandler.SELF_ESCAPE_SEQUENCE.tryEnter() ENTER");
+										if (tryLooksAt("\\\\"))
+										{
+											if (TRACE) TOUT.println("AStringTokenHandler.SELF_ESCAPE_SEQUENCE.tryEnter()=false collected=\""+collected+"\", LEAVE");
+											queueNextChar('\\',syntax_for_character);
+											return true;
+										}else
+										{
+											if (TRACE) TOUT.println("AStringTokenHandler.SELF_ESCAPE_SEQUENCE.tryEnter()=false collected=\""+collected+"\", LEAVE");
+											unread();
+											return false;
+										}
+									};
+									@Override public void toNextChar()throws IOException
+									{
+										throw new AssertionError();
+									};
+								};
+							/** A \" 
+							escape handler */
+							private final ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax> QUOTE_ESCAPE_SEQUENCE = 
+								new ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>(parser)
+								{
+									/* **********************************************************
+												ASyntaxHandler
+									***********************************************************/
+									@Override public boolean tryEnter()throws IOException
+									{
+										if (TRACE) TOUT.println("AStringTokenHandler.QUOTE_ESCAPE_SEQUENCE.tryEnter() ENTER");
+										if (tryLooksAt("\\\""))
+										{
+											if (TRACE) TOUT.println("AStringTokenHandler.QUOTE_ESCAPE_SEQUENCE.tryEnter()=false collected=\""+collected+"\", LEAVE");
+											queueNextChar('\"',syntax_for_character);
+											return true;
+										}else
+										{
+											if (TRACE) TOUT.println("AStringTokenHandler.QUOTE_ESCAPE_SEQUENCE.tryEnter()=false collected=\""+collected+"\", LEAVE");
+											unread();
+											return false;
+										}
+									};
+									@Override public void toNextChar()throws IOException
+									{
+										throw new AssertionError();
+									};
+								};
+								
+				/* *****************************************************************************
+				
+							Construction
+				
+				******************************************************************************/
+				/**
+					Creates
+					@param parser parser
+					@param syntax_for_character syntax to report for characters in token
+					@param syntax_for_void syntax to report for void characters in token
+				*/
+				AStringTokenHandler(ATxtReadFormatStateBase1<ATxtReadFormat1.TIntermediateSyntax> parser,
+									  ATxtReadFormat1.TIntermediateSyntax syntax_for_character,
+									  ATxtReadFormat1.TIntermediateSyntax syntax_for_void
+									  )
+				{
+					super(parser, syntax_for_character, syntax_for_void);
+				}
+				/* *****************************************************************************
+				
+							ASyntaxHandler
+				
+				******************************************************************************/
+				@Override public boolean tryEnter()throws IOException
+				{
+					if (TRACE) TOUT.println("AStringTokenHandler.tryEnter() ENTER");
+					int r = tryRead();
+					if (r==-1)
+					{
+						if (TRACE) TOUT.println("AStringTokenHandler.tryEnter()=false, eof LEAVE");
+						return false;
+					};
+					char c = (char)r;
+					if (TRACE) TOUT.println("AStringTokenHandler.tryEnter() checking \'"+c+"\'");
+					if (c==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)
+					{
+						//Non empty token
+						enterStateHandler();
+						queueNextChar(c,syntax_for_void); //to indicate, that there is at least an empty token.
+						if (TRACE) TOUT.println("AStringTokenHandler.tryEnter()=true, LEAVE");
+						return true;
+					}else
+					{
+						unread(c);
+						if (TRACE) TOUT.println("AStringTokenHandler.tryEnter()=false, LEAVE");
+						return false;
+					}
+				};
+				@Override public void toNextChar()throws IOException
+				{
+					if (TRACE) TOUT.println("AStringTokenHandler.toNextChar() ENTER");
+					//First process escapes, because they do need full data
+					//and un-read correctly.
+					if (!SELF_ESCAPE_SEQUENCE.tryEnter()) //this must be checked first!
+					if (!QUOTE_ESCAPE_SEQUENCE.tryEnter())
+					if (!HEX_ESCAPE_SEQUENCE.tryEnter()) //this must be checked last.
+					{
+						//now check termination.
+						int r = read();
+						if (r==-1)
 						{
-							@Override protected int readImpl()throws IOException{ return in.read(); };
-							@Override protected void unread(char c)throws IOException
-							{
-								in.unread(c);
-							};
+							if (TRACE) TOUT.println("AStringTokenHandler.toNextChar(), eof LEAVE");
+							return;
 						};
-				/** 
-				@param body_syntax a syntax element to set when encountering body character
-				@param terminator_syntax a syntax element to set when encountering string terminator
-				@param next_handler a state handler to set after finising collection
-									together with returning <code>terminator_syntax</code>;
-				*/
-				AStringBody_StateHandler(
-								ATxtReadFormat1.TIntermediateSyntax body_syntax,
-								ATxtReadFormat1.TIntermediateSyntax terminator_syntax,
-								AStateHandler next_handler
-								)
-				{
-					assert(body_syntax!=null);
-					assert(terminator_syntax!=null);
-					assert(next_handler!=null);
-					this.next_handler = next_handler;
-					this.body_syntax=body_syntax;
-					this.terminator_syntax=terminator_syntax;
-				};
-				@Override protected void onEnter()
-				{
-					//Just to be sure, that if escaper thrown AND state transition was mande AND something
-					//was read in an another state (without passing through the escaper) the escaper syntax
-					//is reset.
-					escaper.reset();
-				};
-				@Override protected void toNextChar()throws IOException
-				{
-					int i = escaper.read();
-					if (i==-1) return;
-					assert((i>=-1)&&(i<=0xFFFF));
-					char c = (char)i;
-					//detect un-escaped string terminator.
-					if ((c==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)&&(!escaper.isEscaped()))
-					{
-						setStateHandler(next_handler);
-						queueNextChar(c,terminator_syntax);
-					}else
-					{
-						//everything else is a string body
-						queueNextChar(c,body_syntax);
+						char c = (char)r;
+						if (TRACE) TOUT.println("AStringTokenHandler.toNextChar() checking \'"+c+"\'");
+						if (c==CPlainTxtWriteFormat.STRING_TOKEN_SEPARATOR_CHAR)
+						{
+							if (TRACE) TOUT.println("AStringTokenHandler.toNextChar(), finished, LEAVE");
+							//we do consume token separator so no unreading.
+							leaveStateHandler();
+							return;
+						}else
+						{
+							if (TRACE) TOUT.println("AStringTokenHandler.toNextChar(), \'"+c+"\', LEAVE");
+							queueNextChar(c,syntax_for_character);
+							return;
+						}
 					}
-				}
-			};
-			/**
-			Responsible for collecting double quouted token body. 
+					if (TRACE) TOUT.println("AStringTokenHandler.toNextChar(), unescaped, LEAVE");
+				};
+			}
+			
+			
+			/* *****************************************************************************
+				
+			
+			
+			
+			
+							A state graph.
+				
+							
+						Each state in a graph is represented by a field to
+						which an apropriate handler is assigned.
+						
+						States names are CAPITALIZAED.
+							
+							
+							
+							
+		     ******************************************************************************/
+			
+			
+			/** A state which looks up for struct or file body content
+				which may be plain token, string token, comment, begin, end, white-space or end-of-file.
+				<p>
+				This state is an initial state for a file processing, initial state after end or begin
+				signal is processed and a state after the token separator is processed.
 			*/
-			private final class STRING_TOKEN_BODY_StateHandler extends AStringBody_StateHandler
+			private final IStateHandler STRUCT_BODY = new AStateHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
 			{
-					STRING_TOKEN_BODY_StateHandler()
-					{
-						super(
-									ATxtReadFormat1.TIntermediateSyntax.TOKEN,
-									ATxtReadFormat1.TIntermediateSyntax.SEPARATOR,
-									TOKEN_LOOKUP
-									);
-					};
-			};
-			/**
-			Responsible for collecting double quouted begin signal name. 
-			*/
-			private final class COLLECTING_STRING_BEGIN_NAME_StateHandler extends AStringBody_StateHandler
-			{
-					COLLECTING_STRING_BEGIN_NAME_StateHandler()
-					{
-						super(
-									ATxtReadFormat1.TIntermediateSyntax.SIG_NAME,
-									ATxtReadFormat1.TIntermediateSyntax.SIG_NAME_VOID,
-									TOKEN_BODY_LOOKUP
-									);
-					};
-			};
-			/**
-			     We collected first {@link #isTokenBodyChar} and are on the look-up for
-				 subsequent {@link #isTokenBodyChar} or 
-				 or {@link CPlainTxtWriteFormat#BEGIN_SIGNAL_CHAR} 
-				 or {@link CPlainTxtWriteFormat#END_SIGNAL_CHAR}
-				 or {@link #isEmptyChar} 
-				 or {@link CPlainTxtWriteFormat#TOKEN_SEPARATOR_CHAR} */
-			private final class PLAIN_TOKEN_BODY_StateHandler extends AStateHandler
-			{
-				@Override protected void toNextChar()throws IOException
+				@Override public void toNextChar()throws IOException
 				{
-					final int i= read();
-					if (i==-1) return;
-					final char c=(char)i;
-					if (c==CPlainTxtWriteFormat.COMMENT_CHAR)
+					if (TRACE) TOUT.println("STRUCT_BODY.toNextChar() ENTER");
+					//Consider what is next?
+					if (!PLAIN_TOKEN.tryEnter())
+					if (!STRING_TOKEN.tryEnter())
+					if (!COMMENT.tryEnter())
+					if (!BEGIN.tryEnter())
+					if (!END.tryEnter())
+					if (!WHITESPACE.tryEnter())
 					{
-						setStateHandler(TOKEN_BODY_LOOKUP);
-						pushStateHandler(COMMENT);
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
-					}else
-					if (c==CPlainTxtWriteFormat.BEGIN_SIGNAL_CHAR)
+						//Now we check why? 
+						int r = read();
+						if (r!=-1) throw new EBrokenFormat("Invalid syntax \'"+(char)r+"\':"+getLineInfoMessage());
+					}
+					if (TRACE) TOUT.println("STRUCT_BODY.toNextChar() LEAVE");
+				};
+				@Override public String getName(){ return "STRUCT_BODY"; };
+			};
+			
+			/** A white-space skipper. Returns to parent state on first non-white space character.
+			All white spaces are reported as {@link ATxtReadFormat1.TIntermediateSyntax#SEPARATOR}
+			*/
+			private final ISyntaxHandler WHITESPACE =  new ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
+			{
+				@Override public boolean tryEnter()throws IOException
+				{
+					if (TRACE) TOUT.println("WHITESPACE.tryEnter() ENTER");
+					int r = tryRead();
+					if (r==-1)
 					{
-						setStateHandler(COLLECTED_BEGIN);
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_BEGIN);
-					}else
-					if (c==CPlainTxtWriteFormat.END_SIGNAL_CHAR)
-					{
-						//We don't change state, we indicate to superclass we got end.
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_END);
-					}else
-					if (c==CPlainTxtWriteFormat.TOKEN_SEPARATOR_CHAR)
-					{
-						setStateHandler(TOKEN_BODY_LOOKUP);
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
-					}else
-					if (isTokenBodyChar(c))
-					{
-						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.TOKEN);
-					}else
+						if (TRACE) TOUT.println("WHITESPACE.tryEnter()=false, eof LEAVE");
+						return false;
+					};
+					char c = (char)r;
+					if (TRACE) TOUT.println("WHITESPACE.tryEnter() checking \'"+c+"\'");
 					if (isEmptyChar(c))
 					{
-						setStateHandler(TOKEN_LOOKUP);
+						//we are at space, skipp all spaces
+						pushStateHandler(this);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+						if (TRACE) TOUT.println("WHITESPACE.tryEnter()=true, LEAVE");
+						return true;
+					}else
+					{
+						unread(c);
+						if (TRACE) TOUT.println("WHITESPACE.tryEnter()=false, LEAVE");
+						return false;
+					}
+				};
+				@Override public void toNextChar()throws IOException
+				{
+					if (TRACE) TOUT.println("WHITESPACE.toNextChar() ENTER");
+					int r = read();
+					if (r==-1)
+					{
+						if (TRACE) TOUT.println("WHITESPACE.toNextChar(), eof LEAVE");
+						return;
+					};
+					char c = (char)r;
+					if (isEmptyChar(c))
+					{
+						//skipping
 						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
 					}else
-						throw unexpectedCharException(c,"while collecting token body");
-				}
+					{
+						//non-space, move to parent state.
+						unread(c);
+						popStateHandler();
+						if (TRACE) TOUT.println("WHITESPACE.toNextChar(), finished, LEAVE");
+					};
+				};
+				@Override public String getName(){ return "WHITESPACE"; };
 			};
-						
-				private final AStateHandler NOTHING = new NOTHING_StateHandler();
-				private final AStateHandler COLLECTED_BEGIN = new COLLECTED_BEGIN_StateHandler();
-				private final AStateHandler TOKEN_LOOKUP = new TOKEN_LOOKUP_StateHandler();
-				private final AStateHandler TOKEN_BODY_LOOKUP = new TOKEN_BODY_LOOKUP_StateHandler();
-				private final AStateHandler COLLECTING_BEGIN_NAME = new COLLECTING_BEGIN_NAME_StateHandler();
-				private final AStateHandler STRING_TOKEN_BODY = new  STRING_TOKEN_BODY_StateHandler();
-				private final AStateHandler PLAIN_TOKEN_BODY = new  PLAIN_TOKEN_BODY_StateHandler();
-				private final AStateHandler COLLECTING_STRING_BEGIN_NAME = new  COLLECTING_STRING_BEGIN_NAME_StateHandler();
-				private final AStateHandler COMMENT = new  COMMENT_StateHandler();
-				/** Push-back input */
-				private final CAdaptivePushBackReader in;
+			
+			/** A commend syntax handler. Recognizes # comment opening character.
+			Reports # as {@link ATxtReadFormat1.TIntermediateSyntax#SEPARATOR},
+			and a comment body as {@link ATxtReadFormat1.TIntermediateSyntax#VOID}.
+			The trailing EOL, as specified in format definition, does not belong to the comment. 
+			*/
+			private final ISyntaxHandler COMMENT = new ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
+			{		
 				
+				@Override public boolean tryEnter()throws IOException
+				{
+					if (TRACE) TOUT.println("COMMENT.tryEnter() ENTER");
+					int r = tryRead();
+					if (r==-1)
+					{
+						if (TRACE) TOUT.println("COMMENT.tryEnter()=false, eof LEAVE");
+						return false;
+					};
+					char c = (char)r;
+					if (TRACE) TOUT.println("COMMENT.tryEnter() checking \'"+c+"\'");
+					if (c==CPlainTxtWriteFormat.COMMENT_CHAR)
+					{						
+						pushStateHandler(this);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+						if (TRACE) TOUT.println("COMMENT.tryEnter()=true, LEAVE");
+						return true;
+					}else
+					{
+						unread(c);
+						if (TRACE) TOUT.println("COMMENT.tryEnter()=false, LEAVE");
+						return false;
+					}
+				};
+				@Override public void toNextChar()throws IOException
+				{
+					if (TRACE) TOUT.println("COMMENT.toNextChar() ENTER");
+					int r = read();
+					if (r==-1)
+					{
+						if (TRACE) TOUT.println("COMMENT.toNextChar(), eof LEAVE");
+						return;
+					};
+					char c = (char)r;
+					if ((c=='\r')||(c=='\n'))
+					{
+						//comment terminated. Accodring to specs eol does not belong to comment so:
+						unread(c);
+						//return to parent state.
+						popStateHandler();
+						if (TRACE) TOUT.println("COMMENT.toNextChar(), eol, LEAVE");
+					}else
+					{
+						//in comment.
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
+						if (TRACE) TOUT.println("COMMENT.toNextChar(), skipped, LEAVE");
+						
+					};
+				};
+				@Override public String getName(){ return "COMMENT"; };
+			};
+	
+	
+			/** A "begin" handler. Recognizes begin, that is '*'. Reports it as
+			{@link ATxtReadFormat1.TIntermediateSyntax#SIG_BEGIN} and recognizes what kind of signal name it is to collect,
+			which can be {@link #PLAIN_BEGIN_NAME} or {@link #QUOTED_BEGIN_NAME}.
+			*/
+			private final ISyntaxHandler BEGIN = new ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
+			{				
+				@Override public boolean tryEnter()throws IOException
+				{
+					if (TRACE) TOUT.println("BEGIN.tryEnter() ENTER");
+					int r = tryRead();
+					if (r==-1)
+					{
+						if (TRACE) TOUT.println("BEGIN.tryEnter()=false, eof LEAVE");
+						return false;
+					};
+					char c = (char)r;
+					if (TRACE) TOUT.println("BEGIN.tryEnter() checking \'"+c+"\'");
+					if (c==CPlainTxtWriteFormat.BEGIN_SIGNAL_CHAR)
+					{
+						pushStateHandler(this);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_BEGIN);
+						if (TRACE) TOUT.println("BEGIN.tryEnter()=true, LEAVE");
+						return true;
+					}else
+					{
+						unread(c);
+						if (TRACE) TOUT.println("BEGIN.tryEnter()=false, LEAVE");
+						return false;
+					}
+				};
+				@Override public void toNextChar()throws IOException
+				{
+					if (TRACE) TOUT.println("BEGIN.toNextChar() ENTER");
+					if (!PLAIN_BEGIN_NAME.tryEnter())
+					if (!QUOTED_BEGIN_NAME.tryEnter())
+					{
+						int r = read();
+						if (r!=-1) throw new EBrokenFormat("Invalid begin syntax \'"+(char)r+"\':"+getLineInfoMessage());
+					};
+				if (TRACE) TOUT.println("BEGIN.toNextChar() LEAVE");
+				};
+				@Override public String getName(){ return "BEGIN"; };
+			};
+			
+			
+			/** Recognizes and collects plain begin name and reports it as
+			 {@link ATxtReadFormat1.TIntermediateSyntax#SIG_NAME} or
+			 {@link ATxtReadFormat1.TIntermediateSyntax#SIG_NAME_VOID}.
+			 <p>
+			 Moves to {@link #STRUCT_BODY} handler.
+			*/
+			private final ISyntaxHandler PLAIN_BEGIN_NAME = new APlainTokenHandler
+															(
+																this,
+																ATxtReadFormat1.TIntermediateSyntax.SIG_NAME,
+																ATxtReadFormat1.TIntermediateSyntax.SIG_NAME_VOID
+																)
+			{
+				@Override protected IStateHandler getNextHandler(){ return STRUCT_BODY; };
+				@Override public boolean tryEnter()throws IOException
+				{
+					if (TRACE) TOUT.println("PLAIN_BEGIN_NAME.tryEnter() ENTER");
+					if (super.tryEnter())
+					{
+						if (TRACE) TOUT.println("PLAIN_BEGIN_NAME.tryEnter()=true, super LEAVE");
+						return true;
+					};
+					//we might have to look up for empty name, that is a "begin" follwed by 
+					//begin, end, token separator, whitespace comment.
+					int r = tryRead();
+					if (r==-1)
+					{
+						if (TRACE) TOUT.println("PLAIN_BEGIN_NAME.tryEnter()=false, eof LEAVE");
+						return false;
+					};
+					char c = (char)r;
+					if (TRACE) TOUT.println("PLAIN_BEGIN_NAME.tryEnter() checking \'"+c+"\'");
+					if (isEmptyChar(c)
+							||
+						(c==CPlainTxtWriteFormat.TOKEN_SEPARATOR_CHAR)
+							||
+						(c==CPlainTxtWriteFormat.END_SIGNAL_CHAR)
+							||
+						(c==CPlainTxtWriteFormat.BEGIN_SIGNAL_CHAR)
+							||
+						(c==CPlainTxtWriteFormat.COMMENT_CHAR)
+						)
+					{
+						if (TRACE) TOUT.println("PLAIN_BEGIN_NAME.tryEnter(), detected empty name");
+						assert(getNextHandler()!=null);
+						unread(c);	//leave it for next state handler!
+						leaveStateHandler();
+						queueNextChar(c,syntax_for_void);
+						if (TRACE) TOUT.println("PLAIN_BEGIN_NAME.tryEnter()=true, LEAVE");
+						return true;
+					}else
+					{
+						unread(c);
+						if (TRACE) TOUT.println("PLAIN_BEGIN_NAME.tryEnter()=false, LEAVE");
+						return false;
+					}
+				}
+				@Override public String getName(){ return "PLAIN_BEGIN_NAME"; };
+			};
+		
+			
+			/** Recognizes and collects quoted begin name and reports it as
+			 {@link ATxtReadFormat1.TIntermediateSyntax#SIG_NAME} or
+			 {@link ATxtReadFormat1.TIntermediateSyntax#SIG_NAME_VOID}.
+			 <p>
+			 Moves to {@link #STRUCT_BODY} handler.
+			*/
+			private final ISyntaxHandler QUOTED_BEGIN_NAME = new AStringTokenHandler(
+																		this,
+																		ATxtReadFormat1.TIntermediateSyntax.SIG_NAME,
+																		ATxtReadFormat1.TIntermediateSyntax.SIG_NAME_VOID)
+			{
+				@Override protected IStateHandler getNextHandler(){ return STRUCT_BODY; };
+				@Override public String getName(){ return "QUOTED_BEGIN_NAME"; };
+			};
+			
+			/** Recognizes and collects a plain token.
+			Reports it as {@link ATxtReadFormat1.TIntermediateSyntax#TOKEN}
+			and {@link ATxtReadFormat1.TIntermediateSyntax#TOKEN_VOID}.
+			<p>
+			Do recognize an empty token if finds separator.
+			<p>
+			Should be entered from {@link #STRUCT_BODY} and moves to {@link #NEXT_TOKEN}.
+			*/
+			private final ISyntaxHandler PLAIN_TOKEN = new APlainTokenHandler(
+																		this,
+																		ATxtReadFormat1.TIntermediateSyntax.TOKEN,
+																		ATxtReadFormat1.TIntermediateSyntax.TOKEN_VOID
+																		)
+			{
+				@Override protected IStateHandler getNextHandler(){ return NEXT_TOKEN; };
+				@Override public boolean tryEnter()throws IOException
+				{
+					if (TRACE) TOUT.println("PLAIN_TOKEN.tryEnter() ENTER");
+					if (super.tryEnter())
+					{
+						if (TRACE) TOUT.println("PLAIN_TOKEN.tryEnter()=true, super LEAVE");
+						return true;
+					};
+					//We might also accept empty token if we will find ,
+					int r = tryRead();
+					if (r==-1)
+					{
+						if (TRACE) TOUT.println("PLAIN_TOKEN.tryEnter()=false, eof LEAVE");
+						return false;
+					};
+					char c = (char)r;
+					if (TRACE) TOUT.println("PLAIN_TOKEN.tryEnter() checking \'"+c+"\'");
+					if (c==CPlainTxtWriteFormat.TOKEN_SEPARATOR_CHAR)
+					{
+						if (TRACE) TOUT.println("PLAIN_TOKEN.tryEnter(), detected empty token");
+						assert(getNextHandler()!=null);
+						//but leave character for next state. 
+						unread(c);
+						leaveStateHandler();
+						queueNextChar(c,syntax_for_void);
+						if (TRACE) TOUT.println("PLAIN_TOKEN.tryEnter()=true, LEAVE");
+						return true;
+					}else
+					{
+						unread(c);
+						if (TRACE) TOUT.println("PLAIN_TOKEN.tryEnter()=false, LEAVE");
+						return false;
+					}
+				}
+				@Override public String getName(){ return "PLAIN_TOKEN"; };
+			};
+			
+			/** Recognizes and collects quoted string token.
+			Reports it as {@link ATxtReadFormat1.TIntermediateSyntax#TOKEN}
+			and {@link ATxtReadFormat1.TIntermediateSyntax#TOKEN_VOID}.
+			<p>
+			Do recognize an empty token if finds separator.
+			<p>
+			Should be entered from {@link #STRUCT_BODY} and moves to {@link #NEXT_TOKEN}.
+			*/
+			private final ISyntaxHandler STRING_TOKEN = new AStringTokenHandler(
+																		this,
+																		ATxtReadFormat1.TIntermediateSyntax.TOKEN,
+																		ATxtReadFormat1.TIntermediateSyntax.TOKEN_VOID
+																		)
+			{
+				@Override protected IStateHandler getNextHandler(){ return NEXT_TOKEN; };
+				@Override public String getName(){ return "STRING_TOKEN"; };
+			};
+			
+			/**
+				This state is entered after a token is consumend and is looking for 
+				a next element which may be a token separator, begin, end, commend or eof.
+			*/
+			private final IStateHandler NEXT_TOKEN = new AStateHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
+			{
+				@Override public void toNextChar()throws IOException
+				{
+					if (TRACE) TOUT.println("NEXT_TOKEN.toNextChar() ENTER");
+					//Consider what is next?
+					if (!COMMENT.tryEnter())
+					if (!BEGIN.tryEnter())
+					if (!END.tryEnter())
+					if (!WHITESPACE.tryEnter())
+					if (!TOKEN_SEPARATOR.tryEnter())
+					{
+						//Now we 
+						int r = read();
+						if (r!=-1) throw new EBrokenFormat("Invalid syntax \'"+(char)r+"':"+getLineInfoMessage());
+					}
+					if (TRACE) TOUT.println("NEXT_TOKEN.toNextChar() LEAVE");
+				};
+				@Override public String getName(){ return "NEXT_TOKEN"; };
+			};
+			/**
+				A state recognizing and consuming a token separator.
+				Reports it as {@link ATxtReadFormat1.TIntermediateSyntax#SEPARATOR}.
+				Transits to {@link #STRUCT_BODY}.
+			*/
+			private final ISyntaxHandler TOKEN_SEPARATOR = new ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
+			{
+				@Override public boolean tryEnter()throws IOException
+				{
+					if (TRACE) TOUT.println("TOKEN_SEPARATOR.tryEnter() ENTER");
+					int r = tryRead();
+					if (r==-1)
+					{
+						if (TRACE) TOUT.println("TOKEN_SEPARATOR.tryEnter()=false, eof LEAVE");
+						return false;
+					};
+					char c = (char)r;
+					if (TRACE) TOUT.println("TOKEN_SEPARATOR.tryEnter() checking \'"+c+"\'");
+					if (c==CPlainTxtWriteFormat.TOKEN_SEPARATOR_CHAR)
+					{
+						//Found it, move to target state
+						if (TRACE) TOUT.println("TOKEN_SEPARATOR->STRUCT_BODY");
+						setStateHandler(STRUCT_BODY);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+						if (TRACE) TOUT.println("TOKEN_SEPARATOR.tryEnter()=true, LEAVE");
+						return true;
+					}else
+					{
+						if (TRACE) TOUT.println("TOKEN_SEPARATOR.tryEnter()=false, LEAVE");
+						unread(c);
+						return false;
+					}
+				};
+				@Override public void toNextChar()throws IOException
+				{
+					throw new AssertionError();
+				};
+				@Override public String getName(){ return "TOKEN_SEPARATOR"; };
+			};
+			
+			
+			/** Recognizes "end", that is ';'. Reports it as {@link ATxtReadFormat1.TIntermediateSyntax#SIG_END}.
+			Transits to {@link #STRUCT_BODY}.
+			*/
+			private final ISyntaxHandler END = new ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
+			{				
+				@Override public boolean tryEnter()throws IOException
+				{
+					int r = tryRead();
+					if (r==-1) return false;
+					char c = (char)r;
+					if (c==CPlainTxtWriteFormat.END_SIGNAL_CHAR)
+					{
+						if (TRACE) TOUT.println("END->STRUCT_BODY");
+						setStateHandler(STRUCT_BODY);
+						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_END);
+						return true;
+					}else
+					{
+						unread(c);
+						return false;
+					}
+				};
+				@Override public void toNextChar()throws IOException{ throw new AssertionError();};
+				@Override public String getName(){ return "END"; };
+			};
+			
 					
 	/* *********************************************************
 	
@@ -444,21 +879,16 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 	**********************************************************/
 	public CPlainTxtReadFormat(Reader in)
 	{
-		super(0,//int name_registry_capacity - disabled
+		super(in,
+			  0,//int name_registry_capacity - disabled
 			  64//int token_size_limit 
 			  );
-		assert(in!=null);
-		this.in = new CAdaptivePushBackReader(in,1,1);
 	}
-	private String getLineInfoMessage()
-	{
-		int c = in.getCharNumber();
-		return " at line "+(in.getLineNumber()+1)+" position "+c+ (c<=0 ? " from the end of line" : "");
-	};
+	
 	/* ********************************************************************
 	
 		
-			Syntax definitions
+			Characters classifiers
 	
 	
 	*********************************************************************/
@@ -478,6 +908,8 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 				(c==CPlainTxtWriteFormat.END_SIGNAL_CHAR)
 				||
 				(c==CPlainTxtWriteFormat.BEGIN_SIGNAL_CHAR)
+				||
+				(c==CPlainTxtWriteFormat.COMMENT_CHAR)
 				);
 	};
 	
@@ -491,13 +923,14 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase0<ATxtReadFormat
 	/** Closes input, abandons state handler. */
 	@Override protected void closeImpl()throws IOException
 	{
-		setStateHandler(null);
+		super.closeImpl();
 		in.close();
 	};
 	/** Initializes state handler */
 	@Override protected void openImpl()throws IOException
 	{		
-		setStateHandler(NOTHING);
+		if (TRACE) TOUT.println("openImpl->STRUCT_BODY");
+		setStateHandler(STRUCT_BODY);
 	};
 	/* ********************************************************************
 	

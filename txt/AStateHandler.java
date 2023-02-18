@@ -1,5 +1,6 @@
 package sztejkat.abstractfmt.txt;
 import sztejkat.abstractfmt.EUnexpectedEof;
+import sztejkat.abstractfmt.EFormatBoundaryExceeded;
 import java.io.IOException;
 import sztejkat.abstractfmt.utils.CAdaptivePushBackReader;
 /**
@@ -53,6 +54,15 @@ public abstract class AStateHandler<TSyntax extends ATxtReadFormat1.ISyntax>
 			};
 			return r;
 		};
+		/** Reads data from {@link ATxtReadFormatStateBase1#in}.
+		If encounters end-of-file returns -1. Otherwise just returns the character.
+		@return -1 or 0...0xFFFF
+		@throws IOException if failed.
+		*/
+		protected final int tryRead()throws IOException
+		{
+			return in().read();
+		};
 		/** Reads data from {@link #in}.
 		If encounters end-of-file throws {@link EUnexpectedEof}
 		 Otherwise just returns the character.
@@ -93,5 +103,42 @@ public abstract class AStateHandler<TSyntax extends ATxtReadFormat1.ISyntax>
 		{
 			in().unread(chars,from,length);
 		}
-		
+		/* ************************************************************************
+	
+				Common shortcuts.	
+	
+	    *************************************************************************/
+		/** Calls <code>parser</code>
+		@param s state handler to push
+		@throws EFormatBoundaryExceeded if handlers stack limit was reached. 
+		*/
+		protected final void pushStateHandler(ATxtReadFormatStateBase0.IStateHandler s)throws EFormatBoundaryExceeded
+		{
+			parser.pushStateHandler(s);
+		};
+		/** Calls <code>parser</code>
+		@param s state handler to set
+		*/
+		protected final void setStateHandler(ATxtReadFormatStateBase0.IStateHandler s)
+		{
+			parser.setStateHandler(s);
+		};
+		/** Calls <code>parser</code>
+		*/
+		protected final void popStateHandler()
+		{
+			parser.popStateHandler();
+		};
+		/** Calls <code>parser</code>
+		@param c see {@link ATxtReadFormatStateBase0#queueNextChar}
+		@param syntax --//--
+		*/
+		protected final void queueNextChar(int c, TSyntax syntax)
+		{
+			parser.queueNextChar(c,syntax);
+		};
+		/** Calls <code>parser</code>
+		@return c see {@link ATxtReadFormatStateBase1#getLineInfoMessage}		
+		*/
+		protected String getLineInfoMessage(){ return parser.getLineInfoMessage(); };
 }

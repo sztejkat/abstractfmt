@@ -5,6 +5,11 @@ import java.io.IOException;
 /**
 	A simplfified engine which is responsible for 
 	handling multi-line comments.
+	<p>
+	It's main purpose is to change multi line comment
+	to a stream of linies starting with #. Works with
+	all known eol-styles, altough may produce empty
+	lines for some of them.
 */
 abstract class ACommentEscapingEngine extends AEscapingEngine
 {

@@ -293,7 +293,7 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 							//plain chars collection, bound
 							if (token_completion_buffer.length()>=token_size_limit)
 								throw new EFormatBoundaryExceeded("Token \""+token_completion_buffer+"...\" too long in current context processing");
-							if (DUMP) TOUT.println("collectToken+=\'"+c+"'(0x"+Integer.toHexString(c)+")");
+							if (DUMP) TOUT.println("collectToken+=\'"+(char)c+"'(0x"+Integer.toHexString(c)+")");
 							token_completion_buffer.append((char) c);
 			}
 		};

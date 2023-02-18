@@ -655,7 +655,9 @@ public class Test_CPlainTxtReadFormat extends ATest
 							
 		d.open();
 		Assert.assertTrue("ma".equals(d.next()));
-		Assert.assertTrue("roboteur".equals(d.readString(100)));
+		String s= d.readString(100);
+		System.out.println(s);
+		Assert.assertTrue("roboteur".equals(s));
 		leave();
 	};
 	

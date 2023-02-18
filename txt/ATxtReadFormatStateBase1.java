@@ -106,9 +106,17 @@ public abstract class ATxtReadFormatStateBase1<TSyntax extends ATxtReadFormat1.I
 	/** Returns reader bound with this state machine.
 	All reads and un-reads should get directly through it without
 	any additional buffering or state machine may get confused. 
-	@return reader passed in constructor or wrapped there, non null */
+	@return {@link #in}, reader passed in constructor or wrapped there, non null */
 	public final CAdaptivePushBackReader in(){ return in; };
-	
+	/** Forms message which can be used to formulate exception
+	like <code>"someting bad happen "+getLineInfoMessage()</code>
+	@return human readable information about cursor position in {@link #in}
+	*/
+	public String getLineInfoMessage()
+	{
+		int c = in.getCharNumber();
+		return " at line "+(in.getLineNumber()+1)+" position "+c+ (c<=0 ? " from the end of line" : "");
+	};
 	/* ****************************************************************
 	
 				AStructBaseFormat
@@ -118,6 +126,7 @@ public abstract class ATxtReadFormatStateBase1<TSyntax extends ATxtReadFormat1.I
 	@Override protected void closeImpl()throws IOException
 	{
 		if (TRACE) TOUT.println("closeImpl() ENTER");
+		super.close();
 		in.close();
 		if (TRACE) TOUT.println("closeImpl() LEAVE");
 	};

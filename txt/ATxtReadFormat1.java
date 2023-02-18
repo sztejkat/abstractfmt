@@ -225,7 +225,9 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 				In reaction to this character the processing of current signal content 
 				is stopped and {@link ARegisteringStructReadFormat#readSignalReg}
 				will be used to process the end signal by collecting
-				this one {@link #SIG_END}.*/
+				this one {@link #SIG_END}. Each {@link #SIG_END} character produces one
+				"end" signal.
+				*/
 				SIG_END,
 				/** A token or signal terminator. This character do not belong to any
 				syntax element and do terminate a previous syntax element, if any.
@@ -465,7 +467,7 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 							int c = peekChar();
 							assert((c>=0)&&(c<=0xFFFF));
 							consume();
-							if (DUMP) TOUT.println("nextTokenBody+=\'"+c+"'(0x"+Integer.toHexString(c)+") stx="+stx+" token_state="+token_state+" LEAVE");
+							if (DUMP) TOUT.println("nextTokenBody+=\'"+((char)c)+"'(0x"+Integer.toHexString(c)+") stx="+stx+" token_state="+token_state+" LEAVE");
 							return c;
 						}
 				default:

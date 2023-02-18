@@ -5,6 +5,12 @@ import java.io.IOException;
 
 /**
 	A reverse engine for {@link AEscapingEngine}.
+	<p>
+	This engine is indended to work with parsers which do NOT use
+	the "state graph" approach presented in {@link ATxtReadFormatStateBase0}/{@link ATxtReadFormatStateBase1}.
+	<p>
+	State-graph based parsers should use own state machines to handle it
+	and they don't need any dedicated support.
 */
 public abstract class AUnescapingEngine 
 {

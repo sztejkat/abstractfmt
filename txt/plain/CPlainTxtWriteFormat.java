@@ -181,7 +181,6 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat1
 	@param c char to write 
 	@see #outEscapedStringToken(String)
 	@throws IOException if failed 
-	@see #is_upper_surogate_pending
 	@see #openEscapedStringToken
 	*/
 	protected void outEscapedStringToken(char c)throws IOException
@@ -208,7 +207,7 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat1
 	by purging pending upper surogates.
 	@throws IOException if failed.
 	@see #openEscapedStringToken
-	@see #flushPendingSurogates
+	@see #escaper
 	*/
 	protected void closeEscapedStringToken()throws IOException
 	{
