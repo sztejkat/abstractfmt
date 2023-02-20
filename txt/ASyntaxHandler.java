@@ -252,6 +252,32 @@ public abstract class ASyntaxHandler<TSyntax extends ATxtReadFormat1.ISyntax>
 			};
 		}
 	};
+	/** As {@link #tryLooksAt} but un-reads collection buffer ({@link #unread})
+	if returns false. Usefull in calling them in 
+	<pre>
+	if (orTryLooksAt("alt") || orTryLooksAt("balt"))
+	{
+		... collected contains catched variant.
+	}else
+	{
+		... no need to unread()
+	};
+	</pre>
+	@param text what to compare with.
+	@return see {@link #looksAt}
+	@throws IOException --//--
+	*/
+	protected final boolean orTryLooksAt(String text)throws IOException
+	{
+		if (tryLooksAt(text))
+		{
+			return true;
+		}else
+		{
+			unread();
+			return false;
+		}
+	};
 	/** A variant of {@link #looksAtCaseInsensitive} which never throws {@link EUnexpectedEof}
 	returning false instead.
 	@param text text to compare with

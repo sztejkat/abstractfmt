@@ -41,7 +41,7 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat
 				This base keeps information about how to report characters and
 				how to transit to next state.
 			*/
-			private static abstract class ATokenHandler extends ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>
+			private static abstract class ATokenHandler extends AToNextSyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>
 			{
 							/** How to report character which is a part of a token */
 							protected final ATxtReadFormat1.TIntermediateSyntax syntax_for_character;
@@ -70,49 +70,6 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat
 					this.syntax_for_character=syntax_for_character;
 					this.syntax_for_void=syntax_for_void;
 				}
-				/* *****************************************************************************
-				
-							Services required from subclasses
-				
-				******************************************************************************/
-				/** A next handler to use.
-					<p>
-					Note: This method is necessary to allow breaking "cyclic construction" of cyclic state machines
-						by referencing to a common outer class field.
-					@return if non null state will move to that handler. If null
-							state will be popped. Also controls if state is set or pushed on {@link #enterStateHandler}.
-							
-					@see #enterStateHandler
-					@see #leaveStateHandler
-				*/
-				protected abstract IStateHandler getNextHandler(); 
-				
-				/* *****************************************************************************
-				
-							Services for subclasses
-				
-				******************************************************************************/
-				/** Acts on {@link #tryEnter()}==true and manages state according to {@link #getNextHandler} 
-				@throws EFormatBoundaryExceeded if {@link #pushStateHandler} thrown.*/
-				protected final void enterStateHandler()throws EFormatBoundaryExceeded
-				{
-					if (TRACE) TOUT.println("enterStateHandler("+this+")");
-					if (getNextHandler()==null) 
-								pushStateHandler(this);
-							else
-								setStateHandler(this);
-				};
-				/** Acts on {@link #toNextChar()} figuring out that needs to move to next state
-				and manages state according to {@link #getNextHandler}.
-				*/
-				protected final void leaveStateHandler()
-				{
-					if (TRACE) TOUT.println("leaveStateHandler("+this+")->"+getNextHandler());
-					if (getNextHandler()==null) 
-								popStateHandler();
-							else
-								setStateHandler(getNextHandler());
-				};
 			};
 			
 			

@@ -275,8 +275,9 @@ public abstract class AXMLWriteFormat0 extends ATxtWriteFormat1
 				own generic text API at char level. It should not be a problem tough, if not the fact
 				that the javax.xml.stream.XMLEventReader is also String based. What is worse
 				the XMLEventReader.nextEvent() is an un-bound read which will try to load
-				the whole XML element body. This is out-of-memory attack prone and unacceptable
-				in this format API.
+				the whole XML element body (or at least - I do suspect that it is allowed
+				since specs do not say a word about it). This is out-of-memory attack prone 
+				and unacceptable in this format API.
 				
 			3. Writing XML is trivial. No need to overcomplicate it unless using DOM model.
 				

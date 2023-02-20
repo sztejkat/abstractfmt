@@ -1,7 +1,14 @@
 package sztejkat.abstractfmt.txt.xml;
 
 /**
-	XML classifier
+	XML characters classifier. A class responsible
+	for recognizing which characters are allowed where.
+	<p>
+	This class is used to ensure that generated XML
+	do conform to specs.
+	<p>
+	This class is declared as an interface since XML 1.0 ed IV, XML 1.0 ed V
+	and XML 1.1 are all incompatible in that manner with each other.
 */
 public interface IXMLCharClassifier
 {
