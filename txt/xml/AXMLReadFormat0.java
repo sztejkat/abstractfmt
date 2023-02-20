@@ -43,7 +43,12 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
         		*/
         		private static abstract class ASkippper extends AToNextSyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>
         		{
+        						/** A nested &lt; count. The XML is in generic not 
+        						allowing nested comment and exct, but, unfortunately
+        						allows nested elements in DOCTYPE. */
+        						private int nested;
         			protected ASkippper(ATxtReadFormatStateBase1<ATxtReadFormat1.TIntermediateSyntax> p){ super(p); };
+        			@Override public void onEnter(){ nested = 0; };
         			@Override public void toNextChar()throws IOException
         			{
         				if (TRACE) TOUT.println("ASkippper.toNextChar() ENTER");
@@ -54,11 +59,19 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 							return;
 						};
 						char c = (char)r;
+						if (c=='<')
+						{
+							nested++;
+						}else
 						if (c=='>')
 						{
 							//consume char and move to next;
-							leaveStateHandler();
-							if (TRACE) TOUT.println("ASkippper.toNextChar(), finished LEAVE");
+							if (nested==0)
+							{
+								leaveStateHandler();
+								if (TRACE) TOUT.println("ASkippper.toNextChar(), finished LEAVE");
+							}else
+								nested--;
 						}else
 						{
 							//do not report this character at all.
@@ -309,7 +322,7 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 							if (TRACE) TOUT.println("CAmpHexEscapeHandler.toNextChar() unescaping \'"+c+"\'");
 							if (c==';')
 							{
-								queueNextChar(unescaped,report_unescaped_as);
+								queueNextCodepoint(unescaped,report_unescaped_as);
 								popStateHandler();
 								if (TRACE) TOUT.println("CAmpHexEscapeHandler.toNextChar(), unescaped LEAVE");
 							}else
@@ -376,7 +389,7 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 							if (TRACE) TOUT.println("CAmpDecimalEscapeHandler.toNextChar() unescaping \'"+c+"\'");
 							if (c==';')
 							{
-								queueNextChar(unescaped,report_unescaped_as);
+								queueNextCodepoint(unescaped,report_unescaped_as);
 								popStateHandler();
 								if (TRACE) TOUT.println("CAmpDecimalEscapeHandler.toNextChar(), unescaped LEAVE");
 							}else
@@ -548,7 +561,8 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 					};
 				};
 				/** A state responsible for looking for the opening tag specified by
-				{@link #getXMLBodyElement} */				
+				{@link #getXMLBodyElement}. Finally moves to {@link #ELEMENT_BODY}
+				*/				
 				private final IStateHandler XML_BODY_LOOKUP = new ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
 				{
 					@Override public String getName(){ return "XML_BODY_LOOKUP"; };
@@ -673,6 +687,17 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 							if (TRACE) TOUT.println("BEGIN_TAG.tryEnter()=true, empty name, LEAVE");
 							return true;
 						}else
+						if (orTryLooksAt("<_/>"))
+						{
+							//self closing empty name.
+							queueNextChar(0,ATxtReadFormat1.TIntermediateSyntax.SIG_BEGIN);	//begin
+							queueNextChar(0,ATxtReadFormat1.TIntermediateSyntax.SIG_NAME_VOID); //empty name
+							queueNextChar(0,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);	//end of name
+							queueNextChar(0,ATxtReadFormat1.TIntermediateSyntax.SIG_END);	//self closing.
+							setStateHandler(ELEMENT_BODY);
+							if (TRACE) TOUT.println("BEGIN_TAG.tryEnter()=true, self closing empty name, LEAVE");
+							return true;
+						}else
 						if (tryLooksAt("<"))//now full text variants.
 						{
 							//Now check if it is not the end tag?
@@ -687,6 +712,7 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 							if (!classifier.isXMLSpace(c))
 							{
 								queueNextChar(0,ATxtReadFormat1.TIntermediateSyntax.SIG_BEGIN);	//begin
+								queueNextChar(0,ATxtReadFormat1.TIntermediateSyntax.SIG_NAME_VOID); //empty name, just in case
 								pushStateHandler(this);
 								if (TRACE) TOUT.println("BEGIN_TAG.tryEnter()=true, full name, LEAVE");
 								return true;
@@ -711,9 +737,7 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 						{
 							char c = readAlways();						
 							if (c=='>')
-							{
-								unread(c);
-								queueNextChar(0,ATxtReadFormat1.TIntermediateSyntax.SIG_NAME_VOID); //empty name, just in case
+							{								
 								queueNextChar(0,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);	//end of name
 								end_tags.push("</"+collected+">"); //includes raw escape sequences								
 								if (TRACE) TOUT.println("BEGIN_TAG.toNextChar(), got unescaped name \""+collected+"\" LEAVE");
@@ -728,7 +752,7 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 								{
 									//yes, self closing.
 									queueNextChar(0,ATxtReadFormat1.TIntermediateSyntax.SIG_END);	//end of name, end.
-									popStateHandler();
+									setStateHandler(ELEMENT_BODY);
 									if (TRACE) TOUT.println("BEGIN_TAG.toNextChar(), self closing tag, LEAVE"); 
 									return;
 								}else
@@ -737,19 +761,66 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 								}
 							}else
 							//now be flexible and allow all non-space
-							if (!classifier.isXMLSpace(c))
+							if (classifier.isXMLSpace(c))
+							{
+								//attribute skipper.
+								queueNextChar(0,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);	//end of name
+								end_tags.push("</"+collected+">"); //includes raw escape sequences		
+								if (TRACE) TOUT.println("BEGIN_TAG.toNextChar(), got unescaped name \""+collected+"\" but possible attributes LEAVE");
+								setStateHandler(ATTRIBUTES_SKIPPER);
+								return;
+							}else
 							{
 								//Now collect it
 								collected.append(c);
 								//now pass it up.
 								queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SIG_NAME); //empty name
 								if (TRACE) TOUT.println("BEGIN_TAG.toNextChar(), collected \'"+c+"\'");
-							}else
-								throw new EBrokenFormat("Invalid character in element name \'"+c+"\', attributes are not allowed:"+getLineInfoMessage());
+							}
 						};
 					};
 				};
 				
+				/** A state responsible for skipping eventuall attributes in dumbest possible way */
+				private final IStateHandler ATTRIBUTES_SKIPPER = new AStateHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
+				{
+								/** Used to track quouted section which unfortunately
+								do allows for &gt; */
+								private boolean in_quoted_section;
+					@Override public String getName(){ return "ATTRIBUTES_SKIPPER"; };
+					@Override public void onEnter(){ in_quoted_section = false; };
+					@Override public void toNextChar()throws IOException
+					{
+						if (TRACE) TOUT.println("ATTRIBUTES_SKIPPER.toNextChar() ENTER");
+						char c = readAlways();						
+						if (!in_quoted_section)
+						{
+							switch(c)
+							{
+								case '>':
+									{								
+										if (TRACE) TOUT.println("ATTRIBUTES_SKIPPER.toNextChar(), finished LEAVE");
+										setStateHandler(ELEMENT_BODY);
+										return;
+									}
+								case '\"':
+									{								
+										if (TRACE) TOUT.println("ATTRIBUTES_SKIPPER.toNextChar(), quouted section LEAVE");
+										in_quoted_section = true;
+									};
+									break;
+							}
+						}else
+						{
+							if (c=='\"')
+							{
+								in_quoted_section = false;
+								if (TRACE) TOUT.println("ATTRIBUTES_SKIPPER.toNextChar(), no longer in quouted section LEAVE");
+							};
+						};
+						if (TRACE) TOUT.println("ATTRIBUTES_SKIPPER.toNextChar() LEAVE");
+					};
+				};
 				/** 
 					A class which is processing a body of an element.					
 				*/
@@ -935,9 +1006,7 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 					@Override public void toNextChar()throws IOException
 					{
 						if (TRACE) TOUT.println("PLAIN_TOKEN.toNextChar() ENTER");
-						if (!TOKEN_UNDERSCORE_ESCAPE.tryEnter())
-						if (!TOKEN_UNDERSCORE_SELF_ESCAPE.tryEnter())
-						if (!TOKEN_AMP_HEX_ESCAPE.tryEnter())
+						if (!TOKEN_AMP_HEX_ESCAPE.tryEnter())	//just XML escapes which must be understood there.
 						if (!TOKEN_AMP_DEC_ESCAPE.tryEnter())
 						if (!TOKEN_AMP_ENTITY_ESCAPE.tryEnter())
 						{
@@ -960,6 +1029,10 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 								queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
 								setStateHandler(TOKEN_SEPARATOR);
 								if (TRACE) TOUT.println("PLAIN_TOKEN.toNextChar(), terminated token");
+							}else
+							if (c=='\"')
+							{
+								throw new EBrokenFormat("plain token cannot contain \'"+c+"\' :"+getLineInfoMessage());
 							}else
 							{
 								//emit as token.
@@ -1037,18 +1110,23 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 								return;
 							};
 							char c = (char)r;
-							if ( c=='\"') //only this terminates the string token.
+							switch(c)
 							{
-								//terminate token
-								unread(c);
-								queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
-								setStateHandler(TOKEN_SEPARATOR);
-								if (TRACE) TOUT.println("STRING_TOKEN.toNextChar(), terminated token");
-							}else
-							{
-								//emit as token.
-								queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.TOKEN);
-							};
+									case '\"': //only this terminates the string token.
+											//terminate token
+											unread(c);
+											queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+											setStateHandler(TOKEN_SEPARATOR);
+											if (TRACE) TOUT.println("STRING_TOKEN.toNextChar(), terminated token");
+											return;
+									case '<':
+											//This is an error to have this is a qouted token even tough xml
+											//do allow that.
+											throw new EBrokenFormat("Unclosed quouted token or XML command inside it :"+getLineInfoMessage());
+									default:
+											//emit as token.
+											queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.TOKEN);
+							}
 						}
 						if (TRACE) TOUT.println("STRING_TOKEN.toNextChar() LEAVE");
 					};

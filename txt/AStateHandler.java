@@ -138,6 +138,14 @@ public abstract class AStateHandler<TSyntax extends ATxtReadFormat1.ISyntax>
 			parser.queueNextChar(c,syntax);
 		};
 		/** Calls <code>parser</code>
+		@param c see {@link ATxtReadFormatStateBase0#queueNextCodepoint}
+		@param syntax --//--
+		*/
+		protected final void queueNextCodepoint(int c, TSyntax syntax)
+		{
+			parser.queueNextCodepoint(c,syntax);
+		};
+		/** Calls <code>parser</code>
 		@return c see {@link ATxtReadFormatStateBase1#getLineInfoMessage}		
 		*/
 		protected String getLineInfoMessage(){ return parser.getLineInfoMessage(); };

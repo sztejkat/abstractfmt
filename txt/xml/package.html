@@ -10,41 +10,34 @@
       This package defines how signal format is projected on XML file.
 
       <h1>Use of XML standard</h1>
-      This format do produce "well formed XML 1.0 ed 4", but cannot parse all
-      "well formed" XMLs.
+      This format does produce "well formed XML 1.0 ed 4".
+      <p>
+      When parsing it does:
+      <ul>
+      		<li>cannot parse all "well formed" XMLs, especially it:
+      				<ul>
+      					<li>does not support definition of custom entities, including xref entities;</li>
+      					<li>no XML element or command or comment may appear inside a "string" <a href="#TOKENS">token</a>;</li> 
+      				</u>
+      		</li>
+      		<li>ignores following XML standard informations:
+      				<ul>
+      					<li>DOCTYPE is completely ignored;</li>
+      					<li>?xml prolog content is ignored;</li> 
+      				</ul>
+      		</li>
+      		<li>allows all non-space characters in tag name;</li>
+      		<li>allows all zero length tag name;</li>
+      		<li>allows all characters in a body, including bad surogates;</li>
+      		<li>allows all characters in &amp; numeric escapes, including bad surogates;</li>
+      		<li>allows anonymous <code>&lt;/&gt;</code> closing tags;</li>
+      		<li>ignores all attributes;</li>
+      	</ul>
       <p>
       Note: Refer to XML specification <a href="https://www.w3.org/TR/xml/">there</a>
       or a <a href="doc-files/xml1.0e4/XML_specification.html">copy</a> provided with this package
       for Your convinience.
-      
-      <h3>Breaking change</h3>
-      The XML 1.0 Ed 5 introduced a "breaking change" by allowing characters which were not
-      allwed in XML 1.0 Ed 4 and below <u>without</u> bumping up version in XML prolog.
-      This results in incompatibility and files produced with Ed 5 are not well formed when
-      processed by parsers of Ed 4 and below. Which, by the way, are default for JDK8...11 and 
-      Firefox. 
-      <p>
-      The correct edition was introduced <u>earlier</u> in 2006 in a form of XML 1.1. The XML 1.0
-      was bumped up to same character set in 2008 what created a "breaking change". How they could
-      miss that? I can't imagine. 
-      <p>
-      Thous I actually had a choice: to stay at 1.0 Ed4 or to select 1.1. The last choice seems
-      to be more logic and coherent as up to now (2023) it does not generated any "breaking changes",
-      however 1.1 is NOT implemented by Microsoft NET nor Firefox while it IS implemented by JAVA.
-      
-      <h1>Restrictions on parsing</h1>
-      During parsing the classes implementing signal format over the XML
-      are expected to:
-      <ul>
-      	<li>support only required set of entities, as by 4.6 of specification:
-      	<code>lt, gt, amp, apos, quot</code>;
-      	<li>ignore declarations of named entities, either internal or external;</li>
-      	<li>ignore CDATA sections;</li>
-      	<li>ignore processing ? instructions;</li>
-      	<li>ignore NOTATION sections;</li>
-      	<li>ignore DOCTYPE syntax declaration;</li>
-      </ul>
-      
+     
       <h1>XML schema</h1>
       The format is schema-less since there is no way to define schema
       for unknown data structures.
@@ -52,7 +45,7 @@
       <h1>Main XML element</h1>
       Opening stream writes XML prolog:
       <pre>
-      	&lt;?xml version="1.1" encoding="UTF-8" ?&gt;
+      	&lt;?xml version="1.0" encoding="UTF-8" ?&gt;
       	&lt;xml&gt;
       </pre>
       <p>
@@ -63,8 +56,7 @@
       		<li>if signal recustion depth is NOT zero, all XML tags
       		which were open but not closed are left as they are, and
       		it is not closing the tag for an element opened in prolog.
-      		</li>
-      		
+      		</li>      		
       	</ul>
       This method was selected because even tough closing a stream with 
       un-closed signals will produce a faulty XML I find it still better
@@ -74,8 +66,14 @@
       
 
       <h1>XML comments</h1>
-      Supported everywhere where XML allows them. The XML comment, alike in XML,
-      do affect the parser and is seen as a <a href="#TOKENS">"token" terminator</a>. 
+      XML comments are allowed almost everywhere where XML specification allows it,
+      with following exceptions:
+      <ul>
+      	<li>comment do terminate a "plain", not double quoted token, exactly 
+      		as if a space would appear;</li>
+      	<li>this is an error to place or start a comment inside a "string"
+      		<a href="#TOKENS">token</a>;</li>
+      </ul>
       
 
       
@@ -89,21 +87,28 @@
       </pre>
       where <code>nnnn</code> is a signal name, with not allowed characters <a href="#ESCAPE">escaped</a>.
       <p>
-      Since XML element name cannot be empty for some unknown reason the
-      empty name is encoded as a single '_'. 
+      Since XML element name cannot be empty the empty name is encoded as a single <code>&lt;'_'&gt;</code>. 
+      <p>
+      Self closing elements are allowed.
+      <p>
+      Parsing allows for any non-space character in a name and allows for a 
+      <code>&lt;&gt;</code> as a zero-length name begin signal.
 
       
       
       <h2>End signal</h2>
-      End signal in XML cannot be anonymous and must be encoded alike <code>begin</code> signal:
+      End signal in XML be encoded alike <code>begin</code> signal:
       <pre>
             &lt;/<i>nnnn</i>&gt;
       </pre>
       <p>
-      <i>Note: The inablity to use "anonymous closing tag" <code> &lt;/&gt;</code>
+      <i>Note: The inablity to use "anonymous closing tag" <code>&lt;/&gt;</code>
       enforces stream writer to keep track of opened signals on a stack what may
       cause excesive memory consumption. Thous XML format do have some natural limit
       for recursion depth.</i>
+      <p>
+      Parsing allows for "anonymous closing tag" <code>&lt;/&gt;</code> which matches
+      any currently opened tag. Notice it is not a "zero length name" closing tag.
 
       
       
@@ -111,12 +116,22 @@
       Inside an XML element body elementary primitives are stored one by one, using "tokens" separated by <code>,</code> and optional
       ignorable white spaces. There are two kinds of tokens:
       <ul>
-      	<li>"plain tokens", which can't contain the <code>,"</code> or white-space character;</li>
-      	<li id="STRTOKEN">"string tokens", which are enclosed in " and can contain any text;</li>
+      	<li>"plain tokens", which can't contain the <code>,"&gt;</code> nor white-space character
+      	and must consist only from valid unicode character. Plain tokens are used to represent
+      	logic values and numbers so there is no chance to get it wrong;</li>
+      	<li id="STRTOKEN">"string tokens", which are enclosed in " and can contain any text
+      	except &gt; and " characters which must be escaped. They are used for JAVA characters and strings,
+      	so everything may appear there including invalid unicode code-points and surogates. Everything
+      	what is not allowed in XML must be escaped;</li>
       </ul>
       The syntax which tells how primitive elements are turned into "tokens"
       is described in <a href="../ATxtWriteFormat0.html">sztejkat.abstractfmt.txt.ATxtWriteFormat0</a>
-      class. 
+      class.
+      <p>
+      The syntax which tells how "tokens" are parsed into primitive elements 
+      is described in <a href="../ATxtReadFormat0.html">sztejkat.abstractfmt.txt.ATxtReadFormat0</a>
+      class.
+      
 
       
       
@@ -124,6 +139,7 @@
       The signals are parsed as usual XML elements.
       <p>
       The body of XML element is parsed as a sequence of comma separated "tokens", either enclosed in "" or not.
+      
       <h2>Parsing tokens</h2>
       <i><small>Note: those are the same rules as for <code>sztejkat.abstractfmt.txt.plain</code> format.</small></i><br>
       This format do write tokens using <code>sztejkat.abstractfmt.txt.ATxtReadFormat1</code> formating style
@@ -160,19 +176,20 @@
 
       <h1 id="INVALID_CHARACTER">Invalid characters</h1>
       XML defines following classes off "cannot encode" characters:
-      <ul>
-          <li>characters which are proper XML characters, but cannot be
+      <ol>
+          <li>Characters which are proper XML characters, but cannot be
           encoded using current low level character encoding;</li>
-          <li>characters which cannot be used in XML regardless of how they are
+          <li>Characters which cannot be used in XML regardless of how they are
           presented. These are mostly "invalid" unicode code-point, but not always;</li>
-          <li>characters which are valid but cannot be used for tag names, attribute names and etc;</li>
-      </ul>
+          <li>Characters which are valid but cannot be used for tag names, attribute names and etc;</li>
+      </ol>
       First type of characters can be encoded using known set of entities in style
       <pre>
             &amp;<i>entity mnemonic</i>;
             &amp;#<i>unicode</i>;
+            &amp;#x<i>hex unicode</i>;
       </pre>
-      Second type of characters cannot be present in XML file at all. Our abstract
+      The 2) type characters cannot be present in XML file <u>at all</u>. Our abstract
       format do require however, that the entire 0...0xFFFF space of JAVA
       characters can be used for names, elementary characters and strings.
       No XML escape or any other defined method allows to embedd them in XML file.
@@ -183,10 +200,10 @@
       should be able to escape everything and be used in <u>any XML context</u>.
       <p>      
       The first character of XML element must be the "base char" what excludes
-      any reasonable escape selection past true letters or _ or :.
+      any reasonable escape selection past true letters or <code>'_'</code> or <code>':'</code>.
       <p>
-      Where in fact : is also excluded due to later use for "namespace" handling 
-      (not XML base standard scope, but 99% of parsers do reserve : for namespace separator).
+      Where in fact <code>':'</code> is also excluded due to later use for "namespace" handling 
+      (not XML base standard scope, but 99% of parsers do reserve <code>':'</code> for namespace separator).
       <p>
       This means, that _ (U+005F, 95 decimal) is the only reasonable escape character we can actually use
       for an escape.
@@ -199,14 +216,10 @@
       an XML file is encoded as:
       <pre>
       	_HHHH
-      	<i>or</i>
-      	_<i>white space character</i>
       </pre>
       where H are <u>exactly</u> four hexadecimal digits representing
       the Java <code>char</code> in question. Upper case is used during generation, but
       both upper and lower case is accepted during parsing.
-      <p>
-      The _ followed by white-space character is understood as "void", zero size character.
       <p>
       The '_' can be encoded in three forms:
       <ul>
@@ -215,31 +228,23 @@
       	<li>'&amp;#x5F;' ;</li>
       </ul>
       Two first forms of an escape can appear in XML elements names while <code>&amp;#xHHH;</code>
-      form can't. 
-      
-      
-      
-      <h2>Parsing escapes</h2>
-      All escapes are parsed <u>after</u> XML syntax is processed and <u>after</u> XML element
-      body is split into <a href="#TOKENS">tokens</a>.
+      form can't.
       <p>
-      If '_' starting an escape sequence is a last character in a sequence which is to
-      be un-escaped it is skipped and results in no character production.
-      <p>
-      Otherwise it must be followed either by four hex digits, upper or lower case or '_'.
-      It is an error if it is followed by anything else.
+      The '_' used in a start tag: <code>&gt;_&lt;</code> or end tag: <code>&gt;/_&lt;</code>
+      has a special meaning and means: "zero length name".
       
       
-      <h2>What is escaped?</h2>
+      <h2>What is escaped and how?</h2>
       <ol>
       	<li>the XML element names (thous begin signal names) are escaped using <code>_HHHH</code> syntax;</li>
       	<li>the <a href="#STRTOKEN">"string token"</a> body is escaped using
-      	primary the <code>&amp;#xXXX;</a> XML syntax and only characters which 
+      	first the <code>&amp;#xXXX;</a> XML syntax and only characters which 
       	can't be present in XML are escaped using <code>_HHHH</code> syntax.
       	This means that _ can be either __ or _005F or &amp;#95; or &amp;#x5F;.
       	<p>
       	Notice that "plain tokens" are not escaped as by definition they
-      	can't contain unprocessable characters;</li>
+      	can't contain unprocessable characters. Parser won't apply '_' unescaping,
+      	but will unescpae XML '&amp;' escapes;</li>
       	<li>comments, generated by API, are escaped using only <code>&amp;#xXXX;</a>
       	XML syntax and do not allow characters which can't be contained inside an
       	XML;</li>
