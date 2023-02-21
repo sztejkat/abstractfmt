@@ -529,6 +529,19 @@ public abstract class ATxtReadFormatStateBase0<TSyntax extends ATxtReadFormat1.I
 				):"inconsistent syntax ="+syntax+" with character=0x"+Integer.toHexString(character);
 		queueSyntax(character, syntax);
 	};
+	/** Puts next value, to be read after current, from  syntax queue 
+	@param characters list of character for {@link #getNextChar} 
+	@param syntax for {@link #getNextSyntaxElement}
+	@throws AssertionError if syntax is null.
+	*/
+	public void queueNextChars(String characters, TSyntax syntax)
+	{
+		assert(syntax!=null);
+		for(int i=0,n=characters.length();i<n;i++)
+		{
+			queueSyntax(characters.charAt(i), syntax);
+		};
+	};
 	/**
 		Turns specified unicode code point into surogates pair, if necessary
 		and puts them into character queue under a specified syntax.

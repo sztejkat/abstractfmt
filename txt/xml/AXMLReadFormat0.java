@@ -34,90 +34,183 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 							Content skipping
 							
 				-----------------------------------------------------------------------------------*/
-        		/** A state handler which is responsible for skipping all processing commands,
-        		comments and CDATA.
-        		<p>
-        		This state handler is very forgiving and is skipping everything till nearest &gt;
-        		character, including. It does NOT validate if the closing syntax do match 
-        		required opening syntax.
+				/**
+					A state responsible for skipping a content of an element except it's name.
+					This class do allow &gt; and &lt; inside "" segments of text
+				*/
+				private static abstract class AAttributeSkipper extends AToNextStateHandler<ATxtReadFormat1.TIntermediateSyntax>
+				{
+								/** Used to track quouted section which unfortunately
+								do allows for &gt; */
+								private boolean in_quoted_section;
+					protected AAttributeSkipper(ATxtReadFormatStateBase1<ATxtReadFormat1.TIntermediateSyntax> p)
+					{
+						super(p);
+					}
+					@Override public void onEnter(){ in_quoted_section = false; };
+					@Override public void toNextChar()throws IOException
+					{
+						if (TRACE) TOUT.println("AAttributeSkipper("+getName()+").toNextChar() ENTER");
+						char c = readAlways();						
+						if (!in_quoted_section)
+						{
+							switch(c)
+							{
+								case '>':
+									{								
+										if (TRACE) TOUT.println("AAttributeSkipper("+getName()+").toNextChar(), finished LEAVE");
+										toNextStateHandler();
+										return;
+									}
+								case '\"':
+									{								
+										if (TRACE) TOUT.println("AAttributeSkipper("+getName()+").toNextChar(), quouted section LEAVE");
+										in_quoted_section = true;
+									};
+									break;
+							}
+						}else
+						{
+							if (c=='\"')
+							{
+								in_quoted_section = false;
+								if (TRACE) TOUT.println("AAttributeSkipper("+getName()+").toNextChar(), no longer in quouted section LEAVE");
+							};
+						};
+						if (TRACE) TOUT.println("AAttributeSkipper("+getName()+").toNextChar() LEAVE");
+					};
+				}
+				
+				
+        		/** A state handler which is responsible for skipping content of elements which
+        		are not allowed to contain inner elements.
         		*/
         		private static abstract class ASkippper extends AToNextSyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>
-        		{
-        						/** A nested &lt; count. The XML is in generic not 
-        						allowing nested comment and exct, but, unfortunately
-        						allows nested elements in DOCTYPE. */
-        						private int nested;
-        			protected ASkippper(ATxtReadFormatStateBase1<ATxtReadFormat1.TIntermediateSyntax> p){ super(p); };
-        			@Override public void onEnter(){ nested = 0; };
-        			@Override public void toNextChar()throws IOException
-        			{
-        				if (TRACE) TOUT.println("ASkippper.toNextChar() ENTER");
-						int r= read();
-						if (r==-1)
-						{
-							if (TRACE) TOUT.println("ASkippper.toNextChar(), eof LEAVE");
-							return;
-						};
-						char c = (char)r;
-						if (c=='<')
-						{
-							nested++;
-						}else
-						if (c=='>')
-						{
-							//consume char and move to next;
-							if (nested==0)
-							{
-								leaveStateHandler();
-								if (TRACE) TOUT.println("ASkippper.toNextChar(), finished LEAVE");
-							}else
-								nested--;
-						}else
-						{
-							//do not report this character at all.
-							if (TRACE) TOUT.println("ASkippper.toNextChar() LEAVE");
-						}
-        			};
-        		};
-        		/** A skipper with detecting capabilities, for comments, processing instructions
-        		and cdata. First character is reported as {@link ATxtReadFormat1.TIntermediateSyntax#SEPARATOR} since
-        		those do break tokens, subsequente are just skipped in a loop.
-        		*/
-        		private static abstract class ABreakingSkippper extends ASkippper
-        		{
-        						/** A phrase which begins it */
-        						private final String catch_phrase;
+        		{	
+        							/** A starting phrase */
+        							private final String catch_phrase;
+        							/** A starting terminating */
+        							private final String stop_phrase;
+        							/** A char category to assign to skipped content, null to not assign anything */
+        							protected final ATxtReadFormat1.TIntermediateSyntax emit_content_as;
         			/** Creates
         			@param catch_phrase a phrase which begins it, non null
+        			@param stop_phrase a phrase which terminates it, non null
+        			@param emit_content_as what character type use for emiting content.
+        						If null not content is emited to upstream class.
         			@param p parser, non null */
-        			protected ABreakingSkippper(String catch_phrase, 
-        									  ATxtReadFormatStateBase1<ATxtReadFormat1.TIntermediateSyntax> p)
+        			protected ASkippper(String catch_phrase, 
+        								String stop_phrase,
+        								ATxtReadFormat1.TIntermediateSyntax emit_content_as,
+        							     ATxtReadFormatStateBase1<ATxtReadFormat1.TIntermediateSyntax> p)
         			{ 
         				super(p); 
         				assert(catch_phrase!=null);
+        				assert(stop_phrase!=null);
         				this.catch_phrase = catch_phrase;
+        				this.stop_phrase  = stop_phrase;
+        				this.emit_content_as=emit_content_as;
         			};
         			/** Overriden to return null as those are overlapping states 
         			and return to previous state after processing. */
         			@Override protected IStateHandler getNextHandler(){ return null; }; 
         			@Override public boolean tryEnter()throws IOException
 					{
-						if (TRACE) TOUT.println("ABreakingSkippper.tryEnter() ENTER");
+						if (TRACE) TOUT.println("ASkippper("+getName()+").tryEnter() ENTER");
 						if (tryLooksAt(catch_phrase))
 						{
-							queueNextChar(' ', ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
+							if (emit_content_as!=null) queueNextChars(catch_phrase,emit_content_as);
 							enterStateHandler();
-							if (TRACE) TOUT.println("ABreakingSkippper.tryEnter()=true LEAVE");
+							if (TRACE) TOUT.println("ASkippper("+getName()+").tryEnter()=true LEAVE");
 							return true;
 						}else
 						{
 							unread();
-							if (TRACE) TOUT.println("ABreakingSkippper.tryEnter()=false LEAVE");
+							if (TRACE) TOUT.println("ASkippper("+getName()+").tryEnter()=false LEAVE");
 							return false;
 						}
 					};
+					@Override public void toNextChar()throws IOException
+        			{
+        				if (TRACE) TOUT.println("ASkippper("+getName()+").toNextChar() ENTER");
+        				if (looksAt(stop_phrase))
+        				{
+        					if (TRACE) TOUT.println("ASkippper("+getName()+").toNextChar(), got stop_phrase LEAVE");
+        					if (emit_content_as!=null) queueNextChars(stop_phrase,emit_content_as);
+        					leaveStateHandler();
+        					return;
+        				}else
+        				{
+        					//now we need to un-read everything from collected buffer except first 
+        					//character to have a flow-in iterative lookup.
+        					final int n = collected.length();
+        					if ((n!=0)&&(emit_content_as!=null)) queueNextChar(collected.charAt(0),emit_content_as);
+        					for(int i=1;i<n;i++)
+        					{
+        						unread(collected.charAt(i));
+        					};
+        				};
+        				if (TRACE) TOUT.println("ASkippper("+getName()+").toNextChar() LEAVE");
+        			};
+        		}
+				
+        		/** A state handler which is responsible for skipping content of elements which
+        		are allowed to contain nested elements. This class will do a "dumb" skipping assuming
+        		always that elements do start with &lt; and ends with &gt; regardless of context. 
+        		*/
+        		private static abstract class ANestedSkippper extends ASkippper
+        		{
+        						/** A nested &lt; count. The XML is in generic not 
+        						allowing nested comment and exct, but, unfortunately
+        						allows nested elements in DOCTYPE. */
+        						private int nested;
+        			/** Creates
+        			@param catch_phrase a phrase which begins it, non null
+        			@param stop_phrase a phrase which terminates it, non null
+        			@param emit_content_as what character type use for emiting content.
+        						If null not content is emited to upstream class.
+        			@param p parser, non null */
+        			protected ANestedSkippper(String catch_phrase, 
+        								String stop_phrase,
+        								ATxtReadFormat1.TIntermediateSyntax emit_content_as,
+        							    ATxtReadFormatStateBase1<ATxtReadFormat1.TIntermediateSyntax> p)
+        			{
+        				super(catch_phrase,stop_phrase,emit_content_as,p);
+        			};
+        			@Override public void onEnter(){ nested = 0; };
+        			@Override public void toNextChar()throws IOException
+        			{
+        				if (TRACE) TOUT.println("ANestedSkippper("+getName()+").toNextChar() ENTER");
+        				if (nested==0)
+        				{
+        					char c = readAlways();
+							if (c=='<')
+							{
+								if (TRACE) TOUT.println("ANestedSkippper("+getName()+").toNextChar() detected nested element.");
+								if (emit_content_as!=null) queueNextChar('<',emit_content_as);
+								nested++;
+							}else
+							{
+								unread(c);
+								super.toNextChar();
+							};
+        				}else
+        				{
+        					if (TRACE) TOUT.println("ANestedSkippper("+getName()+").toNextChar(), nested processing ENTER");
+							char c = readAlways();
+							if (emit_content_as!=null) queueNextChar(c,emit_content_as);
+							if (c=='<')
+							{
+								nested++;
+							}else
+							if (c=='>')
+							{
+								nested--;
+							};
+						}
+						if (TRACE) TOUT.println("ANestedSkippper("+getName()+").toNextChar() LEAVE");
+        			};
         		};
-        		
         		
         		
         		/* -----------------------------------------------------------------------------------
@@ -539,17 +632,16 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 				any prolog and we skip it. We do ignore any kind of encoding information
 				and anything else what can be found in a prolog. 
 				*/
-				private final ISyntaxHandler PROLOG = new ASkippper(this)
+				private final ISyntaxHandler PROLOG = new ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
 				{
 					@Override public String getName(){ return "PROLOG"; };
-					@Override protected IStateHandler getNextHandler(){ return XML_BODY_LOOKUP; };
 					@Override public boolean tryEnter()throws IOException
 					{
 						if (TRACE) TOUT.println("PROLOG.tryEnter() ENTER");
 						if (tryLooksAt("<?xml"))
 						{
 							//yep, this is prolog.
-							enterStateHandler();
+							setStateHandler(PROLOG_ATTRSKIPPER);
 							if (TRACE) TOUT.println("PROLOG.tryEnter()=true, LEAVE");
 							return true;
 						}else
@@ -559,6 +651,13 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 							return false;
 						}
 					};
+					@Override public void toNextChar(){ throw new AssertionError(); };
+				};
+				/** Skips prolog attributes */
+				private final IStateHandler PROLOG_ATTRSKIPPER = new AAttributeSkipper(this)
+				{
+					@Override public String getName(){ return "PROLOG_ATTRSKIPPER"; };
+					@Override protected IStateHandler getNextHandler(){ return XML_BODY_LOOKUP; };
 				};
 				/** A state responsible for looking for the opening tag specified by
 				{@link #getXMLBodyElement}. Finally moves to {@link #ELEMENT_BODY}
@@ -573,6 +672,7 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 						if (!COMMENT.tryEnter())
 						if (!PI.tryEnter())
 						if (!CDATA.tryEnter())
+						if (!DOCTYPE.tryEnter())
 						if (!WHITESPACE.tryEnter())
 						{
 							//Now find that dedicated tag.
@@ -580,17 +680,23 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 							//      but it would be always constructing new String
 							//		so instead I will use sequence of less expensive
 							//		calls but in a bit peculiar order and unread sequence.
+							if (TRACE) TOUT.println("XML_BODY_LOOKUP.toNextChar - looking for <"+getXMLBodyElement());
 							if (tryLooksAt("<"))
 							{
+								if (TRACE) TOUT.println("XML_BODY_LOOKUP.toNextChar got <");
 								if (tryLooksAt(getXMLBodyElement()))
 								{
+									if (TRACE) TOUT.println("XML_BODY_LOOKUP.toNextChar got element");
 									if (tryLooksAt(">"))
 									{
+										if (TRACE) TOUT.println("XML_BODY_LOOKUP.toNextChar got >");
 										//Matching required tag. 
 										//Remember what is expected to be an end-tag.
 										end_tags.push("</"+getXMLBodyElement()+">");
 										//Make common body handler current
-										setStateHandler(ELEMENT_BODY);									
+										setStateHandler(ELEMENT_BODY);		
+										//emit character to prevent subsequent scanning of body
+										queueNextChar(0,ATxtReadFormat1.TIntermediateSyntax.VOID);
 										if (TRACE) TOUT.println("XML_BODY_LOOKUP.toNextChar() found, LEAVE");
 										return;
 									}else
@@ -782,44 +888,10 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 				};
 				
 				/** A state responsible for skipping eventuall attributes in dumbest possible way */
-				private final IStateHandler ATTRIBUTES_SKIPPER = new AStateHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
+				private final IStateHandler ATTRIBUTES_SKIPPER = new AAttributeSkipper(this)
 				{
-								/** Used to track quouted section which unfortunately
-								do allows for &gt; */
-								private boolean in_quoted_section;
 					@Override public String getName(){ return "ATTRIBUTES_SKIPPER"; };
-					@Override public void onEnter(){ in_quoted_section = false; };
-					@Override public void toNextChar()throws IOException
-					{
-						if (TRACE) TOUT.println("ATTRIBUTES_SKIPPER.toNextChar() ENTER");
-						char c = readAlways();						
-						if (!in_quoted_section)
-						{
-							switch(c)
-							{
-								case '>':
-									{								
-										if (TRACE) TOUT.println("ATTRIBUTES_SKIPPER.toNextChar(), finished LEAVE");
-										setStateHandler(ELEMENT_BODY);
-										return;
-									}
-								case '\"':
-									{								
-										if (TRACE) TOUT.println("ATTRIBUTES_SKIPPER.toNextChar(), quouted section LEAVE");
-										in_quoted_section = true;
-									};
-									break;
-							}
-						}else
-						{
-							if (c=='\"')
-							{
-								in_quoted_section = false;
-								if (TRACE) TOUT.println("ATTRIBUTES_SKIPPER.toNextChar(), no longer in quouted section LEAVE");
-							};
-						};
-						if (TRACE) TOUT.println("ATTRIBUTES_SKIPPER.toNextChar() LEAVE");
-					};
+					@Override protected IStateHandler getNextHandler(){ return ELEMENT_BODY; };
 				};
 				/** 
 					A class which is processing a body of an element.					
@@ -891,21 +963,25 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 				/** A comment detector and skipper. First character is reported as 
 				{@link ATxtReadFormat1.TIntermediateSyntax#SEPARATOR} since comments do break tokens.
 				*/
-				private final ISyntaxHandler COMMENT = new ABreakingSkippper("<!--",this)
+				private final ISyntaxHandler COMMENT = new ASkippper("<!--","-->",ATxtReadFormat1.TIntermediateSyntax.SEPARATOR, this)
 				{
 					@Override public String getName(){ return "COMMENT"; };
 				};
 				/** A processing instruction detector and skipper. First character is reported as 
 				{@link ATxtReadFormat1.TIntermediateSyntax#SEPARATOR} since it do break tokens.
 				*/
-				private final ISyntaxHandler PI = new ABreakingSkippper("<?",this)
+				private final ISyntaxHandler PI = new ASkippper("<?","?>",ATxtReadFormat1.TIntermediateSyntax.VOID,this)
 				{
 					@Override public String getName(){ return "PI"; };
+				};
+				private final ISyntaxHandler DOCTYPE = new ANestedSkippper("<!DOCTYPE",">",ATxtReadFormat1.TIntermediateSyntax.VOID,this)
+				{
+					@Override public String getName(){ return "DOCTYPE"; };
 				};
 				/** A cdata instruction detector and skipper. First character is reported as 
 				{@link ATxtReadFormat1.TIntermediateSyntax#SEPARATOR} since it do break tokens.
 				*/
-				private final ISyntaxHandler CDATA = new ABreakingSkippper("<![CDATA[",this)
+				private final ISyntaxHandler CDATA = new ASkippper("<![CDATA[","]]>",ATxtReadFormat1.TIntermediateSyntax.SEPARATOR,this)
 				{
 					@Override public String getName(){ return "CDATA"; };
 				};
@@ -931,7 +1007,7 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 							return true;
 						}else
 						{
-							unread();
+							unread((char)r);
 							if (TRACE) TOUT.println("WHITESPACE.tryEnter()=false, LEAVE");
 							return false;
 						}
@@ -1204,6 +1280,7 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 				/** Products of matching {@link #entities_escapes} */
 				private final char [] entities_escapes_chars;
 				
+				
 	/* ****************************************************************
 	
 			Creation
@@ -1275,12 +1352,21 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 	and validate if it is a valid XML.*/
 	@Override protected void openImpl()throws IOException
 	{
+		if (TRACE) TOUT.println("openImpl ENTER");
 		setStateHandler(START);
 		//Now we need to trigger any file action which will
 		//automatically consume the states which are necessary
 		//to move to actual content production. Those will
 		//fail if we are not a valid XML.
-		hasElementaryData();
+		//We are however still not opened so we can't just ask
+		//the high level routines.
+		//We should however enforce going down to main element
+		while(getStateHandler()!=ELEMENT_BODY)
+		{
+			toNextChar();
+			if (getNextSyntaxElement()==null) throw new EUnexpectedEof("While looking for <"+getXMLBodyElement()+">");
+		};
+		if (TRACE) TOUT.println("openImpl LEAVE");
 	}; 
 	
 };

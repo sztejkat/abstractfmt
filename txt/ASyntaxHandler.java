@@ -1,5 +1,6 @@
 package sztejkat.abstractfmt.txt;
 import sztejkat.abstractfmt.EUnexpectedEof;
+import sztejkat.abstractfmt.logging.SLogging;
 import java.io.IOException;
 import sztejkat.abstractfmt.utils.SStringUtils;
 import sztejkat.abstractfmt.utils.CAdaptivePushBackReader;
@@ -39,6 +40,10 @@ public abstract class ASyntaxHandler<TSyntax extends ATxtReadFormat1.ISyntax>
 				   extends AStateHandler<TSyntax>
 				   implements ATxtReadFormatStateBase0.ISyntaxHandler
 {
+		 private static final long TLEVEL = SLogging.getDebugLevelForClass(ASyntaxHandler.class);
+         private static final boolean TRACE = (TLEVEL!=0);
+         private static final java.io.PrintStream TOUT = TRACE ? SLogging.createDebugOutputForClass("ASyntaxHandler.",ASyntaxHandler.class) : null;
+ 
 				/** A "collected token" buffer. 
 					It is wiped out on {@link #onLeave}, so be sure to 
 					pick up all data before making a state transition which 
@@ -100,6 +105,7 @@ public abstract class ASyntaxHandler<TSyntax extends ATxtReadFormat1.ISyntax>
 			if (collected.length()!=0) throw new EUnexpectedEof();
 			return -1;
 		};
+		if (TRACE) TOUT.println("collect()->collected \'"+(char)r+"\'");
 		collected.append((char)r);
 		return r;
 	};
@@ -120,6 +126,7 @@ public abstract class ASyntaxHandler<TSyntax extends ATxtReadFormat1.ISyntax>
 		{
 			return -1;
 		};
+		if (TRACE) TOUT.println("tryCollect()->collected \'"+(char)r+"\'");
 		collected.append((char)r);
 		return r;
 	};
@@ -131,6 +138,7 @@ public abstract class ASyntaxHandler<TSyntax extends ATxtReadFormat1.ISyntax>
 	protected char collectAlways()throws IOException,EUnexpectedEof
 	{
 		char r = readAlways();
+		if (TRACE) TOUT.println("collectAlways()->collected \'"+r+"\'");
 		collected.append(r);
 		return r;
 	};
@@ -200,6 +208,7 @@ public abstract class ASyntaxHandler<TSyntax extends ATxtReadFormat1.ISyntax>
 		for(int at=0;;at++)
 		{
 			if (collect()==-1) return false;
+			if (TRACE) TOUT.println("looksAt()->collected \'"+collected+"\'");
 			//For efficiency use counted method
 			//Comparison will automatically give -1 if we try to collect too much characters.
 			switch(SStringUtils.canStartWithCaseSensitive(collected,text,at))
@@ -223,6 +232,7 @@ public abstract class ASyntaxHandler<TSyntax extends ATxtReadFormat1.ISyntax>
 		for(int at=0;;at++)
 		{
 			if (collect()==-1) return false;
+			if (TRACE) TOUT.println("looksAtCaseInsensitive()->collected \'"+collected+"\'");
 			switch(SStringUtils.canStartWithCaseInsensitive(collected,text,at)) 
 			{
 				case -1: return false;
@@ -244,6 +254,7 @@ public abstract class ASyntaxHandler<TSyntax extends ATxtReadFormat1.ISyntax>
 		for(int at=0;;at++)
 		{
 			if (tryCollect()==-1) return false;
+			if (TRACE) TOUT.println("tryLooksAt()->collected \'"+collected+"\'");
 			switch(SStringUtils.canStartWithCaseSensitive(collected,text,at)) 
 			{
 				case -1: return false;
@@ -291,6 +302,7 @@ public abstract class ASyntaxHandler<TSyntax extends ATxtReadFormat1.ISyntax>
 		for(int at=0;;at++)
 		{
 			if (tryCollect()==-1) return false;
+			if (TRACE) TOUT.println("tryLooksAtCaseInsensitive()->collected \'"+collected+"\'");
 			switch(SStringUtils.canStartWithCaseInsensitive(collected,text,at))  
 			{
 				case -1: return false;

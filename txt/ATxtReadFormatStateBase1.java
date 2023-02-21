@@ -126,7 +126,7 @@ public abstract class ATxtReadFormatStateBase1<TSyntax extends ATxtReadFormat1.I
 	@Override protected void closeImpl()throws IOException
 	{
 		if (TRACE) TOUT.println("closeImpl() ENTER");
-		super.close();
+		super.closeImpl();
 		in.close();
 		if (TRACE) TOUT.println("closeImpl() LEAVE");
 	};
