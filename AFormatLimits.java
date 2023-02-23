@@ -44,7 +44,8 @@ abstract class AFormatLimits implements IFormatLimits,Closeable
 		protected void initializeToSupportedLimits()
 		{
 			//name
-			int l = getMaxSupportedSignalNameLength();			
+			int l = getMaxSupportedSignalNameLength();		
+			assert(l>0);
 			assert(current_max_signal_name_length==1024); //<-from defaults
 			if (l< current_max_signal_name_length) 
 						current_max_signal_name_length = l;			

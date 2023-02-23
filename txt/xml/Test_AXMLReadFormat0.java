@@ -1,6 +1,7 @@
 package sztejkat.abstractfmt.txt.xml;
 import sztejkat.abstractfmt.test.*;
 import sztejkat.abstractfmt.*;
+import sztejkat.abstractfmt.utils.SStringUtils;
 import java.io.*;
 import org.junit.Test;
 import org.junit.Assert;
@@ -18,8 +19,8 @@ public class Test_AXMLReadFormat0 extends ATest
 					{
 						super(new StringReader(s));
 					};
-					@Override public int getMaxSupportedStructRecursionDepth(){ return Integer.MAX_VALUE; };
-					@Override public int getMaxSupportedSignalNameLength(){ return -1; };
+					@Override public int getMaxSupportedSignalNameLength(){ return Integer.MAX_VALUE; };
+					@Override public int getMaxSupportedStructRecursionDepth(){ return -1; };
 			};
 			
 			
@@ -364,6 +365,70 @@ public class Test_AXMLReadFormat0 extends ATest
 		leave();
 	};
 	
+	@Test public void canProcessAmpHexEscapeSurogated()throws IOException
+	{
+		enter();
+		final int code = 0x10001;
+			DUT d = new DUT(
+			"<?xml ?><sztejkat.abstractfmt.txt.xml>\n"+
+			"\"&#x"+Integer.toHexString(code)+";\"\n"+
+			"</sztejkat.abstractfmt.txt.xml>"
+						);
+			d.open();
+			char u = d.readChar();
+			System.out.println("u="+Integer.toHexString(u));
+			System.out.println("us="+Integer.toHexString(Character.highSurrogate(code)));
+			char L = d.readChar();
+			System.out.println("L="+Integer.toHexString(L));			
+			System.out.println("Ls="+Integer.toHexString(Character.lowSurrogate(code)));
+			
+			Assert.assertTrue(u==Character.highSurrogate(code));
+			Assert.assertTrue( L==Character.lowSurrogate(code));
+			Assert.assertTrue(!d.hasElementaryData());
+			d.close();
+		leave();
+	};
+	
+	@Test public void canProcessAmpDecEscapeSurogated()throws IOException
+	{
+		enter();
+		final int code = 0x10401;
+			DUT d = new DUT(
+			"<?xml ?><sztejkat.abstractfmt.txt.xml>\n"+
+			"\"&#"+Integer.toString(code)+";\"\n"+
+			"</sztejkat.abstractfmt.txt.xml>"
+						);
+			d.open();
+			char u = d.readChar();
+			System.out.println("u="+Integer.toHexString(u));
+			System.out.println("us="+Integer.toHexString(Character.highSurrogate(code)));
+			char L = d.readChar();
+			System.out.println("L="+Integer.toHexString(L));			
+			System.out.println("Ls="+Integer.toHexString(Character.lowSurrogate(code)));
+			
+			Assert.assertTrue(u==Character.highSurrogate(code));
+			Assert.assertTrue( L==Character.lowSurrogate(code));
+			Assert.assertTrue(!d.hasElementaryData());
+			d.close();
+		leave();
+	};
+	
+	@Test public void canProcessAmpHexEscapeBadSurogate()throws IOException
+	{
+		enter();
+			DUT d = new DUT(
+			"<?xml ?><sztejkat.abstractfmt.txt.xml>\n"+
+			"\"&#xD801;\"\n"+
+			"</sztejkat.abstractfmt.txt.xml>"
+						);
+			d.open();
+			char c = d.readChar();
+			System.out.println(Integer.toHexString(c));
+			Assert.assertTrue(c==0xD801);
+			Assert.assertTrue(!d.hasElementaryData());
+			d.close();
+		leave();
+	};
 	
 	/* ********************************************************************
 	
@@ -434,6 +499,68 @@ public class Test_AXMLReadFormat0 extends ATest
 			d.close();
 		leave();
 	};
+	
+	@Test public void canProcessPlainStructWithPI()throws IOException
+	{
+		enter();
+			DUT d = new DUT(
+			"<?xml ?><sztejkat.abstractfmt.txt.xml>\n"+
+			"<? cmt \n ?><marco></>\n"+
+			"<?-- cmt \n ?><pollo><? cmt \n ?></>\n"+
+			"</>"
+						);
+			d.open();
+			
+			Assert.assertTrue("marco".equals(d.next()));
+			Assert.assertTrue(null==d.next());
+			Assert.assertTrue("pollo".equals(d.next()));
+			Assert.assertTrue(null==d.next());
+			Assert.assertTrue(!d.hasElementaryData());
+			d.close();
+		leave();
+	};
+	
+	
+	@Test public void canProcessPlainStructCDATA()throws IOException
+	{
+		enter();
+			DUT d = new DUT(
+			"<?xml ?><sztejkat.abstractfmt.txt.xml>\n"+
+			"<![CDATA[ something bad >  can happen > ]]><marco></>\n"+
+			"<![CDATA[ something bad >  can happen > ]]><pollo><![CDATA[ something bad >  can happen > ]]></>\n"+
+			"</>"
+						);
+			d.open();
+			
+			Assert.assertTrue("marco".equals(d.next()));
+			Assert.assertTrue(null==d.next());
+			Assert.assertTrue("pollo".equals(d.next()));
+			Assert.assertTrue(null==d.next());
+			Assert.assertTrue(!d.hasElementaryData());
+			d.close();
+		leave();
+	};
+	
+	@Test public void canProcessPlainStructWithComments()throws IOException
+	{
+		enter();
+			DUT d = new DUT(
+			"<?xml ?><sztejkat.abstractfmt.txt.xml>\n"+
+			"<!-- cmt \n --><marco></>\n"+
+			"<!-- cmt \n --><pollo><!-- cmt \n --></>\n"+
+			"</>"
+						);
+			d.open();
+			
+			Assert.assertTrue("marco".equals(d.next()));
+			Assert.assertTrue(null==d.next());
+			Assert.assertTrue("pollo".equals(d.next()));
+			Assert.assertTrue(null==d.next());
+			Assert.assertTrue(!d.hasElementaryData());
+			d.close();
+		leave();
+	};
+	
 	@Test public void canProcessPlainStructWithEmptyTag()throws IOException
 	{
 		enter();
@@ -540,6 +667,206 @@ public class Test_AXMLReadFormat0 extends ATest
 			System.out.println(n);
 			Assert.assertTrue("Jason gone home".equals(n));
 			Assert.assertTrue(null==d.next());
+			d.close();
+		leave();
+	};
+	
+	
+	
+	@Test public void canProcessCharUnqutedStringWithAmpEscapes()throws IOException
+	{
+		enter();
+			DUT d = new DUT(
+			"<?xml ?><sztejkat.abstractfmt.txt.xml>\n"+
+"<marco> Jason , &#32;gone&#32;home</>\n"+
+			"</sztejkat.abstractfmt.txt.xml>"
+						);
+			d.open();
+			
+			Assert.assertTrue("marco".equals(d.next()));
+			String n = d.readString(1000);
+			System.out.println(n);
+			Assert.assertTrue("Jason gone home".equals(n));
+			Assert.assertTrue(null==d.next());
+			d.close();
+		leave();
+	};
+	
+	
+	
+	
+	
+	
+	/* *******************************************************************
+	
+			Defensive structures 
+			
+				Again, we defend only against
+	
+	
+	*********************************************************************/
+	@Test public void detectsBadAmpDecimalEscape()throws IOException
+	{
+		enter();
+			DUT d = new DUT(
+			"<?xml ?><sztejkat.abstractfmt.txt.xml>\n"+
+			"<marco> &#4a;</>\n"+
+			"</sztejkat.abstractfmt.txt.xml>"
+						);
+			d.open();
+			
+			Assert.assertTrue("marco".equals(d.next()));
+			try{
+				String n = d.readString(1000);
+				Assert.fail();
+			}catch(EBrokenFormat ex){ System.out.println(ex); };
+			d.close();
+		leave();
+	};
+	
+	@Test public void detectsVeryLongAmpDecimalEscape()throws IOException
+	{
+		enter();
+			DUT d = new DUT(
+			"<?xml ?><sztejkat.abstractfmt.txt.xml>\n"+
+			"<marco> &#000304040343313414;</>\n"+
+			"</sztejkat.abstractfmt.txt.xml>"
+						);
+			d.open();
+			
+			Assert.assertTrue("marco".equals(d.next()));
+			try{
+				String n = d.readString(1000);
+				Assert.fail();
+			}catch(EBrokenFormat ex){ System.out.println(ex); };
+			d.close();
+		leave();
+	};
+	
+	@Test public void detectsOutOfRangeDecimalEscape()throws IOException
+	{
+		enter();
+			DUT d = new DUT(
+			"<?xml ?><sztejkat.abstractfmt.txt.xml>\n"+
+			"<marco> &#9114111;</>\n"+
+			"</sztejkat.abstractfmt.txt.xml>"
+						);
+			d.open();
+			
+			Assert.assertTrue("marco".equals(d.next()));
+			try{
+				String n = d.readString(1000);
+				Assert.fail();
+			}catch(EBrokenFormat ex){ System.out.println(ex); };
+			d.close();
+		leave();
+	};
+	
+	
+	
+	
+	@Test public void detectsBadAmpHexEscape()throws IOException
+	{
+		enter();
+			DUT d = new DUT(
+			"<?xml ?><sztejkat.abstractfmt.txt.xml>\n"+
+			"<marco> &#x4Z;</>\n"+
+			"</sztejkat.abstractfmt.txt.xml>"
+						);
+			d.open();
+			
+			Assert.assertTrue("marco".equals(d.next()));
+			try{
+				String n = d.readString(1000);
+				Assert.fail();
+			}catch(EBrokenFormat ex){ System.out.println(ex); };
+			d.close();
+		leave();
+	};
+	
+	@Test public void detectsVeryLongAmpHexEscape()throws IOException
+	{
+		enter();
+			DUT d = new DUT(
+			"<?xml ?><sztejkat.abstractfmt.txt.xml>\n"+
+			"<marco> &#x3A594821;</>\n"+
+			"</sztejkat.abstractfmt.txt.xml>"
+						);
+			d.open();
+			
+			Assert.assertTrue("marco".equals(d.next()));
+			try{
+				String n = d.readString(1000);
+				Assert.fail();
+			}catch(EBrokenFormat ex){ System.out.println(ex); };
+			d.close();
+		leave();
+	};
+	
+	@Test public void detectsOutOfRangeHexEscape()throws IOException
+	{
+		enter();
+			DUT d = new DUT(
+			"<?xml ?><sztejkat.abstractfmt.txt.xml>\n"+
+			"<marco> &#x110000;</>\n"+
+			"</sztejkat.abstractfmt.txt.xml>"
+						);
+			d.open();
+			
+			Assert.assertTrue("marco".equals(d.next()));
+			try{
+				String n = d.readString(1000);
+				Assert.fail();
+			}catch(EBrokenFormat ex){ System.out.println(ex); };
+			d.close();
+		leave();
+	};
+	
+	
+	@Test public void readingPastClosingElementFails()throws IOException
+	{
+		enter();
+			DUT d = new DUT(
+			"<?xml ?><sztejkat.abstractfmt.txt.xml>\n"+
+			"</sztejkat.abstractfmt.txt.xml>"+
+			"103,345"
+						);
+			d.open();
+			Assert.assertTrue(!d.hasElementaryData());
+			try{
+				d.readInt();
+				Assert.fail();
+			}catch(EUnexpectedEof ex){ System.out.println(ex); };
+			d.close();
+		leave();
+	};
+	
+	@Test public void nameBoundaryWorks()throws IOException
+	{
+		enter();
+			DUT d = new DUT(
+			"<?xml ?><sztejkat.abstractfmt.txt.xml>\n"+
+			"<fucking__long__name__of__my__beloved__xml__file__format>"+
+			"</sztejkat.abstractfmt.txt.xml>"
+						);
+			d.setMaxSignalNameLength(32);
+			d.open();
+			try{
+				d.next();
+				Assert.fail();
+			}catch(EFormatBoundaryExceeded ex)
+			{
+				System.out.println(ex);
+				//We also need to ensure that this happend inside a handler
+				//before collecting the entire name.
+				//We can't test it directly so a bit wobbly test in here:
+				Assert.assertTrue(ex.getMessage().equals(
+							"Signal name \"fucking_long_name_of_my_beloved_\" too long"
+							));
+				//This test may fail if exception message is changed,
+				//so please notice that the name in exception message
+				//is SHORTER than the name in XML above.
+			};
 			d.close();
 		leave();
 	};

@@ -91,7 +91,7 @@ public class SLogging
               //      returns a constant. This means, that enabling/disabling
               //      logs requires re-compilation of this class.
               //  if (_class.getName().equals("sztejkat.abstractfmt.bin.chunk.AChunkWriteFormat0")) return 1;
-              	if (_class.getName().equals("sztejkat.abstractfmt.txt.xml.AXMLReadFormat0")) return 2;
+              //	if (_class.getName().equals("sztejkat.abstractfmt.txt.xml.AXMLReadFormat0")) return 2;
               //if (_class.getName().equals("sztejkat.abstractfmt.txt.ASyntaxHandler")) return 2;
               //if (_class.getName().equals("sztejkat.abstractfmt.txt.AStateHandler")) return 2;
               //if (_class.getName().equals("sztejkat.abstractfmt.txt.ATxtReadFormatStateBase0")) return 2;
@@ -100,7 +100,7 @@ public class SLogging
               //if (_class.getName().equals("sztejkat.abstractfmt.txt.ASyntaxHandler")) return 2;
               //if (_class.getName().equals("sztejkat.abstractfmt.txt.plain.CPlainTxtReadFormat")) return 2;
               //if (_class.getName().equals("sztejkat.abstractfmt.txt.ATxtReadFormat0")) return 3;
-              //if (_class.getName().equals("sztejkat.abstractfmt.txt.ATxtReadFormat1")) return 3;
+              //if (_class.getName().equals("sztejkat.abstractfmt.txt.ATxtReadFormat1")) return 1;
               //if (_class.getName().equals("sztejkat.abstractfmt.txt.ATxtReadFormatStateBase0")) return 2;
               //if (_class.getName().equals("sztejkat.abstractfmt.txt.plain.CPlainTxtReadFormat")) return 2;
               // if (_class == sztejkat.abstractfmt.bin.chunk.CChunkWriteFormat.class) return 1;

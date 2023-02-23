@@ -252,13 +252,29 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 				{
 								/** Counts digits */
 								protected int count = 0;
-								/** Preserves un-escaped value */
-								protected 	char unescaped = 0;
+								/** Preserves un-escaped value of unicode code-point */
+								protected int unescaped = 0;
 								
 						protected ACodeBasedEscapeHandler(ATxtReadFormat1.TIntermediateSyntax report_unescaped_as,
 														  ATxtReadFormatStateBase1<ATxtReadFormat1.TIntermediateSyntax> p)
 						{
 							super(report_unescaped_as,p);
+						};
+						/** queues unescaped code-point after validating it
+						and pops state handler.
+						@throws EBrokenFormat if un-escaped is not in valid unicode range.
+						*/
+						protected void queueUnescaped()throws EBrokenFormat
+						{
+							if (TRACE) TOUT.println("ACodeBasedEscapeHandler.queueUnescaped(), unescaped="+unescaped+" 0x"+Integer.toHexString(unescaped)+" ENTER");
+							if (!((unescaped>=0)&&(unescaped<=0x10FFFF)))
+								throw new EBrokenFormat("Escape produced 0x"+
+											Integer.toHexString(unescaped)+
+											" which is not valid 0...0x10FFFF unicode code point :"+getLineInfoMessage());
+							queueNextCodepoint(unescaped,report_unescaped_as);
+							popStateHandler();
+							if (TRACE) TOUT.println("ACodeBasedEscapeHandler.queueUnescaped() LEAVE");
+							
 						};
 						/* **********************************************************
 									AStateHandler
@@ -321,7 +337,7 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 							{
 								nibble = digit - 'a'+10;
 							}else
-								throw new EBrokenFormat("Not a hex digit '"+digit+"\'"+getLineInfoMessage());
+								throw new EBrokenFormat("Not a hex digit '"+digit+"\' in _XXXX style escape"+getLineInfoMessage());
 								
 							collectDirectly(c); //for direct processing.
 							unescaped<<=4;
@@ -329,8 +345,7 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 							count++;
 							if (count==4)
 							{
-								queueNextChar(unescaped,report_unescaped_as);
-								popStateHandler();
+								queueUnescaped();//Note this is a bit overkill because we can't get over 0xFFFF in _ escape.
 								if (TRACE) TOUT.println("CUnderscoreHexEscapeHandler.toNextChar(), unescaped LEAVE");
 							};
 						};
@@ -415,8 +430,7 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 							if (TRACE) TOUT.println("CAmpHexEscapeHandler.toNextChar() unescaping \'"+c+"\'");
 							if (c==';')
 							{
-								queueNextCodepoint(unescaped,report_unescaped_as);
-								popStateHandler();
+								queueUnescaped();
 								if (TRACE) TOUT.println("CAmpHexEscapeHandler.toNextChar(), unescaped LEAVE");
 							}else
 							{
@@ -482,8 +496,7 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 							if (TRACE) TOUT.println("CAmpDecimalEscapeHandler.toNextChar() unescaping \'"+c+"\'");
 							if (c==';')
 							{
-								queueNextCodepoint(unescaped,report_unescaped_as);
-								popStateHandler();
+								queueUnescaped();
 								if (TRACE) TOUT.println("CAmpDecimalEscapeHandler.toNextChar(), unescaped LEAVE");
 							}else
 							{
@@ -734,6 +747,12 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 				    {
 				   	   if (TRACE) TOUT.println("NO_MORE_DATA.toNextChar() ENTER");
 				   	   //Persisten "no more data" regardless of what is in stream.
+				   	   // Notice we have two choices:
+				   	   //		throw or queue -1.
+				   	   //		The contract of ATxtReadFormat1.toNextChar forbids 
+				   	   //		us to throw if we encounter	end of file.
+				   	   //
+				   	   // 
 				   	   queueNextChar(-1,null);
 					   if (TRACE) TOUT.println("NO_MORE_DATA.toNextChar() LEAVE");
 				   };
@@ -954,11 +973,13 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 								//Picked up last possible state.
 								if (TRACE) TOUT.println("END_TAG.tryEnter(), closed main body element.");
 								setStateHandler(NO_MORE_DATA);
+								//We do NOT indicate SIG_END, because this is EOF in fact.
 							}else
 							{
+								if (TRACE) TOUT.println("END_TAG.tryEnter(), closed user element");
 								setStateHandler(ELEMENT_BODY);
-							}
-							queueNextChar(0,ATxtReadFormat1.TIntermediateSyntax.SIG_END);
+								queueNextChar(0,ATxtReadFormat1.TIntermediateSyntax.SIG_END);
+							}							
 							if (TRACE) TOUT.println("END_TAG.tryEnter()=true, LEAVE");
 							return true;
 						}else
