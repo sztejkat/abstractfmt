@@ -157,7 +157,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 											new FileOutputStream(temp),
 											"UTF-8");
 			o.write("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
-			o.write("<xml><body></body>");
+			o.write("<sztejkat.abstractfmt.txt.xml><body></body>");
 			o.close();
 			
 			assertXMLFileIsBad(temp);
@@ -178,7 +178,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 											new FileOutputStream(temp),
 											"UTF-8");
 			o.write("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
-			o.write("<xml></body>");
+			o.write("<sztejkat.abstractfmt.txt.xml></body>");
 			o.close();
 			
 			assertXMLFileIsBad(temp);
@@ -219,7 +219,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 											new FileOutputStream(temp),
 											"UTF-8");
 			o.write("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
-			o.write("<xml><&amp;parma><&amp;parma></xml>");
+			o.write("<sztejkat.abstractfmt.txt.xml><&amp;parma><&amp;parma></sztejkat.abstractfmt.txt.xml>");
 			o.close();
 			
 			assertXMLFileIsBad(temp);
@@ -245,7 +245,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 											new FileOutputStream(temp),
 											"UTF-8");
 			o.write("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");			
-			o.write("<xml>&amp;&#xDC01;</xml>");	
+			o.write("<sztejkat.abstractfmt.txt.xml>&amp;&#xDC01;</sztejkat.abstractfmt.txt.xml>");	
 			o.close();
 			
 			assertXMLFileIsBad(temp);
@@ -287,7 +287,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			//Test if it is a valid XML
 			validateXMLFile(temp);
 			//Compare against known code
-			Assert.assertTrue("<?xml version=\"1.0\" encoding=\"UTF-8\" ?><xml></xml>".equals(s.toString()));
+			Assert.assertTrue("<?xml version=\"1.0\" encoding=\"UTF-8\" ?><sztejkat.abstractfmt.txt.xml></sztejkat.abstractfmt.txt.xml>".equals(s.toString()));
 		leave();
 	};
 	
@@ -315,9 +315,9 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			//Test if it is a valid XML
 			validateXMLFile(temp);
 			//Compare against known code
-			Assert.assertTrue(("<?xml version=\"1.0\" encoding=\"UTF-8\" ?><xml>"+
+			Assert.assertTrue(("<?xml version=\"1.0\" encoding=\"UTF-8\" ?><sztejkat.abstractfmt.txt.xml>"+
 			"<spartan></spartan>"+
-			"</xml>").equals(s.toString()));
+			"</sztejkat.abstractfmt.txt.xml>").equals(s.toString()));
 		leave();
 	};
 	
@@ -346,9 +346,9 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			// Note: We do not allow empty XML names, so, as package description
 			//		 is saying, we do expect _. This is handled by name escaping
 			//		 engine tough, but I did not add own test to it.
-			Assert.assertTrue(("<?xml version=\"1.0\" encoding=\"UTF-8\" ?><xml>"+
+			Assert.assertTrue(("<?xml version=\"1.0\" encoding=\"UTF-8\" ?><sztejkat.abstractfmt.txt.xml>"+
 			"<_></_>"+
-			"</xml>").equals(s.toString()));
+			"</sztejkat.abstractfmt.txt.xml>").equals(s.toString()));
 		leave();
 	};
 	
@@ -374,9 +374,9 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			//Test if it is a valid XML
 			validateXMLFile(temp);
 			//None of chars is valid so all should be escaped with _
-			Assert.assertTrue(("<?xml version=\"1.1\" encoding=\"UTF-8\" ?><xml>"+
+			Assert.assertTrue(("<?xml version=\"1.1\" encoding=\"UTF-8\" ?><sztejkat.abstractfmt.txt.xml>"+
 			"<\uD830\uDC30_003C_003E></\uD830\uDC30_003C_003E>"+
-			"</xml>").equals(s.toString()));
+			"</sztejkat.abstractfmt.txt.xml>").equals(s.toString()));
 		leave();
 	};
 	
@@ -407,9 +407,9 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			//Test if it is a valid XML
 			validateXMLFile(temp);
 			//None of chars is valid so all should be escaped with _
-			Assert.assertTrue(("<?xml version=\"1.0\" encoding=\"UTF-8\" ?><xml>"+
+			Assert.assertTrue(("<?xml version=\"1.0\" encoding=\"UTF-8\" ?><sztejkat.abstractfmt.txt.xml>"+
 			"<andy><mandy></mandy><dandy></dandy></andy>"+
-			"</xml>").equals(s.toString()));
+			"</sztejkat.abstractfmt.txt.xml>").equals(s.toString()));
 		leave();
 	};
 	
@@ -441,7 +441,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			validateXMLFile(temp);
 			//None of chars is valid so all should be escaped with _
 			Assert.assertTrue(("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"+
-							   "<xml>false,true<andy>false,true</andy></xml>"
+							   "<sztejkat.abstractfmt.txt.xml>false,true<andy>false,true</andy></sztejkat.abstractfmt.txt.xml>"
 			).equals(s.toString()));
 		leave();
 	};
@@ -477,7 +477,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			validateXMLFile(temp);
 			//None of chars is valid so all should be escaped with _
 			Assert.assertTrue(("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"+
-							   "<xml>-7,3332,12345678,-3949849494<andy>-7,3332,12345678,-3949849494</andy></xml>"
+							   "<sztejkat.abstractfmt.txt.xml>-7,3332,12345678,-3949849494<andy>-7,3332,12345678,-3949849494</andy></sztejkat.abstractfmt.txt.xml>"
 			).equals(s.toString()));
 		leave();
 	};
@@ -509,7 +509,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			validateXMLFile(temp);
 			//None of chars is valid so all should be escaped with _
 			Assert.assertTrue(("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"+
-							   "<xml>-0.0333,0.0333<andy>-0.0333,0.0333</andy></xml>"
+							   "<sztejkat.abstractfmt.txt.xml>-0.0333,0.0333<andy>-0.0333,0.0333</andy></sztejkat.abstractfmt.txt.xml>"
 			).equals(s.toString()));
 		leave();
 	};
@@ -546,7 +546,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			validateXMLFile(temp);
 			//None of chars is valid so all should be escaped with _
 			Assert.assertTrue(("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"+
-							   "<xml>\"mou\"<andy>\"se\",0,\"r\"</andy>\"d\"</xml>"
+							   "<sztejkat.abstractfmt.txt.xml>\"mou\"<andy>\"se\",0,\"r\"</andy>\"d\"</sztejkat.abstractfmt.txt.xml>"
 			).equals(s.toString()));
 		leave();
 	};
@@ -582,7 +582,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			validateXMLFile(temp);
 			//None of chars is valid so all should be escaped with _
 			Assert.assertTrue(("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"+
-							   "<xml>\"m&quot;__\"<andy>\"_D800_0000\",0,\"r\"</andy>\"d\"</xml>"
+							   "<sztejkat.abstractfmt.txt.xml>\"m&quot;__\"<andy>\"_D800_0000\",0,\"r\"</andy>\"d\"</sztejkat.abstractfmt.txt.xml>"
 			).equals(s.toString()));
 		leave();
 	};
@@ -620,7 +620,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			validateXMLFile(temp);
 			//None of chars is valid so all should be escaped with _
 			Assert.assertTrue(("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"+
-							   "<xml>t,f,f,t<blk>t,f,f,t</blk></xml>"
+							   "<sztejkat.abstractfmt.txt.xml>t,f,f,t<blk>t,f,f,t</blk></sztejkat.abstractfmt.txt.xml>"
 			).equals(s.toString()));
 		leave();
 	};
@@ -655,7 +655,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			validateXMLFile(temp);
 			//None of chars is valid so all should be escaped with _
 			Assert.assertTrue(("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"+
-							   "<xml>0,0,0,0<blk>0,0,0,0</blk></xml>"
+							   "<sztejkat.abstractfmt.txt.xml>0,0,0,0<blk>0,0,0,0</blk></sztejkat.abstractfmt.txt.xml>"
 			).equals(s.toString()));
 		leave();
 	};
@@ -690,7 +690,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			validateXMLFile(temp);
 			//None of chars is valid so all should be escaped with _
 			Assert.assertTrue(("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"+
-							   "<xml>0,0,0,0<blk>0,0,0,0</blk></xml>"
+							   "<sztejkat.abstractfmt.txt.xml>0,0,0,0<blk>0,0,0,0</blk></sztejkat.abstractfmt.txt.xml>"
 			).equals(s.toString()));
 		leave();
 	};
@@ -724,7 +724,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			validateXMLFile(temp);
 			//None of chars is valid so all should be escaped with _
 			Assert.assertTrue(("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"+
-							   "<xml>0,0,0,0<blk>0,0,0,0</blk></xml>"
+							   "<sztejkat.abstractfmt.txt.xml>0,0,0,0<blk>0,0,0,0</blk></sztejkat.abstractfmt.txt.xml>"
 			).equals(s.toString()));
 		leave();
 	};
@@ -758,7 +758,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			validateXMLFile(temp);
 			//None of chars is valid so all should be escaped with _
 			Assert.assertTrue(("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"+
-							   "<xml>0,0,0,0<blk>0,0,0,0</blk></xml>"
+							   "<sztejkat.abstractfmt.txt.xml>0,0,0,0<blk>0,0,0,0</blk></sztejkat.abstractfmt.txt.xml>"
 			).equals(s.toString()));
 		leave();
 	};
@@ -792,7 +792,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			validateXMLFile(temp);
 			//None of chars is valid so all should be escaped with _
 			Assert.assertTrue(("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"+
-							   "<xml>0.0,0.0,0.0,0.0<blk>0.0,0.0,0.0,0.0</blk></xml>"
+							   "<sztejkat.abstractfmt.txt.xml>0.0,0.0,0.0,0.0<blk>0.0,0.0,0.0,0.0</blk></sztejkat.abstractfmt.txt.xml>"
 			).equals(s.toString()));
 		leave();
 	};
@@ -827,7 +827,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			validateXMLFile(temp);
 			//None of chars is valid so all should be escaped with _
 			Assert.assertTrue(("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"+
-							   "<xml>0.0,0.0,0.0,0.0<blk>0.0,0.0,0.0,0.0</blk></xml>"
+							   "<sztejkat.abstractfmt.txt.xml>0.0,0.0,0.0,0.0<blk>0.0,0.0,0.0,0.0</blk></sztejkat.abstractfmt.txt.xml>"
 			).equals(s.toString()));
 		leave();
 	};
@@ -862,7 +862,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			validateXMLFile(temp);
 			//None of chars is valid so all should be escaped with _
 			Assert.assertTrue(("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"+
-							   "<xml>\"_0000_0000_0000_0000\"<blk>\"as_0000_0000\"</blk></xml>"
+							   "<sztejkat.abstractfmt.txt.xml>\"_0000_0000_0000_0000\"<blk>\"as_0000_0000\"</blk></sztejkat.abstractfmt.txt.xml>"
 			).equals(s.toString()));
 		leave();
 	};
@@ -897,7 +897,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			validateXMLFile(temp);
 			//None of chars is valid so all should be escaped with _
 			Assert.assertTrue(("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"+
-							   "<xml>\"a_0000\"<blk>\"borutadruch\"</blk></xml>"
+							   "<sztejkat.abstractfmt.txt.xml>\"a_0000\"<blk>\"borutadruch\"</blk></sztejkat.abstractfmt.txt.xml>"
 			).equals(s.toString()));
 		leave();
 	};
@@ -927,8 +927,8 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 			validateXMLFile(temp);
 			//None of chars is valid so all should be escaped with _
 			Assert.assertTrue(("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"+
-							   "<xml>\"a\"<!-- Nothing special \n"+
-							   " but few lines &lt;&gt; -->,\"_0000\"</xml>"
+							   "<sztejkat.abstractfmt.txt.xml>\"a\"<!-- Nothing special \n"+
+							   " but few lines &lt;&gt; -->,\"_0000\"</sztejkat.abstractfmt.txt.xml>"
 			).equals(s.toString()));
 		leave();
 	};

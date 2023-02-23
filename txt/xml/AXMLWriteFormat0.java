@@ -106,24 +106,31 @@ public abstract class AXMLWriteFormat0 extends ATxtWriteFormat1
 	Standard implementation writes following XML:
 	<pre>
 	&lt;?xml version="<i>from classifier</i>" encoding="UTF-8"?&gt;
-	&lt;xml&gt;
+	&lt;{@link #getXMLBodyElement()"}&gt;
 	</pre>
 	@see #outXML(String)	
 	*/
 	protected void writeXMLProlog()throws IOException
 	{
-		outXML("<?xml version=\""+classifier.getXMLVersion()+"\" encoding=\"UTF-8\" ?><xml>");
+		outXML("<?xml version=\""+classifier.getXMLVersion()+"\" encoding=\"UTF-8\" ?>");
+		outXML('<');
+		outXML(getXMLBodyElement());
+		outXML('>');
 	};
+	/** Returns the name of XML body element opened by {@link AXMLWriteFormat0#writeXMLProlog}.*/
+	protected String getXMLBodyElement(){ return "sztejkat.abstractfmt.txt.xml"; }
 	/** A method which will be called by {@link #closeImpl} to
 	terminate the element started by {@link #writeXMLProlog}.
 	Standard implementation writes a single XML token:
 	<pre>
-	&lt;/xml&gt;
+	&lt;/{@link #getXMLBodyElement()"}&gt;
 	</pre>
 	*/
 	protected void writeXMLClosure()throws IOException
 	{
-		outXML("</xml>");
+		outXML('<');outXML('/');
+		outXML(getXMLBodyElement());
+		outXML('>');
 	};
 	/** Writes single XML comment.
 	@param comment a comment string. Will be correctly escaped 

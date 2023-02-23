@@ -804,31 +804,34 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 							if (TRACE) TOUT.println("BEGIN_TAG.tryEnter()=true, self closing empty name, LEAVE");
 							return true;
 						}else
-						if (tryLooksAt("<"))//now full text variants.
 						{
-							//Now check if it is not the end tag?
-							char c= readAlways();
-							unread(c);//in all cases it will be processed elsewhere.
-							if (c=='/')
+							int ci=tryRead(); 
+							if (ci=='<')//now full text variants. Avoid collecting it so tryRead instead of tryLooksAt
 							{
-								if (TRACE) TOUT.println("BEGIN_TAG.tryEnter()=false, end tag LEAVE");
+								//Now check if it is not the end tag?
+								char c= readAlways();
+								unread(c);//in all cases it will be processed elsewhere.
+								if (c=='/')
+								{
+									if (TRACE) TOUT.println("BEGIN_TAG.tryEnter()=false, end tag LEAVE");
+									return false;
+								}else
+								//now be flexible and allow all non-space
+								if (!classifier.isXMLSpace(c))
+								{
+									queueNextChar(0,ATxtReadFormat1.TIntermediateSyntax.SIG_BEGIN);	//begin
+									queueNextChar(0,ATxtReadFormat1.TIntermediateSyntax.SIG_NAME_VOID); //empty name, just in case
+									pushStateHandler(this);
+									if (TRACE) TOUT.println("BEGIN_TAG.tryEnter()=true, full name, LEAVE");
+									return true;
+								}else
+									throw new EBrokenFormat("Invalid first character in element name \'"+c+"\' :"+getLineInfoMessage());
+							}else
+							{
+								if (ci!=-1)	unread((char)ci);
+								if (TRACE) TOUT.println("BEGIN_TAG.tryEnter()=false, LEAVE");
 								return false;
-							}else
-							//now be flexible and allow all non-space
-							if (!classifier.isXMLSpace(c))
-							{
-								queueNextChar(0,ATxtReadFormat1.TIntermediateSyntax.SIG_BEGIN);	//begin
-								queueNextChar(0,ATxtReadFormat1.TIntermediateSyntax.SIG_NAME_VOID); //empty name, just in case
-								pushStateHandler(this);
-								if (TRACE) TOUT.println("BEGIN_TAG.tryEnter()=true, full name, LEAVE");
-								return true;
-							}else
-								throw new EBrokenFormat("Invalid first character in element name \'"+c+"\' :"+getLineInfoMessage());
-						}else
-						{
-							unread();
-							if (TRACE) TOUT.println("BEGIN_TAG.tryEnter()=false, LEAVE");
-							return false;
+							}
 						}
 					};
 					@Override public void toNextChar()throws IOException
@@ -908,12 +911,14 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 						@Override public void toNextChar()throws IOException
 						{
 						   if (TRACE) TOUT.println("ELEMENT_BODY.toNextChar() ENTER");
-						   if (!END_TAG.tryEnter())		//sef end
-						   if (!BEGIN_TAG.tryEnter())	//new elements
-						   if (!COMMENT.tryEnter())		//this state is pushed over us
-						   if (!PI.tryEnter())			//this state is pushed over us
-						   if (!CDATA.tryEnter())		//this state is pushed over us
-						   if (!WHITESPACE.tryEnter())	//this state is pushed over us
+						   //Note: comparison must start from longer to shorter pattern
+						   //which may conflict.
+						   if (!COMMENT.tryEnter())		//<!--
+						   if (!PI.tryEnter())			//<?
+						   if (!CDATA.tryEnter())		//<[CDATA[					   
+						   if (!END_TAG.tryEnter())		//</
+						   if (!BEGIN_TAG.tryEnter())	//<   -- this may conflict with above
+						   if (!WHITESPACE.tryEnter())	
 						   if (!PLAIN_TOKEN.tryEnter()) 
 						   if (!STRING_TOKEN.tryEnter())
 						   {
@@ -935,7 +940,12 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 					@Override public boolean tryEnter()throws IOException
 					{
 						if (TRACE) TOUT.println("END_TAG.tryEnter() ENTER");
-						if (orTryLooksAt("</>") || orTryLooksAt(end_tags.peek()))
+						if (orTryLooksAt("</>") 
+							|| 
+							orTryLooksAt(end_tags.peek())
+							//Note: end_tags is never empty, always contains at least main body
+							//so peek will never give null gere.
+							) 				 
 						{							
 							//anonymous end tag or full end tag.
 							end_tags.pop();
@@ -951,6 +961,12 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 							queueNextChar(0,ATxtReadFormat1.TIntermediateSyntax.SIG_END);
 							if (TRACE) TOUT.println("END_TAG.tryEnter()=true, LEAVE");
 							return true;
+						}else
+						if (orTryLooksAt("</"))
+						{
+							//Now we failed anonymous tag and we failed expected tag.
+							//This means, we have an unexpected closing tag"
+							throw new EBrokenFormat("Closing tag miss-match, either </> or </"+end_tags.peek()+"> is expected:"+getLineInfoMessage());
 						}else
 						{
 							if (TRACE) TOUT.println("END_TAG.tryEnter()=false, LEAVE");
@@ -1112,6 +1128,7 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 							}else
 							{
 								//emit as token.
+								if (TRACE) TOUT.println("PLAIN_TOKEN.toNextChar() -> \'"+c+"\'");
 								queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.TOKEN);
 							};
 						}
@@ -1154,8 +1171,6 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 							return false;
 						};
 						char c = (char)r;
-						unread(c);//in all cases.
-						//Now it cannot be " of quouted token 
 						if (c=='\"')
 						{
 							if (TRACE) TOUT.println("STRING_TOKEN.tryEnter()=true, LEAVE");
@@ -1166,14 +1181,15 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 						}else
 						{
 							if (TRACE) TOUT.println("STRING_TOKEN.tryEnter()=false, LEAVE");
+							unread(c);
 							return false;
 						}
 					};
 					@Override public void toNextChar()throws IOException
 					{
 						if (TRACE) TOUT.println("STRING_TOKEN.toNextChar() ENTER");
-						if (!TOKEN_UNDERSCORE_ESCAPE.tryEnter())
 						if (!TOKEN_UNDERSCORE_SELF_ESCAPE.tryEnter())
+						if (!TOKEN_UNDERSCORE_ESCAPE.tryEnter())
 						if (!TOKEN_AMP_HEX_ESCAPE.tryEnter())
 						if (!TOKEN_AMP_DEC_ESCAPE.tryEnter())
 						if (!TOKEN_AMP_ENTITY_ESCAPE.tryEnter())
@@ -1190,7 +1206,6 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 							{
 									case '\"': //only this terminates the string token.
 											//terminate token
-											unread(c);
 											queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
 											setStateHandler(TOKEN_SEPARATOR);
 											if (TRACE) TOUT.println("STRING_TOKEN.toNextChar(), terminated token");
@@ -1223,11 +1238,13 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 						@Override public void toNextChar()throws IOException
 						{
 						   if (TRACE) TOUT.println("TOKEN_SEPARATOR.toNextChar() ENTER");
-						   if (!END_TAG.tryEnter())		//sef end
-						   if (!BEGIN_TAG.tryEnter())	//new elements
-						   if (!COMMENT.tryEnter())		//this state is pushed over us
-						   if (!PI.tryEnter())			//this state is pushed over us
-						   if (!CDATA.tryEnter())		//this state is pushed over us
+						   //Note: comparison must start from longer to shorter pattern
+						   //which may conflict.
+						   if (!COMMENT.tryEnter())		//<!--
+						   if (!PI.tryEnter())			//<?
+						   if (!CDATA.tryEnter())		//<[CDATA[					   
+						   if (!END_TAG.tryEnter())		//</
+						   if (!BEGIN_TAG.tryEnter())	//<   -- this may conflict with above
 						   if (!WHITESPACE.tryEnter())	//this state is pushed over us
 						   {
 								int r= read();
@@ -1245,6 +1262,7 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 								}else
 									throw new EBrokenFormat("Invalid syntax, \'"+(char)r+"\' :"+getLineInfoMessage());
 						   }
+						   if (TRACE) TOUT.println("TOKEN_SEPARATOR.toNextChar() LEAVE");
 						};
 				};
 				/** Pre-defined set of amp based escapes.
@@ -1340,7 +1358,7 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 	
 	*****************************************************************/
 	/** Returns the name of XML body element opened by {@link AXMLWriteFormat0#writeXMLProlog}.*/
-	protected String getXMLBodyElement(){ return "xml"; }
+	protected String getXMLBodyElement(){ return "sztejkat.abstractfmt.txt.xml"; }
 	
 	/* ***************************************************************
 	

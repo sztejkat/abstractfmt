@@ -231,7 +231,7 @@ public abstract class ATxtReadFormat1<TSyntax extends ATxtReadFormat1.ISyntax>
 				SIG_END,
 				/** A token or signal terminator. This character do not belong to any
 				syntax element and do terminate a previous syntax element, if any.
-				It token was in progess will report {@link #TOKEN_BOUNDARY}. If
+				If token was in progess will report {@link #TOKEN_BOUNDARY}. If
 				token was not in progress, will be skipped as of void or will be used
 				to detect when signal definition terminates.
 				*/
