@@ -41,8 +41,7 @@ public abstract class AToNextStateHandler<TState extends ATxtReadFormat1.TInterm
 			by referencing to a common outer class field.
 		@return state to which will move to that handler. 
 				
-		@see #enterStateHandler
-		@see #leaveStateHandler
+		@see #toNextStateHandler
 	*/
 	protected abstract ATxtReadFormatStateBase0.IStateHandler getNextHandler(); 
 	

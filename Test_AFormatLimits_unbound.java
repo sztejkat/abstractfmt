@@ -10,7 +10,7 @@ public class Test_AFormatLimits_unbound extends ATest_IFormatLimits<Test_AFormat
 {
 			static final class DUT extends AFormatLimits
 			{
-					DUT(){ initializeToSupportedLimits(); };
+					DUT(){  };
 					@Override public int getMaxSupportedSignalNameLength(){ return 65536; };
 					@Override public int getMaxSupportedStructRecursionDepth(){ return -1; };
 			};

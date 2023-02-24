@@ -870,4 +870,26 @@ public class Test_AXMLReadFormat0 extends ATest
 			d.close();
 		leave();
 	};
+	
+	
+	@Test public void tooManyClosingTags()throws IOException
+	{
+		enter();
+			DUT d = new DUT(
+			"<?xml ?><sztejkat.abstractfmt.txt.xml>\n"+
+			"</f>"+
+			"</sztejkat.abstractfmt.txt.xml>"
+						);
+			d.setMaxSignalNameLength(32);
+			d.open();
+			try{
+				d.next();
+				Assert.fail();
+			}catch(EBrokenFormat ex)
+			{
+				System.out.println(ex);
+			};
+			d.close();
+		leave();
+	};
 };      

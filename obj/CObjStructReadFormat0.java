@@ -59,7 +59,7 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 		this.max_supported_recursion_depth=max_supported_recursion_depth;
 		this.max_supported_name_length=max_supported_name_length;
 		
-		initializeToSupportedLimits();
+		trimLimitsToSupportedLimits();
 	};
 	/** Creates
 	@param stream stream to read content from, non null. 

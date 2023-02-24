@@ -33,7 +33,7 @@ abstract class AXMLEscapingEngineBase extends AEscapingEngine
 		@throws IOException if failed.
 		@throws AssertionError if not a codepoint.
 		
-		@see SXMLChar_classifier#isXMLChar
+		@see IXMLCharClassifier#isXMLRecommendedChar
 	*/
 	protected void escapeCodePointAsHexEntity(int c)throws IOException
 	{
@@ -68,7 +68,7 @@ abstract class AXMLEscapingEngineBase extends AEscapingEngine
 		@throws IOException if failed.
 		@throws AssertionError if not a codepoint.
 		
-		@see SXMLChar_classifier#isXMLChar
+		@see IXMLCharClassifier#isXMLRecommendedChar
 	*/
 	protected void escapeCodePointAsEntity(int c)throws IOException
 	{

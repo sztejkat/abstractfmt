@@ -46,7 +46,7 @@ public class CObjStructWriteFormat0 extends AStructWriteFormatBase0
 		this.max_supported_recursion_depth=max_supported_recursion_depth;
 		this.max_supported_name_length=max_supported_name_length;
 		this.stream = stream;
-		initializeToSupportedLimits();
+		trimLimitsToSupportedLimits();
 	};
 	/** Creates, using {@link CAddablePollableArrayList} as a stream back-end  
 		and sets it to {@link #stream}.

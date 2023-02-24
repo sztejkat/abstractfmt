@@ -48,11 +48,11 @@ public interface IXMLCharClassifier
 			situation since we won't be using any possibly conflicting
 			sets in here.
 			*/
-			/** See {@link #isDataChar}. A valid body character. */
+			/** See {@link #isCharData}. A valid body character. */
 			static final int XML_DATA_CHAR = 0;
-			/** See {@link #isDataChar}. Not a body character, but allowed in XML */
+			/** See {@link #isCharData}. Not a body character, but allowed in XML */
 			static final int XML_ENTITY = 1;
-			/** See {@link #isDataChar}. Not a body character, and NOT allowed in XML */
+			/** See {@link #isCharData}. Not a body character, and NOT allowed in XML */
 			static final int NON_XML_COMPATIBLE = 2;
 			
 	/** Tests against if character is a valid element body character.

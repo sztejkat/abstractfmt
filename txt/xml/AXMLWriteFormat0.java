@@ -106,9 +106,10 @@ public abstract class AXMLWriteFormat0 extends ATxtWriteFormat1
 	Standard implementation writes following XML:
 	<pre>
 	&lt;?xml version="<i>from classifier</i>" encoding="UTF-8"?&gt;
-	&lt;{@link #getXMLBodyElement()"}&gt;
+	&lt;{@link #getXMLBodyElement()}&gt;
 	</pre>
-	@see #outXML(String)	
+	@see #outXML(String)
+	@throws IOException if {@link #outXML} failed.
 	*/
 	protected void writeXMLProlog()throws IOException
 	{
@@ -117,14 +118,16 @@ public abstract class AXMLWriteFormat0 extends ATxtWriteFormat1
 		outXML(getXMLBodyElement());
 		outXML('>');
 	};
-	/** Returns the name of XML body element opened by {@link AXMLWriteFormat0#writeXMLProlog}.*/
+	/** Returns the name of XML body element opened by {@link AXMLWriteFormat0#writeXMLProlog}.
+	@return XML body element, default is "sztejkat.abstractfmt.txt.xml"*/
 	protected String getXMLBodyElement(){ return "sztejkat.abstractfmt.txt.xml"; }
 	/** A method which will be called by {@link #closeImpl} to
 	terminate the element started by {@link #writeXMLProlog}.
 	Standard implementation writes a single XML token:
 	<pre>
-	&lt;/{@link #getXMLBodyElement()"}&gt;
+	&lt;/{@link #getXMLBodyElement()}&gt;
 	</pre>
+	@throws IOException if failed.
 	*/
 	protected void writeXMLClosure()throws IOException
 	{
@@ -139,6 +142,7 @@ public abstract class AXMLWriteFormat0 extends ATxtWriteFormat1
 			<p>
 			Notice however that escaped comment may be a problematic 
 			for a human	to read, so You should avoid such comments.
+	@throws IOException if failed to write off-band data.
 	*/
 	public void writeComment(String comment)throws IOException
 	{

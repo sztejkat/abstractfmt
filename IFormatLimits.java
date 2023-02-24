@@ -27,7 +27,7 @@ public interface IFormatLimits
 		/** Returns maximum supported signal name length by this format.
 		This limit is non-adjustable and relates to physcial boundaries
 		of format.
-		@return length limit, non-zero positive, life-time constant */
+		@return length limit, non-zero positive, efficiently life time constant. */
 		public int getMaxSupportedSignalNameLength();
 	/* .........................................................
 			Events nesting limits.
@@ -60,6 +60,7 @@ public interface IFormatLimits
 	  	public void setMaxStructRecursionDepth(int max_depth)throws IllegalStateException,IllegalArgumentException;
 		/** Returns -1 if format supports un-bound recursion, otherwise a 
 		maximum recursion depth which can be set in {@link #setMaxStructRecursionDepth}
-		@return -1 or max recursion depth supported. */
+		@return -1 or max recursion depth supported, efficiently life time constant.
+		*/
 	  	public int getMaxSupportedStructRecursionDepth();
 };

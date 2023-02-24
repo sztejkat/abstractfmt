@@ -167,5 +167,21 @@ public class Test_AXMLElementNameEscapingEngine extends sztejkat.abstractfmt.tes
 			Assert.assertTrue("__int__32".equals(y));
 		leave();
 	};
+	
+	@Test public void test_bad_surogates()throws IOException
+	{
+		enter();
+		
+			DUT d = new DUT();
+			
+			d.append("\uDCFE\uDCFF");
+			d.flush();
+			
+			final String y = d.o.toString();
+			System.out.println("\""+y+"\"");
+			
+			Assert.assertTrue("_DCFE_DCFF".equals(y));
+		leave();
+	};
 };
 	

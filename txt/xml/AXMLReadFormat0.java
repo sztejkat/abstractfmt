@@ -1347,8 +1347,7 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 			{@link #in} field. Will be closed on {@link #close}.
 			<p>
 			No I/O operation will be generate till {@link #open}.
-	@param classifier classifier to use, non null. Remember to get in sync the necessary
-			prolog.
+	@param classifier classifier to use, non null. 
 	@param entities_escapes entities to detect as escapes for special characters and produce matching.
 			Non null, can't carry nulls, same length as <code>entities_escapes_chars</code>.
 			Usually {@link #PREFEFINED_ENTITIES_ESCAPES}
@@ -1378,7 +1377,8 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 	
 	
 	*****************************************************************/
-	/** Returns the name of XML body element opened by {@link AXMLWriteFormat0#writeXMLProlog}.*/
+	/** Returns the name of XML body element opened by {@link AXMLWriteFormat0#writeXMLProlog}.
+	@return XML body element, default is "sztejkat.abstractfmt.txt.xml" */
 	protected String getXMLBodyElement(){ return "sztejkat.abstractfmt.txt.xml"; }
 	
 	/* ***************************************************************

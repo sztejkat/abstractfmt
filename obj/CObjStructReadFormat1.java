@@ -83,7 +83,7 @@ public class CObjStructReadFormat1 extends ARegisteringStructReadFormat
 		this.max_supported_name_length=max_supported_name_length;
 		this.use_index_instead_of_order = use_index_instead_of_order;
 		
-		initializeToSupportedLimits();
+		trimLimitsToSupportedLimits();
 	};
 	/** Creates
 	@param stream stream to read content from, non null. 

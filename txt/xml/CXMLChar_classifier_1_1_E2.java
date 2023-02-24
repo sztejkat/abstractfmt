@@ -13,8 +13,7 @@ import sztejkat.abstractfmt.txt.*;
 	<i>Note: Whenever I say XML I do mean:
 	<a href="doc-files/xml1.1/XML_specification.htm">
 	Extensible Markup Language (XML) 1.1 (Second Edition)
-	W3C Recommendation 16 August 2006, edited in place 29 September 2006</a>
-	<p>
+	W3C Recommendation 16 August 2006, edited in place 29 September 2006</a></i>
 */
 public class CXMLChar_classifier_1_1_E2 implements IXMLCharClassifier 
 {

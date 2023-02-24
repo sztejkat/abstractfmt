@@ -33,6 +33,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 		Tells <code>javax.xml.stream</code> to load specified
 		file and iterate over it in hope, that malformed XML
 		is reported as a problematic one.
+		@param f file to validate through Java standard parser.
 		@throws IOException if failed at low level
 		@throws AssertionError if XML reported warning or error
 	*/
@@ -74,6 +75,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 		Tells <code>javax.xml.stream</code> to load specified
 		file and iterate over it in hope, that malformed XML
 		is reported as a problematic one.
+		@param f file which pass through standard Java parser.
 		@throws IOException if failed at low level
 		@throws AssertionError if XML did NOT report warning or error.
 	*/

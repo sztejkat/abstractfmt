@@ -27,11 +27,16 @@ abstract class AXMLElementNameEscapingEngine extends AXMLEscapingEngineBase
 				AEscapingEngine
 	
 	* *************************************************************************/
+	/** Overriden to correctly detect that first char must be treated differently
+	in all possible scenarios. */
+	@Override protected void appendImpl(char c)throws IOException
+	{
+		super.appendImpl(c);
+		is_first_char = false;		
+	};
 	@Override protected boolean mustEscapeCodepoint(int code_point)
 	{
-		System.out.println("0x"+Integer.toHexString(code_point));
 		boolean f = is_first_char;
-		is_first_char = false;
 		return  (code_point=='_') || 
 				(!(f  ?
 					getClassifier().isNameStartChar(code_point)

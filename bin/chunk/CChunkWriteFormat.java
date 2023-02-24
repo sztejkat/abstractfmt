@@ -39,7 +39,7 @@ public class CChunkWriteFormat extends AChunkWriteFormat0
 					   boolean indexed_registration
 					   )
 	{
-		super(name_registry_capacity,raw, indexed_registration);
+		super(name_registry_capacity,raw, indexed_registration);		
 		if (TRACE) TOUT.println("new CChunkWriteFormat(...)");
 	};
 	

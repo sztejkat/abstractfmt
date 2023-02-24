@@ -37,7 +37,7 @@ public class CXMLWriteFormat extends AXMLWriteFormat0
 	
 	@param out non null writer which must support the whole Unicode characters
 			set. Any actuall writing will happen after {@link #open}.
-	@param IXMLCharClassifier xml classifier to use for version and escapes.
+	@param xml_classifier xml classifier to use for version and escapes.
 	*/
 	public CXMLWriteFormat(Writer out, IXMLCharClassifier xml_classifier)
 	{
@@ -91,7 +91,7 @@ public class CXMLWriteFormat extends AXMLWriteFormat0
 	************************************************************************/
 	/** No bound is set, but You should remember that this format DOES consume some
 	memory on each recursion due to the necessity of tracking structs names. */
-	@Override public int getMaxSupportedStructRecursionDepth(){ return Integer.MAX_VALUE; };
+	@Override public int getMaxSupportedStructRecursionDepth(){ return -1; };
 	/** No limit */
-	@Override public int getMaxSupportedSignalNameLength(){ return -1; };
+	@Override public int getMaxSupportedSignalNameLength(){ return Integer.MAX_VALUE; };
 }

@@ -22,7 +22,6 @@ abstract class AFormatLimits implements IFormatLimits,Closeable
 				/** A current recursion depth */
 				private int current_recursion_depth = 0;
 				
-				
 		/* **************************************************
 		
 		
@@ -31,25 +30,69 @@ abstract class AFormatLimits implements IFormatLimits,Closeable
 		
 		***************************************************/
 		/**
-			Subclasses should take care to 
-			invoke {@link #initializeToSupportedLimits}
+			Creates, initialized to default limits.
+			<p>
+			This is NOT checked if default limits:
+			(1024 characters and inifinite recursion)
+			are in supported bounds.
+			<p>
+			Subclasses which do override {@link #getMaxSupportedSignalNameLength}/{@link #getMaxSupportedStructRecursionDepth}
+			to report supported limits which may not cover
+			above defaults and have limits not hardcoded in those methods are expected to invoke {@link #trimLimitsToSupportedLimits}.
+			If they won't call set limits may be above boundaries.
+			<p>
+			This a bit tricky apporach is necessary since overriden
+			{@link #getMaxSupportedSignalNameLength}/{@link #getMaxSupportedStructRecursionDepth}
+			may in some cases report limits which are initialized in subclass constructor
+			and any call to them made in this class constructor will return 0 since subclass fields
+			won't be initialized yet.
+			<p>
+			This constructor will check if name limit is non-zero and will call {@link #trimLimitsToSupportedLimits} automatically.
+			This means that classes which do:
+			<pre>
+			protected int getMaxSupportedSignalNameLength(){ return 100; };
+			....
+			</pre>
+			do not have to call {@link #trimLimitsToSupportedLimits} but those which do:
+			<pre>
+			class X ...
+			{
+					int limit;
+				X(...
+				{
+					limit = 100;
+					<b>trimLimitsToSupportedLimits();</b>
+				}
+				protected int getMaxSupportedSignalNameLength(){ return limit; };
+			}
+			</pre>
+			have to make that call.
 		*/
-		AFormatLimits(){};
+		AFormatLimits()
+		{
+			//Check if supported limits are initialized?
+			//Zero is not allowed for name limit, so it is a good initialization
+			//indicator.
+			if (getMaxSupportedSignalNameLength()!=0)
+							trimLimitsToSupportedLimits();
+		};
 		
-		/** See constructor.
-		
-			Sets limits to either predefined values
-			or supported bounds
+		/** 
+			Makes sure that current limits do not exceed those supported.
+			<p>
+			Requires that {@link #getMaxSupportedSignalNameLength}
+			and {@link #getMaxSupportedStructRecursionDepth} are 
+			initialized.
+			
+			@see AFormatLimits#AFormatLimits
 		*/
-		protected void initializeToSupportedLimits()
+		protected void trimLimitsToSupportedLimits()
 		{
 			//name
 			int l = getMaxSupportedSignalNameLength();		
-			assert(l>0);
-			assert(current_max_signal_name_length==1024); //<-from defaults
+			assert(l>0) : "possibly not initialized?";
 			if (l< current_max_signal_name_length) 
 						current_max_signal_name_length = l;			
-			assert(max_struct_recursion==-1); //<-from defaults, unbound.			
 			int r = getMaxSupportedStructRecursionDepth();
 			assert(r>=-1);
 			if (r!= max_struct_recursion)
@@ -115,15 +158,22 @@ abstract class AFormatLimits implements IFormatLimits,Closeable
 		
 		********************************************************/
 		@Override public void setMaxSignalNameLength(int characters)
-		{			
+		{		
 			assert(characters>0):"characters="+characters+" <= 0";
+			assert(getMaxSupportedSignalNameLength()>0):"not initialized?";
 			if (TRACE) TOUT.println("setMaxSignalNameLength("+characters+")");
 			if(characters>getMaxSupportedSignalNameLength()) throw new IllegalArgumentException("characters="+characters+" >getMaxSupportedSignalNameLength()="+getMaxSupportedSignalNameLength());
 			this.current_max_signal_name_length=characters;
 		};
-		@Override public final int getMaxSignalNameLength(){ return current_max_signal_name_length; };
+		@Override public final int getMaxSignalNameLength()
+		{
+			return current_max_signal_name_length; 
+		};
 		
-		@Override public final int getMaxStructRecursionDepth(){ return max_struct_recursion; };
+		@Override public final int getMaxStructRecursionDepth()
+		{
+			return max_struct_recursion; 
+		};
 		
 		/** {@inheritDoc}
 			
@@ -131,10 +181,11 @@ abstract class AFormatLimits implements IFormatLimits,Closeable
 			depth of structs recursion 
 		*/
 		@Override public void setMaxStructRecursionDepth(int max_depth)throws IllegalStateException
-		{			
+		{	  					    
 				assert(max_depth>=-1):"max_depth="+max_depth;
 				//test system limits
 				int supported = getMaxSupportedStructRecursionDepth();
+				assert(supported>=-1);
 				if (TRACE) TOUT.println("setMaxStructRecursionDepth("+max_depth+")"+
 										" supported="+supported+
 										" current_recursion_depth="+current_recursion_depth);
@@ -158,4 +209,12 @@ abstract class AFormatLimits implements IFormatLimits,Closeable
 			    };
 		   	    this.max_struct_recursion=max_depth;
 		};
+		/** {@inheritDoc}
+		Remember to call {@link #trimLimitsToSupportedLimits} if You override it 
+		to return non-hardcoded value */
+		@Override public abstract int getMaxSupportedSignalNameLength();
+		/** {@inheritDoc}
+		Remember to call {@link #trimLimitsToSupportedLimits} if You override it 
+		to return non-hardcoded value */
+		@Override public abstract int getMaxSupportedStructRecursionDepth();
 };

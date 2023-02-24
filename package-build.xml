@@ -20,8 +20,8 @@
 	<property name="package" value="sztejkat.abstractfmt"/>
 	
 	<property name="lib_packages" value="sztejkat.abstractfmt,
-					sztejkat.abstractfmt.logging,
-					sztejkat.abstractfmt.test,
+										sztejkat.abstractfmt.logging,
+										sztejkat.abstractfmt.test,
                                         sztejkat.abstractfmt.obj,
                                         sztejkat.abstractfmt.utils,
                                         sztejkat.abstractfmt.bin,

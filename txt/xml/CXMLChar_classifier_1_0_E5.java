@@ -12,7 +12,7 @@ import sztejkat.abstractfmt.txt.*;
 	<p>
 	<i>Note: Whenever I say XML I do mean:
 	<a href="doc-files/xml1.0/XML_specification.htm">
-	Extensible Markup Language (XML) 1.0 (Fifth Edition) W3C Recommendation 26 November 2008</a>
+	Extensible Markup Language (XML) 1.0 (Fifth Edition) W3C Recommendation 26 November 2008</a></i>
 	<p>
 	Notes:
 	<br>
