@@ -253,7 +253,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 							);
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
-				Assert.assertTrue(d.skip(0)==0);
+				d.skip(0);
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
 	};
@@ -279,7 +279,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
 				d.readBooleanBlock();
-				Assert.assertTrue(d.skip(0)==0);
+				d.skip(0);
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
 	};
@@ -434,7 +434,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 							);
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
-				Assert.assertTrue(d.skip(0)==0);
+				d.skip(0);
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
 	};
@@ -460,7 +460,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
 				d.readByteBlock();
-				Assert.assertTrue(d.skip(0)==0);
+				d.skip(0);
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
 	};
@@ -614,7 +614,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 							);
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
-				Assert.assertTrue(d.skip(0)==0);
+				d.skip(0);
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
 	};
@@ -640,7 +640,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
 				d.readCharBlock();
-				Assert.assertTrue(d.skip(0)==0);
+				d.skip(0);
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
 	};
@@ -799,7 +799,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 							);
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
-				Assert.assertTrue(d.skip(0)==0);
+				d.skip(0);
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
 	};
@@ -825,7 +825,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
 				d.readShortBlock();
-				Assert.assertTrue(d.skip(0)==0);
+				d.skip(0);
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
 	};
@@ -983,7 +983,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 							);
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
-				Assert.assertTrue(d.skip(0)==0);
+				d.skip(0);
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
 	};
@@ -1009,7 +1009,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
 				d.readLongBlock();
-				Assert.assertTrue(d.skip(0)==0);
+				d.skip(0);
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
 	};
@@ -1167,7 +1167,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 							);
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
-				Assert.assertTrue(d.skip(0)==0);
+				d.skip(0);
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
 	};
@@ -1193,7 +1193,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
 				d.readFloatBlock();
-				Assert.assertTrue(d.skip(0)==0);
+				d.skip(0);
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
 	};
@@ -1354,7 +1354,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 							);
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
-				Assert.assertTrue(d.skip(0)==0);
+				d.skip(0);
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
 	};
@@ -1380,7 +1380,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
 				d.readDoubleBlock();
-				Assert.assertTrue(d.skip(0)==0);
+				d.skip(0);
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
 	};
@@ -1538,7 +1538,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 							);
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
-				Assert.assertTrue(d.skip(0)==0);
+				d.skip(0);
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
 	};
@@ -1564,7 +1564,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
 				d.readString();
-				Assert.assertTrue(d.skip(0)==0);
+				d.skip(0);
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
 	};
@@ -1724,7 +1724,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 							);
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
-				Assert.assertTrue(d.skip(0)==0);
+				d.skip(0);
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
 	};
@@ -1750,7 +1750,7 @@ public class Test_AStructReadFormatBase0 extends sztejkat.abstractfmt.test.ATest
 				d.open();
 				Assert.assertTrue("start".equals(d.next()));
 				d.readIntBlock();
-				Assert.assertTrue(d.skip(0)==0);
+				d.skip(0);
 				Assert.assertTrue(d.readChar()=='4');
 		leave();
 	};

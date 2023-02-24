@@ -88,6 +88,23 @@ import java.io.IOException;
 	<h1>IOException</h1>
 	Whenever this contract states that something <i>throws IOException</i> it is strictly
 	required that a <u>specific exception class</u> is thrown for a specific reason.
+	
+	<h2 id="TEMPEOF">eof handling model</h2>
+	This class, in generic assumes that if end-of-file is reported by throwing 
+	an exception then it is an un-recoverable error and {@link EUnexpectedEof}
+	should be used.
+	<p>
+	If end-of-file is expected but non-recoverable the {@link EEof} should be thrown.
+	<p>
+	If however the subclass decides that some end-of-file exceptions are 
+	recoverable it should throw {@link ETemporaryEndOfFile}. This contract does
+	not specify which operations and under which conditions can recover from
+	end-of-file. 
+	<p>
+	Implementations which do support recoverable end of file <u>must</u>
+	clearly specifiy when and how one can recover from the exception.
+	If it is not specified user should assume that there is no support for
+	recovering from end-of-file exception.
 */
 public interface IStructReadFormat extends Closeable, IFormatLimits
 {	
@@ -175,33 +192,18 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
 		<p>		 
 		@param levels how many levels upwards to skip. Zero: skip just all remaning
 			body of current structure and its end signal, including all sub-structures.
-		@return number of levels it has left to skip. This value
-			can be non-zero only for <a href="#TEMPEOF">eof models
-			different than "None"</a> and should be used to re-try this
-			operation after an temporary end of file condition.
 		@throws IOException if low level i/o failed or an appropriate
 			subclass to represent encountered problem.
-			This method never throws {@link ETemporaryEndOfFile} because
-			default implementation depends on it to be thrown
-			by {@link #next} in which case the exception 
-			is intercepted and converted to non-zero return value.
 		@throws EBrokenFormat if broken permanently
 		@throws EFormatBoundaryExceeded if skipping required to dig too deep into
 			a structures or encountered a begin signal name out of allowed limits.
 		*/ 
-		public default int skip(int levels)throws IOException
+		public default void skip(int levels)throws IOException
 		{
 			int depth = levels+1;
 			String s;
 			do{
-				try{
-						//Note: we need to handle temporary EOF to 
-						//let this operation to be re-tried.
-						s=next();
-					}catch( ETemporaryEndOfFile ex) 
-					{
-					 	break;
-					};
+				s=next();
 				if (s!=null)
 				{
 					depth++;
@@ -210,21 +212,14 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
 					depth--;
 				};
 			}while(depth!=0);
-			return depth;
 		};
 		
-		/** An equivalent of <code>skip(0)</code>. 
-		Should <u>not</u> be used with streams supporting
-		<a href="#TEMPEOF">eof models different than "None"</a>
-		because in such case the information necessary to re-try
-		the operation is lost.  
-		@throws IOException if {@link #skip(int)} failed
-		@throws EEof if {@link #skip(int)} returned
-		non zero, since re-trying in this case is impossible.
+		/** An equivalent of <code>skip(0)</code>.
+		@throws IOException if {@link #skip(int)} failed		
 		*/ 
 		public default void skip()throws IOException
 		{
-			 if (skip(0)!=0) throw new EEof();  
+			 skip(0);  
 		};
 		
 		

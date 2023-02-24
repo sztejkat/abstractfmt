@@ -23,7 +23,7 @@ public class AStructReadFormatAdapter extends AStructFormatAdapterBase<IStructRe
 	****************************************************************/
 	@Override public String next()throws IOException{ return engine.next(); };
 	@Override public boolean hasElementaryData()throws IOException{ return engine.hasElementaryData(); }
-	@Override public int skip(int levels)throws IOException{ return engine.skip(levels); };
+	@Override public void skip(int levels)throws IOException{ engine.skip(levels); };
 	@Override public void skip()throws IOException{ engine.skip(); };
 	@Override public boolean readBoolean()throws IOException{ return engine.readBoolean(); };
 	@Override public byte readByte()throws IOException{ return engine.readByte(); };

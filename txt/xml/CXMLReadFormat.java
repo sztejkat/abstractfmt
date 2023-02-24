@@ -41,8 +41,14 @@ public class CXMLReadFormat extends AXMLReadFormat0
 			IFormatLimits
 	
 	********************************************************************/
-	/** Unlimited */
+	/** Integer.MAX_VALUE */
 	@Override public int getMaxSupportedSignalNameLength(){ return Integer.MAX_VALUE; };
-	/** Unlimited */
+	/** 
+	-1, unbound. 
+	<p>
+	You should remember that this format does consume some
+	memory on each recursion due to the necessity of tracking structs names
+	so the physical limit do exist. 
+	*/
 	@Override public int getMaxSupportedStructRecursionDepth(){ return -1; };
 };

@@ -599,7 +599,7 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 						if (TRACE) TOUT.println("START.toNextChar() LEVE");
 					};
 				};
-				/** A ByteOrderMar handler.
+				/** A ByteOrderMark handler.
 				Moves to {@link #PROLOG} after consuming the BOM character.
 				*/
 				private final ISyntaxHandler BOM = new ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
@@ -1011,6 +1011,7 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 				{
 					@Override public String getName(){ return "PI"; };
 				};
+				/** A doctype schema skipper */
 				private final ISyntaxHandler DOCTYPE = new ANestedSkippper("<!DOCTYPE",">",ATxtReadFormat1.TIntermediateSyntax.VOID,this)
 				{
 					@Override public String getName(){ return "DOCTYPE"; };
@@ -1023,7 +1024,7 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 					@Override public String getName(){ return "CDATA"; };
 				};
 				/** A state handler reporting all white-spaces as separators 
-				and returns to previous state. */
+				and returning to previous state. */
 				private final ISyntaxHandler WHITESPACE = new ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
 				{
 					@Override public String getName(){ return "WHITESPACE"; };
@@ -1156,22 +1157,27 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 						if (TRACE) TOUT.println("PLAIN_TOKEN.toNextChar() LEAVE");
 					};
 				};
+				/** Escape handler for _XXXX escape in tokens */
 				private final ISyntaxHandler TOKEN_UNDERSCORE_ESCAPE = new CUnderscoreHexEscapeHandler(
 																					ATxtReadFormat1.TIntermediateSyntax.TOKEN,
 																					this
 																					);
+				/** Escape handler for __ escape in tokens */
 				private final ISyntaxHandler TOKEN_UNDERSCORE_SELF_ESCAPE = new CUnderscoreSelfEscapeHandler(
 																					ATxtReadFormat1.TIntermediateSyntax.TOKEN,
 																					this
 																					);
+				/** Escape handler for &amp;#xXXXX; escape in tokens */				
 				private final ISyntaxHandler TOKEN_AMP_HEX_ESCAPE = new CAmpHexEscapeHandler(
 																					ATxtReadFormat1.TIntermediateSyntax.TOKEN,
 																					this
 																					);
+				/** Escape handler for &amp;#dddd; escape in tokens */
 				private final ISyntaxHandler TOKEN_AMP_DEC_ESCAPE = new CAmpDecimalEscapeHandler(
 																					ATxtReadFormat1.TIntermediateSyntax.TOKEN,
 																					this
 																					);
+				/** Escape handler for &amp;<i>name</i>; escape in tokens */
 				private final ISyntaxHandler TOKEN_AMP_ENTITY_ESCAPE = new CAmpEntityEscapeHandler(
 																					ATxtReadFormat1.TIntermediateSyntax.TOKEN,
 																					this

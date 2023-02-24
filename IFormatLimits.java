@@ -59,7 +59,7 @@ public interface IFormatLimits
 		*/
 	  	public void setMaxStructRecursionDepth(int max_depth)throws IllegalStateException,IllegalArgumentException;
 		/** Returns -1 if format supports un-bound recursion, otherwise a 
-		maximum recursion depth which can be set in {@link #setMaxStructRecursionDepth}
+		maximum recursion depth which can be set in {@link #setMaxStructRecursionDepth}.
 		@return -1 or max recursion depth supported, efficiently life time constant.
 		*/
 	  	public int getMaxSupportedStructRecursionDepth();
