@@ -30,7 +30,7 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat1
 			/** A escape character */
 			static final char ESCAPE_CHAR = '\\';
 			
-				/** Where to write. Protected to allow some data injcection in superclasses modifications */
+				/** Where to write. Protected to allow some data injection in superclasses modifications */
 				protected final Writer out;
 				
 				/** Used to track if inject signal separator or not.
@@ -109,6 +109,9 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat1
 	@Override protected void outTokenSeparator()throws IOException
 	{
 		out.write(TOKEN_SEPARATOR_CHAR);
+	};
+	@Override protected void outTokenToSignalSeparator()throws IOException
+	{
 	};
 	/* --------------------------------------------------------------
 					plain tokens

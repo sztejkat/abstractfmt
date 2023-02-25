@@ -76,23 +76,13 @@
          "<i>signal_name</i>": <i>primitive element</i>
       }
       </pre>
-      </li>
-      
-      <li>structure with just <u>string sequence</u> or <u>char sequence</u>:
-      <pre>
-      {
-         "<i>signal_name</i>": "<i>string</i>"
-      }
-      </pre>
+      The primitive element is numeric or logic or single character.
       </li>
       </ul>
-      Notice we can't avoid [ ] if structure element is a sub-structure
-      because to be able to tell if there is just one element we have to
-      delay writing its content to the stream and inject [ before it eventually.
-      Delaying the whole structure may be very memory consuming.
-      <p>
-      We could provide more compactness but it would affect the clarity
-      of the processing.
+      Notice we can detect "single element structure" only for elementary primitives
+      because to do it we have to await for next operation and buffer every written
+      character. Buffering strings or sub-structures would require unpredictable
+      amount of memory.
       
       
       <h2>Primitive values</h2>
@@ -122,6 +112,14 @@
       ]
       </pre>
      
+      
+      <h2>Impact of flush()</h2>
+      If <code>flush()</code> is called after first element
+      was written after begin signal the stream doesn't know yet
+      if there is just a single element in structure or there will
+      be more. It assumes then that there will be more elements
+      and will write it using array form.
+      
       
       
 

@@ -45,6 +45,10 @@ abstract class APlainEscapingEngine extends AEscapingEngine
 	*/
 	@Override protected boolean mustEscape(char c)
 	{
+		//Note: This is enough to consider chars since all upper
+		//		code-points will be automatically split back
+		//		to UTF-16 surogates and all improper surogates
+		//		are also automatically escaped.
 		switch(c)
 		{
 			case '\"':
@@ -61,7 +65,8 @@ abstract class APlainEscapingEngine extends AEscapingEngine
 	*/
 	@Override protected void escape(char c)throws IOException
 	{
-		
+		//We need to escape every char but some faster, some
+		//using full escape.
 		switch(c)
 		{
 			case '\"':
