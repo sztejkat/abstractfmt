@@ -95,19 +95,20 @@ public abstract class AEscapingEngine implements Appendable,Flushable
 	This method will be invoked for each and every code point, in order of appearance
 	and once and only once for each code point.
 	
-	@param code_point code-point to test, full range.
+	@param code_point code-point to test, except surogates ranges.
 	@return true if it must be escaped.
 	*/
 	protected abstract boolean mustEscapeCodepoint(int code_point);
 	
 	/** Should, possibly using a sequence of calls to {@link #out},
 	write the UTF-16 character into a stream using an escape sequence.
-	@param c a char to escape, may be a surogate.
+	Must <u>not</u> decide byitself <u>if</u> escape the character, but
+	may decide how to escape it.
+	@param c a char to escape, may be a surogate including bad ones.
 	@throws IOException if failed */
 	protected abstract void escape(char c)throws IOException;
-	/** Escapes code-point 
-	By default splits it into upper/lower surogate and
-	passes down to {@link #escape} 
+	/** Escapes code-point. 
+	By passes down to {@link #escape(char)}. 
 	@param c a code-point, above 0xFFFF range.
 	@param upper_surogate upper surogate of <code>c</code>, as it was stored in UTF-16 stream
 	@param lower_surogate lowe surogate of <code>c</code>
