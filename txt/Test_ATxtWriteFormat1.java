@@ -25,6 +25,10 @@ public class Test_ATxtWriteFormat1 extends ATest
 				{
 					stream.append(',');
 				};
+				@Override protected void outTokenToSignalSeparator()throws IOException
+				{
+					stream.append('-');
+				};
 				@Override protected void openPlainTokenImpl()throws IOException
 				{
 					stream.append('>');
@@ -80,6 +84,126 @@ public class Test_ATxtWriteFormat1 extends ATest
 					closeStringToken_no_stitching();
 				};
 		};
+		/** This test check how to treat char and chars blocks differently from strings */
+		private static class NonStringDUT extends ATxtWriteFormat1
+		{
+					public final StringBuilder stream = new StringBuilder(); 
+				NonStringDUT()
+				{
+					super(5);
+				};
+				@Override protected void outSignalSeparator()throws IOException
+				{ 
+					stream.append(' ');
+				};
+				@Override protected void outTokenSeparator()throws IOException
+				{
+					stream.append(',');
+				};
+				@Override protected void outTokenToSignalSeparator()throws IOException
+				{
+					stream.append('-');
+				};
+				@Override protected void openPlainTokenImpl()throws IOException
+				{
+					stream.append('>');
+				};
+				@Override protected void closePlainTokenImpl()throws IOException
+				{
+					stream.append('<');
+				};
+				@Override protected void openStringTokenImpl()throws IOException
+				{
+					stream.append('\"');
+				};
+				@Override protected void closeStringTokenImpl()throws IOException
+				{
+					stream.append('\"');
+				};
+				@Override protected void outPlainToken(char c)throws IOException
+				{
+					stream.append('p');
+					stream.append(c);
+				};
+				@Override protected void outStringToken(char c)throws IOException
+				{
+					stream.append('s');
+					stream.append(c);
+				};
+				
+				
+				
+				@Override protected void openBlockCharToken()throws IOException
+				{
+					defaultOpenBlockCharToken();
+				};
+				@Override protected void openBlockCharTokenImpl()throws IOException
+				{
+					stream.append("[b");
+				};
+				@Override protected void closeBlockCharToken()throws IOException
+				{
+					defaultCloseBlockCharToken();
+				};
+				@Override protected void closeBlockCharTokenImpl()throws IOException
+				{
+					stream.append("b]");
+				};
+				@Override protected void outBlockCharToken(char c)throws IOException
+				{
+					stream.append('b');
+					stream.append(c);
+				};
+				
+				
+				
+				@Override protected void openSingleCharToken()throws IOException
+				{
+					defaultOpenSingleCharToken();
+				};
+				@Override protected void openSingleCharTokenImpl()throws IOException
+				{
+					stream.append("[c");
+				};
+				@Override protected void closeSingleCharToken()throws IOException
+				{
+					defaultCloseSingleCharToken();
+				};
+				@Override protected void closeSingleCharTokenImpl()throws IOException
+				{
+					stream.append("c]");
+				};
+				@Override protected void outSingleCharToken(char c)throws IOException
+				{
+					stream.append('c');
+					stream.append(c);
+				};
+				
+				
+				
+	
+				@Override protected void beginAndRegisterImpl(String name, int index, int order)throws IOException
+				{
+					stream.append("*beginAndRegisterImpl*");
+				};
+				@Override protected void beginRegisteredImpl(int index, int order)throws IOException
+				{
+					stream.append("*beginRegisteredImpl*");
+				};
+				@Override protected  void beginDirectImpl(String name)throws IOException
+				{
+					stream.append("*beginDirectImpl*");
+				};
+				@Override protected  void endImpl()throws IOException
+				{
+					stream.append("*endImpl*");
+				};
+				@Override protected  void closeImpl()throws IOException{};
+				@Override protected  void openImpl()throws IOException{};
+				@Override public int getMaxSupportedStructRecursionDepth(){ return -1; };
+				@Override public int getMaxSupportedSignalNameLength(){ return Integer.MAX_VALUE; };
+		};
+		
 		
 	@Test public void testPlainTokenSequencingWithoutSignal()throws IOException
 	{
@@ -114,9 +238,9 @@ public class Test_ATxtWriteFormat1 extends ATest
 			d.close();
 			String o = d.stream.toString();
 			System.out.println(o);
-			Assert.assertTrue(("*beginDirectImpl* >p1p0<,>p0<*endImpl* "+
+			Assert.assertTrue(("*beginDirectImpl* >p1p0<,>p0<-*endImpl* "+
 								">p1p0<,>p0<"+
-								"*beginDirectImpl* >p1p0<,>p0<*endImpl*").equals(o));
+								"-*beginDirectImpl* >p1p0<,>p0<-*endImpl*").equals(o));
 		leave();
 	};
 	
@@ -168,9 +292,9 @@ public class Test_ATxtWriteFormat1 extends ATest
 			System.out.println(o);
 			Assert.assertTrue(
 							("\"sasDsA\""+
-								"*beginDirectImpl*"+
+								"-*beginDirectImpl*"+
 								" \"sDsA\""+
-								"*endImpl*"+
+								"-*endImpl*"+
 								" \"sDsA\"")
 								.equals(o));
 		leave();
@@ -193,6 +317,46 @@ public class Test_ATxtWriteFormat1 extends ATest
 			Assert.assertTrue(("\"sasDsA\""+
 							   ",>p3<,"+
 							   "\"sasDsA\"")
+							   .equals(o));
+		leave();
+	};
+	
+	
+	@Test public void testSingleCharDifferentThanString()throws IOException
+	{
+		enter();
+			NonStringDUT d = new NonStringDUT();
+			d.open();
+				d.writeChar('a');
+				d.writeChar('D');
+				d.writeInt(3);
+				d.writeChar('a');
+				d.writeChar('D');
+				d.writeString("aDA");
+			d.close();
+			String o = d.stream.toString();
+			System.out.println(o);
+			Assert.assertTrue(("[ccac],[ccDc]"+
+							   ",>p3<,"+
+							   "[ccac],[ccDc]"+
+							   ",\"sasDsA\"")
+							   .equals(o));
+		leave();
+	};
+	
+	@Test public void testBlockCharDifferentThanString()throws IOException
+	{
+		enter();
+			NonStringDUT d = new NonStringDUT();
+			d.open();
+				d.writeChar('a');
+				d.writeChar('D');
+				d.writeCharBlock(new char[]{'x','y','z'});
+			d.close();
+			String o = d.stream.toString();
+			System.out.println(o);
+			Assert.assertTrue(("[ccac],[ccDc]"+
+							   ",[bbxbybzb]")
 							   .equals(o));
 		leave();
 	};

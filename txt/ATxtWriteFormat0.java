@@ -131,11 +131,15 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	call to block char/string write produces one token.
 	@throws IOException if failed.
 	@see #closeStringToken
+	@see #openBlockCharToken
+	@see #openSingleCharToken
 	*/
 	protected abstract void openStringToken()throws IOException;
 	/** Will be invoked after a content of token opened by {@link #openStringToken}
 	was written. 
 	@throws IOException if failed.
+	@see #closeBlockCharToken
+	@see #closeSingleCharToken
 	*/
 	protected abstract void closeStringToken()throws IOException;
 	/** Writes single character of a plain token.
@@ -160,12 +164,88 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@param c char to write.
 	@throws IOException if failed
 	@see #outStringToken(String)
+	@see #outBlockCharToken
+	@see #outSingleCharToken
 	*/	
 	protected abstract void outStringToken(char c)throws IOException;
 	/* --------------------------------------------------------------------------
-				Elementary primitive values.
+				Tunable defaults
+				
+			Subclasses which like to treat elementary character write
+			and character block writes differently than string writes
+			may override them. 
+			
 	--------------------------------------------------------------------------*/
-	/** Invokes {@link #outPlainToken} for every charcter
+	/** Used to surround whole block char operations, defaults to {@link #openStringToken}
+	@throws IOException if failed.
+	@see #closeBlockCharToken
+	@see #outBlockCharToken
+	*/
+	protected void openBlockCharToken()throws IOException{ openStringToken(); };
+	/** Used to implement block char operations, defaults to {@link #outStringToken}
+	@throws IOException if failed.
+	@see #closeBlockCharToken
+	@see #openBlockCharToken
+	@see #outBlockCharToken(String)
+	*/
+	protected void outBlockCharToken(char c)throws IOException{ outStringToken(c); };
+	/** Used to surround whole block char operations, defaults to {@link #closeStringToken}
+	@throws IOException if failed.
+	@see #openBlockCharToken
+	@see #outBlockCharToken(char)
+	*/
+	protected void closeBlockCharToken()throws IOException{ closeStringToken(); };
+	
+	
+	/** Used to surround whole block char operations, defaults to {@link #openStringToken}
+	@throws IOException if failed.
+	@see #closeSingleCharToken
+	@see #outSingleCharToken
+	*/
+	protected void openSingleCharToken()throws IOException{ openStringToken(); };
+	/** Used to implement block char operations, defaults to {@link #outStringToken}
+	@throws IOException if failed.
+	@see #closeSingleCharToken
+	@see #openSingleCharToken
+	@see #outSingleCharToken(String)
+	*/
+	protected void outSingleCharToken(char c)throws IOException{ outStringToken(c); };
+	/** Used to surround whole block char operations, defaults to {@link #closeStringToken}
+	@throws IOException if failed.
+	@see #openSingleCharToken
+	@see #outSingleCharToken(char)
+	*/
+	protected void closeSingleCharToken()throws IOException{ closeStringToken(); };
+	/* --------------------------------------------------------------------------
+				Elementary primitive values.				
+	--------------------------------------------------------------------------*/
+	/** Invokes {@link #outBlockCharToken(char)} for every charcter
+	@param token non-null, but can be empty.
+	@throws IOException if failed.
+	*/
+	protected void outBlockCharToken(String token)throws IOException
+	{
+		if (TRACE) TOUT.println("outBlockCharToken(\""+token+"\") ENTER");
+		for(int i=0,n=token.length();i<n;i++)
+		{
+			outBlockCharToken(token.charAt(i));
+		};
+		if (TRACE) TOUT.println("outBlockCharToken() LEAVE");
+	};
+	/** Invokes {@link #outSingleCharToken(char)} for every charcter
+	@param token non-null, but can be empty.
+	@throws IOException if failed.
+	*/
+	protected void outSingleCharToken(String token)throws IOException
+	{
+		if (TRACE) TOUT.println("outSingleCharToken(\""+token+"\") ENTER");
+		for(int i=0,n=token.length();i<n;i++)
+		{
+			outSingleCharToken(token.charAt(i));
+		};
+		if (TRACE) TOUT.println("outSingleCharToken() LEAVE");
+	};
+	/** Invokes {@link #outPlainToken(char)} for every charcter
 	@param token non-null, but can be empty.
 	@throws IOException if failed.
 	*/
@@ -178,7 +258,7 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 		};
 		if (TRACE) TOUT.println("outPlainToken() LEAVE");
 	};
-	/** Invokes {@link #outStringToken} for every charcter
+	/** Invokes {@link #outStringToken(char)} for every charcter
 	@param token non-null, but can be empty.
 	@throws IOException if failed.
 	*/
@@ -228,12 +308,16 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	{
 		return Character.toString(v);
 	};
-	/** Uses {@link #formatChar} */
+	/** Uses {@link #formatChar} to produce data.
+	A single elementary primitive character is enclosed
+	in {@link #openSingleCharToken} and {@link #closeSingleCharToken}
+	and write is done through {@link #outSingleCharToken}.
+	*/
 	@Override protected void writeCharImpl(char v)throws IOException
 	{
-		openStringToken();
-		outStringToken(formatChar(v));
-		closeStringToken();
+		openSingleCharToken();
+		outSingleCharToken(formatChar(v));
+		closeSingleCharToken();
 	};
 	
 	/** Called by {@link #writeShortImpl} to produce short token.
@@ -363,18 +447,18 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	*/
 	@Override protected void writeCharBlockImpl(char [] buffer, int offset, int length)throws IOException
 	{
-		openStringToken();
+		openBlockCharToken();
 			while(length--!=0)
 			{
-				outStringToken(formatCharBlock(buffer[offset++]));
+				outBlockCharToken(formatCharBlock(buffer[offset++]));
 			};
-		closeStringToken();
+		closeBlockCharToken();
 	};
 	@Override protected final void writeCharBlockImpl(char v)throws IOException
 	{
-		openStringToken();
-		outStringToken(formatCharBlock(v));
-		closeStringToken();
+		openBlockCharToken();
+		outBlockCharToken(formatCharBlock(v));
+		closeBlockCharToken();
 	};
 	
 	

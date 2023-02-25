@@ -57,6 +57,12 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 					/** A string token is open and content may be
 					written */
 					STRING_TOKEN,
+					/** A single char token is open and content may be
+					written */
+					SINGLE_CHAR_TOKEN,
+					/** A block char token is open and content may be
+					written */
+					BLOCK_CHAR_TOKEN,
 					/** A string token was closed by user API, 
 					but due to possible stitching this operation
 					is post-poned and not passed to subclass 
@@ -94,6 +100,9 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 	@throws IOException if failed.
 	*/
 	protected abstract void outSignalSeparator()throws IOException;
+	/** Invoked when class detects that signal is to be written
+	after some tokes were written */
+	protected abstract void outTokenToSignalSeparator()throws IOException;
 	/** Invoken when class detects that token was written and
 	next token is to be opened. Once this method returns
 	the {@link #openPlainTokenImpl} or {@link #openStringTokenImpl}
@@ -122,11 +131,131 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 	*/
 	protected abstract void closeStringTokenImpl()throws IOException;
 	
+	/* ---------------------------------------------------------
+			Tunable services.
+	------------------------------------------------------------*/
+	/** Invoked by {@link #defaultOpenBlockCharToken},
+	defaults to {@link #openStringTokenImpl} */
+	protected void openBlockCharTokenImpl()throws IOException{ openStringTokenImpl(); };
+	/** Invoked by {@link #defaultCloseBlockCharToken},
+	defaults to {@link #closeStringTokenImpl} */
+	protected void closeBlockCharTokenImpl()throws IOException{ closeStringTokenImpl(); };
+	
+	/** Invoked by {@link #defaultOpenSingleCharToken},
+	defaults to {@link #openStringTokenImpl} */
+	protected void openSingleCharTokenImpl()throws IOException{ openStringTokenImpl(); };
+	/** Invoked by {@link #defaultCloseSingleCharToken},
+	defaults to {@link #closeStringTokenImpl} */
+	protected void closeSingleCharTokenImpl()throws IOException{ closeStringTokenImpl(); };
 	/* **********************************************************
 	
 			ATxtWriteFromat0
 			
 	***********************************************************/
+	/** {@link InheritDoc}
+	<p>
+	Subclasses which wishes to treat block character tokens differently should
+	override it with:
+	<pre>
+	&#64;Override protected void openBlockCharToken()throws IOException
+	{
+		defaultOpenBlockCharToken()
+	}
+	</pre>
+	and override {@link #openBlockCharTokenImpl}
+	*/
+	@Override protected void openBlockCharToken()throws IOException{ openStringToken(); };
+	/** This decides if	token separator is necessary and invokes
+	{@link #outTokenSeparator} and {@link #openBlockCharTokenImpl}.
+	If string token stitching is in progress will terminate it.
+	<p>
+	@throws AssertionError if in incorrect state
+	@throws IOException if failed.
+	@see #openBlockCharToken
+	*/
+	protected final void defaultOpenBlockCharToken()throws IOException
+	{
+		switch(token_state)
+		{
+			case NOTHING:	//no separator necessary at the beginning of a file
+						openBlockCharTokenImpl();
+						break;
+			case SIGNAL:	//no token separator necessary after signal, but signal is a must
+						outSignalSeparator();
+						openBlockCharTokenImpl();
+						break;
+			case AFTER_TOKEN:
+							//separator is necessary
+						outTokenSeparator();
+						openBlockCharTokenImpl();
+						break;
+			case PLAIN_TOKEN:		
+			case SINGLE_CHAR_TOKEN:
+			case BLOCK_CHAR_TOKEN:
+			case STRING_TOKEN:
+						//both are assertion errors.
+						throw new AssertionError("token_state="+token_state);
+			case STRING_TOKEN_STITCHING:
+						//in this case we need to actually close it.
+						closeStringTokenImpl();
+						outTokenSeparator();
+						openBlockCharTokenImpl();
+						break;
+		};
+		token_state = TTokenState.BLOCK_CHAR_TOKEN;
+	};
+	/** {@link InheritDoc}
+	<p>
+	Subclasses which wishes to treat single character tokens differently should
+	override it with:
+	<pre>
+	&#64;Override protected void openSingleCharToken()throws IOException
+	{
+		defaultOpenSingleCharToken()
+	}
+	</pre>
+	and override {@link #openSingleCharTokenImpl}
+	*/
+	@Override protected void openSingleCharToken()throws IOException{ openStringToken(); };
+	/** This decides if	token separator is necessary and invokes
+	{@link #outTokenSeparator} and {@link #openSingleCharTokenImpl}.
+	If string token stitching is in progress will terminate it.
+	@throws AssertionError if in incorrect state
+	@throws IOException if failed.
+	@see #openSingleCharToken
+	*/
+	protected final void defaultOpenSingleCharToken()throws IOException
+	{
+		switch(token_state)
+		{
+			case NOTHING:	//no separator necessary at the beginning of a file
+						openSingleCharTokenImpl();
+						break;
+			case SIGNAL:	//no token separator necessary after signal, but signal is a must
+						outSignalSeparator();
+						openSingleCharTokenImpl();
+						break;
+			case AFTER_TOKEN:
+							//separator is necessary
+						outTokenSeparator();
+						openSingleCharTokenImpl();
+						break;
+			case PLAIN_TOKEN:		
+			case SINGLE_CHAR_TOKEN:
+			case BLOCK_CHAR_TOKEN:
+			case STRING_TOKEN:
+						//both are assertion errors.
+						throw new AssertionError("token_state="+token_state);
+			case STRING_TOKEN_STITCHING:
+						//in this case we need to actually close it.
+						closeStringTokenImpl();
+						outTokenSeparator();
+						openSingleCharTokenImpl();
+						break;
+		};
+		token_state = TTokenState.SINGLE_CHAR_TOKEN;
+	};
+	
 	/** This decides if	token separator is necessary and invokes
 	{@link #outTokenSeparator} and {@link #openPlainTokenImpl}.
 	If string token stitching is in progress will terminate it.
@@ -149,7 +278,9 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 						outTokenSeparator();
 						openPlainTokenImpl();
 						break;
-			case PLAIN_TOKEN:						
+			case PLAIN_TOKEN:		
+			case SINGLE_CHAR_TOKEN:
+			case BLOCK_CHAR_TOKEN:
 			case STRING_TOKEN:
 						//both are assertion errors.
 						throw new AssertionError("token_state="+token_state);
@@ -186,7 +317,9 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 						outTokenSeparator();
 						openStringTokenImpl();
 						break;
-			case PLAIN_TOKEN:						
+			case PLAIN_TOKEN:
+			case SINGLE_CHAR_TOKEN:
+			case BLOCK_CHAR_TOKEN:
 			case STRING_TOKEN:
 						//both are assertion errors.
 						throw new AssertionError("token_state="+token_state);
@@ -225,6 +358,8 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 			case SIGNAL:
 			case AFTER_TOKEN:
 			case PLAIN_TOKEN:
+			case SINGLE_CHAR_TOKEN:
+			case BLOCK_CHAR_TOKEN:
 						//all are assertion errors.
 						throw new AssertionError("token_state="+token_state);						
 			case STRING_TOKEN:
@@ -246,6 +381,8 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 			case SIGNAL:
 			case AFTER_TOKEN:
 			case PLAIN_TOKEN:
+			case SINGLE_CHAR_TOKEN:
+			case BLOCK_CHAR_TOKEN:				
 						//all are assertion errors.
 						throw new AssertionError("token_state="+token_state);						
 			case STRING_TOKEN:
@@ -267,12 +404,89 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 			case NOTHING:	
 			case SIGNAL:
 			case AFTER_TOKEN:
+			case SINGLE_CHAR_TOKEN:
+			case BLOCK_CHAR_TOKEN:	
 						//all are assertion errors.
 						throw new AssertionError("token_state="+token_state);
 			case PLAIN_TOKEN:
 						//do it. No stitching for plain tokens.
 						token_state = TTokenState.AFTER_TOKEN;
 						closePlainTokenImpl();
+						break;						
+			case STRING_TOKEN:						
+			case STRING_TOKEN_STITCHING:
+						throw new AssertionError("token_state="+token_state);
+		}
+	};
+	
+	/** {@link InheritDoc}
+	<p>
+	Subclasses which wishes to treat block character tokens differently should
+	override it with:
+	<pre>
+	&#64;Override protected void closeBlockCharToken()throws IOException
+	{
+		defaultCloseBlockCharToken()
+	}
+	</pre>
+	and override {@link #closeBlockCharTokenImpl}
+	*/
+	@Override protected void closeBlockCharToken()throws IOException{ closeStringToken(); };
+	/**
+	@throws AssertionError if not during char token
+	*/
+	protected final void defaultCloseBlockCharToken()throws IOException
+	{
+		switch(token_state)
+		{
+			case NOTHING:	
+			case SIGNAL:
+			case AFTER_TOKEN:
+			case SINGLE_CHAR_TOKEN:
+			case PLAIN_TOKEN:
+						//all are assertion errors.
+						throw new AssertionError("token_state="+token_state);
+			case BLOCK_CHAR_TOKEN:
+						//do it. No stitching for plain tokens.
+						token_state = TTokenState.AFTER_TOKEN;
+						closeBlockCharTokenImpl();
+						break;						
+			case STRING_TOKEN:						
+			case STRING_TOKEN_STITCHING:
+						throw new AssertionError("token_state="+token_state);
+		}
+	};
+	/** {@link InheritDoc}
+	<p>
+	Subclasses which wishes to treat single character tokens differently should
+	override it with:
+	<pre>
+	&#64;Override protected void closeSingleCharToken()throws IOException
+	{
+		defaultCloseSingleCharToken()
+	}
+	</pre>
+	and override {@link #closeSingleCharTokenImpl}
+	*/
+	@Override protected void closeSingleCharToken()throws IOException{ closeStringToken(); };
+	/**
+	@throws AssertionError if not during char token
+	*/
+	protected final void defaultCloseSingleCharToken()throws IOException
+	{
+		switch(token_state)
+		{
+			case NOTHING:	
+			case SIGNAL:
+			case AFTER_TOKEN:
+			case BLOCK_CHAR_TOKEN:
+			case PLAIN_TOKEN:
+						//all are assertion errors.
+						throw new AssertionError("token_state="+token_state);
+			case SINGLE_CHAR_TOKEN:
+						//do it. No stitching for plain tokens.
+						token_state = TTokenState.AFTER_TOKEN;
+						closeSingleCharTokenImpl();
 						break;						
 			case STRING_TOKEN:						
 			case STRING_TOKEN_STITCHING:
@@ -324,6 +538,8 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 						break;
 			case PLAIN_TOKEN:						
 			case STRING_TOKEN:
+			case SINGLE_CHAR_TOKEN:
+			case BLOCK_CHAR_TOKEN:	
 						//both are assertion errors.
 						throw new AssertionError("token_state="+token_state);						
 			case STRING_TOKEN_STITCHING:
@@ -345,6 +561,10 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 				&&
 				(token_state!=TTokenState.STRING_TOKEN)
 				&&
+				(token_state!=TTokenState.SINGLE_CHAR_TOKEN)
+				&&
+				(token_state!=TTokenState.BLOCK_CHAR_TOKEN)
+				&&
 				(token_state!=TTokenState.STRING_TOKEN_STITCHING)
 				):"token_state="+token_state+" did You forgot flushStringTokenStitching or closing tokens?";
 		token_state = TTokenState.SIGNAL;
@@ -358,6 +578,7 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 	{
 		//Note: flush is warranted to be called before close,
 		//		so flushing stitched tokens here is fine.
+		//flush tokens
 		flushStringTokenStitching();
 	};
 	/* **********************************************************
@@ -403,6 +624,9 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 	@Override protected void flushSignalPayload()throws IOException
 	{
 		flushStringTokenStitching();
+		//Inject eventual token 		
+		if(token_state==TTokenState.AFTER_TOKEN)
+							outTokenToSignalSeparator();
 		super.flushSignalPayload();
 		setTokenStateToAfterSignal();
 	}; 
