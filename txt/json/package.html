@@ -33,7 +33,7 @@
       <p>
       At first glance it looks good but the primary problem for us
       is the the {} are not having own name. The name may come only
-      from the <i>filed</i> to which JSON object is assigned.
+      from the <i>field</i> to which JSON object is assigned.
       And elements in list are not named.
       <p>
       In our struct format we do have <u>named</u> object containing
@@ -50,6 +50,11 @@
       We can't transform it directly to JSON and some tricks will be 
       necessary.
       
+      
+      <h1>Characters encoding</h1>
+      This package assumes UTF-8 encoding. However since we are using
+      standard JAVA text I/O we do only require that encoding must
+      support full set of unicode code points excluding bad surogates.
       
       
       
@@ -84,7 +89,6 @@
          "<i>signal_name</i>": []
       }
       </pre>
-      The primitive element is numeric or logic or single character.
       </li>
       </ul>
       Notice we can detect "single element structure" only for elementary primitives
@@ -96,15 +100,22 @@
       <h2>Primitive values</h2>
       Java primitives are converted to matching JSON numbers or logic types.
       <p>
-      Characters are converted to JSON string and sequence of character
-      writes is stitched into one JSON string. There is no difference between
+      Characters are converted to JSON string. 
+      Each elementary primitive character is stored as a separate JSON string
+      of one character length, but characters blocks and strings
+      are stitched into one JSON string. Except those there are no differences between
       strings, char sequences and elementary primitive char writes.
       <p>
       JSON <code>null</code> is not used.
       
       <h3>Escaping characters</h3>
       Since JSON works in a full UTF-16 realm we don't have to be picky and allow everything
-      except the bad surogates needs to be escaped directly using JSON syntax.
+      except the bad surogates. Bad surogates needs to be escaped directly using JSON syntax or low level
+      UTF-8/UTF-16 streams will barf. Sadly Java does not support WTF-8.
+      <p>
+      JSON requires that only " and \ are escaped, we do however escape some characters
+      from control ASCII zone (below 32) except new line characters. Those characters
+      (del, backspace, page feed, bell and alike) usually do badly confuse text editiors.
      
       <h3>Parsing values</h3>
       Generic rules specified in <code>sztejkat.abstractfmt.txt.ATxtReadFormat0</code>
@@ -119,6 +130,8 @@
       	<i>structs or elementary primitives</i>,....
       ]
       </pre>
+      When parsing this class do allow for UTF-8 ByteOrderMark 0xFEFF to be present
+      as a first character in a stream.
      
       
       <h2>Impact of flush()</h2>
