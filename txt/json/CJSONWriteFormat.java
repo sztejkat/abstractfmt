@@ -123,27 +123,21 @@ public class CJSONWriteFormat extends ATxtWriteFormat1
 	/* ----------------------------------------------------------
 			Related to "," appearing before sub structure
 	----------------------------------------------------------*/	
-	@Override protected void outSignalSeparator()throws IOException
+	@Override protected void outBeginSignalSeparator()throws IOException{};
+	@Override protected void outEndSignalSeparator()throws IOException
 	{
-		if (TRACE) TOUT.println("outTokenSeparator() state="+state+" ENTER");
-		//Separator indicates that at least one element was written
-		//so for sure we won't be single element.
-		switch(state)
-		{
-			case DEDUCE_SINGLE_ELEMENT:
-			case DEDUCING_PLAIN_SINGLE_ELEMENT:				
-			case DEDUCING_CHAR_SINGLE_ELEMENT:
-						break;
-			case NEXT_ELEMENT:
-						//and add separator as requested.
-						out.write(',');	
-						break;
-			case FIRST_ELEMENT:
-		};
-		
-		if (TRACE) TOUT.println("outTokenSeparator() LEAVE");
+		if (TRACE) TOUT.println("outEndSignalSeparator() state="+state+" ENTER");
+		//end signal is always followed by separator
+		out.write(',');
+		if (TRACE) TOUT.println("outEndSignalSeparator() LEAVE");
 	};
-	@Override protected void outTokenToSignalSeparator()throws IOException{};
+	@Override protected void outTokenToEndSignalSeparator()throws IOException{};
+	@Override protected void outTokenToBeginSignalSeparator()throws IOException
+	{
+		//begin signal after token is always preceeded by separator
+		//however due to single element detection it has to be left to
+		//beginDirectImpl.
+	};
 	/* ----------------------------------------------------------
 			Again, related to handling first element optimization
 			and just doing the output

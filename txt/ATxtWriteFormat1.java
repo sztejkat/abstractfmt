@@ -41,11 +41,16 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 					Indicates that no token seprator is necessary.
 					*/
 					NOTHING,
-					/** Once signal was written or begun to be written.
+					/** Once "begin" signal was written or begun to be written.
 					Indicates that no token seprator is necessary,
 					however a signal separator is necessary.
 					*/
-					SIGNAL,
+					BEGIN_SIGNAL,
+					/** Once "end" signal was written or begun to be written.
+					Indicates that no token seprator is necessary,
+					however a signal separator is necessary.
+					*/
+					END_SIGNAL,
 					/** Once token of any type was written
 					and is closed. Indicates the fact that
 					token sperator should be written before
@@ -93,16 +98,26 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 	/* ---------------------------------------------------------
 				Token related
 	---------------------------------------------------------*/
-	/** Invoken when class detects that signal was written and
+	/** Invoken when class detects that "begin" signal was written and
 	token is to be opened. Once this method returns
 	the {@link #openPlainTokenImpl} or {@link #openStringTokenImpl}
 	is invoked 
 	@throws IOException if failed.
 	*/
-	protected abstract void outSignalSeparator()throws IOException;
-	/** Invoked when class detects that signal is to be written
+	protected abstract void outBeginSignalSeparator()throws IOException;
+	/** Invoken when class detects that "end" signal was written and
+	token is to be opened. Once this method returns
+	the {@link #openPlainTokenImpl} or {@link #openStringTokenImpl}
+	is invoked 
+	@throws IOException if failed.
+	*/
+	protected abstract void outEndSignalSeparator()throws IOException;
+	/** Invoked when class detects that "begin" signal is to be written
 	after some tokes were written */
-	protected abstract void outTokenToSignalSeparator()throws IOException;
+	protected abstract void outTokenToBeginSignalSeparator()throws IOException;
+	/** Invoked when class detects that "end" signal is to be written
+	after some tokes were written */
+	protected abstract void outTokenToEndSignalSeparator()throws IOException;
 	/** Invoken when class detects that token was written and
 	next token is to be opened. Once this method returns
 	the {@link #openPlainTokenImpl} or {@link #openStringTokenImpl}
@@ -180,8 +195,12 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 			case NOTHING:	//no separator necessary at the beginning of a file
 						openBlockCharTokenImpl();
 						break;
-			case SIGNAL:	//no token separator necessary after signal, but signal is a must
-						outSignalSeparator();
+			case BEGIN_SIGNAL:	//no token separator necessary after signal, but signal is a must
+						outBeginSignalSeparator();
+						openBlockCharTokenImpl();
+						break;
+			case END_SIGNAL:	//no token separator necessary after signal, but signal is a must
+						outEndSignalSeparator();
 						openBlockCharTokenImpl();
 						break;
 			case AFTER_TOKEN:
@@ -231,8 +250,12 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 			case NOTHING:	//no separator necessary at the beginning of a file
 						openSingleCharTokenImpl();
 						break;
-			case SIGNAL:	//no token separator necessary after signal, but signal is a must
-						outSignalSeparator();
+			case BEGIN_SIGNAL:	//no token separator necessary after signal, but signal is a must
+						outBeginSignalSeparator();
+						openSingleCharTokenImpl();
+						break;
+			case END_SIGNAL:	//no token separator necessary after signal, but signal is a must
+						outEndSignalSeparator();
 						openSingleCharTokenImpl();
 						break;
 			case AFTER_TOKEN:
@@ -269,8 +292,12 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 			case NOTHING:	//no separator necessary at the beginning of a file
 						openPlainTokenImpl();
 						break;
-			case SIGNAL:	//no token separator necessary after signal, but signal is a must
-						outSignalSeparator();
+			case BEGIN_SIGNAL:	//no token separator necessary after signal, but signal is a must
+						outBeginSignalSeparator();
+						openPlainTokenImpl();
+						break;
+			case END_SIGNAL:	//no token separator necessary after signal, but signal is a must
+						outEndSignalSeparator();
 						openPlainTokenImpl();
 						break;
 			case AFTER_TOKEN:
@@ -308,8 +335,12 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 			case NOTHING:	//no separator necessary at the beginning of a file
 						openStringTokenImpl();
 						break;
-			case SIGNAL:	//no token separator necessary after signal, but signal is a must
-						outSignalSeparator();
+			case BEGIN_SIGNAL:	//no token separator necessary after signal, but signal is a must
+						outBeginSignalSeparator();
+						openStringTokenImpl();
+						break;
+			case END_SIGNAL:	//no token separator necessary after signal, but signal is a must
+						outEndSignalSeparator();
 						openStringTokenImpl();
 						break;
 			case AFTER_TOKEN:
@@ -355,7 +386,8 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 		switch(token_state)
 		{
 			case NOTHING:	
-			case SIGNAL:
+			case BEGIN_SIGNAL:
+			case END_SIGNAL:
 			case AFTER_TOKEN:
 			case PLAIN_TOKEN:
 			case SINGLE_CHAR_TOKEN:
@@ -378,7 +410,8 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 		switch(token_state)
 		{
 			case NOTHING:	
-			case SIGNAL:
+			case BEGIN_SIGNAL:
+			case END_SIGNAL:
 			case AFTER_TOKEN:
 			case PLAIN_TOKEN:
 			case SINGLE_CHAR_TOKEN:
@@ -402,7 +435,8 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 		switch(token_state)
 		{
 			case NOTHING:	
-			case SIGNAL:
+			case BEGIN_SIGNAL:
+			case END_SIGNAL:
 			case AFTER_TOKEN:
 			case SINGLE_CHAR_TOKEN:
 			case BLOCK_CHAR_TOKEN:	
@@ -440,7 +474,8 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 		switch(token_state)
 		{
 			case NOTHING:	
-			case SIGNAL:
+			case BEGIN_SIGNAL:
+			case END_SIGNAL:
 			case AFTER_TOKEN:
 			case SINGLE_CHAR_TOKEN:
 			case PLAIN_TOKEN:
@@ -477,7 +512,8 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 		switch(token_state)
 		{
 			case NOTHING:	
-			case SIGNAL:
+			case BEGIN_SIGNAL:
+			case END_SIGNAL:
 			case AFTER_TOKEN:
 			case BLOCK_CHAR_TOKEN:
 			case PLAIN_TOKEN:
@@ -533,7 +569,8 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 		switch(token_state)
 		{
 			case NOTHING:	
-			case SIGNAL:	
+			case BEGIN_SIGNAL:
+			case END_SIGNAL:	
 			case AFTER_TOKEN:
 						break;
 			case PLAIN_TOKEN:						
@@ -549,26 +586,7 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 						break;
 		};
 	};
-	/**
-		Should be invoked after signal was written to a stream.
-		@throws AssertionError if some tokens were not closed through API
-		@throws AssertionError {@link #flushStringTokenStitching} was not called.
-	*/
-	private void setTokenStateToAfterSignal()
-	{
-		assert(
-				(token_state!=TTokenState.PLAIN_TOKEN)
-				&&
-				(token_state!=TTokenState.STRING_TOKEN)
-				&&
-				(token_state!=TTokenState.SINGLE_CHAR_TOKEN)
-				&&
-				(token_state!=TTokenState.BLOCK_CHAR_TOKEN)
-				&&
-				(token_state!=TTokenState.STRING_TOKEN_STITCHING)
-				):"token_state="+token_state+" did You forgot flushStringTokenStitching or closing tokens?";
-		token_state = TTokenState.SIGNAL;
-	};
+	
 	/* **********************************************************
 	
 			AStructWriteFormatBase0
@@ -583,51 +601,34 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 	};
 	/* **********************************************************
 		
-			Note:
-				We have three points at which we can intercept
-				signal operations:
-				
-				AStructWriteFormatBase.begin
-				ARegisteringStructWriteFormat.beginImpl
-				and
-				ARegisteringStructWriteFormat.beginAndRegisterImpl familly.
-				
-				Our interception do serve two purposes:
-					1.To call flushStringTokenStitching which may produce
-					  some output;
-					2.To trace state with setTokenStateToAfterSignal
-					
-				The AStructWriteFormatBase.begin does:
-					- tests if this is allowed call.
-						* here we need to terminate pending stitching.
-					- terminate pending block operation which MAY generate output
-						* here we should 
-					- goes to beginImpl
-						ARegisteringStructWriteFormat.beginImpl does:
-							- not generate anything, but dispateches to beginAndRegisterImpl
-							  and so on.
-				Since our flushStringTokenStitching() needs to terminate the token which may
-				be a part of a sequence the correct position is to capture the begin() and
-				end(). 
-				
-				The ideal point will be a termination point which 
-				is provided to us by AStructWriteFormatBase0.flushSignalPayload();
+		AStructWriteFormatBase0
 			
 	***********************************************************/
 	
 	/** Overriden to call link {@link #flushStringTokenStitching} 
 	to terminate any pending token, call super implementation 
-	and then indicate with {@link #setTokenStateToAfterSignal}
-	that form point of view of tokens we are after the signal.
-	
+	and then change the state to {@link TTokenState#BEGIN_SIGNAL}
 	*/
-	@Override protected void flushSignalPayload()throws IOException
+	@Override protected void flushSignalPayloadBeginNext()throws IOException
 	{
 		flushStringTokenStitching();
 		//Inject eventual token 		
 		if(token_state==TTokenState.AFTER_TOKEN)
-							outTokenToSignalSeparator();
-		super.flushSignalPayload();
-		setTokenStateToAfterSignal();
+							outTokenToBeginSignalSeparator();
+		super.flushSignalPayloadBeginNext();
+		token_state = TTokenState.BEGIN_SIGNAL;
+	}; 
+	/** Overriden to call link {@link #flushStringTokenStitching} 
+	to terminate any pending token, call super implementation 
+	and then change the state to {@link TTokenState#BEGIN_SIGNAL}
+	*/
+	@Override protected void flushSignalPayloadEndNext()throws IOException
+	{
+		flushStringTokenStitching();
+		//Inject eventual token 		
+		if(token_state==TTokenState.AFTER_TOKEN)
+							outTokenToEndSignalSeparator();
+		super.flushSignalPayloadEndNext();
+		token_state = TTokenState.END_SIGNAL;
 	}; 
 };

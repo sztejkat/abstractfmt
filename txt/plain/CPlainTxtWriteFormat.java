@@ -33,9 +33,6 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat1
 				/** Where to write. Protected to allow some data injection in superclasses modifications */
 				protected final Writer out;
 				
-				/** Used to track if inject signal separator or not.
-				In generic end signals do not need signal separators. */
-				private boolean last_signal_was_begin;
 				/** An escaping engine for names and string tokens */
 				private final APlainEscapingEngine escaper = new APlainEscapingEngine()
 				{
@@ -101,18 +98,19 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat1
 	/* --------------------------------------------------------------
 					common tokens
 	----------------------------------------------------------------*/
-	@Override protected void outSignalSeparator()throws IOException
+	@Override protected void outEndSignalSeparator()throws IOException
 	{
-		if (last_signal_was_begin)
-				out.write(DEFAULT_EMPTY_CHAR);
+	};
+	@Override protected void outBeginSignalSeparator()throws IOException
+	{
+		out.write(DEFAULT_EMPTY_CHAR);
 	};
 	@Override protected void outTokenSeparator()throws IOException
 	{
 		out.write(TOKEN_SEPARATOR_CHAR);
 	};
-	@Override protected void outTokenToSignalSeparator()throws IOException
-	{
-	};
+	@Override protected void outTokenToEndSignalSeparator()throws IOException{};
+	@Override protected void outTokenToBeginSignalSeparator()throws IOException{};
 	/* --------------------------------------------------------------
 					plain tokens
 	----------------------------------------------------------------*/	
@@ -285,7 +283,6 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat1
 				closeEscapedStringToken();
 			out.write(STRING_TOKEN_SEPARATOR_CHAR);
 		}
-		last_signal_was_begin = true;
 		if (DUMP) TOUT.println("beginDirectImpl() LEAVE");
 	};
 	/* *****************************************************************
@@ -297,7 +294,6 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat1
 	{
 		if (DUMP) TOUT.println("endImpl() ENTER");
 		out.write(END_SIGNAL_CHAR);
-		last_signal_was_begin = false;
 		if (DUMP) TOUT.println("endImpl() LEAVE");
 	};
 	/** Empty */

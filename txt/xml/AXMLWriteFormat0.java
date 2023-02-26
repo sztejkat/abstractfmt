@@ -194,15 +194,16 @@ public abstract class AXMLWriteFormat0 extends ATxtWriteFormat1
 		string_token_escaper.flush();
 		outXML('\"');
 	};
-	@Override protected void outTokenToSignalSeparator()throws IOException
-	{
-	};
+	@Override protected void outTokenToBeginSignalSeparator()throws IOException{};
+	@Override protected void outTokenToEndSignalSeparator()throws IOException{};
 	/** Nothing needs to be done */
 	@Override protected void openPlainTokenImpl()throws IOException{};
 	/** Nothing needs to be done */
 	@Override protected void closePlainTokenImpl()throws IOException{};
 	/** Nothing needs to be done */
-	@Override protected void outSignalSeparator()throws IOException{};
+	@Override protected void outEndSignalSeparator()throws IOException{};
+	/** Nothing needs to be done */
+	@Override protected void outBeginSignalSeparator()throws IOException{};
 	/** Writes , */
 	@Override protected void outTokenSeparator()throws IOException
 	{

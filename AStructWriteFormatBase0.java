@@ -305,15 +305,42 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 		
 				
 		************************************************************************/
-		/** A housekeeping method for {@link #begin}/{@link #end} responsible
-		for perfoming any closure operation on payload carried between signals.
-		Default implementation calls {@link #terminatePendingBlockOperation} 
-		@throws IOException if generation of closure failed.
-		*/
-		protected void flushSignalPayload()throws IOException
+		/** Common implementation for 
+		{@link #flushSignalPayloadBeginNext} and 
+		{@link #flushSignalPayloadBeginNext}.
+		Invokes {@link #terminatePendingBlockOperation} */
+		private void defaultFlushSignalPayload()throws IOException
 		{
 			//Terminate block type, according to type
 			terminatePendingBlockOperation();
+		}
+		/** A housekeeping method for {@link #begin}/{@link #end} responsible
+		for perfoming any closure operation on payload carried between signals.
+		Default implementation calls {@link #defaultFlushSignalPayload}.
+		<p>
+		This method is called when "begin" signal is written.
+		<p>
+		After this method is called the {@link #beginImpl} or {@link #endBeginImpl} is invoked
+		depending on end-begin optimization state.
+		@throws IOException if generation of closure failed.
+		*/
+		protected void flushSignalPayloadBeginNext()throws IOException
+		{
+			defaultFlushSignalPayload();
+		};
+		/** Alike method to {@link #flushSignalPayloadBeginNext} but
+		for "end" signal. Default implementation calls {@link #defaultFlushSignalPayload}.
+		<p>
+		This method is called when "end" signal is written.
+		<p>
+		After this method is called the {@link #endImpl} is invoked, however
+		the invocation may be delayed till some subsequent operation due
+		to end-begin optimization.
+		@throws IOException if generation of closure failed.
+		*/
+		protected void flushSignalPayloadEndNext()throws IOException
+		{
+			defaultFlushSignalPayload();
 		};
 		/** Tests if end-begin optimization has pending and and flushes it.
 		To be invoked before any primitive operation.
@@ -345,7 +372,7 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 			//validat recursion levels.			
 			leaveStruct();
 			//Do necessary cleanup.
-			flushSignalPayload();
+			flushSignalPayloadEndNext();
 			
 			//Handle end-begin optimization
 			if (!pending_end) 
@@ -374,14 +401,14 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 		    //validat recursion levels.
 		    enterStruct();
 		    
-		   //Do necessary cleanup.
-			flushSignalPayload();
-		    
+		    //Do necessary cleanup regardless if it was actually necessary
+		    //to keep state tracking in sync.
+			flushSignalPayloadBeginNext();
 			//Handle end-begin optimization
 			if (!pending_end)
 			{
-				if (TRACE) TOUT.println("begin()->beginImpl()");
-				 beginImpl(name);
+				if (TRACE) TOUT.println("begin()->beginImpl()");				
+			    beginImpl(name);
 			}else
 			{
 				if (TRACE) TOUT.println("begin()->endBeginImpl()");

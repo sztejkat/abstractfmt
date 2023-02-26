@@ -39,15 +39,15 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
          		*/
          		private static enum TBlockType
 				{
-					BOOLEAN_BLK(),
-					BYTE_BLK(),
-					CHAR_BLK(),
-					STRING(),
-					SHORT_BLK(),
-					INT_BLK(),
-					LONG_BLK(),
-					FLOAT_BLK(),
-					DOUBLE_BLK();
+					BOOLEAN_BLK,
+					BYTE_BLK,
+					CHAR_BLK,
+					STRING,
+					SHORT_BLK,
+					INT_BLK,
+					LONG_BLK,
+					FLOAT_BLK,
+					DOUBLE_BLK;
 				};
 					/** Tracks format open state */
 					private boolean opened;

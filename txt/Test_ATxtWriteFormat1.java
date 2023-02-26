@@ -17,17 +17,25 @@ public class Test_ATxtWriteFormat1 extends ATest
 				{
 					super(5);
 				};
-				@Override protected void outSignalSeparator()throws IOException
+				@Override protected void outBeginSignalSeparator()throws IOException
 				{ 
 					stream.append(' ');
+				};
+				@Override protected void outEndSignalSeparator()throws IOException
+				{ 
+					stream.append('+');
 				};
 				@Override protected void outTokenSeparator()throws IOException
 				{
 					stream.append(',');
 				};
-				@Override protected void outTokenToSignalSeparator()throws IOException
+				@Override protected void outTokenToEndSignalSeparator()throws IOException
 				{
 					stream.append('-');
+				};
+				@Override protected void outTokenToBeginSignalSeparator()throws IOException
+				{
+					stream.append('!');
 				};
 				@Override protected void openPlainTokenImpl()throws IOException
 				{
@@ -207,9 +215,9 @@ public class Test_ATxtWriteFormat1 extends ATest
 			d.close();
 			String o = d.stream.toString();
 			System.out.println(o);
-			Assert.assertTrue(("*beginDirectImpl* >p1p0<,>p0<-*endImpl* "+
+			Assert.assertTrue(("*beginDirectImpl* >p1p0<,>p0<-*endImpl*+"+
 								">p1p0<,>p0<"+
-								"-*beginDirectImpl* >p1p0<,>p0<-*endImpl*").equals(o));
+								"!*beginDirectImpl* >p1p0<,>p0<-*endImpl*").equals(o));
 		leave();
 	};
 	
@@ -261,10 +269,10 @@ public class Test_ATxtWriteFormat1 extends ATest
 			System.out.println(o);
 			Assert.assertTrue(
 							("\"sasDsA\""+
-								"-*beginDirectImpl*"+
+								"!*beginDirectImpl*"+
 								" \"sDsA\""+
 								"-*endImpl*"+
-								" \"sDsA\"")
+								"+\"sDsA\"")
 								.equals(o));
 		leave();
 	};
@@ -287,6 +295,32 @@ public class Test_ATxtWriteFormat1 extends ATest
 							   ",>p3<,"+
 							   "\"sasDsA\"")
 							   .equals(o));
+		leave();
+	};
+	
+	@Test public void testStructMixup()throws IOException
+	{
+		enter();
+			DUT w = new DUT();
+		
+			w.open();
+			w.begin(""); //this DOES require enclosing
+				w.begin("");
+					w.writeInt(33);
+				w.end();
+				w.begin("");
+					w.writeInt(90);
+					w.writeInt(40);
+					w.writeInt(90);
+				w.end();
+			w.end();
+			w.close();
+			
+			String o = w.stream.toString();
+			System.out.println(o);
+			Assert.assertTrue(("*beginDirectImpl**beginDirectImpl* >p3p3<-*endImpl*"+
+							  "*beginDirectImpl* >p9p0<,>p4p0<,>p9p0<-*endImpl**endImpl*").equals(o));
+			
 		leave();
 	};
 	
