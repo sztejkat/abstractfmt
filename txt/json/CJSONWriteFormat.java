@@ -26,19 +26,37 @@ public class CJSONWriteFormat extends ATxtWriteFormat1
 						CJSONWriteFormat.this.out.write(c);
 					};
 				};
-				/** If true the a first primitive is being collected
-				into {@link #is_first_element} to decide 
-				if array mode is necessary. If false array mode is
-				on.*/
-				private boolean is_first_element;
-				/** If true the first element is a buffered char element */
-				private boolean first_element_is_char;
+				
+				private static enum TState
+				{
+					/** If "begin" was written and first plain or char token
+					is to be collected. If this state is active
+					when "end" signal is written it means we have an empty structure.
+					If it is reached when "begin" signal is written means
+					that begin signal is a first element in a parent structure.
+					*/
+					DEDUCE_SINGLE_ELEMENT,
+					/** If "begin" was written and first plain token is beeing collected.*/
+					DEDUCING_PLAIN_SINGLE_ELEMENT,
+					/** If "begin" was written and first char token is beeing collected.*/
+					DEDUCING_CHAR_SINGLE_ELEMENT,
+					/** If first token was collected or first token was a string token
+					or otherwise we are already in JSON array mode used to write 
+					multi-element or variable size element structure. */
+					NEXT_ELEMENT,
+					/** Mens that we are in array mode but no token was written yet
+					and no token collection is in progress.
+					Practically only after opening a file
+					*/ 
+					FIRST_ELEMENT
+				}
+				
+				private TState state; 
+				
 				/** Used to collect first single primitive element in 
 				structure, in raw form */
-				private StringBuilder first_element;
-				/** Indicates that {@link #outTokenToSignalSeparator}
-				was called before writing signal */
-				private boolean token_to_signal_separator_pending;
+				private final StringBuilder first_element = new StringBuilder();
+				
 	/* ****************************************************************
 	
 			Creation
@@ -56,6 +74,7 @@ public class CJSONWriteFormat extends ATxtWriteFormat1
 					//it was for me easier to inherite the ARegisteringStructWriteFormat
 					//in generic text support and then disable it here rather
 					//than playing with class composition.
+		if (TRACE) TOUT.println("new CJSONWriteFormat()");
 		assert(out!=null);
 		this.out = out;
 	};		
@@ -67,63 +86,37 @@ public class CJSONWriteFormat extends ATxtWriteFormat1
 	/* -----------------------------------------------------------
 			Related to single element optimization
 	-----------------------------------------------------------*/
-	/** Invoked at each place which may write second element
-	in structure body or an element which should switch structur
-	body to array mode */
-	private void flushPendingFirstElement()throws IOException
-	{
-		if (is_first_element)
-		{
-			out.write('[');
-			writePendingFirstElement();
-		};
-	};
-	/** Invoked in place where there is a possiblity that pending
-	first element do construct the single element structure. 
-	@return true if element was pending
-	*/
-	private boolean confirmPendingFirstElement()throws IOException
-	{
-		if (is_first_element)
-		{
-			writePendingFirstElement();
-			return true;
-		}else
-			return false;
-	};
+	
 	/** Invoked in place where first element must be just written.
 	Writes it and drops any information about pending element.
-	@throws AssertionError if there is no pending first element
+	@throws AssertionError if state is incorrect.
 	*/
-	private void writePendingFirstElement()throws IOException
+	private void flushFirstElement()throws IOException
 	{
-		assert(is_first_element);
-		if (first_element_is_char)
+		if (TRACE) TOUT.println("writePendingFirstElement() state="+state+" ENTER");
+		switch(state)
 		{
-				assert(first_element.length()==1);
-				//push it through escaper as a JSON string
-				out.append('\"');
-				escaper.reset(); //we need to run complete escaper sequence.
-				escaper.append(first_element.charAt(0));
-				escaper.flush();
-				out.append('\"');
-		}
-		else
-		{
-				out.append(first_element);
-		}
-		//reset them.
-		first_element.setLength(0);
-		is_first_element = false;
-		first_element_is_char = false;
-	};
-	/** Invoked after begin signal to indicate that first element
-	in struct may appear */
-	private void startFirstElement()
-	{
-		is_first_element = true;
-		assert(first_element_is_char == false);
-		assert(first_element.length()==0);
+			case DEDUCE_SINGLE_ELEMENT:
+						throw new AssertionError("state="+state);
+			case DEDUCING_PLAIN_SINGLE_ELEMENT:
+						if (TRACE) TOUT.println("writePendingFirstElement() plain element");
+						out.append(first_element);
+						first_element.setLength(0);
+						break;
+			case DEDUCING_CHAR_SINGLE_ELEMENT:
+						if (TRACE) TOUT.println("writePendingFirstElement() char element");
+						//push it through escaper as a JSON string
+						out.append('\"');
+						escaper.reset(); //we need to run complete escaper sequence.
+						escaper.append(first_element); // in theory it can be multi-char.
+						escaper.flush();
+						out.append('\"');
+						first_element.setLength(0);
+						break;
+			default:
+						throw new AssertionError("state="+state);
+		};
+		if (TRACE) TOUT.println("writePendingFirstElement() LEAVE");
 	};
 	
 	
@@ -132,40 +125,113 @@ public class CJSONWriteFormat extends ATxtWriteFormat1
 	----------------------------------------------------------*/	
 	@Override protected void outSignalSeparator()throws IOException
 	{
-		//No need to write anything.
+		if (TRACE) TOUT.println("outTokenSeparator() state="+state+" ENTER");
+		//Separator indicates that at least one element was written
+		//so for sure we won't be single element.
+		switch(state)
+		{
+			case DEDUCE_SINGLE_ELEMENT:
+			case DEDUCING_PLAIN_SINGLE_ELEMENT:				
+			case DEDUCING_CHAR_SINGLE_ELEMENT:
+						break;
+			case NEXT_ELEMENT:
+						//and add separator as requested.
+						out.write(',');	
+						break;
+			case FIRST_ELEMENT:
+		};
+		
+		if (TRACE) TOUT.println("outTokenSeparator() LEAVE");
 	};
-	@Override protected void outTokenToSignalSeparator()throws IOException
-	{
-		//In JSON begin signal requires , but end signal does not
-		//require anything. We will just store this information.
-		assert(!token_to_signal_separator_pending);
-		token_to_signal_separator_pending = true;
-	};
-	
+	@Override protected void outTokenToSignalSeparator()throws IOException{};
 	/* ----------------------------------------------------------
 			Again, related to handling first element optimization
 			and just doing the output
 	----------------------------------------------------------*/
 	@Override protected void outTokenSeparator()throws IOException
 	{
+		if (TRACE) TOUT.println("outTokenSeparator() state="+state+" ENTER");
 		//Separator indicates that at least one element was written
 		//so for sure we won't be single element.
-		flushPendingFirstElement();
+		switch(state)
+		{
+			case DEDUCE_SINGLE_ELEMENT:
+						//this would mean that no token was written. This won't happen.
+						throw new AssertionError("state="+state);
+			case DEDUCING_PLAIN_SINGLE_ELEMENT:				
+			case DEDUCING_CHAR_SINGLE_ELEMENT:
+						out.write('[');	//array mode.
+						flushFirstElement();
+						state = TState.NEXT_ELEMENT;
+						break;
+			case NEXT_ELEMENT:
+						break;
+			case FIRST_ELEMENT:
+						state = TState.NEXT_ELEMENT;
+						break;
+		};
 		//and add separator as requested.
 		out.write(',');
+		if (TRACE) TOUT.println("outTokenSeparator() LEAVE");
 	};
 	
 	
-	@Override protected void openPlainTokenImpl()throws IOException{};
+	@Override protected void openPlainTokenImpl()throws IOException
+	{
+		if (TRACE) TOUT.println("openPlainTokenImpl() state="+state+" ENTER");
+		switch(state)
+		{
+			case DEDUCE_SINGLE_ELEMENT:
+						//First character of first token
+						if (TRACE) TOUT.println("openPlainTokenImpl() first element will be plain");
+						state = TState.DEDUCING_PLAIN_SINGLE_ELEMENT;			
+						break;
+			case DEDUCING_PLAIN_SINGLE_ELEMENT:
+			case DEDUCING_CHAR_SINGLE_ELEMENT:
+						throw new AssertionError("state="+state);
+			case NEXT_ELEMENT:
+			case FIRST_ELEMENT:
+						break;
+		};
+		if (TRACE) TOUT.println("openPlainTokenImpl() state="+state+" LEAVE");
+	};
 	@Override protected void outPlainToken(char c)throws IOException
 	{
-		if (is_first_element)			
-			first_element.append(c);//Collect it in buffer for first element
-		else
-			out.write(c);//write for others
+		if (TRACE) TOUT.println("outPlainToken() state="+state+" ENTER");
+		switch(state)
+		{
+			case DEDUCE_SINGLE_ELEMENT:			
+						throw new AssertionError("state="+state);
+			case DEDUCING_PLAIN_SINGLE_ELEMENT:
+						if (TRACE) TOUT.println("outPlainToken() collecting first element");
+						first_element.append(c);//Collect it in buffer for first element			
+						break;
+			case DEDUCING_CHAR_SINGLE_ELEMENT:
+						throw new AssertionError("state="+state);
+			case NEXT_ELEMENT:
+			case FIRST_ELEMENT:
+						out.write(c);//write for others			
+		};
+		if (TRACE) TOUT.println("outPlainToken() LEAVE");
 	};	
-	@Override protected void closePlainTokenImpl()throws IOException{};
-	
+	@Override protected void closePlainTokenImpl()throws IOException
+	{
+		if (TRACE) TOUT.println("closePlainTokenImpl() state="+state+" ENTER");
+		switch(state)
+		{
+			case DEDUCE_SINGLE_ELEMENT:			
+						throw new AssertionError("state="+state);
+			case DEDUCING_PLAIN_SINGLE_ELEMENT:			
+						break;
+			case DEDUCING_CHAR_SINGLE_ELEMENT:
+						throw new AssertionError("state="+state);
+			case NEXT_ELEMENT:
+						break;
+			case FIRST_ELEMENT:
+						state=TState.NEXT_ELEMENT;			
+		};
+		if (TRACE) TOUT.println("closePlainTokenImpl() LEAVE");
+	};
 	
 	
 	@Override protected void openSingleCharToken()throws IOException
@@ -176,24 +242,41 @@ public class CJSONWriteFormat extends ATxtWriteFormat1
 	};
 	@Override protected void openSingleCharTokenImpl()throws IOException
 	{
-		if (is_first_element)
-				first_element_is_char = true; //remember it is a char element
-		else
+		if (TRACE) TOUT.println("openSingleCharTokenImpl()  state="+state+" ENTER");
+		switch(state)
 		{
-			escaper.reset();
-			out.write('\"');//or pass directly
-		};
+			case DEDUCE_SINGLE_ELEMENT:
+						//First character of first token
+						if (TRACE) TOUT.println("openSingleCharTokenImpl() deducing element is char");
+						state = TState.DEDUCING_CHAR_SINGLE_ELEMENT;			
+						break;
+			case DEDUCING_PLAIN_SINGLE_ELEMENT:
+			case DEDUCING_CHAR_SINGLE_ELEMENT:
+						throw new AssertionError("state="+state);
+			case NEXT_ELEMENT:
+			case FIRST_ELEMENT:
+						escaper.reset();
+						out.write('\"');//or pass directly			
+		}
+		if (TRACE) TOUT.println("openSingleCharTokenImpl() LEAVE");
 	}
 	protected void outSingleCharToken(char c)throws IOException
 	{
-		if (is_first_element)
+		if (TRACE) TOUT.println("outSingleCharToken() state="+state+" ENTER");
+		switch(state)
 		{
-			//buffer it as raw
-			assert(first_element_is_char);
-			assert(first_element.length()==0);
-			first_element.append(c);
-		}else
-			escaper.write(c);	//or pass through escaped.
+			case DEDUCE_SINGLE_ELEMENT:
+			case DEDUCING_PLAIN_SINGLE_ELEMENT:
+						throw new AssertionError("state="+state);
+			case DEDUCING_CHAR_SINGLE_ELEMENT:
+						if (TRACE) TOUT.println("outSingleCharToken() collecting first token ENTER");
+						first_element.append(c);
+						break;
+			case NEXT_ELEMENT:
+			case FIRST_ELEMENT:
+						escaper.write(c);			
+		}
+		if (TRACE) TOUT.println("outSingleCharToken() LEAVE");
 	};
 	
 	
@@ -201,36 +284,78 @@ public class CJSONWriteFormat extends ATxtWriteFormat1
 	{
 		defaultCloseSingleCharToken();
 	};
+	@SuppressWarnings("fallthrough")
 	@Override protected void closeSingleCharTokenImpl()throws IOException
 	{
-		if (!is_first_element)
+		if (TRACE) TOUT.println("closeSingleCharTokenImpl() ENTER");
+		switch(state)
 		{
-			escaper.flush();
-			out.write('\"');//close it directly
+			case DEDUCE_SINGLE_ELEMENT:
+			case DEDUCING_PLAIN_SINGLE_ELEMENT:
+						throw new AssertionError("state="+state);
+			case DEDUCING_CHAR_SINGLE_ELEMENT:
+						break;
+			case FIRST_ELEMENT:
+						state = TState.NEXT_ELEMENT;
+						//fallthrough
+			case NEXT_ELEMENT:
+						escaper.flush();
+						out.write('\"');//close it directly			
 		};
+		if (TRACE) TOUT.println("closeSingleCharTokenImpl() LEAVE");
 	}
  	
 	
 	
-		
+	@SuppressWarnings("fallthrough")
 	@Override protected void openStringTokenImpl()throws IOException
 	{
+		if (TRACE) TOUT.println("openStringTokenImpl() ENTER");
 		//Note: String tokens do handle string sequences and char [] blocks
 		//		in our implementation. Both are variable and potentially
-		//		infinite in size so they can't be a part of "single element structure".
-		
-		is_first_element = false;//can drop it unconditionally.
-		escaper.reset();//reset escaping engine.
-		out.write('\"');//open the JSON string
+		//		infinite in size so they can't be a part of "single element structure".		
+		switch(state)
+		{
+			case DEDUCING_PLAIN_SINGLE_ELEMENT:
+			case DEDUCING_CHAR_SINGLE_ELEMENT:
+						throw new AssertionError("state="+state);
+			case DEDUCE_SINGLE_ELEMENT:
+						out.write('[');//to array mode.
+						state = TState.NEXT_ELEMENT;
+						//fallthrough
+			case NEXT_ELEMENT:
+			case FIRST_ELEMENT:
+							escaper.reset();//reset escaping engine.
+							out.write('\"');//open the JSON string			
+		};
+
+		if (TRACE) TOUT.println("openStringTokenImpl() LEAVE");
 	};	
 	@Override protected void outStringToken(char c)throws IOException
 	{
+		if (TRACE) TOUT.println("outStringToken() ENTER");
+		assert((state==TState.NEXT_ELEMENT)||(state==TState.FIRST_ELEMENT)):"state="+state;
 		escaper.write(c);
+		if (TRACE) TOUT.println("outStringToken() LEAVE");
 	};
+	@SuppressWarnings("fallthrough")
 	@Override protected void closeStringTokenImpl()throws IOException
 	{		
-		escaper.flush();
-		out.write('\"');//close the JSON string
+		if (TRACE) TOUT.println("closeStringTokenImpl() ENTER");
+		switch(state)
+		{
+			case DEDUCE_SINGLE_ELEMENT:
+			case DEDUCING_PLAIN_SINGLE_ELEMENT:
+			case DEDUCING_CHAR_SINGLE_ELEMENT:
+						throw new AssertionError("state="+state);
+			case FIRST_ELEMENT:
+						state = TState.NEXT_ELEMENT;
+						//fallthrough
+			case NEXT_ELEMENT:
+						escaper.flush();
+						out.write('\"');//close JSON string			
+		};
+		if (TRACE) TOUT.println("closeStringTokenImpl() LEAVE");
 	};
 	
 	/* *****************************************************************
@@ -251,19 +376,37 @@ public class CJSONWriteFormat extends ATxtWriteFormat1
 	/** Redirects to state engine since additional actions may be necessary */
 	@Override protected void beginDirectImpl(String name)throws IOException
 	{
-		flushPendingFirstElement();
-		//handle pending token to signal separator.
-		if (token_to_signal_separator_pending)
+		if (TRACE) TOUT.println("beginDirectImpl(\""+name+"\") state="+state+" ENTER");
+		switch(state)
 		{
-			out.write(',');
-			token_to_signal_separator_pending = false;
-		}
+			case DEDUCE_SINGLE_ELEMENT:
+						//We are first element in struture, but we are structure,
+						//so array mode is necessary
+						out.write('[');
+						break;
+			case DEDUCING_PLAIN_SINGLE_ELEMENT:
+			case DEDUCING_CHAR_SINGLE_ELEMENT:
+						//some element was collected, but again we have to go to array
+						//mode.
+						out.write('[');
+						flushFirstElement();
+						out.write(',');
+						break;
+			case NEXT_ELEMENT:
+						//We are next.
+						out.write(',');
+						break;
+			case FIRST_ELEMENT:
+						//we are first after array is opened and nothing is to be deduced.
+						break;			
+		};
 		out.write("{\"");
 				escaper.reset();
 				escaper.append(name);
 				escaper.flush();
 		out.write("\":");
-		startFirstElement();
+		state = TState.DEDUCE_SINGLE_ELEMENT;
+		if (TRACE) TOUT.println("beginDirectImpl() LEAVE");
 	};
 	
 	/* *****************************************************************
@@ -271,30 +414,68 @@ public class CJSONWriteFormat extends ATxtWriteFormat1
 			AStructWriteFormatBase0
 	
 	******************************************************************/
-	@Override protected void flushImpl()throws IOException
-	{
-		//Now flush may be invoked when we written first structure
-		//element but could not decide yet. We need to deliver value
-		//to destination tough.
-		flushPendingFirstElement();
-		super.flushImpl();
-		out.flush();	//and low level.
-	};
 	@Override protected void endImpl()throws IOException
 	{
-		if (!confirmPendingFirstElement())
+		if (TRACE) TOUT.println("endImpl() state="+state+" ENTER");
+		switch(state)
 		{
-			//We were in array mode, so:
-			out.write(']');
+			case DEDUCE_SINGLE_ELEMENT:
+						//Nothing written, it is an empty struct
+						out.write("[]}");
+						break;
+			case DEDUCING_PLAIN_SINGLE_ELEMENT:
+			case DEDUCING_CHAR_SINGLE_ELEMENT:
+						//single element structure
+						flushFirstElement();
+						out.write("}");
+						break;
+			case NEXT_ELEMENT:						
+			case FIRST_ELEMENT:
+						//we are first after array is opened and nothing is to be deduced
+						//or next in array mode.
+						out.write("]}");
+						break;			
 		};
-		//consume eventual pendig separator.
-		token_to_signal_separator_pending = false;
-		out.append('}');
+		state = TState.NEXT_ELEMENT; 
+		if (TRACE) TOUT.println("endImpl() LEAVE");
 	};
+	
+	@Override protected void flushImpl()throws IOException
+	{
+		if (TRACE) TOUT.println("flushImpl() ENTER");
+		//Now flush may be invoked when we written first structure
+		//element but could not decide yet. We need to deliver value
+		//to destination tough, but without any closing.
+		switch(state)
+		{
+			case DEDUCE_SINGLE_ELEMENT:
+						//Nothing written, so we are not doing anything.
+						break;
+			case DEDUCING_PLAIN_SINGLE_ELEMENT:
+			case DEDUCING_CHAR_SINGLE_ELEMENT:
+						//This must become array structur
+						out.write('[');
+						flushFirstElement();
+						state = TState.NEXT_ELEMENT;
+						break;
+			case NEXT_ELEMENT:						
+			case FIRST_ELEMENT:
+						break;			
+		};
+		super.flushImpl();
+		out.flush();	//and low level.
+		if (TRACE) TOUT.println("flushImpl() LEAVE");
+	};
+	
 	/** Opens JSON array */
 	@Override protected void openImpl()throws IOException
 	{
+		if (TRACE) TOUT.println("openImpl() ENTER");
+		//Sanitize possible states.
+		first_element.setLength(0);
+		state = TState.FIRST_ELEMENT;
 		out.write('[');
+		if (TRACE) TOUT.println("openImpl() LEAVE");
 	};
 	/** Closes output writer.
 	  If recursion depth is zero 
@@ -304,12 +485,17 @@ public class CJSONWriteFormat extends ATxtWriteFormat1
 	*/
 	@Override protected void closeImpl()throws IOException
 	{
+		if (TRACE) TOUT.println("closeImpl() ENTER");
 		if (getCurrentStructRecursionDepth()==0)
 		{
 			out.write(']');
 			out.flush();
-		};
+		}else
+		{
+			if (TRACE) TOUT.println("closeImpl(), dangling signal, not closing JSON");
+		}
 		out.close();
+		if (TRACE) TOUT.println("closeImpl() LEAVE");
 	};
 	
 	/* ***********************************************************************

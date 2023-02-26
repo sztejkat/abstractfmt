@@ -21,7 +21,7 @@ import java.io.IOException;
 	This class achives that by intercepting {@link #openPlainToken}
 	and {@link #openStringToken} and converting them to
 	necessary sequence of calls to:
-	{@link #outTokenSeparator},{@link #outSignalSeparator}, {@link #openPlainTokenImpl},
+	{@link #outTokenSeparator},{@link #outSignalSeparator},{@link #outTokenToSignalSeparator}, {@link #openPlainTokenImpl},
 	{@link #openStringTokenImpl} and etc. according to current
 	state of the token list.
 	<p>

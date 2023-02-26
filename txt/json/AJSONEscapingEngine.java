@@ -3,6 +3,8 @@ import sztejkat.abstractfmt.txt.AEscapingEngine;
 import java.io.IOException;
 /**
 	Implements JSON escapes necessary inside JSON strings.
+	The set of escaped characters included 0...9, 11, 12, 14...31, 127, \\r and \\ and "
+	
 */
 abstract class AJSONEscapingEngine extends AEscapingEngine
 {
@@ -34,6 +36,18 @@ abstract class AJSONEscapingEngine extends AEscapingEngine
 					(c=='\"')
 					||
 					(c=='\\')
+					||
+					(c=='\r')
+					||
+					((c>=0)&&(c<=9))
+					||
+					(c==11)
+					||
+					(c==12)
+					||
+					((c>=14)&&(c<=31))
+					||
+					(c==127)
 				);
 	};	
 	/** Always false, no additional escapes */
@@ -56,6 +70,16 @@ abstract class AJSONEscapingEngine extends AEscapingEngine
 						out('\\');out('\"'); break;
 			case '\\': 
 						out('\\');out('\\'); break;
+			case '\b': 
+						out('\\');out('b'); break;
+			case '\f': 
+						out('\\');out('f'); break;
+			case '\r':
+						out('\\');out('r'); break;
+			case '\n':
+						out('\\');out('n'); break;
+			case '\t':
+						out('\\');out('t'); break;
 			default	 : hex_escape(c);
 		}
 	};
