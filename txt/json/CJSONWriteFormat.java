@@ -65,7 +65,9 @@ public class CJSONWriteFormat extends ATxtWriteFormat1
 	*****************************************************************/
 	/** Creates
 	@param out writer where to write, non null, opened. Must accept all
-		possible <code>char</code> values.
+		possible <code>char</code> values. If directed to true byte level
+		I/O stream the stream encoding is recommended to be UTF-8 even tough JSON 
+		standard does not reuqire that directly.
 	*/
 	public CJSONWriteFormat(Writer out)
 	{
@@ -87,9 +89,12 @@ public class CJSONWriteFormat extends ATxtWriteFormat1
 			Related to single element optimization
 	-----------------------------------------------------------*/
 	
-	/** Invoked in place where first element must be just written.
+	/** Invoked in place where first element must be written 
+	unconditionally.
+	<p>
 	Writes it and drops any information about pending element.
 	@throws AssertionError if state is incorrect.
+	@throws IOException if failed.
 	*/
 	private void flushFirstElement()throws IOException
 	{

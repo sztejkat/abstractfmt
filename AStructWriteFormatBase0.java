@@ -308,7 +308,9 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 		/** Common implementation for 
 		{@link #flushSignalPayloadBeginNext} and 
 		{@link #flushSignalPayloadBeginNext}.
-		Invokes {@link #terminatePendingBlockOperation} */
+		Invokes {@link #terminatePendingBlockOperation} 
+		@throws IOException if failed to terminate block.
+		*/
 		private void defaultFlushSignalPayload()throws IOException
 		{
 			//Terminate block type, according to type

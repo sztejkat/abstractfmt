@@ -5,15 +5,14 @@ import java.io.IOException;
 
 
 /**
-	A bottom most layer of text based formats providing transformation
+	A bottom-most layer of text based formats providing transformation
 	of primitive data into "tokens". A writing part for  {@link ATxtReadFormat0}.
 	<p>
-	This class is made around a concept of "tokens" of two kinds: plain and
-	string. 
+	This class is made around a concept of "tokens" of following kinds:
 	<table border="2">
 	<caption>Token types</caption>
 	<tr style="color:#000000;background-color:#FFF0F0">
-	<th>
+	<th colspan="2">
 		Token
 	</th>
 	<th>
@@ -24,7 +23,7 @@ import java.io.IOException;
 	</th>
 	</tr>
 	<tr>
-		<td>
+		<td colspan="2">
 		Plain token
 		</td>
 		<td>
@@ -44,13 +43,15 @@ import java.io.IOException;
 		</td>
 	</tr>
 	<tr>
-		<td>
-		String token
+		<td rowspan="3">
+			String token
 		</td>
 		<td>
-			Used to write elementary primitives
-			and elements of:
-			<code>char,</code><code>char[]</code>,<code>String</code>.
+		String token proper
+		</td>
+		<td>
+			Used to write elementary sequences of 
+			<code>String</code> in {@link #writeString}.
 			<p>
 			May contain all characters thous must, internally, implement
 			a kind of escaping mechanism.
@@ -60,19 +61,56 @@ import java.io.IOException;
 			{@link #outStringToken(String)},{@link #closeStringToken}.
 		</td>
 	</tr>
+	<tr>
+		<td>
+		Single char token		
+		</td>
+		<td>
+			Used to write elementary <code>char</code>
+			primitive in {@link #writeChar}.
+			<p>
+			Except the purpose must produce data which can be read
+			by routines used to process string tokens proper.
+		</td>
+		<td>
+			{@link #openSingleCharToken},{@link #outSingleCharToken(char)},
+			{@link #outSingleCharToken(String)},{@link #closeSingleCharToken}.
+			<p>
+			<i>By default implemented by calling methods for string tokens</i>
+		</td>
+	</tr>
+	<tr>
+		<td>
+		Block char token
+		</td>
+		<td>
+			Used to write elementary sequences of 
+			<code>char []</code> in {@link #writeCharBlock}.
+			<p>
+			Except the purpose must produce data which can be read
+			by routines used to process string tokens proper.
+		</td>
+		<td>
+			{@link #openBlockCharToken},{@link #outBlockCharToken(char)},
+			{@link #outBlockCharToken(String)},{@link #closeBlockCharToken}.
+			<p>
+			<i>By default implemented by calling methods for string tokens</i>
+		</td>
+	</tr>
 	</table>
 	All token related methods are used according to below schema:
 	<pre>
-		writeXXXX(<i>primitive element</i>)
-		{
-			...
-			openYYYToken()
-				outYYYToken(....
-				outYYYToken(....
-				....
-			closeYYYToken()
+	writeXXXX(<i>primitive element(s)</i>)
+	{
+		...
+		openYYYToken()
+			<i>via formatXXX:</i>
+			outYYYToken(....
+			outYYYToken(....
 			....
-		}
+		closeYYYToken()
+		....
+	}
 	</pre>
 */
 public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
@@ -176,20 +214,21 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 			may override them. 
 			
 	--------------------------------------------------------------------------*/
-	/** Used to surround whole block char operations, defaults to {@link #openStringToken}
+	/** Used to surround whole block char operations, defaults to {@link #openStringToken}.
 	@throws IOException if failed.
 	@see #closeBlockCharToken
 	@see #outBlockCharToken
 	*/
 	protected void openBlockCharToken()throws IOException{ openStringToken(); };
-	/** Used to implement block char operations, defaults to {@link #outStringToken}
+	/** Used to implement block char operations, defaults to {@link #outStringToken}.
+	@param c character to write
 	@throws IOException if failed.
 	@see #closeBlockCharToken
 	@see #openBlockCharToken
 	@see #outBlockCharToken(String)
 	*/
 	protected void outBlockCharToken(char c)throws IOException{ outStringToken(c); };
-	/** Used to surround whole block char operations, defaults to {@link #closeStringToken}
+	/** Used to surround whole block char operations, defaults to {@link #closeStringToken}.
 	@throws IOException if failed.
 	@see #openBlockCharToken
 	@see #outBlockCharToken(char)
@@ -197,20 +236,21 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	protected void closeBlockCharToken()throws IOException{ closeStringToken(); };
 	
 	
-	/** Used to surround whole block char operations, defaults to {@link #openStringToken}
+	/** Used to surround whole block char operations, defaults to {@link #openStringToken}.
 	@throws IOException if failed.
 	@see #closeSingleCharToken
 	@see #outSingleCharToken
 	*/
 	protected void openSingleCharToken()throws IOException{ openStringToken(); };
-	/** Used to implement block char operations, defaults to {@link #outStringToken}
+	/** Used to implement block char operations, defaults to {@link #outStringToken}.
+	@param c character to write
 	@throws IOException if failed.
 	@see #closeSingleCharToken
 	@see #openSingleCharToken
 	@see #outSingleCharToken(String)
 	*/
 	protected void outSingleCharToken(char c)throws IOException{ outStringToken(c); };
-	/** Used to surround whole block char operations, defaults to {@link #closeStringToken}
+	/** Used to surround whole block char operations, defaults to {@link #closeStringToken}.
 	@throws IOException if failed.
 	@see #openSingleCharToken
 	@see #outSingleCharToken(char)
@@ -279,6 +319,9 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@return text representation of v
 	*/
 	protected String formatBoolean(boolean v){ return v ? "true" : "false"; };
+	/** {@inheritDoc}
+	<p>
+	Uses {@link #formatBoolean} to produce plain token carrying <code>v</code> */
 	@Override protected final void writeBooleanImpl(boolean v)throws IOException
 	{
 		openPlainToken();
@@ -293,6 +336,9 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@return text representation of v
 	*/
 	protected String formatByte(byte v){ return Byte.toString(v); };
+	/** {@inheritDoc}
+	<p>
+	Uses {@link #formatByte} to produce plain token carrying <code>v</code> */
 	@Override protected void writeByteImpl(byte v)throws IOException
 	{
 		openPlainToken();
@@ -308,11 +354,9 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	{
 		return Character.toString(v);
 	};
-	/** Uses {@link #formatChar} to produce data.
-	A single elementary primitive character is enclosed
-	in {@link #openSingleCharToken} and {@link #closeSingleCharToken}
-	and write is done through {@link #outSingleCharToken}.
-	*/
+	/** {@inheritDoc}
+	<p>
+	Uses {@link #formatChar} to produce single char token carrying <code>v</code> */
 	@Override protected void writeCharImpl(char v)throws IOException
 	{
 		openSingleCharToken();
@@ -327,6 +371,9 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@return text representation of v
 	*/
 	protected String formatShort(short v){ return Short.toString(v); };
+	/** {@inheritDoc}
+	<p>
+	Uses {@link #formatShort} to produce plain token carrying <code>v</code> */
 	@Override protected void writeShortImpl(short v)throws IOException
 	{
 		openPlainToken();
@@ -341,6 +388,9 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@return text representation of v
 	*/
 	protected String formatInt(int v){ return Integer.toString(v); };
+	/** {@inheritDoc}
+	<p>
+	Uses {@link #formatInt} to produce plain token carrying <code>v</code> */
 	@Override protected void writeIntImpl(int v)throws IOException
 	{
 		openPlainToken();
@@ -355,6 +405,9 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@return text representation of v
 	*/
 	protected String formatLong(long v){ return Long.toString(v); };
+	/** {@inheritDoc}
+	<p>
+	Uses {@link #formatLong} to produce plain token carrying <code>v</code> */
 	@Override protected void writeLongImpl(long v)throws IOException
 	{
 		openPlainToken();
@@ -369,6 +422,9 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@return text representation of v
 	*/
 	protected String formatFloat(float v){ return Float.toString(v); };
+	/** {@inheritDoc}
+	<p>
+	Uses {@link #formatFloat} to produce plain token carrying <code>v</code> */
 	@Override protected void writeFloatImpl(float v)throws IOException
 	{
 		openPlainToken();
@@ -383,6 +439,9 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@return text representation of v
 	*/
 	protected String formatDouble(double v){ return Double.toString(v); };
+	/** {@inheritDoc}
+	<p>
+	Uses {@link #formatDouble} to produce plain token carrying <code>v</code> */
 	@Override protected void writeDoubleImpl(double v)throws IOException
 	{
 		openPlainToken();
@@ -400,6 +459,9 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@return text representation of v
 	*/
 	protected String formatBooleanBlock(boolean v){ return formatBoolean(v); };
+	/** {@inheritDoc}
+	<p>
+	Uses {@link #formatBooleanBlock} to produce plain token carrying <code>v</code> */
 	@Override protected final void writeBooleanBlockImpl(boolean v)throws IOException
 	{
 		openPlainToken();
@@ -414,6 +476,9 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@return text representation of v
 	*/
 	protected String formatByteBlock(byte v){ return formatByte(v); };
+	/** {@inheritDoc}
+	<p>
+	Uses {@link #formatByteBlock} to produce plain token carrying <code>v</code> */
 	@Override protected final void writeByteBlockImpl(byte v)throws IOException
 	{
 		openPlainToken();
@@ -428,6 +493,9 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@return text representation of v
 	*/
 	protected String formatShortBlock(short v){ return formatShort(v); };
+	/** {@inheritDoc}
+	<p>
+	Uses {@link #formatShortBlock} to produce plain token carrying <code>v</code> */
 	@Override protected final void writeShortBlockImpl(short v)throws IOException
 	{
 		openPlainToken();
@@ -443,8 +511,9 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@return text representation of v
 	*/	
 	protected String formatCharBlock(char v){ return formatChar(v); };
-	/** Encloses entire operation in one {@link #openStringToken}/{@link #closeStringToken}
-	*/
+	/** {@inheritDoc}
+	<p>
+	Uses {@link #formatCharBlock} to produce block char token carrying data from <code>buffer</code> */
 	@Override protected void writeCharBlockImpl(char [] buffer, int offset, int length)throws IOException
 	{
 		openBlockCharToken();
@@ -454,6 +523,9 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 			};
 		closeBlockCharToken();
 	};
+	/** {@inheritDoc}
+	<p>
+	Uses {@link #formatCharBlock} to produce block char token carrying <code>v</code> */
 	@Override protected final void writeCharBlockImpl(char v)throws IOException
 	{
 		openBlockCharToken();
@@ -469,6 +541,9 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@return text representation of v
 	*/
 	protected String formatIntBlock(int v){ return formatInt(v); };
+	/** {@inheritDoc}
+	<p>
+	Uses {@link #formatIntBlock} to produce plain token carrying <code>v</code> */
 	@Override protected final void writeIntBlockImpl(int v)throws IOException
 	{
 		openPlainToken();
@@ -484,6 +559,9 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@return text representation of v
 	*/
 	protected String formatLongBlock(long v){ return formatLong(v); };
+	/** {@inheritDoc}
+	<p>
+	Uses {@link #formatLongBlock} to produce plain token carrying <code>v</code> */
 	@Override protected final void writeLongBlockImpl(long v)throws IOException
 	{
 		openPlainToken();
@@ -500,6 +578,9 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@return text representation of v
 	*/
 	protected String formatFloatBlock(float v){ return formatFloat(v); };
+	/** {@inheritDoc}
+	<p>
+	Uses {@link #formatFloatBlock} to produce plain token carrying <code>v</code> */
 	@Override protected final void writeFloatBlockImpl(float v)throws IOException
 	{
 		openPlainToken();
@@ -514,6 +595,9 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@return text representation of v
 	*/
 	protected String formatDoubleBlock(double v){ return formatDouble(v); };
+	/** {@inheritDoc}
+	<p>
+	Uses {@link #formatDoubleBlock} to produce plain token carrying <code>v</code> */
 	@Override protected final void writeDoubleBlockImpl(double v)throws IOException
 	{
 		openPlainToken();
@@ -529,8 +613,9 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 	@return text representation of v
 	*/	
 	protected String formatStringBlock(char v){ return formatCharBlock(v); };
-	/** Encloses entire operation in one {@link #openStringToken}/{@link #closeStringToken}
-	*/
+	/** {@inheritDoc}
+	<p>
+	Uses {@link #formatStringBlock} to produce string token carrying <code>characters</code> */
 	@Override protected void writeStringImpl(CharSequence characters, int offset, int length)throws IOException
 	{
 		openStringToken();
@@ -540,6 +625,9 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 			};
 		closeStringToken();
 	};
+	/** {@inheritDoc}
+	<p>
+	Uses {@link #formatStringBlock} to produce string token carrying <code>v</code> */	
 	@Override protected final void writeStringImpl(char v)throws IOException
 	{
 		openStringToken();
