@@ -52,7 +52,8 @@ public abstract class AToNextSyntaxHandler<TState extends ATxtReadFormat1.TInter
 				Services for subclasses
 	
 	******************************************************************************/
-	/** Acts on {@link #tryEnter()}==true and manages state according to {@link #getNextHandler} 
+	/** Acts on {@link #tryEnter()}==true and manages state according to {@link #getNextHandler}.
+	Current state handler becomes <code>this</code>.
 	@throws EFormatBoundaryExceeded if {@link #pushStateHandler} thrown.*/
 	protected final void enterStateHandler()throws EFormatBoundaryExceeded
 	{
@@ -64,6 +65,8 @@ public abstract class AToNextSyntaxHandler<TState extends ATxtReadFormat1.TInter
 	};
 	/** Acts on {@link #toNextChar()} figuring out that needs to move to next state
 	and manages state according to {@link #getNextHandler}.
+	Current state handler becomes either {@link #getNextHandler} or what was recently
+	a current state handler.
 	*/
 	protected final void leaveStateHandler()
 	{

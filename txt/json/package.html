@@ -134,6 +134,37 @@
       as a first character in a stream.
      
       
+      <h2>Conformance with JSON standard</h2>
+      <h3>When writing</h3>
+      This format will produce valid JSON stream, but not necessairly a valid AJAX stream.
+      
+      <h3>When parsing</h3>
+      This format will be able to process only such JSON stream which matches the 
+      use of JSON described above.
+      <p>
+      This format will parse some invalid JSON files, especially it will parse 
+      JSON logic or numbers or any non json string  tokens as "plain tokens" and will attempt to parse them 
+      according to <code>sztejkat.abstractfmt.txt.ATxtReadFormat0</code> rules.
+      <p>
+      This means that below examples will be processes without an error:
+      <pre>
+      {
+       	"sorki":0x33
+       	}
+      </pre>
+      even tough it is not a valid JSON and that 0x33 can be read both as a number
+      or as four primitive char elements or four characters long string.
+      <p>
+      This format will also understand single element structures with JSON string value
+      with zero characters or more than one character:
+      <pre>
+      {
+       	"sorki":"123"
+       	}
+      </pre>
+      which will be processed, depending on a querry method used, as a number or as
+      three characters or as three characters long string. 
+      
       <h2>Impact of flush()</h2>
       If <code>flush()</code> is called after first element
       was written after begin signal the stream doesn't know yet
