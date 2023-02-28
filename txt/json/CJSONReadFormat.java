@@ -30,6 +30,66 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 						Support classes
 				
 				-----------------------------------------------------------------------*/
+				/** A whitespace skipper handler */
+				private static class CWhitespace extends ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>
+				{
+								/** What to report first character as  */
+								protected final ATxtReadFormat1.TIntermediateSyntax report_first_as;
+						protected CWhitespace(ATxtReadFormatStateBase1<ATxtReadFormat1.TIntermediateSyntax> parser,
+												 ATxtReadFormat1.TIntermediateSyntax report_first_as
+												)
+						{
+							super(parser);
+							assert(report_first_as!=null);
+							this.report_first_as=report_first_as;
+						};
+						@Override public boolean tryEnter()throws IOException
+						{
+							if (TRACE) TOUT.println(getName()+".tryEnter() ENTER");
+							int r = tryRead();
+							if (r==-1)
+							{
+								if (TRACE) TOUT.println(getName()+".tryEnter()=false, eof, LEAVE");
+								return false;
+							}
+							char c = (char)r;
+							if (isJSONWhitespace(c))
+							{
+								//We do report first white-space as a specified type
+								//subsequent as VOID.
+								queueNextChar(c,report_first_as);
+								pushStateHandler(this); //place self over current state.
+								if (TRACE) TOUT.println(getName()+".tryEnter()=true, \'"+c+"\' is whitespace LEAVE");
+								return true;
+							}else
+							{
+								unread(c);
+								if (TRACE) TOUT.println(getName()+".tryEnter()=false LEAVE");
+								return false;
+							}
+						};
+						@Override public void toNextChar()throws IOException
+						{
+							if (TRACE) TOUT.println(getName()+".toNextChar() ENTER");
+							int r = read();
+							if (r==-1)
+							{
+								if (TRACE) TOUT.println(getName()+".toNextChar() eof LEAVE");
+								return;
+							}
+							char c = (char)r;
+							if (!isJSONWhitespace(c))
+							{
+								unread(c);//restore for others to process
+								popStateHandler(); //restore parent state handler.
+								if (TRACE) TOUT.println(getName()+".toNextChar() end of whitespaces, LEAVE");
+							}else
+							{
+								queueNextChar(c,TIntermediateSyntax.VOID);
+								if (TRACE) TOUT.println(getName()+".toNextChar(), consumed LEAVE");
+							}
+						}
+				}
 				/** Base for escapes handlers */
         		private static abstract class AEscapeHandler extends ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>
         		{
@@ -193,39 +253,54 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 						*************************************************************/
 						@Override public boolean tryEnter()throws IOException
 						{
+							if (TRACE) TOUT.println("AJSONString.tryEnter() ENTER");
 							int r = tryRead();
-							if (r==-1) return false;
+							if (r==-1)
+							{
+								if (TRACE) TOUT.println("AJSONString.tryEnter()=false, eof LEAVE");
+								return false;
+							}
 							char c = (char)r;
 							if (c=='\"')
 							{
 								setStateHandler(this);
 								queueNextChar(c,report_void_as); //to allow for empty strings.
+								if (TRACE) TOUT.println("AJSONString.tryEnter()=true, LEAVE");
 								return true;
 							}else
 							{
 								unread(c);
+								if (TRACE) TOUT.println("AJSONString.tryEnter()=false, LEAVE");
 								return false;
 							}
 						}
 						@Override public void toNextChar()throws IOException
 						{
+							if (TRACE) TOUT.println("AJSONString.toNextChar() ENTER");
 							if (!HEX_ESCAPE.tryEnter())
 							if (!SYMBOLIC_ESCAPE.tryEnter())
 							{
 								int r = read();
-								if (r==-1) return;
+								if (r==-1)
+								{
+									if (TRACE) TOUT.println("AJSONString.toNextChar(), eof LEAVE");
+									return;
+								};
 								char c = (char)r;
 								if (c=='\"')
 								{
 									queueNextChar(c,report_void_as);				//to ensure zero size token.
 									queueNextChar(0,TIntermediateSyntax.SEPARATOR);	//to ensure that token finished.
 									setStateHandler(getNextState());
+									if (TRACE) TOUT.println("AJSONString.toNextChar(), end of string LEAVE");
 								}else
 								{
 									//to report character.
+									if (TRACE) TOUT.println("AJSONString.toNextChar() \'"+c+"\' LEAVE");
 									queueNextChar(c,report_character_as);
 								}
 							}
+							if (TRACE) TOUT.println("AJSONString.toNextChar() LEAVE");
 						}
 							
 				};
@@ -257,47 +332,72 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 						/* ************************************************************
 								ASyntaxHandler
 						*************************************************************/
+						/** Tests if character can be a plain value character 
+						@param c character
+						@return true if can be.
+						*/
 						private static boolean isPlainValueChar(char c)
 						{
-							return (!isJSONWhitespace(c)
-								&&
-								(c!=',')
-								&&
-								(c!='\"')
-								&&
-								(c!=']')
-								&&
-								(c!='}')
-								);
+							if (isJSONWhitespace(c)) return false;
+							//Note: this is a bit awkward set. 
+							//If we would strictly conform to JSON we would
+							//allow here only those making numbers and booleans.
+							//To be a bit relaxed we need to allow all non-syntax characters.
+							switch(c)
+							{
+								case ',':	//separator
+								case '\"':  //string token
+								case '[':   //array body start
+								case ']':   //array body end
+								case '{':   //object start
+								case '}':   //object end
+										return false;
+							};
+							return true;
 						};
 						@Override public boolean tryEnter()throws IOException
 						{
+							if (TRACE) TOUT.println("AJSONPlainValue.tryEnter() ENTER");
 							int r = tryRead();
-							if (r==-1) return false;
+							if (r==-1)
+							{
+								if (TRACE) TOUT.println("AJSONPlainValue.tryEnter()=false, eof LEAVE");
+								return false;
+							}
 							char c = (char)r;
 							if (isPlainValueChar(c))
 							{
 								//this is a plain token character
 								queueNextChar(c,TIntermediateSyntax.TOKEN);
 								setStateHandler(this);
+								if (TRACE) TOUT.println("AJSONPlainValue.tryEnter()=true LEAVE");
 								return true;
 							}else
 							{
+								unread(c);
+								if (TRACE) TOUT.println("AJSONPlainValue.tryEnter()=false LEAVE");
 								return false;
 							}
 						};
 						@Override public void toNextChar()throws IOException
 						{
+							if (TRACE) TOUT.println("AJSONPlainValue.toNextChar() ENTER");
 							int r = read();
-							if (r==-1) return;
+							if (r==-1)
+							{
+								if (TRACE) TOUT.println("AJSONPlainValue.toNextChar(), eof LEAVE");
+								return;
+							}
 							char c = (char)r;
 							if (isPlainValueChar(c))
 							{
 								queueNextChar(c,TIntermediateSyntax.TOKEN);
+								if (TRACE) TOUT.println("AJSONPlainValue.toNextChar() \'"+c+"\' LEAVE");
 							}else
 							{
 								unread(c);
 								setStateHandler(getNextState());
+								if (TRACE) TOUT.println("AJSONPlainValue.toNextChar() end of token LEAVE");
 							}
 						};
 				};
@@ -323,16 +423,16 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
          		*/
 				private final IStateHandler JSON_START = new  AStateHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
 				{
+					@Override public String getName(){ return "JSON_START";}
 					@Override public void toNextChar()throws IOException
 					{
+						if (TRACE) TOUT.println("JSON_START.toNextChar() ENTER");
 						if (!BOM.tryEnter())
 						{
-							//check end-of-file.
-							int r = read();
-							if (r==-1) return;
 							//in this case move to next sate unconditionally.							
 							setStateHandler(JSON_BODY_LOOKUP);
 						}
+						if (TRACE) TOUT.println("JSON_START.toNextChar() LEAVE");
 					}
 				};
 				
@@ -344,18 +444,26 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 				*/
 				private final  ISyntaxHandler BOM = new  ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
 				{
+					@Override public String getName(){ return "BOM";}
 					@Override public boolean tryEnter()throws IOException
 					{
+						if (TRACE) TOUT.println("BOM.tryEnter() ENTER");
 						int r = tryRead();
-						if (r==-1) return false;
+						if (r==-1)
+						{
+							if (TRACE) TOUT.println("BOM.tryEnter()=false, eof LEAVE");
+							return false;
+						}
 						char c = (char)r;
 						if (0xFEFF == c)
 						{
 							setStateHandler(JSON_BODY_LOOKUP);
+							if (TRACE) TOUT.println("BOM.tryEnter()=true, LEAVE");
 							return true;
 						}else
 						{
 							unread(c);
+							if (TRACE) TOUT.println("BOM.tryEnter()=false, LEAVE");
 							return false;
 						}
 					};
@@ -371,15 +479,22 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
          		*/
 				private final IStateHandler JSON_BODY_LOOKUP = new  AStateHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
 				{
+					@Override public String getName(){ return "JSON_BODY_LOOKUP";}
 					@Override public void toNextChar()throws IOException
 					{
+						if (TRACE) TOUT.println("JSON_BODY_LOOKUP.toNextChar() ENTER");
 						if (!WHITESPACE.tryEnter())
 						if (!JSON_ARRAY_LOOKUP.tryEnter())
 						{
 							int r= read();
-							if (r==-1) return;
+							if (r==-1)
+							{
+								if (TRACE) TOUT.println("JSON_BODY_LOOKUP.toNextChar() eof, LEAVE");
+								return;
+							}
 							throw new EBrokenFormat("JSON stream must be an array [...], but \'"+((char)r)+"\' was found :"+getLineInfoMessage());
 						}
+						if (TRACE) TOUT.println("JSON_BODY_LOOKUP.toNextChar() LEAVE");
 					}
 				};
 				
@@ -388,21 +503,31 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 				Moves to {@link #JSON_ARRAY_BODY}*/
 				private final ISyntaxHandler JSON_ARRAY_LOOKUP = new ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
 				{
-					@Override public boolean tryEnter()throws IOException
+					@Override public String getName(){ return "JSON_ARRAY_LOOKUP";}
+					@Override public boolean tryEnter()throws IOException					
 					{
+						if (TRACE) TOUT.println("JSON_ARRAY_LOOKUP.tryEnter() ENTER");
 						int r= tryRead();
-						if (r==-1) return false;
+						if (r==-1)
+						{
+							if (TRACE) TOUT.println("JSON_ARRAY_LOOKUP.tryEnter()=false, eof LEAVE");
+							return false;
+						}
 						char c = (char)r;
 						if (c=='[')
 						{
 							//Now we are in JSON body.
 							setStateHandler(JSON_ARRAY_BODY);
+							queueNextChar(c,TIntermediateSyntax.VOID);//we need to emit some char since
+																	  //otherwise openImpl won't catch this.
+							if (TRACE) TOUT.println("JSON_ARRAY_LOOKUP.tryEnter()=true LEAVE");
 							return true;
 						}else
 						{
 							unread(c);
+							if (TRACE) TOUT.println("JSON_ARRAY_LOOKUP.tryEnter()=false LEAVE");
 							return false;
-						};
+						}
 					};
 					@Override public void toNextChar()throws IOException{ throw new AssertionError(); };
 				};
@@ -414,8 +539,10 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 				*/
 				private final  IStateHandler JSON_ARRAY_BODY = new  AStateHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
 				{
+					@Override public String getName(){ return "JSON_ARRAY_BODY";}
 					@Override public void toNextChar()throws IOException
 					{
+						if (TRACE) TOUT.println("JSON_ARRAY_BODY.toNextChar() ENTER");
 						if (!WHITESPACE.tryEnter())
 						if (!END_OF_JSON_ARRAY.tryEnter())
 						if (!JSON_PLAIN_VALUE.tryEnter())
@@ -423,39 +550,60 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 						if (!JSON_OBJECT.tryEnter())
 						{
 							int r= read();
-							if (r==-1) return;
+							if (r==-1)
+							{
+								if (TRACE) TOUT.println("JSON_ARRAY_BODY.toNextChar(), eof LEAVE");
+								return;
+							}
 							throw new EBrokenFormat("Expected [, comma, space, numeric or logic value or string but \'"+((char)r)+"\' was found :"+getLineInfoMessage());
 						}
+						if (TRACE) TOUT.println("JSON_ARRAY_BODY.toNextChar() LEAVE");
 					};
 				};
 				/** A state recognizing a begin of JSON object and thous a begin signal */
 				private final ISyntaxHandler JSON_OBJECT = new ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
 				{
+					@Override public String getName(){ return "JSON_OBJECT";}
 					@Override public boolean tryEnter()throws IOException
 					{
+						if (TRACE) TOUT.println("JSON_OBJECT.tryEnter() ENTER");
 						int r = tryRead();
-						if (r==-1) return false;
+						if (r==-1)
+						{
+							if (TRACE) TOUT.println("JSON_OBJECT.tryEnter()=false, eof LEAVE");
+							return false;
+						}
 						char c = (char)r;
 						if (c=='{')
 						{
 							setStateHandler(this);
 							queueNextChar(c, TIntermediateSyntax.SIG_BEGIN);
+							if (TRACE) TOUT.println("JSON_OBJECT.tryEnter()=true, LEAVE");
 							return true;
 						}else
 						{
 							unread(c);
+							if (TRACE) TOUT.println("JSON_OBJECT.tryEnter()=false, LEAVE");
 							return false;
 						}
 					}
 					@Override public void toNextChar()throws IOException
 					{
-						if (!WHITESPACE.tryEnter())
+						if (TRACE) TOUT.println("JSON_OBJECT.toNextChar() ENTER");
+						//A whitespace in this area cannot produce SEPARATOR
+						//because it will generate nameless signal.
+						if (!VOIDWHITESPACE.tryEnter())
 						if (!BEGIN_NAME.tryEnter())
 						{
 							int r= read();
-							if (r==-1) return;
+							if (r==-1)
+							{
+								if (TRACE) TOUT.println("JSON_OBJECT.toNextChar(), eof LEAVE");
+								return;
+							}
 							throw new EBrokenFormat("JSON object must have a single named field indicating the name of begin signal :"+getLineInfoMessage());
 						}
+						if (TRACE) TOUT.println("JSON_OBJECT.toNextChar() LEAVE");
 					};
 				};
 				/** A begin signal name handler */
@@ -465,6 +613,7 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 															 TIntermediateSyntax.SIG_NAME //ATxtReadFormat1.TIntermediateSyntax report_character_as
 															 )
 				{
+					@Override public String getName(){ return "BEGIN_NAME";}
 					@Override protected IStateHandler getNextState(){ return NAME_SEPARATOR_LOOKUP; };		
 				};
 				
@@ -473,35 +622,77 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 				*/
 				private final IStateHandler NAME_SEPARATOR_LOOKUP = new AStateHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
 				{
+					@Override public String getName(){ return "NAME_SEPARATOR_LOOKUP";}
 					@Override public void toNextChar()throws IOException
 					{
+						if (TRACE) TOUT.println("NAME_SEPARATOR_LOOKUP.toNextChar() ENTER");
 						if (!WHITESPACE.tryEnter())
-						if (!JSON_ARRAY_LOOKUP.tryEnter())
+						if (!NAME_SEPARATOR.tryEnter())
 						{
-							//Now we have a possiblity that it can be a single element 
-							
-							
+							//Now we have a possiblity that it can be a single element
 							int r= read();
-							if (r==-1) return;
+							if (r==-1)
+							{
+								if (TRACE) TOUT.println("NAME_SEPARATOR_LOOKUP.toNextChar() eof, LEAVE");
+								return;
+							}
 							throw new EBrokenFormat("JSON object must have a single named field indicating the name of begin signal :"+getLineInfoMessage());
 						}
+						if (TRACE) TOUT.println("NAME_SEPARATOR_LOOKUP.toNextChar() LEAVE");
 					};
 				};
+				/** A syntax responsible for capturing : separating signal name from structure body.
+				*/
+				private final ISyntaxHandler NAME_SEPARATOR = new ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
+				{
+					@Override public String getName(){ return "NAME_SEPARATOR";}
+					@Override public boolean tryEnter()throws IOException
+					{
+						if (TRACE) TOUT.println("NAME_SEPARATOR.tryEnter() ENTER");
+						int r = tryRead();
+						if (r==-1)
+						{
+							if (TRACE) TOUT.println("NAME_SEPARATOR.tryEnter()=false, eof LEAVE");
+							return false;
+						}
+						char c = (char)r;
+						if (c==':')
+						{
+							setStateHandler(STRUCT_BODY_LOOKUP);
+							if (TRACE) TOUT.println("NAME_SEPARATOR.tryEnter()=true, LEAVE");
+							return true;
+						}else
+						{
+							unread(c);
+							if (TRACE) TOUT.println("NAME_SEPARATOR.tryEnter()=false, LEAVE");
+							return false;
+						}
+					};
+					@Override public void toNextChar()throws IOException{ throw new AssertionError(); };
+				};
 				
-				/** A state looking for either [ opening structure body or a single element body struct.
+				/** A state looking for either [ opening structure body or for a single element body struct.
 				*/
 				private final IStateHandler STRUCT_BODY_LOOKUP = new AStateHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
 				{
+					@Override public String getName(){ return "STRUCT_BODY_LOOKUP";}
 					@Override public void toNextChar()throws IOException
 					{
+						if (TRACE) TOUT.println("STRUCT_BODY_LOOKUP.toNextChar() ENTER");
 						if (!WHITESPACE.tryEnter())
+						if (!JSON_ARRAY_LOOKUP.tryEnter())	//search this first, or tokens may catch up.
 						if (!SINGLE_ELEMENT_STRUCT_PLAIN_VALUE.tryEnter())
 						if (!SINGLE_ELEMENT_STRUCT_STRING_VALUE.tryEnter())
 						{
 							int r= read();
-							if (r==-1) return;
+							if (r==-1)
+							{
+								if (TRACE) TOUT.println("STRUCT_BODY_LOOKUP.toNextChar() eof LEAVE");
+								return;
+							}
 							throw new EBrokenFormat("JSON object must have a primitive value or array :"+getLineInfoMessage());
 						}
+						if (TRACE) TOUT.println("STRUCT_BODY_LOOKUP.toNextChar() LEAVE");
 					};
 				};
 				
@@ -513,6 +704,7 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 				*/
 				private final ISyntaxHandler SINGLE_ELEMENT_STRUCT_PLAIN_VALUE = new  AJSONPlainValue(this)
 				{
+						@Override public String getName(){ return "SINGLE_ELEMENT_STRUCT_PLAIN_VALUE";}
 						@Override protected IStateHandler getNextState(){ return JSON_AFTER_ARRAY; };
 				};
 				
@@ -530,6 +722,7 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 								 							TIntermediateSyntax.TOKEN //ATxtReadFormat1.TIntermediateSyntax report_character_as
 								 							)
 				{
+						@Override public String getName(){ return "SINGLE_ELEMENT_STRUCT_STRING_VALUE";}
 						@Override protected IStateHandler getNextState(){ return JSON_AFTER_ARRAY; };
 				};
 				
@@ -544,10 +737,16 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 				 */
 				private final ISyntaxHandler END_OF_JSON_ARRAY = new  ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
 				{
+					@Override public String getName(){ return "END_OF_JSON_ARRAY";}
 					@Override public boolean tryEnter()throws IOException
 					{
+						if (TRACE) TOUT.println("END_OF_JSON_ARRAY.tryEnter() ENTER");
 						int r= tryRead();
-						if (r==-1) return false;
+						if (r==-1)
+						{
+							if (TRACE) TOUT.println("END_OF_JSON_ARRAY.tryEnter()=false, eof LEAVE");
+							return false;
+						}
 						char c = (char)r;
 						if (c==']')
 						{
@@ -556,12 +755,14 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 									setStateHandler(AFTER_JSON_BODY);
 								else
 									setStateHandler(JSON_AFTER_ARRAY);
+							if (TRACE) TOUT.println("END_OF_JSON_ARRAY.tryEnter()=true LEAVE");
 							return true;
 						}else
 						{
 							unread(c);
+							if (TRACE) TOUT.println("END_OF_JSON_ARRAY.tryEnter()=false  LEAVE");
 							return false;
-						};
+						}
 					};
 					@Override public void toNextChar()throws IOException{ throw new AssertionError(); };
 				};
@@ -574,6 +775,7 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 				*/
 				private final ISyntaxHandler JSON_PLAIN_VALUE = new  AJSONPlainValue(this)
 				{
+						@Override public String getName(){ return "JSON_PLAIN_VALUE";}
 						@Override protected IStateHandler getNextState(){ return JSON_ARRAY_NEXT_LOOKUP; };
 				};
 				/** 
@@ -587,6 +789,7 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 								 							TIntermediateSyntax.TOKEN //ATxtReadFormat1.TIntermediateSyntax report_character_as
 								 							)
 				{
+						@Override public String getName(){ return "JSON_STRING_VALUE";}
 						@Override protected IStateHandler getNextState(){ return JSON_ARRAY_NEXT_LOOKUP; };
 				};
 				
@@ -598,8 +801,10 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 				*/
 				private final IStateHandler JSON_ARRAY_NEXT_LOOKUP = new  AStateHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
 				{
+					@Override public String getName(){ return "JSON_ARRAY_NEXT_LOOKUP";}
 					@Override public void toNextChar()throws IOException
 					{
+						if (TRACE) TOUT.println("JSON_ARRAY_NEXT_LOOKUP.toNextChar() ENTER");
 						if (!WHITESPACE.tryEnter())
 						if (!END_OF_JSON_ARRAY.tryEnter())
 						{
@@ -610,9 +815,12 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 							{
 								queueNextChar(c,TIntermediateSyntax.SEPARATOR);
 								setStateHandler(JSON_ARRAY_BODY);
+								if (TRACE) TOUT.println("JSON_ARRAY_NEXT_LOOKUP.toNextChar(), found separator, LEAVE");
+								return;
 							}else
-								throw new EBrokenFormat("Expected [, comma, space, numeric or logic value or string but \'"+((char)r)+"\' was found :"+getLineInfoMessage());
+								throw new EBrokenFormat("Expected ] or comma but \'"+((char)r)+"\' was found :"+getLineInfoMessage());
 						}
+						if (TRACE) TOUT.println("JSON_ARRAY_NEXT_LOOKUP.toNextChar() LEAVE");
 					};
 				};
 				
@@ -623,8 +831,10 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 				*/
 				private final IStateHandler JSON_AFTER_ARRAY = new  AStateHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
 				{
+					@Override public String getName(){ return "JSON_AFTER_ARRAY";}
 					@Override public void toNextChar()throws IOException
 					{
+						if (TRACE) TOUT.println("JSON_AFTER_ARRAY.toNextChar() ENTER");
 						/* Note:
 								Full JSON syntax do allow array within an array or array after an array.
 								In our context however only  ]} is possible, because we use JSON array
@@ -634,9 +844,14 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 						if (!JSON_OBJ_END.tryEnter()) //a } indicating that this is an end of a struture.
 						{
 							int r= read();
-							if (r==-1) return;
-							throw new EBrokenFormat("Expected ], space, comma or } \'"+((char)r)+"\' was found :"+getLineInfoMessage());
+							if (r==-1)
+							{
+								if (TRACE) TOUT.println("JSON_AFTER_ARRAY.toNextChar(), eof LEAVE");
+								return;
+							}
+							throw new EBrokenFormat("Expected } \'"+((char)r)+"\' was found :"+getLineInfoMessage());
 						}
+						if (TRACE) TOUT.println("JSON_AFTER_ARRAY.toNextChar() LEAVE");
 					}
 				};
 				
@@ -646,23 +861,34 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 				*/
 				private final ISyntaxHandler JSON_OBJ_END = new ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
 				{
-					@Override public boolean tryEnter()
+					@Override public String getName(){ return "JSON_OBJ_END";}
+					@Override public boolean tryEnter()throws IOException
 					{
+						if (TRACE) TOUT.println("JSON_OBJ_END.tryEnter() ENTER");
 						int r = tryRead();
-						if (r==-1) return false;
+						if (r==-1)
+						{
+							if (TRACE) TOUT.println("JSON_OBJ_END.tryEnter()=false, eof LEAVE");
+							return false;
+						}
 						char c = (char)r;
 						if (c=='}')
 						{
 							queueNextChar(c,TIntermediateSyntax.SIG_END);
 							setStateHandler(JSON_ARRAY_NEXT_LOOKUP);
+							if (TRACE) TOUT.println("JSON_OBJ_END.tryEnter()=true LEAVE");
+							return true;
 						}else
 						{
 							unread(c);
+							if (TRACE) TOUT.println("JSON_OBJ_END.tryEnter()=false LEAVE");
 							return false;
-						};
-					};
+						}
+					}
 					@Override public void toNextChar()throws IOException{ throw new AssertionError(); };
 				};
+				
+				
 				
 				/**
 					A whitespace skipper between JSON elements.
@@ -671,40 +897,21 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 					Returns to previous state at first non-whitespace character.
 					@see #isJSONWhitespace
 				*/
-				private final ISyntaxHandler WHITESPACE = new  ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
+				private final ISyntaxHandler WHITESPACE = new CWhitespace(this,TIntermediateSyntax.SEPARATOR)
 				{
-					@Override public boolean tryEnter()throws IOException
-					{
-						int r = tryRead();
-						if (r==-1) return false;
-						char c = (char)r;
-						if (isJSONWhitespace(c))
-						{
-							//We do report first white-space as a separator
-							//subsequent as VOID.
-							queueNextChar(c,TIntermediateSyntax.SEPARATOR);
-							pushStateHandler(this); //place self over current state.
-							return true;
-						}else
-						{
-							unread(c);
-							return false;
-						}
-					};
-					@Override public void toNextChar()throws IOException
-					{
-						int r = read();
-						if (r==-1) return;
-						char c = (char)r;
-						if (!isJSONWhitespace(c))
-						{
-							unread(c);//restore for others to process
-							popStateHandler(); //restore parent state handler.
-						}else
-						{
-							queueNextChar(c,TIntermediateSyntax.VOID);
-						}
-					}
+					@Override public String getName(){ return "WHITESPACE";}
+				};
+				
+				/**
+					A whitespace skipper between JSON elements which are not a part of upstream syntax.
+					This is an overlay state.
+					<p>
+					Returns to previous state at first non-whitespace character.
+					@see #isJSONWhitespace
+				*/
+				private final ISyntaxHandler VOIDWHITESPACE = new CWhitespace(this,TIntermediateSyntax.VOID)
+				{
+					@Override public String getName(){ return "WHITESPACE";}
 				};
 				
 				/**
@@ -713,8 +920,10 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 				*/
 				private final IStateHandler AFTER_JSON_BODY = new  AStateHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
 				{
+					@Override public String getName(){ return "AFTER_JSON_BODY";}
 					@Override public void toNextChar()throws IOException
 					{
+						if (TRACE) TOUT.println("AFTER_JSON_BODY.toNextChar()");
 					   //Persisten "no more data" regardless of what is in stream.
 				   	   // Notice we have two choices:
 				   	   //		throw or queue -1.
@@ -762,4 +971,48 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 		};
 		return false;
 	};
+	/* ************************************************************************
+	
+				AStructFormatBase
+	
+	
+	*************************************************************************/
+	/** Overriden to consume opening sequence */
+	@Override public void openImpl()throws IOException 
+	{
+		if (TRACE) TOUT.println("openImpl ENTER");
+		setStateHandler(JSON_START);
+		//Now we need to trigger any file action which will
+		//automatically consume the states which are necessary
+		//to move to actual content production. Those will
+		//fail if we are not a valid JSON.
+		//We are however still not opened so we can't just ask
+		//the high level routines.
+		//We should however enforce going down to JSON array body.
+		while(getStateHandler()!=JSON_ARRAY_BODY)
+		{
+			if (TRACE) TOUT.println("openImpl() state is "+getStateHandler().getName());
+			toNextChar();
+			if (getNextSyntaxElement()==null) throw new EUnexpectedEof("While looking for [ opening JSON array.");
+		};
+		if (TRACE) TOUT.println("openImpl LEAVE");
+	}
+	/** Overriden to close input */
+	@Override public void closeImpl()throws IOException
+	{
+		super.closeImpl();
+		in.close();
+	}
+	/* ************************************************************************
+	
+				AFormatLimits
+	
+	
+	*************************************************************************/
+	/** Returns Integer.MAX_VALUE */
+	@Override public int getMaxSupportedSignalNameLength(){ return Integer.MAX_VALUE; };
+	/** Unlimited
+	@return -1*/
+	@Override public int getMaxSupportedStructRecursionDepth(){ return -1; };
+	
 };
