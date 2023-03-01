@@ -114,7 +114,7 @@ import java.io.IOException;
 	</pre>
 	
 	<h2>Default formating</h2>
-	<h3>Numeric and logic values in single elmentary primitives</h2>
+	<h3>Numeric and logic values in single elmentary primitives</h3>
 	The {@link #formatBoolean} and alike are responsible for
 	formating elementary primitive values.
 	<p>
@@ -124,7 +124,7 @@ import java.io.IOException;
 	methods for boxed types, resulting in decimal numbers with '.' 
 	as decimal separator.
 	
-	<h3>Numeric and logic values in sequences</h2>
+	<h3>Numeric and logic values in sequences</h3>
 	The {@link #formatBooleanBlock} and alike are responsible
 	for the task. By default they call the single variants
 	encoding every value as a separate token exactly as if
@@ -687,12 +687,14 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 		&#64;Override protected void writeByteBlockImpl(byte v)throws IOException{ writePackedByteBlockImpl(v); }
 	</pre>
 	<h3>Packed byte block</h3>
-	A packed byte block is represented as a plain, very long token using two hex digits
+	A packed byte block is represented as a <u>plain token</u> using two hex digits
 	for every stored byte:
 	<pre>
 		3344AF4G ....
 	</pre>
-	and so on, without any prefix or separators.
+	and so on, without any prefix nor separators.
+	<p>
+	The plain token is opened in this method and closed in {@link #endPackedByteBlock}
 	@throws IOException if failed
 	*/
 	protected void startPackedByteBlock()throws IOException
@@ -714,7 +716,12 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 								'0','1','2','3','4','5','6','7','8','9',
 								'A','B','C','D','E','F'
 					};
-	/** @see #startPackedByteBlock */
+	/** A packed variant of {@link #writeByteBlockImpl(byte)}.
+	Outputs upper case hex form of <code>v</code> using {@link #outPlainToken}.
+	@param v as in {@link #writeByteBlockImpl(byte)}
+	@see #startPackedByteBlock 
+	@throws IOException if failed.
+	*/
 	protected void writePackedByteBlockImpl(byte v)throws IOException
 	{
 		outPlainToken(HEX[ (v & 0xF0)>>4 ] );

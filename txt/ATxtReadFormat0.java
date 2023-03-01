@@ -1167,7 +1167,9 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	
 	/** Digit to nibble conversin
 	@param digit hex digit, upper or lower case.
-	@return value of it, 0....F */
+	@return value of it, 0....F 
+	@throws EBrokenFormat if digit is not a hex digit.
+	*/
 	private static int hex2nibble(char digit)throws EBrokenFormat
 	{
 		if ((digit>='0')&&(digit<='9'))
