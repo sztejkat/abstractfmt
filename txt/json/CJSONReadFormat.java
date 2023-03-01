@@ -246,7 +246,12 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 						/* ************************************************************
 								Services required from subclasses
 						*************************************************************/
-						/** State to become active after string completion */
+						/** State to become active after string completion.
+						<p>
+						This method is declared as abstract istead of just having some field
+						to overcome problems with cyclic initialization when constructing state
+						graph.
+						@return next state handler, non null.*/
 						protected abstract IStateHandler getNextState();						
 						/* ************************************************************
 								ASyntaxHandler
@@ -314,8 +319,6 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 						/**
 							Creates
 							@param parser see {@link ASyntaxHandler#ASyntaxHandler}
-							@param report_void_as how to report insignificant characters;
-							@param report_character_as how to report significant characters.
 						*/
 						AJSONPlainValue(
 											  ATxtReadFormatStateBase1<ATxtReadFormat1.TIntermediateSyntax> parser
