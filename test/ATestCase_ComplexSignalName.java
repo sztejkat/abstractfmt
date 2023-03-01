@@ -34,6 +34,7 @@ public class ATestCase_ComplexSignalName extends AInterOpTestCase<IStructReadFor
 			if (p.writer.getMaxSignalNameLength()<name.length())
 						p.writer.setMaxSignalNameLength(name.length()+1);
 				 p.writer.begin(name);
+				 p.writer.end();
 			p.writer.close();
 			
 			System.out.println("reading...");
@@ -48,6 +49,7 @@ public class ATestCase_ComplexSignalName extends AInterOpTestCase<IStructReadFor
 									( (c>=32) ? "("+c+")" : "?"));
 				};
 				Assert.assertTrue(name.equals(rname));
+				Assert.assertTrue(p.reader.next()==null);
 			p.reader.close();
 	};
 	
