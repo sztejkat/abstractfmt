@@ -1,14 +1,14 @@
-package sztejkat.abstractfmt.txt.xml;
+package sztejkat.abstractfmt.txt.json;
 import  sztejkat.abstractfmt.*;
 import  sztejkat.abstractfmt.test.*;
 import org.junit.BeforeClass;
 import org.junit.AfterClass;
 import java.io.*;
 /**
-		A test suite checking if {@link CXMLWriteFormat}/{@link CXMLReadFormat}
+		A test suite checking if {@link CJSONWriteFormat}/{@link CJSONReadFormat}
 		do obey base contract. 
 */
-public class TestSuite_CXMLFormat extends ADefaultUntypedTestSuite
+public class TestSuite_CJSONFormat extends ADefaultUntypedTestSuite
 {
 	
 	@BeforeClass public static void armImplementation()
@@ -22,15 +22,15 @@ public class TestSuite_CXMLFormat extends ADefaultUntypedTestSuite
 			        CPair<R,W> createTestDevice(File temp_folder)throws IOException
 			{
 					//We will provide content dump to file.
-					final File file = new File(temp_folder+"/content.xml");
+					final File file = new File(temp_folder+"/content.json");
 					
 					//Content.
-					CXMLWriteFormat writer = new CXMLWriteFormat(
+					CJSONWriteFormat writer = new CJSONWriteFormat(
 									new OutputStreamWriter(
 											new FileOutputStream(file),
 											"UTF-8")
 								  );
-					CXMLReadFormat reader = new CXMLReadFormat(
+					CJSONReadFormat reader = new CJSONReadFormat(
 											new InputStreamReader(
 														new FileInputStream(file),
 														"UTF-8")
