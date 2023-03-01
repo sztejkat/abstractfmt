@@ -433,6 +433,13 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat
 			*/
 			private final ISyntaxHandler WHITESPACE =  new ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
 			{
+							/** Counts whitespaces if {@link #continous_whitespace_limit}
+							is enabled */
+							private int count;
+				@Override public void onActivated()
+				{
+					this.count = 0;
+				}
 				@Override public boolean tryEnter()throws IOException
 				{
 					if (TRACE) TOUT.println("WHITESPACE.tryEnter() ENTER");
@@ -471,6 +478,12 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat
 					if (isEmptyChar(c))
 					{
 						//skipping
+						if (continous_whitespace_limit!=-1)
+						{
+							if (count==continous_whitespace_limit)
+									throw new EFormatBoundaryExceeded("Continous whitespace stream longer than "+continous_whitespace_limit);
+							count++;
+						};
 						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
 					}else
 					{
@@ -490,7 +503,13 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat
 			*/
 			private final ISyntaxHandler COMMENT = new ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
 			{		
-				
+							/** Counts whitespaces if {@link #continous_comment_limit}
+							is enabled */
+							private int count;
+				@Override public void onActivated()
+				{
+					this.count = 0;
+				}
 				@Override public boolean tryEnter()throws IOException
 				{
 					if (TRACE) TOUT.println("COMMENT.tryEnter() ENTER");
@@ -503,7 +522,7 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat
 					char c = (char)r;
 					if (TRACE) TOUT.println("COMMENT.tryEnter() checking \'"+c+"\'");
 					if (c==CPlainTxtWriteFormat.COMMENT_CHAR)
-					{						
+					{					
 						pushStateHandler(this);
 						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
 						if (TRACE) TOUT.println("COMMENT.tryEnter()=true, LEAVE");
@@ -535,6 +554,12 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat
 					}else
 					{
 						//in comment.
+						if (continous_comment_limit!=-1)
+						{
+							if (count==continous_comment_limit)
+									throw new EFormatBoundaryExceeded("Comment line longer than "+continous_comment_limit);
+							count++;
+						};
 						queueNextChar(c,ATxtReadFormat1.TIntermediateSyntax.VOID);
 						if (TRACE) TOUT.println("COMMENT.toNextChar(), skipped, LEAVE");
 						
@@ -826,6 +851,16 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat
 				@Override public String getName(){ return "END"; };
 			};
 			
+						/** A maximum length of continous sequence of white spaces
+						which is allowed. Longer sequence of whitespaces will cause
+						parser to throw {@link EFormatBoundaryExceeded}. -1 to disable limit. */
+						private final int continous_whitespace_limit;
+						/** A maximum length of comment line
+						which is allowed. Longer sequence of white-spaces will cause
+						parser to throw {@link EFormatBoundaryExceeded}. -1 to disable limit.
+						<p>
+						Note: blocks of comments are not controlled this way.*/
+						private final int continous_comment_limit;
 					
 	/* *********************************************************
 	
@@ -834,12 +869,33 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat
 	
 	
 	**********************************************************/
+	/** Constructs without any additional safety limits.
+	@param in non null input
+	*/
 	public CPlainTxtReadFormat(Reader in)
+	{
+		this(in,-1,-1);
+	}
+	/** Constructs without any additional safety limits.
+	@param in non null input 
+	@param continous_whitespace_limit a maximum length of continous sequence of white spaces
+		which is allowed. Longer sequence of whitespaces will cause
+		parser to barfto throw {@link EFormatBoundaryExceeded}. -1 to disable limit. 
+	@param continous_comment_limit alike, but for a single comment line. 
+	*/
+	public CPlainTxtReadFormat(Reader in, 
+								final int continous_whitespace_limit,
+								final int continous_comment_limit
+								)
 	{
 		super(in,
 			  0,//int name_registry_capacity - disabled
 			  64//int token_size_limit 
 			  );
+		assert(continous_whitespace_limit>=-1);
+		assert(continous_comment_limit>=-1);
+		this.continous_whitespace_limit=continous_whitespace_limit;
+		this.continous_comment_limit=continous_comment_limit;
 	}
 	
 	/* ********************************************************************
