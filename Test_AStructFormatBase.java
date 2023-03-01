@@ -899,4 +899,23 @@ public class Test_AStructFormatBase extends sztejkat.abstractfmt.test.ATest
 			dut.close();
 		leave();
 	};
+	
+	
+	
+	@Test public void testIfCloseTerminatesPendingBlockOperation()throws IOException
+	{
+		enter();
+		//Note: No need to run it for other block types
+		//	    since we actually test if terminatePendingBlockOperation()
+		//		was invoked inside AStructFormatBase during close.
+		//		The working of terminatePendingBlockOperation() is tested
+		//		elsewhere.
+			DUT dut = new DUT(10,-1);
+			dut.open();
+			dut.validateStringBlock(); 
+			dut.close();
+			Assert.assertTrue(dut._startStringBlock==1);
+			Assert.assertTrue(dut._endStringBlock==1);
+		leave();
+	};
 };

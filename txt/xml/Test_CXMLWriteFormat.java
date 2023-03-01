@@ -650,14 +650,14 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 				o.writeByteBlock(new byte[4]);
 				o.begin("blk");
 					o.writeByteBlock(new byte[2]);
-					o.writeByteBlock(new byte[2]);
+					o.writeByteBlock(new byte[]{(byte)0x00,(byte)0x3C,(byte)0x11},1,2);
 				o.end();
 			o.close();
 			//Test if it is a valid XML
 			validateXMLFile(temp);
 			//None of chars is valid so all should be escaped with _
 			Assert.assertTrue(("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"+
-							   "<sztejkat.abstractfmt.txt.xml>0,0,0,0<blk>0,0,0,0</blk></sztejkat.abstractfmt.txt.xml>"
+							   "<sztejkat.abstractfmt.txt.xml>00000000<blk>00003C11</blk></sztejkat.abstractfmt.txt.xml>"
 			).equals(s.toString()));
 		leave();
 	};

@@ -112,6 +112,30 @@ import java.io.IOException;
 		....
 	}
 	</pre>
+	
+	<h2>Default formating</h2>
+	<h3>Numeric and logic values in single elmentary primitives</h2>
+	The {@link #formatBoolean} and alike are responsible for
+	formating elementary primitive values.
+	<p>
+	The boolean is formated to "true" or "false".
+	<p>
+	Numbers and character sare formated using their respective XXX.toString()
+	methods for boxed types, resulting in decimal numbers with '.' 
+	as decimal separator.
+	
+	<h3>Numeric and logic values in sequences</h2>
+	The {@link #formatBooleanBlock} and alike are responsible
+	for the task. By default they call the single variants
+	encoding every value as a separate token exactly as if
+	single primitive would have been written.
+	
+	<h3>Packed byte sequences</h3>
+	If {@link #startPackedByteBlock} is used to enable
+	(by overriding some methods) the packed byte block
+	operation the byte block is stored as one huge hex
+	number, two characters per each byte.
+	
 */
 public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 {
@@ -469,22 +493,30 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 		closePlainToken();
 	};
 	
+	
+	
+	
 	/** Called by {@link #writeByteBlockImpl} to produce byte token.
 	<p>
 	Default implementation returns {@link #formatByte}
 	@param v value 
 	@return text representation of v
+	@see #startPackedByteBlock
 	*/
 	protected String formatByteBlock(byte v){ return formatByte(v); };
 	/** {@inheritDoc}
 	<p>
-	Uses {@link #formatByteBlock} to produce plain token carrying <code>v</code> */
-	@Override protected final void writeByteBlockImpl(byte v)throws IOException
+	Uses {@link #formatByteBlock} to produce plain token carrying <code>v</code>
+	@see #startPackedByteBlock*/
+	@Override protected void writeByteBlockImpl(byte v)throws IOException
 	{
 		openPlainToken();
 		outPlainToken(formatByteBlock(v));
 		closePlainToken();
-	};		
+	};
+	
+	
+	
 	
 	/** Called by {@link #writeShortBlockImpl} to produce short token.
 	<p>
@@ -634,4 +666,60 @@ public abstract class ATxtWriteFormat0 extends ARegisteringStructWriteFormat
 		outStringToken(formatStringBlock(v));
 		closeStringToken();
 	};
+	
+	
+	
+	/* ---------------------------------------------------------------------------
+	
+				
+				Packed byte blocks support
+	
+	
+	---------------------------------------------------------------------------*/
+	
+	/** Starts packed byte-block.
+	<p>
+	Optional method. To enable packed byte blocks override following methods like below:
+	<pre>
+		&#64;Override protected void startByteBlock()throws IOException{ startPackedByteBlock(); }
+		&#64;Override protected void endByteBlock()throws IOException{ endPackedByteBlock(); }
+		&#64;Override protected String formatByteBlock(byte v){ throw new AssertionError(); }
+		&#64;Override protected void writeByteBlockImpl(byte v)throws IOException{ writePackedByteBlockImpl(v); }
+	</pre>
+	<h3>Packed byte block</h3>
+	A packed byte block is represented as a plain, very long token using two hex digits
+	for every stored byte:
+	<pre>
+		3344AF4G ....
+	</pre>
+	and so on, without any prefix or separators.
+	@throws IOException if failed
+	*/
+	protected void startPackedByteBlock()throws IOException
+	{
+		super.startByteBlock();
+		openPlainToken();
+	}
+	/** @see #startPackedByteBlock 
+	@throws IOException if failed
+	*/
+	protected void endPackedByteBlock()throws IOException
+	{		
+		closePlainToken();
+		super.endByteBlock();
+	}
+					/** Used by {@link #writePackedByteBlockImpl} to format packed byte-stream */
+					private static final char [] HEX = new char[]
+					{
+								'0','1','2','3','4','5','6','7','8','9',
+								'A','B','C','D','E','F'
+					};
+	/** @see #startPackedByteBlock */
+	protected void writePackedByteBlockImpl(byte v)throws IOException
+	{
+		outPlainToken(HEX[ (v & 0xF0)>>4 ] );
+		outPlainToken(HEX[ (v & 0x0F) ] );
+	};
+		
+	
 };

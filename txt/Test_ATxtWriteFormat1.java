@@ -182,6 +182,15 @@ public class Test_ATxtWriteFormat1 extends ATest
 		};
 		
 		
+		/** This class tests how the engine works if byte blocks are packed. */
+		private static class PackedByteBlocksDUT extends DUT
+		{
+				@Override protected void startByteBlock()throws IOException{ startPackedByteBlock(); }
+				@Override protected void endByteBlock()throws IOException{ endPackedByteBlock(); }
+				@Override protected String formatByteBlock(byte v){ throw new AssertionError(); }
+				@Override protected void writeByteBlockImpl(byte v)throws IOException{ writePackedByteBlockImpl(v); }
+		}
+		
 	@Test public void testPlainTokenSequencingWithoutSignal()throws IOException
 	{
 		enter();
@@ -377,6 +386,43 @@ public class Test_ATxtWriteFormat1 extends ATest
 			System.out.println(o);
 			Assert.assertTrue(("\"sasD\""+
 							   ",[bbxbybzb]")
+							   .equals(o));
+		leave();
+	};
+	
+	
+	@Test public void testByteBlockPackedInStruct()throws IOException
+	{
+		enter();
+			PackedByteBlocksDUT d = new PackedByteBlocksDUT();
+			d.open();
+				d.writeByteBlock(new byte[]{(byte)0x3A});
+				d.begin("a");
+					d.writeByteBlock(new byte[]{(byte)0x3C});
+				d.end();
+			d.close();
+			String o = d.stream.toString();
+			System.out.println(o);
+			Assert.assertTrue((">p3pA<!*beginDirectImpl* >p3pC<-*endImpl*")
+							   .equals(o));
+		leave();
+	};
+	
+	@Test public void testByteBlockPackedInStructEnd()throws IOException
+	{
+		enter();
+			PackedByteBlocksDUT d = new PackedByteBlocksDUT();
+			d.open();
+				d.begin("a");
+					d.begin("a");
+						d.writeByteBlock(new byte[]{(byte)0x3A});
+					d.end();
+					d.writeByteBlock(new byte[]{(byte)0x3C});
+				d.end();
+			d.close();
+			String o = d.stream.toString();
+			System.out.println(o);
+			Assert.assertTrue(("*beginDirectImpl**beginDirectImpl* >p3pA<-*endImpl*+>p3pC<-*endImpl*")
 							   .equals(o));
 		leave();
 	};

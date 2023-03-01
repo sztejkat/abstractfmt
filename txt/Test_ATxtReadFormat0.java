@@ -10,7 +10,7 @@ import org.junit.Assert;
 public class Test_ATxtReadFormat0 extends ATest
 {
 		/** A device under test. Very limited implementation */
-		private static final class DUT extends ATxtReadFormat0
+		private static class DUT extends ATxtReadFormat0
 		{
 					/** A tokens stream to return */
 					private final int [] token_chars;
@@ -70,6 +70,24 @@ public class Test_ATxtReadFormat0 extends ATest
 			@Override protected void openImpl(){};
 			@Override public int getMaxSupportedStructRecursionDepth(){ return -1; };
 			@Override public int getMaxSupportedSignalNameLength(){ return 10000; };
+		};
+		
+		
+		/** A device under test, packed byte sequence variant*/
+		private static final class PackedByteBlockDUT extends DUT
+		{
+			/** Creates
+			@param token_chars tokens to read
+			*/
+			protected PackedByteBlockDUT(int [] token_chars)
+			{
+				super(token_chars);
+			};
+			@Override protected byte readByteBlockImpl()throws IOException{ return readPackedByteBlockImpl(); };
+			@Override protected int readByteBlockImpl(byte [] buffer, int offset, int length)throws IOException
+			{ 
+				return readPackedByteBlockImpl(buffer,offset,length);
+			}
 		};
 		
 	@Test public void testDetectsEof()throws IOException
@@ -1210,6 +1228,34 @@ public class Test_ATxtReadFormat0 extends ATest
 		leave();
 	}
 	
+	@Test public void testStringBlock_with_empty_token()throws IOException
+	{
+		enter();
+		final int [] x = new int[]{  
+										'a',ATxtReadFormat0.TOKEN_BOUNDARY,ATxtReadFormat0.TOKEN_BOUNDARY,
+										'b',
+										'c'
+										};
+		DUT d= new DUT(x);
+		d.open();
+		Assert.assertTrue("abc".equals(d.readString(100)));
+		leave();
+	}
+	@Test public void testStringBlock_with_empty_token_char_by_char()throws IOException
+	{
+		enter();
+		final int [] x = new int[]{  
+										'a',ATxtReadFormat0.TOKEN_BOUNDARY,ATxtReadFormat0.TOKEN_BOUNDARY,
+										'b',
+										'c'
+										};
+		DUT d= new DUT(x);
+		d.open();
+		Assert.assertTrue('a'==d.readString());
+		Assert.assertTrue('b'==d.readString());
+		Assert.assertTrue('c'==d.readString());
+		leave();
+	}
 	
 	
 	@Test public void testCharacterModeThenNumber()throws IOException
@@ -1341,6 +1387,131 @@ public class Test_ATxtReadFormat0 extends ATest
 		Assert.assertTrue(d.readChar()=='3');
 		Assert.assertTrue(d.hasElementaryData());
 		Assert.assertTrue(d.readChar()=='4');
+		Assert.assertTrue(!d.hasElementaryData());
+		leave();
+	}
+	
+	
+	
+	@Test public void testStandAlonePackedByteBlock()throws IOException
+	{
+		enter();
+		
+		final int [] x = new int[]{  
+										'3','A','7','F'
+										};
+		PackedByteBlockDUT d= new PackedByteBlockDUT(x);
+		d.open();
+		Assert.assertTrue(d.readByteBlock()==(byte)0x3A);
+		Assert.assertTrue(d.readByteBlock()==(byte)0x7F);
+		Assert.assertTrue(!d.hasElementaryData());
+		leave();
+	}
+	
+	@Test public void testStandAlonePackedByteBlockThrows()throws IOException
+	{
+		enter();
+		
+		final int [] x = new int[]{  
+										'3','A','7','F'
+										};
+		PackedByteBlockDUT d= new PackedByteBlockDUT(x);
+		d.open();
+		Assert.assertTrue(d.readByteBlock()==(byte)0x3A);
+		Assert.assertTrue(d.readByteBlock()==(byte)0x7F);
+		try{
+			d.readByteBlock();
+		}catch(EEof ex){};
+		leave();
+	}
+	
+	@Test public void testStandAlonePackedByteBlockArray()throws IOException
+	{
+		enter();
+		
+		final int [] x = new int[]{  
+										'3','A','7','F'
+										};
+		PackedByteBlockDUT d= new PackedByteBlockDUT(x);
+		d.open();
+		byte [] buff = new byte[100];
+		Assert.assertTrue(d.readByteBlock(buff)==2);
+		Assert.assertTrue(buff[0]==(byte)0x3A);
+		Assert.assertTrue(buff[1]==(byte)0x7F);
+		try{
+			d.readByteBlock(buff);
+		}catch(EEof ex){};
+		leave();
+	}
+	
+	@Test public void testStandAlonePackedByteBlockArrayStitching()throws IOException
+	{
+		enter();
+		
+		final int [] x = new int[]{  
+										'3','A','7','F',ATxtReadFormat0.TOKEN_BOUNDARY,'2','A'
+										};
+		PackedByteBlockDUT d= new PackedByteBlockDUT(x);
+		d.open();
+		byte [] buff = new byte[100];
+		Assert.assertTrue(d.readByteBlock(buff)==3);
+		Assert.assertTrue(buff[0]==(byte)0x3A);
+		Assert.assertTrue(buff[1]==(byte)0x7F);
+		Assert.assertTrue(buff[2]==(byte)0x2A);
+		try{
+			d.readByteBlock(buff);
+		}catch(EEof ex){};
+		leave();
+	}
+	
+	@Test public void testStandAlonePackedByteBlockArrayStitchingWithEmptyToken()throws IOException
+	{
+		enter();
+		
+		final int [] x = new int[]{  
+										'3','A','7','F',ATxtReadFormat0.TOKEN_BOUNDARY,ATxtReadFormat0.TOKEN_BOUNDARY,'2','A'
+										};
+		PackedByteBlockDUT d= new PackedByteBlockDUT(x);
+		d.open();
+		byte [] buff = new byte[100];
+		Assert.assertTrue(d.readByteBlock(buff)==3);
+		Assert.assertTrue(buff[0]==(byte)0x3A);
+		Assert.assertTrue(buff[1]==(byte)0x7F);
+		Assert.assertTrue(buff[2]==(byte)0x2A);
+		try{
+			d.readByteBlock(buff);
+		}catch(EEof ex){};
+		leave();
+	}
+	
+	@Test public void testStandAlonePackedByteBlockStitching()throws IOException
+	{
+		enter();
+		
+		final int [] x = new int[]{  
+										'3','A','7','F',ATxtReadFormat0.TOKEN_BOUNDARY,'2','A'
+										};
+		PackedByteBlockDUT d= new PackedByteBlockDUT(x);
+		d.open();
+		Assert.assertTrue(d.readByteBlock()==(byte)0x3A);
+		Assert.assertTrue(d.readByteBlock()==(byte)0x7F);
+		Assert.assertTrue(d.readByteBlock()==(byte)0x2A);
+		Assert.assertTrue(!d.hasElementaryData());
+		leave();
+	}
+	
+	@Test public void testStandAlonePackedByteBlockStitchingWithEmptyToken()throws IOException
+	{
+		enter();
+		
+		final int [] x = new int[]{  
+										'3','A','7','F',ATxtReadFormat0.TOKEN_BOUNDARY,ATxtReadFormat0.TOKEN_BOUNDARY,'2','A'
+										};
+		PackedByteBlockDUT d= new PackedByteBlockDUT(x);
+		d.open();
+		Assert.assertTrue(d.readByteBlock()==(byte)0x3A);
+		Assert.assertTrue(d.readByteBlock()==(byte)0x7F);
+		Assert.assertTrue(d.readByteBlock()==(byte)0x2A);
 		Assert.assertTrue(!d.hasElementaryData());
 		leave();
 	}

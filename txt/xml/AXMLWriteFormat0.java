@@ -175,6 +175,15 @@ public abstract class AXMLWriteFormat0 extends ATxtWriteFormat1
 	{
 		return v ? "t" : "f";
 	};
+	/** Enables byte block packing */
+	@Override protected void startByteBlock()throws IOException{ startPackedByteBlock(); }
+	/** Enables byte block packing */
+	@Override protected void endByteBlock()throws IOException{ endPackedByteBlock(); }
+	/** Enables byte block packing */
+	@Override protected String formatByteBlock(byte v){ throw new AssertionError(); }
+	/** Enables byte block packing */
+	@Override protected void writeByteBlockImpl(byte v)throws IOException{ writePackedByteBlockImpl(v); }
+
 	/* *****************************************************************
 	
 			ATxtWriteFormat1

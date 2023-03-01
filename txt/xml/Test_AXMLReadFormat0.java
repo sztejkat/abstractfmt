@@ -693,7 +693,31 @@ public class Test_AXMLReadFormat0 extends ATest
 	};
 	
 	
-	
+	@Test public void packedByteBlock()throws IOException
+	{
+		enter();
+			DUT d = new DUT(
+			"<?xml ?><sztejkat.abstractfmt.txt.xml>\n"+
+			"<marco>3,5,3A4B,,5C<ally>334455</ally></marco>\n"+
+			"</sztejkat.abstractfmt.txt.xml>"
+						);
+			d.open();
+			
+			Assert.assertTrue("marco".equals(d.next()));
+			Assert.assertTrue(3==d.readInt());
+			Assert.assertTrue(5==d.readInt());
+			Assert.assertTrue((byte)0x3A==d.readByteBlock());
+			Assert.assertTrue((byte)0x4B==d.readByteBlock());
+			Assert.assertTrue((byte)0x5C==d.readByteBlock());
+			Assert.assertTrue("ally".equals(d.next()));
+			Assert.assertTrue((byte)0x33==d.readByteBlock());
+			Assert.assertTrue((byte)0x44==d.readByteBlock());
+			Assert.assertTrue((byte)0x55==d.readByteBlock());
+			Assert.assertTrue(null==d.next());
+			Assert.assertTrue(null==d.next());
+			d.close();
+		leave();
+	};
 	
 	
 	

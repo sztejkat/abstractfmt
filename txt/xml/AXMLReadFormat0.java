@@ -1386,7 +1386,18 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 	/** Returns the name of XML body element opened by {@link AXMLWriteFormat0#writeXMLProlog}.
 	@return XML body element, default is "sztejkat.abstractfmt.txt.xml" */
 	protected String getXMLBodyElement(){ return "sztejkat.abstractfmt.txt.xml"; }
+	/* *****************************************************************
 	
+			ATxtWriteFormat0
+	
+	******************************************************************/
+	/** Enable packed byte sequenced */
+	@Override protected byte readByteBlockImpl()throws IOException{ return readPackedByteBlockImpl(); };
+	/** Enable packed byte sequenced */
+	@Override protected int readByteBlockImpl(byte [] buffer, int offset, int length)throws IOException
+	{ 
+		return readPackedByteBlockImpl(buffer,offset,length);
+	}
 	/* ***************************************************************
 	
 			AStructFormatBase

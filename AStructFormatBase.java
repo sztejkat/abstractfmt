@@ -488,8 +488,12 @@ abstract class AStructFormatBase extends AFormatLimits implements Closeable
 				return;
 			};
 			
-			try{					
-					if (TRACE) TOUT.println("close()->closeImpl()");
+			try{	
+					//Formally speaking we should terminate block operation here
+					//if it is pending because block operations are legitimate case
+					//to be terminated by an end-of-file.
+					terminatePendingBlockOperation();
+					if (TRACE) TOUT.println("close()->closeImpl()");					
 					closeImpl();
 					if (TRACE) TOUT.println("close()->super.close()");
 					super.close(); //zero depth tracking. We can skip it if failed tough.

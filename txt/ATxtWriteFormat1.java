@@ -597,16 +597,16 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 	{
 		switch(token_state)
 		{
-			case NOTHING:	
-			case BEGIN_SIGNAL:
-			case END_SIGNAL:	
-			case AFTER_TOKEN:
+			case NOTHING:		//no problem
+			case BEGIN_SIGNAL:	//no problem
+			case END_SIGNAL:	//no problem
+			case AFTER_TOKEN:	//no problem
+			case PLAIN_TOKEN:	//potential problem, but may happen in un-terminated blocks
+			case SINGLE_CHAR_TOKEN: //--//--
+			case BLOCK_CHAR_TOKEN:	//--//--
 						break;
-			case PLAIN_TOKEN:						
 			case STRING_TOKEN:
-			case SINGLE_CHAR_TOKEN:
-			case BLOCK_CHAR_TOKEN:	
-						//both are assertion errors.
+						//this is for sure a problem
 						throw new AssertionError("token_state="+token_state);						
 			case STRING_TOKEN_STITCHING:
 						//in this case we need to actually close it.
@@ -640,11 +640,23 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 	*/
 	@Override protected void flushSignalPayloadBeginNext()throws IOException
 	{
+		//Now there is a bit of conflict here:
+		//	the super.flushSignalPayloadBeginNext()
+		//	calls terminatePendingBlockOperation()
+		//	which may be responsible for terminating block operation
+		//	which may include some block closing code generation.
+		//	
+		//	If however block contains string tokens, then those tokens 
+		//	must be closed first.
+		//
+		//	If block however keeps un-opened plain token there is 
+		//	
 		flushStringTokenStitching();
+		//Now terminate block
+		super.flushSignalPayloadBeginNext();
 		//Inject eventual token 		
 		if(token_state==TTokenState.AFTER_TOKEN)
 							outTokenToBeginSignalSeparator();
-		super.flushSignalPayloadBeginNext();
 		token_state = TTokenState.BEGIN_SIGNAL;
 	}; 
 	/** Overriden to call link {@link #flushStringTokenStitching} 
@@ -653,11 +665,12 @@ public abstract class ATxtWriteFormat1 extends ATxtWriteFormat0
 	*/
 	@Override protected void flushSignalPayloadEndNext()throws IOException
 	{
+		//See notes in flushSignalPayloadBeginNext
 		flushStringTokenStitching();
+		super.flushSignalPayloadEndNext();
 		//Inject eventual token 		
 		if(token_state==TTokenState.AFTER_TOKEN)
-							outTokenToEndSignalSeparator();
-		super.flushSignalPayloadEndNext();
+							outTokenToEndSignalSeparator();		
 		token_state = TTokenState.END_SIGNAL;
 	}; 
 };

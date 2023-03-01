@@ -11,7 +11,7 @@ import org.junit.Assert;
 */
 public class Test_ATxtWriteFormat0 extends ATest
 {
-			private static final class DUT extends ATxtWriteFormat0
+			private static class DUT extends ATxtWriteFormat0
 			{
 						private StringWriter out;
 					DUT(StringWriter out)
@@ -66,6 +66,22 @@ public class Test_ATxtWriteFormat0 extends ATest
 					@Override protected void flushImpl()throws IOException{};
 					@Override protected void closeImpl()throws IOException{};
 					@Override protected void openImpl()throws IOException{};
+			};
+			
+			
+			/** Variant with packed byte stream */
+			private static final class PackedByteStreamDUT extends DUT
+			{
+						
+					PackedByteStreamDUT(StringWriter out)
+					{
+						super(out);
+					};
+					@Override protected void startByteBlock()throws IOException{ startPackedByteBlock(); }
+					@Override protected void endByteBlock()throws IOException{ endPackedByteBlock(); }
+					@Override protected String formatByteBlock(byte v){ throw new AssertionError(); }
+					@Override protected void writeByteBlockImpl(byte v)throws IOException{ writePackedByteBlockImpl(v); }
+
 			};
 			
 	@Test public void testSingleBoolean()throws IOException
@@ -237,6 +253,64 @@ public class Test_ATxtWriteFormat0 extends ATest
 			System.out.println(o);
 			
 			Assert.assertTrue("<1><2>".equals(o));
+			
+		leave();
+	};
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	/* -------------------------------------------------------------------------------------------
+	
+	
+			Packed byte-stream
+	
+	
+	----------------------------------------------------------------------------------------------*/
+	@Test public void testPackedByteStreamStandAlone()throws IOException
+	{
+		enter();
+			StringWriter ow = new StringWriter();
+			PackedByteStreamDUT w = new PackedByteStreamDUT(ow);
+		
+			w.open();
+			w.writeByteBlock(new byte [] {(byte)0x4c,(byte)0xA1});
+			w.writeByteBlock((byte)0x00);
+			w.writeByteBlock((byte)0x11);
+			w.close();
+			
+			String o = ow.toString();
+			
+			System.out.println(o);
+			
+			Assert.assertTrue("<4CA10011>".equals(o));
+			
+		leave();
+	};
+	
+	@Test public void testPackedByteStreamAfterItem()throws IOException
+	{
+		enter();
+			StringWriter ow = new StringWriter();
+			PackedByteStreamDUT w = new PackedByteStreamDUT(ow);
+		
+			w.open();
+			w.writeInt(3);
+			w.writeByteBlock(new byte [] {(byte)0x4c,(byte)0xA1});
+			w.writeByteBlock((byte)0x00);
+			w.writeByteBlock((byte)0x11);
+			w.close();
+			
+			String o = ow.toString();
+			
+			System.out.println(o);
+			
+			Assert.assertTrue("<3><4CA10011>".equals(o));
 			
 		leave();
 	};

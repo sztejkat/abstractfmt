@@ -925,6 +925,24 @@ public class Test_CPlainTxtReadFormat extends ATest
 		
 		leave();
 	};
+	
+	@Test public void testStringsStitchingAfterEmptyNameWithEmptyToken()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"* string,,_marlene;"));
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		String v = d.readString(100);
+		System.out.println(v);
+		Assert.assertTrue("string_marlene".equals(v));
+		Assert.assertTrue(null==d.next());
+		
+		leave();
+	};
+	
 	@Test public void testStringsStitchingAfterEmptyNameWithSeparator()throws IOException
 	{
 		enter();

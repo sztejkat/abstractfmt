@@ -318,9 +318,9 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
 		@throws AssertionError if <code>buffer.length</code> with <code>offset</code> and <code>length</code>
 							   would result in {@link ArrayIndexOutOfBoundsException} exception;
 		@throws IOException if low level i/o fails. 
-		@throws ESequenceEof accordingly, to indiate a problem.
+		@throws ESequenceEof accordingly, to indicate a problem.
 		@throws EEof of specific subclass depending on <a href="#TEMPEOF">eof handling type</a>
-			if could not read <u>any data</u> due to low level end of file.
+						if could not read <u>any data</u> due to low level end of file.
                         <br>
                         Notice this may not always hold since some implementations will always guard
                         blocks in such way, that even without explict {@link IStructWriteFormat#end} signal the
@@ -343,7 +343,7 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
 		/** Behaves as below code dictates:
 		<pre>
 			final boolean b = new boolean[1];
-			final int r = readBoolean(b);
+			final int r = readBooleanBlock(b);
 			if (r==-1) throw new ENoMoreData();
 			return b[0];
 		</pre>

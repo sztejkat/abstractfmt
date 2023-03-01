@@ -156,6 +156,7 @@ public class CPlainTxtWriteFormat extends ATxtWriteFormat1
 	{
 		return v ? "t" : "f";
 	};
+	
 	/* ***************************************************************
 	
 				state-less support for escaped string tokens

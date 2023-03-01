@@ -73,6 +73,12 @@ import java.io.IOException;
 	There is no indicator which can be used to tell apart an element of sequence from
 	a single primitive element. 
 	
+	<h2>Packed byte sequences</h2>
+	If {@link #readPackedByteBlockImpl} will be used to enable packed byte sequence
+	(by some overrides) the byte sequence is one or more large hex tokens
+	with two digits per byte. Adjacent tokens are stitched exactly the same way
+	as if characters will be processed and empty tokens do represent zero value byte.
+	
 */
 public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 {
@@ -193,12 +199,13 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	/* ------------------------------------------------------------------------
 			Tokens collection mode.
 	------------------------------------------------------------------------*/
-	/** Collects character from an elementary toke using "character mode".
+	/** Collects character from an elementary token using "character mode".
 	<p>
 	This method collects next token character till eof or signal or boundary is returned
 	from {@link #tokenIn}. 
 	<p>
-	If boundary is found it returns 0 what is consistent with {@link #collectToken}
+	If boundary indicating empty token is found this method
+	returns 0 what is consistent with {@link #collectToken}
 	behavior. Otherwise returns a character.
 	<p>
 	If the next character is boundary it is consumed, what is consistent with
@@ -207,41 +214,85 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	@return collected character 0...0xFFFF or -1 if found end-of-file
 	@throws ENoMoreData if found a signal
 	@throws IOException if failed at low level.
+	
+	@see #collectTokenCharacter
 	*/
 	protected final int collectCharacter()throws IOException
 	{
 		if (TRACE) TOUT.println("collectCharacter ENTER");
-		for(;;)
+		int c = collectTokenCharacter();
+		switch(c)
 		{
-			int c= tokenIn();
-			assert( (c>=TOKEN_BOUNDARY) && (c<=0xFFFF) );
-			switch(c)
-			{
-					case TOKEN_SIGNAL: throw new ENoMoreData();
-					case TOKEN_EOF: return -1;
-					case TOKEN_BOUNDARY:
-							//Now we have a token boundary. collectCharacter always
-							//consumes tailing token boundary and collectToken also does it.
-							//So if we are finding it we have an empty token at hand.
-							if (TRACE) TOUT.println("collectCharacter=0 due to empty token, LEAVE");
-							return (char)0;
-					default:
-							//We got a character. This character may be followed by 
-							//token boundary. If we leave it like that the collectToken will
-							//assume, that the token is empty, while it is a fully legitimately
-							//consumed token.
-							//This will also nicely stitch tokens.
-							switch(hasUnreadToken())
-							{
-								case TOKEN_BOUNDARY:
-										if (TRACE) TOUT.println("collectCharacter, consuming trailing boundary");
-										tokenIn(); break;
-							};
-							if (TRACE) TOUT.println("collectCharacter=\'"+(char)c+"\" LEAVE");
-							return c;
-			}
+			case -3: return 0; //boundary
+			case -2: throw new ENoMoreData();
+		};
+		return c;
+	};	
+	
+	
+	
+	
+	/** Collects character from an elementary token using "character mode".
+	<p>
+	This method collects next token character till eof or signal or boundary is returned
+	from {@link #tokenIn}. 
+	<p>
+	If boundary indicating empty token is found this method
+	returns special signal. Otherwise returns a character.
+	<p>
+	If the next character is boundary it is consumed, what is consistent with
+	{@link #collectToken} behaviour.
+	
+	@return collected character 0...0xFFFF or:
+			<ul>
+				<li>-1 if found end-of-file;</li>
+				<li>-2 if found signal;</li>
+				<li>-3 if found boundary;</li>
+			</ul>
+	@throws ENoMoreData if found a signal
+	@throws IOException if failed at low level.
+	
+	@see #collectCharacter
+	*/
+	protected final int collectTokenCharacter()throws IOException
+	{
+		if (TRACE) TOUT.println("collectTokenCharacter ENTER");
+		int c= tokenIn();
+		assert( (c>=TOKEN_BOUNDARY) && (c<=0xFFFF) );
+		switch(c)
+		{
+				case TOKEN_SIGNAL:
+						if (TRACE) TOUT.println("collectTokenCharacter=-2 due to signal, LEAVE");
+						return -2;
+				case TOKEN_EOF: 
+						if (TRACE) TOUT.println("collectTokenCharacter=-1 due to eof, LEAVE");
+						return -1;
+				case TOKEN_BOUNDARY:
+						//Now we have a token boundary. collectCharacter always
+						//consumes tailing token boundary and collectToken also does it.
+						//So if we are finding it we have an empty token at hand.
+						if (TRACE) TOUT.println("collectTokenCharacter=-3 due to empty token, LEAVE");
+						return -3;
+				default:
+						//We got a character. This character may be followed by 
+						//token boundary. If we leave it like that the collectToken will
+						//assume, that the token is empty, while it is a fully legitimately
+						//consumed token.
+						//This will also nicely stitch tokens.
+						switch(hasUnreadToken())
+						{
+							case TOKEN_BOUNDARY:
+									if (TRACE) TOUT.println("collectTokenCharacter, consuming trailing boundary");
+									tokenIn(); break;
+						};
+						if (TRACE) TOUT.println("collectTokenCharacter=\'"+(char)c+"\" LEAVE");
+						return c;
 		}
 	};	
+	
+	
+	
+	
 	/** Collects elementary token into a shared {@link #token_completion_buffer}
 	and returns it. Collection is done using "token mode".
 	<p>
@@ -300,6 +351,8 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 		if (TRACE) TOUT.println("collectToken()=\""+token_completion_buffer+"\" LEAVE");
 		return token_completion_buffer;
 	};
+	
+	
 	
 	
 	
@@ -639,7 +692,11 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 		return readBooleanImpl();
 	};
 		
-	
+	/**
+	{@inheritDoc}
+	<p>
+	See also {@link #readPackedByteBlockImpl()}
+	*/
 	@SuppressWarnings("fallthrough")
 	@Override protected int readByteBlockImpl(byte [] buffer, int offset, int length)throws IOException
 	{
@@ -674,7 +731,11 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 		if (TRACE) TOUT.println("readByteBlockImpl()="+cnt+" read all, LEAVE");
 		return cnt;
 	};
-		
+	/**
+	{@inheritDoc}
+	<p>
+	See also {@link #readPackedByteBlockImpl()}
+	*/	
 	@Override protected byte readByteBlockImpl()throws IOException,ENoMoreData
 	{	
 		return readByteImpl();
@@ -992,8 +1053,136 @@ public abstract class ATxtReadFormat0 extends ARegisteringStructReadFormat
 	};
 	@Override protected char readStringImpl()throws IOException,ENoMoreData
 	{
-		return readCharImpl();
+		//We need to proces it more carefully because we need to skip over
+		//the empty token to be symetric with array processing mode.
+		loop:
+		for(;;)
+		{
+			int c = collectTokenCharacter();
+			assert((c>=-3)&&(c<=0xFFFF));
+			switch(c)
+			{
+		    	case -3: continue loop;			//boundary indicating empty token.
+		    	case -2: throw new ENoMoreData();
+		    	case -1: throw new EUnexpectedEof();
+		    };
+		    return (char)c;
+		}
 	};	
 	
+	/* ---------------------------------------------------------------------------
 	
+				
+				Packed byte blocks support
+	
+	
+	---------------------------------------------------------------------------*/
+	/** A support for packed byte blocks.
+	<p>
+	To enable packed byte blocks support do:
+	<pre>
+		&#64;Override protected byte readByteBlockImpl()throws IOException{ return readPackedByteBlockImpl(); };
+		&#64;Override protected int readByteBlockImpl(byte [] buffer, int offset, int length)throws IOException
+		{ 
+			return readPackedByteBlockImpl(buffer,offset,length);
+		}
+	</pre>
+	@see ATxtWriteFormat0#startPackedByteBlock
+	@return as {@link #readByteBlockImpl}
+	@throws IOException --//--
+	@throws ENoMoreData --//--
+	**/
+	protected byte readPackedByteBlockImpl()throws IOException,ENoMoreData
+	{	
+		if (TRACE) TOUT.println("readPackedByteBlockImpl ENTER");
+		loop:
+		for(;;)
+		{
+			int digit = collectTokenCharacter();
+			switch(digit)
+			{
+				case -3: continue loop;	//to consistently stitch as in array version
+				case -2: throw new ENoMoreData();
+				case -1: throw new EUnexpectedEof();
+			};
+			int v = hex2nibble((char)digit);
+			digit = collectTokenCharacter();
+			switch(digit)
+			{
+				case -3: throw new EBrokenFormat("Token finished inside second hex digit of packed byte");
+				case -2: throw new ESignalCrossed("Signal in the middle of packed byte in byte block");
+				case -1: throw new EUnexpectedEof();
+			};
+			if (TRACE) TOUT.println("readPackedByteBlockImpl LEAVE");
+			return (byte)((v<<4)|hex2nibble((char)digit));
+		}
+	};
+	
+	/**
+	A packed variant of {@link #readByteBlockImpl(byte[],int,int)}.
+	@param buffer --//--
+	@param offset --//--
+	@param length --//--
+	@return --//--
+	@throws IOException and alike like non packed variant.
+	@see #readPackedByteBlockImpl()
+	*/
+	@SuppressWarnings("fallthrough")
+	protected int readPackedByteBlockImpl(byte [] buffer, int offset, int length)throws IOException
+	{
+		if (TRACE) TOUT.println("readPackedByteBlockImpl(offset="+offset+",length="+length+") ENTER");
+		//The block and elementary processing differs at signal and eof treatment
+		int cnt = 0;
+		loop:
+		while(length-->0)
+		{
+			switch(hasUnreadToken())
+			{
+				case TOKEN_EOF:
+							if (TRACE) TOUT.println("readPackedByteBlockImpl, eof");
+							if (cnt==0) throw new EUnexpectedEof();
+							if (TRACE) TOUT.println("readPackedByteBlockImpl()="+cnt+", eof, LEAVE");
+							return cnt;
+				case TOKEN_SIGNAL:
+							{
+							final int r = cnt==0 ? -1 : cnt;
+							if (TRACE) TOUT.println("readPackedByteBlockImpl()="+r+", signal LEAVE");
+							return r;
+							}
+				case TOKEN_BOUNDARY:
+							//boundary will be undestood as an "empty" and parsed correctly
+							//fallthrough.
+							if (TRACE) TOUT.println("readPackedByteBlockImpl(), stitching tokens");
+							tokenIn();	//consume it.
+							continue;
+				default:
+							//Now we can ask packed variant because special cases are processed above.
+							buffer[offset++] = readPackedByteBlockImpl();	//now it must not throw since we handled it.
+							cnt++;
+			}
+		};
+		if (TRACE) TOUT.println("readPackedByteBlockImpl()="+cnt+" read all, LEAVE");
+		return cnt;
+	};
+	
+	/** Digit to nibble conversin
+	@param digit hex digit, upper or lower case.
+	@return value of it, 0....F */
+	private static int hex2nibble(char digit)throws EBrokenFormat
+	{
+		if ((digit>='0')&&(digit<='9'))
+		{
+			return digit - '0';
+		}else
+		if ((digit>='A')&&(digit<='F'))
+		{
+			return digit - 'A'+10;
+		}else
+		if ((digit>='a')&&(digit<='f'))
+		{
+			return digit - 'a'+10;
+		}else
+			throw new EBrokenFormat("Not a hex digit '"+digit+"\'");
+		
+	}
 };		
