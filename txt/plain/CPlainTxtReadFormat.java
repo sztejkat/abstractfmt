@@ -854,7 +854,7 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat
 						/** A maximum length of continous sequence of white spaces
 						which is allowed. Longer sequence of whitespaces will cause
 						parser to throw {@link EFormatBoundaryExceeded}. -1 to disable limit. */
-						private int continous_whitespace_limit;
+						private int continous_whitespace_limit = -1;
 						/** A maximum length of comment line
 						which is allowed. Longer sequence of white-spaces will cause
 						parser to throw {@link EFormatBoundaryExceeded}. -1 to disable limit.
@@ -862,7 +862,7 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat
 						Note: Total length of comment block is not tested by this 
 						limit.
 						*/
-						private int continous_comment_limit;
+						private int continous_comment_limit = -1;
 					
 	/* *********************************************************
 	
@@ -908,7 +908,7 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat
 	
 	*********************************************************************/
 	/** Gives what was set in constructor {@link CPlainTxtReadFormat#CPlainTxtReadFormat(Reader,int,int)}
-	or by {@link #setContinousWhitespaceLimit}
+	or by {@link #setContinousWhitespaceLimit}. Default is: disabled.
 	@return limit, -1 if disabled */
 	public final int getContinousWhitespaceLimit(){ return continous_whitespace_limit; }
 	/** Sets safety limit. Must be set before {@link #open}.
@@ -926,7 +926,7 @@ public class CPlainTxtReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat
 	
 	
 	/** Gives what was set in constructor {@link CPlainTxtReadFormat#CPlainTxtReadFormat(Reader,int,int)}
-	or by {@link #setContinousWhitespaceLimit}
+	or by {@link #setContinousWhitespaceLimit}. Default is: disabled.
 	@return limit, -1 if disabled */
 	public final int getContinousCommentLimit(){ return continous_comment_limit; }
 	/** Sets safety limit. Must be set before {@link #open}.
