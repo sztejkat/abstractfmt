@@ -916,4 +916,172 @@ public class Test_AXMLReadFormat0 extends ATest
 			d.close();
 		leave();
 	};
+	
+	
+	@Test public void attributeLimit_noLimit()throws IOException
+	{
+		enter();
+			DUT d = new DUT(
+			"<?xml ?><sztejkat.abstractfmt.txt.xml>\n"+
+			"<actor somefuckinglongattribute=\"superattribute\"                     ></actor>"+
+			"</sztejkat.abstractfmt.txt.xml>"
+						);
+			d.open();
+			Assert.assertTrue("actor".equals(d.next()));
+			Assert.assertTrue(null==d.next());
+			d.close();
+		leave();
+	};
+	@Test public void attributeLimit_limitApplied()throws IOException
+	{
+		enter();
+			DUT d = new DUT(
+			"<?xml ?><sztejkat.abstractfmt.txt.xml>\n"+
+			"<actor somefuckinglongattribute=\"superattribute\"                     ></actor>"+
+			"</sztejkat.abstractfmt.txt.xml>"
+						);
+			d.setTotalAttributesLimit(50);
+			d.open();
+			try{
+				Assert.assertTrue("actor".equals(d.next()));
+				//Note: Even tough from XML point of view attributes do belong to begin signal
+				//the actuall process of skipping them is delayed till next operation.
+				Assert.assertTrue(null==d.next());
+				Assert.fail();
+			}catch(EFormatBoundaryExceeded ex){ System.out.println(ex); };
+			d.close();
+		leave();
+	};
+	@Test public void attributeLimit_noLimitApplied_NotAccumulating()throws IOException
+	{
+		enter();
+			DUT d = new DUT(
+			"<?xml ?><sztejkat.abstractfmt.txt.xml>\n"+
+			"<actor somefuckinglongattribute=\"\" ></actor>"+
+			"<actor somefuckinglongattribute=\"\" ></actor>"+
+			"<actor somefuckinglongattribute=\"\" ></actor>"+
+			"</sztejkat.abstractfmt.txt.xml>"
+						);
+			d.setTotalAttributesLimit(50);
+			d.open();
+			Assert.assertTrue("actor".equals(d.next()));
+			Assert.assertTrue(null==d.next());
+			Assert.assertTrue("actor".equals(d.next()));
+			Assert.assertTrue(null==d.next());
+			Assert.assertTrue("actor".equals(d.next()));
+			Assert.assertTrue(null==d.next());
+			d.close();
+		leave();
+	};
+	
+	
+	
+	
+	
+	
+	
+	@Test public void whitespaceLimit_noLimit()throws IOException
+	{
+		enter();
+			DUT d = new DUT(
+			"<?xml ?>                                          <sztejkat.abstractfmt.txt.xml>\n"+
+			"<actor></actor>"+
+			"</sztejkat.abstractfmt.txt.xml>"
+						);
+			d.open();
+			Assert.assertTrue("actor".equals(d.next()));
+			Assert.assertTrue(null==d.next());
+			d.close();
+		leave();
+	};
+	@Test public void whitespaceLimit_limitApplied()throws IOException
+	{
+		enter();
+			DUT d = new DUT(
+			"<?xml ?><sztejkat.abstractfmt.txt.xml>\n"+
+			"                                                  <actor></actor>"+
+			"</sztejkat.abstractfmt.txt.xml>"
+						);
+			d.setContinousWhitespaceLimit(30);
+			d.open();
+			try{
+				Assert.assertTrue("actor".equals(d.next()));
+				Assert.fail();
+			}catch(EFormatBoundaryExceeded ex){ System.out.println(ex); };
+			d.close();
+		leave();
+	};
+	@Test public void whitespaceLimit_limitAppliedNotAccumulating()throws IOException
+	{
+		enter();
+			DUT d = new DUT(
+			"<?xml ?>                  <sztejkat.abstractfmt.txt.xml>                   \n"+
+			"<actor>                   </actor>                  "+
+			"</sztejkat.abstractfmt.txt.xml>"
+						);
+			d.setContinousWhitespaceLimit(30);
+			d.open();
+			Assert.assertTrue("actor".equals(d.next()));
+			Assert.assertTrue(null==d.next());
+			d.close();
+		leave();
+	};
+	
+	
+	
+	
+	
+	
+	
+	@Test public void commentLimit_noLimit()throws IOException
+	{
+		enter();
+		/*
+			Note: we do test comment block only, because the same implementation
+			is responsible for handling all skippable blocks.
+		*/
+			DUT d = new DUT(
+			"<?xml ?><sztejkat.abstractfmt.txt.xml>\n"+
+			"<actor><!-- comment comment comment comment comment comment comment --></actor>"+
+			"</sztejkat.abstractfmt.txt.xml>"
+						);
+			d.open();
+			Assert.assertTrue("actor".equals(d.next()));
+			Assert.assertTrue(null==d.next());
+			d.close();
+		leave();
+	};
+	@Test public void commentLimit_limitApplied()throws IOException
+	{
+		enter();
+			DUT d = new DUT(
+			"<?xml ?><sztejkat.abstractfmt.txt.xml>\n"+
+			"<actor><!-- comment comment comment comment comment comment comment --></actor>"+
+			"</sztejkat.abstractfmt.txt.xml>"
+						);
+			d.setSkippableBlockLimit(30);
+			d.open();
+			try{
+				Assert.assertTrue("actor".equals(d.next()));
+				d.next();
+				Assert.fail();
+			}catch(EFormatBoundaryExceeded ex){ System.out.println(ex); };
+			d.close();
+		leave();
+	};
+	@Test public void commentLimit_limitAppliedNotAccumulating()throws IOException
+	{
+		enter();
+			DUT d = new DUT(
+			"<?xml ?><sztejkat.abstractfmt.txt.xml>\n"+
+			"<actor><!-- comment comment --><!--- comment comment comment --><!-- comment comment --></actor>"+
+			"</sztejkat.abstractfmt.txt.xml>"
+						);
+			d.setSkippableBlockLimit(30);
+			d.open();
+			Assert.assertTrue("actor".equals(d.next()));
+			Assert.assertTrue(null==d.next());
+			d.close();
+		leave();
+	};
 };      

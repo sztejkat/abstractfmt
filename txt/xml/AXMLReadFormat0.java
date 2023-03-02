@@ -2,6 +2,7 @@ package sztejkat.abstractfmt.txt.xml;
 import sztejkat.abstractfmt.txt.*;
 import sztejkat.abstractfmt.EBrokenFormat;
 import sztejkat.abstractfmt.EUnexpectedEof;
+import sztejkat.abstractfmt.EFormatBoundaryExceeded;
 import sztejkat.abstractfmt.logging.SLogging;
 import sztejkat.abstractfmt.utils.CAdaptivePushBackReader;
 import java.io.IOException;
@@ -38,16 +39,23 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 					A state responsible for skipping a content of an element except it's name.
 					This class do allow &gt; and &lt; inside "" segments of text
 				*/
-				private static abstract class AAttributeSkipper extends AToNextStateHandler<ATxtReadFormat1.TIntermediateSyntax>
+				private abstract class AAttributeSkipper extends AToNextStateHandler<ATxtReadFormat1.TIntermediateSyntax>
 				{
 								/** Used to track quouted section which unfortunately
 								do allows for &gt; */
 								private boolean in_quoted_section;
+								/** Counts characters to apply {@link #total_attributes_limit} */
+								private int count;
 					protected AAttributeSkipper(ATxtReadFormatStateBase1<ATxtReadFormat1.TIntermediateSyntax> p)
 					{
 						super(p);
 					}
-					@Override public void onEnter(){ in_quoted_section = false; };
+					@Override public void onEnter()
+					{ 
+						super.onEnter();
+						in_quoted_section = false;
+						count = 0;
+					};					
 					@Override public void toNextChar()throws IOException
 					{
 						if (TRACE) TOUT.println("AAttributeSkipper("+getName()+").toNextChar() ENTER");
@@ -77,6 +85,11 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 								if (TRACE) TOUT.println("AAttributeSkipper("+getName()+").toNextChar(), no longer in quouted section LEAVE");
 							};
 						};
+						if (total_attributes_limit!=-1)
+						{
+							if (count == total_attributes_limit) throw new EFormatBoundaryExceeded("The total length of attrbiutes block in XML toke is more than "+total_attributes_limit);
+							count++;
+						};
 						if (TRACE) TOUT.println("AAttributeSkipper("+getName()+").toNextChar() LEAVE");
 					};
 				}
@@ -85,7 +98,7 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
         		/** A state handler which is responsible for skipping content of elements which
         		are not allowed to contain inner elements.
         		*/
-        		private static abstract class ASkippper extends AToNextSyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>
+        		private abstract class ASkippper extends AToNextSyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>
         		{	
         							/** A starting phrase */
         							private final String catch_phrase;
@@ -93,6 +106,8 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
         							private final String stop_phrase;
         							/** A char category to assign to skipped content, null to not assign anything */
         							protected final ATxtReadFormat1.TIntermediateSyntax emit_content_as;
+        							/** Counts characters to apply {@link #skippable_block_size_limit} */
+        							private int count;
         			/** Creates
         			@param catch_phrase a phrase which begins it, non null
         			@param stop_phrase a phrase which terminates it, non null
@@ -114,6 +129,11 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
         			/** Overriden to return null as those are overlapping states 
         			and return to previous state after processing. */
         			@Override protected IStateHandler getNextHandler(){ return null; }; 
+        			@Override public void onEnter()
+        			{
+        				super.onEnter();
+        				count =0;
+        			}
         			@Override public boolean tryEnter()throws IOException
 					{
 						if (TRACE) TOUT.println("ASkippper("+getName()+").tryEnter() ENTER");
@@ -141,6 +161,11 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
         					return;
         				}else
         				{
+        					if (skippable_block_size_limit!=-1)
+							{
+								if (count == skippable_block_size_limit) throw new EFormatBoundaryExceeded("A skipped block size (comment,doctype,cdata etc.) is larger than "+skippable_block_size_limit);
+								count++;
+							};
         					//now we need to un-read everything from collected buffer except first 
         					//character to have a flow-in iterative lookup.
         					final int n = collected.length();
@@ -158,7 +183,7 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
         		are allowed to contain nested elements. This class will do a "dumb" skipping assuming
         		always that elements do start with &lt; and ends with &gt; regardless of context. 
         		*/
-        		private static abstract class ANestedSkippper extends ASkippper
+        		private abstract class ANestedSkippper extends ASkippper
         		{
         						/** A nested &lt; count. The XML is in generic not 
         						allowing nested comment and exct, but, unfortunately
@@ -1027,6 +1052,13 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 				and returning to previous state. */
 				private final ISyntaxHandler WHITESPACE = new ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>(this)
 				{
+								/** Counts characters to apply {@link #continous_whitespace_limit} */
+								private int count;
+					@Override public void onActivated()
+					{ 
+						count = 0;
+						super.onActivated();
+					};
 					@Override public String getName(){ return "WHITESPACE"; };
 					@Override public boolean tryEnter()throws IOException
 					{
@@ -1062,6 +1094,12 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 						char c = (char)r;
 						if (classifier.isXMLSpace(r))
 						{
+							if (continous_whitespace_limit!=-1)
+							{
+								if (count == continous_whitespace_limit) 
+									throw new EFormatBoundaryExceeded("The continous number of whitespaces is larger than "+continous_whitespace_limit);
+								count++;
+							};
 							queueNextChar(c, ATxtReadFormat1.TIntermediateSyntax.SEPARATOR);
 						}else
 						{
@@ -1325,6 +1363,19 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 				/** Products of matching {@link #entities_escapes} */
 				private final char [] entities_escapes_chars;
 				
+				/** A maximum length of continous sequence of white spaces
+				which is allowed. Longer sequence of whitespaces will cause
+				parser to throw {@link EFormatBoundaryExceeded}. -1 to disable limit. */
+				private int continous_whitespace_limit=-1;
+				/** A maximum length of all character (atrributes and separators) which do 
+				appear after the XML token name. Longer text will cause
+				parser to throw {@link EFormatBoundaryExceeded}. -1 to disable limit. */
+				private int total_attributes_limit=-1;
+				/** A maximum size of blocks which are skipped and ignored like
+				comments, processing instructions, doctype declaration and CDATA
+				sections.  Longer text will cause
+				parser to throw {@link EFormatBoundaryExceeded}. -1 to disable limit. */
+				private int skippable_block_size_limit = -1;
 				
 	/* ****************************************************************
 	
@@ -1377,6 +1428,60 @@ public abstract class AXMLReadFormat0 extends ATxtReadFormatStateBase1<ATxtReadF
 		this.entities_escapes =entities_escapes;
 		this.entities_escapes_chars =entities_escapes_chars;
 	};	
+	/* ****************************************************************
+	
+			Safety limits.
+	
+	
+	*****************************************************************/
+	/** Gives what was set y {@link #setContinousWhitespaceLimit}. Default is: disabled.
+	@return limit, -1 if disabled */
+	public final int getContinousWhitespaceLimit(){ return continous_whitespace_limit; }
+	/** Sets safety limit. Must be set before {@link #open}.
+	@param continous_whitespace_limit maximum length of continous sequence of white spaces
+			which is allowed. Longer sequence of whitespaces will cause
+			parser to throw {@link EFormatBoundaryExceeded}. -1 to disable limit. 
+	*/
+	public void setContinousWhitespaceLimit(int continous_whitespace_limit)
+	{
+		assert(continous_whitespace_limit>=-1);
+		assert(!isOpen());
+		this.continous_whitespace_limit = continous_whitespace_limit;
+	}
+	
+	
+	
+	/** Gives what was set y {@link #setTotalAttributesLimit}. Default is: disabled.
+	@return limit, -1 if disabled */
+	public final int getTotalAttributesLimit(){ return total_attributes_limit; }
+	/** Sets safety limit. Must be set before {@link #open}.
+	@param total_attributes_limit maximum length of all character (atrributes and separators) which do 
+		appear after the XML token name. Longer text will cause
+		parser to throw {@link EFormatBoundaryExceeded}. -1 to disable limit.
+	*/
+	public void setTotalAttributesLimit(int total_attributes_limit)
+	{
+		assert(total_attributes_limit>=-1);
+		assert(!isOpen());
+		this.total_attributes_limit = total_attributes_limit;
+	}
+	
+	/** Gives what was set y {@link #setSkippableBlockLimit}. Default is: disabled.
+	@return limit, -1 if disabled */
+	public final int getSkippableBlockLimit(){ return skippable_block_size_limit; }
+	/** Sets safety limit. Must be set before {@link #open}.
+	@param skippable_block_size_limit maximum size of blocks which are skipped and ignored like
+		comments, processing instructions, doctype declaration and CDATA
+		sections.  Longer text will cause parser to throw {@link EFormatBoundaryExceeded}. -1 to disable limit.
+		<p>
+		Note: Adjacent blocks are not tested by this limit.
+	*/
+	public void setSkippableBlockLimit(int skippable_block_size_limit)
+	{
+		assert(skippable_block_size_limit>=-1);
+		assert(!isOpen());
+		this.skippable_block_size_limit = skippable_block_size_limit;
+	}
 	/* ***************************************************************
 	
 			Tunable services
