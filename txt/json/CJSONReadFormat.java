@@ -31,10 +31,12 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 				
 				-----------------------------------------------------------------------*/
 				/** A whitespace skipper handler */
-				private static class CWhitespace extends ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>
+				private class CWhitespace extends ASyntaxHandler<ATxtReadFormat1.TIntermediateSyntax>
 				{
 								/** What to report first character as  */
 								protected final ATxtReadFormat1.TIntermediateSyntax report_first_as;
+								/** Counts characters to apply {@link #continous_whitespace_limit} */
+								private int count;
 						protected CWhitespace(ATxtReadFormatStateBase1<ATxtReadFormat1.TIntermediateSyntax> parser,
 												 ATxtReadFormat1.TIntermediateSyntax report_first_as
 												)
@@ -42,6 +44,11 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 							super(parser);
 							assert(report_first_as!=null);
 							this.report_first_as=report_first_as;
+						};
+						@Override public void onActivated()
+						{
+							super.onActivated();
+							count = 0;
 						};
 						@Override public boolean tryEnter()throws IOException
 						{
@@ -85,6 +92,12 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 								if (TRACE) TOUT.println(getName()+".toNextChar() end of whitespaces, LEAVE");
 							}else
 							{
+								if (continous_whitespace_limit!=-1)
+								{
+									if (count == continous_whitespace_limit) 
+										throw new EFormatBoundaryExceeded("The continous number of whitespaces is larger than "+continous_whitespace_limit);
+									count++;
+								};
 								queueNextChar(c,TIntermediateSyntax.VOID);
 								if (TRACE) TOUT.println(getName()+".toNextChar(), consumed LEAVE");
 							}
@@ -937,6 +950,13 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 				};
 				
 				
+				
+				/** A maximum length of continous sequence of white spaces
+				which is allowed. Longer sequence of whitespaces will cause
+				parser to throw {@link EFormatBoundaryExceeded}. -1 to disable limit. */
+				private int continous_whitespace_limit=-1;
+				
+				
 	/* ************************************************************************
 	
 	
@@ -952,6 +972,28 @@ public class CJSONReadFormat extends ATxtReadFormatStateBase1<ATxtReadFormat1.TI
 				64//int token_size_limit
 		   );
 	};
+	
+	/* ****************************************************************
+	
+			Safety limits.
+	
+	
+	*****************************************************************/
+	/** Gives what was set y {@link #setContinousWhitespaceLimit}. Default is: disabled.
+	@return limit, -1 if disabled */
+	public final int getContinousWhitespaceLimit(){ return continous_whitespace_limit; }
+	/** Sets safety limit. Must be set before {@link #open}.
+	@param continous_whitespace_limit maximum length of continous sequence of white spaces
+			which is allowed. Longer sequence of whitespaces will cause
+			parser to throw {@link EFormatBoundaryExceeded}. -1 to disable limit. 
+	*/
+	public void setContinousWhitespaceLimit(int continous_whitespace_limit)
+	{
+		assert(continous_whitespace_limit>=-1);
+		assert(!isOpen());
+		this.continous_whitespace_limit = continous_whitespace_limit;
+	}
+	
 	/* ************************************************************************
 	
 				JSON syntax support

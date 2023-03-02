@@ -435,4 +435,106 @@ public class Test_CJSONReadFormat extends ATest
 			d.close();
 		leave();
 	};
+	
+	
+	
+	
+	
+	
+	
+	
+	@Test public void whitespaceLimit_noLimit()throws IOException
+	{
+		enter();
+			CJSONReadFormat d = new CJSONReadFormat(
+							new StringReader("[                         {\"struct\":[]}]")
+							);
+			
+			d.open();
+			
+			Assert.assertTrue("struct".equals(d.next()));
+			Assert.assertTrue(null==d.next());
+			
+			d.close();
+		leave();
+	};
+	
+	@Test public void whitespaceLimit_limitApplied()throws IOException
+	{
+		enter();
+			CJSONReadFormat d = new CJSONReadFormat(
+							new StringReader("[                         {\"struct\":[]}]")
+							);
+			d.setContinousWhitespaceLimit(10);
+			d.open();
+			try{
+				Assert.assertTrue("struct".equals(d.next()));
+				Assert.fail();
+				Assert.assertTrue(null==d.next());
+			}catch(EFormatBoundaryExceeded ex){ System.out.println(ex); };
+			d.close();
+		leave();
+	};
+	
+	@Test public void whitespaceLimit_limitApplied2()throws IOException
+	{
+		enter();
+			CJSONReadFormat d = new CJSONReadFormat(
+							new StringReader("[{                         \"struct\":[]}]")
+							);
+			d.setContinousWhitespaceLimit(10);
+			d.open();
+			try{
+				Assert.assertTrue("struct".equals(d.next()));
+				Assert.fail();
+				Assert.assertTrue(null==d.next());
+			}catch(EFormatBoundaryExceeded ex){ System.out.println(ex); };
+			d.close();
+		leave();
+	};
+	@Test public void whitespaceLimit_limitApplied3()throws IOException
+	{
+		enter();
+			CJSONReadFormat d = new CJSONReadFormat(
+							new StringReader("[{\"struct\"                         :[]}]")
+							);
+			d.setContinousWhitespaceLimit(10);
+			d.open();
+			try{
+				Assert.assertTrue("struct".equals(d.next()));
+				Assert.assertTrue(null==d.next());
+				Assert.fail();
+			}catch(EFormatBoundaryExceeded ex){ System.out.println(ex); };
+			d.close();
+		leave();
+	};
+	@Test public void whitespaceLimit_limitApplied4()throws IOException
+	{
+		enter();
+			CJSONReadFormat d = new CJSONReadFormat(
+							new StringReader("[{\"struct\":                         []}]")
+							);
+			d.setContinousWhitespaceLimit(10);
+			d.open();
+			try{
+				Assert.assertTrue("struct".equals(d.next()));
+				Assert.assertTrue(null==d.next());
+				Assert.fail();
+			}catch(EFormatBoundaryExceeded ex){ System.out.println(ex); };
+			d.close();
+		leave();
+	};
+	@Test public void whitespaceLimit_limitAppliedNonAccumulating()throws IOException
+	{
+		enter();
+			CJSONReadFormat d = new CJSONReadFormat(
+							new StringReader("       [       {      \"struct\"        :        [        ]     }     ]")
+							);
+			d.setContinousWhitespaceLimit(10);
+			d.open();
+			Assert.assertTrue("struct".equals(d.next()));
+			Assert.assertTrue(null==d.next());
+			d.close();
+		leave();
+	};
 };
