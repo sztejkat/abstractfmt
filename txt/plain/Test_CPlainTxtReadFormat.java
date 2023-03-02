@@ -1023,4 +1023,96 @@ public class Test_CPlainTxtReadFormat extends ATest
 		}catch(EBrokenFormat ex){System.out.println(ex); };
 		leave();
 	};
+	
+	
+	
+	@Test public void testWhitespaceLimit_Nolimit()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"*                                   ;"));
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		Assert.assertTrue(null==d.next());
+		d.close();
+		leave();
+	};
+	@Test public void testWhitespaceLimit_Appliedlimit()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"*                                   ;"));
+		d.setContinousWhitespaceLimit(20);
+		d.open();
+		Assert.assertTrue("".equals(d.next()));		
+		try{
+			d.next();
+			Assert.fail();
+		}catch(EFormatBoundaryExceeded ex){System.out.println(ex); };
+		leave();
+	};
+	
+	@Test public void testWhitespaceLimit_AppliedlimitInterrupted()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"*                3          ,         3                ;"));
+		d.setContinousWhitespaceLimit(20);
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		Assert.assertTrue(null==d.next());
+		leave();
+	};
+	
+	
+	@Test public void testCommentLimit_Nolimit()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"*\n#                                  \n;"));
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		Assert.assertTrue(null==d.next());		
+		d.close();
+		leave();
+	};
+	@Test public void testCommentLimit_limitApplied()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"*\n#                                  \n;"));
+		d.setContinousCommentLimit(20);
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		try{
+			d.next();
+			Assert.fail();
+		}catch(EFormatBoundaryExceeded ex){System.out.println(ex); };
+		d.close();
+		leave();
+	};
+	@Test public void testCommentLimit_limitNotCommentBlocktest()throws IOException
+	{
+		enter();
+		CPlainTxtReadFormat d=
+				new CPlainTxtReadFormat(
+						new StringReader(
+							"*\n#             \n#              \n#                   \n;"));
+		d.setContinousCommentLimit(20);
+		d.open();
+		Assert.assertTrue("".equals(d.next()));
+		Assert.assertTrue(null==d.next());		
+		d.close();
+		leave();
+	};
 };
