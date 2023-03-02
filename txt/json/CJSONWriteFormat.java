@@ -80,6 +80,7 @@ public class CJSONWriteFormat extends ATxtWriteFormat1
 		assert(out!=null);
 		this.out = out;
 	};		
+	
 	/* *****************************************************************
 	
 				ATxtWriteFormat1/ATxtWriteFormat0
@@ -372,6 +373,17 @@ public class CJSONWriteFormat extends ATxtWriteFormat1
 	{
 		throw new AssertionError();
 	}
+	/** Used by {@link #begiDirectImpl} to open json object of given name 
+	@param name name of object to open.
+	@throws IOException if failed */
+	protected void writeOpenJSONObject(String name)throws IOException
+	{
+		out.write("{\"");
+				escaper.reset();
+				escaper.append(name);
+				escaper.flush();
+		out.write("\":");
+	};
 	/** Redirects to state engine since additional actions may be necessary */
 	@Override protected void beginDirectImpl(String name)throws IOException
 	{
@@ -399,11 +411,7 @@ public class CJSONWriteFormat extends ATxtWriteFormat1
 						//we are first after array is opened and nothing is to be deduced.
 						break;			
 		};
-		out.write("{\"");
-				escaper.reset();
-				escaper.append(name);
-				escaper.flush();
-		out.write("\":");
+		writeOpenJSONObject(name);
 		state = TState.DEDUCE_SINGLE_ELEMENT;
 		if (TRACE) TOUT.println("beginDirectImpl() LEAVE");
 	};
@@ -413,6 +421,12 @@ public class CJSONWriteFormat extends ATxtWriteFormat1
 			AStructWriteFormatBase0
 	
 	******************************************************************/
+	/** Used by {@link #endImpl} to close JSON object
+	@throws IOException if failed */
+	protected void writeCloseJSONObject()throws IOException
+	{
+		out.write("}");
+	}
 	@Override protected void endImpl()throws IOException
 	{
 		if (TRACE) TOUT.println("endImpl() state="+state+" ENTER");
@@ -420,21 +434,21 @@ public class CJSONWriteFormat extends ATxtWriteFormat1
 		{
 			case DEDUCE_SINGLE_ELEMENT:
 						//Nothing written, it is an empty struct
-						out.write("[]}");
+						out.write("[]");
 						break;
 			case DEDUCING_PLAIN_SINGLE_ELEMENT:
 			case DEDUCING_CHAR_SINGLE_ELEMENT:
 						//single element structure
 						flushFirstElement();
-						out.write("}");
 						break;
 			case NEXT_ELEMENT:						
 			case FIRST_ELEMENT:
 						//we are first after array is opened and nothing is to be deduced
 						//or next in array mode.
-						out.write("]}");
+						out.write("]");
 						break;			
 		};
+		writeCloseJSONObject();
 		state = TState.NEXT_ELEMENT; 
 		if (TRACE) TOUT.println("endImpl() LEAVE");
 	};
