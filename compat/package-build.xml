@@ -17,22 +17,9 @@
 	*									*
 	*************************************************************************
 -->
-	<property name="package" value="sztejkat.abstractfmt"/>
+	<property name="package" value="sztejkat.abstractfmt.compat"/>
 	
-	<property name="lib_packages" value="sztejkat.abstractfmt,
-										sztejkat.abstractfmt.logging,
-										sztejkat.abstractfmt.test,
-                                        sztejkat.abstractfmt.obj,
-                                        sztejkat.abstractfmt.utils,
-                                        sztejkat.abstractfmt.bin,
-                                        sztejkat.abstractfmt.bin.chunk,
-                                        sztejkat.abstractfmt.bin.escape,
-                                        sztejkat.abstractfmt.compat,
-                                        sztejkat.abstractfmt.txt,
-                                        sztejkat.abstractfmt.txt.xml,
-                                        sztejkat.abstractfmt.txt.json,
-                                        sztejkat.abstractfmt.txt.plain
-                                        "/>
+	<property name="lib_packages" value=""/>
 
 	<!-- deduces source root from package name -->
 	<propertyregex property="source_root"
