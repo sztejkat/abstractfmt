@@ -99,6 +99,9 @@ public abstract class AXMLWriteFormat0 extends ATxtWriteFormat1
 			Services related to XML format.
 	
 	******************************************************************/
+	/** Retrives XML version info from XML classifier
+	@return see {@link IXMLCharClassifier#getXMLVersion} */
+	protected final String getXMLVersion(){ return classifier.getXMLVersion(); };
 	/** A method which will be called by {@link #openImpl} to
 	write an XML file prolog and open the master element enclosing the
 	content of the file.
@@ -110,14 +113,21 @@ public abstract class AXMLWriteFormat0 extends ATxtWriteFormat1
 	</pre>
 	@see #outXML(String)
 	@throws IOException if {@link #outXML} failed.
+	@see #writeXMLDecl
 	*/
 	protected void writeXMLProlog()throws IOException
 	{
-		outXML("<?xml version=\""+classifier.getXMLVersion()+"\" encoding=\"UTF-8\" ?>");
+		writeXMLDecl();
 		outXML('<');
 		outXML(getXMLBodyElement());
 		outXML('>');
 	};
+	/** Called by {@link #writeXMLProlog} to write XML declaration 
+	@throws IOException if failed */
+	protected void writeXMLDecl()throws IOException
+	{
+		outXML("<?xml version=\""+getXMLVersion()+"\" encoding=\"UTF-8\" ?>");
+	}
 	/** Returns the name of XML body element opened by {@link AXMLWriteFormat0#writeXMLProlog}.
 	@return XML body element, default is "sztejkat.abstractfmt.txt.xml"*/
 	protected String getXMLBodyElement(){ return "sztejkat.abstractfmt.txt.xml"; }

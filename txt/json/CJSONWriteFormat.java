@@ -373,7 +373,7 @@ public class CJSONWriteFormat extends ATxtWriteFormat1
 	{
 		throw new AssertionError();
 	}
-	/** Used by {@link #begiDirectImpl} to open json object of given name 
+	/** Used by {@link #beginDirectImpl} to open json object of given name 
 	@param name name of object to open.
 	@throws IOException if failed */
 	protected void writeOpenJSONObject(String name)throws IOException

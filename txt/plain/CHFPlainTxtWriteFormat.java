@@ -10,8 +10,7 @@ import java.io.Writer;
 		<li>breaks line before each begin signal and outputs up to set limit of
 		white-space leading characters to reflect the current recursion depth;</li>
 		<li>alike for separator between end signal and token;</li>
-	<p>
-	The
+	</ul>
 */
 public class CHFPlainTxtWriteFormat extends CPlainTxtWriteFormat
 {

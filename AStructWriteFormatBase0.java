@@ -36,7 +36,6 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 					sequence into a one operation */
 					private boolean pending_end;
 					
-					
 		/* ***********************************************************************
 		
 				Services required from subclasses
@@ -62,21 +61,37 @@ public abstract class AStructWriteFormatBase0 extends AStructFormatBase implemen
 		/** Should write "end" signal, exactly as {@link #end} specifies.
 		Will be called after <code>end-begin</code> optimization decides, that
 		single "end" signal should be written.
+		<p>
 		Will be called in sane conditions.
+		<p>
+		Note: The actuall action of calling this operation may be delayed
+		till nearest <code>begin(...)</code> or <code>close</code>
+		operation and the {@link #getCurrentStructRecursionDepth}
+		at the moment of call will NOT reflect the actual recursion depth 
+		for the end signal itself. 
 		@throws IOException as {@link #begin}
 		 */
 		protected abstract void endImpl()throws IOException;
 		/** Should write single "begin" signal as {@link #begin} do specify.
+		<p>
 		Will be called in sane conditions.
+		<p>
+		The {@link #getCurrentStructRecursionDepth} represents the depth
+		after the "begin" signal thous is never 0.
 		@param name a sane, validated name.
 		@throws IOException as {@link #begin}
 		*/
 		protected abstract void beginImpl(String name)throws IOException;
 		/** Will be invoked when the composed, compact "end-begin" signal
 		should be written.
+		<p>
 		Will be called in sane conditions.
+		<p>
 		By default implemented by calling {@link #endImpl} and {@link #beginImpl}
 		so there is no composed signal ever written and no optimization in effect.
+		<p>
+		The {@link #getCurrentStructRecursionDepth} represents the depth
+		after the "begin" signal thous is never 0.
 		@param name a sane, validated name.
 		@throws IOException as {@link #begin}/{@link #end}
 		*/

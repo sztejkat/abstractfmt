@@ -1,4 +1,4 @@
-package sztejkat.abstractfmt.txt.plain;
+package sztejkat.abstractfmt.txt.xml;
 import sztejkat.abstractfmt.test.ATest;
 import java.io.IOException;
 import java.io.Writer;
@@ -7,18 +7,18 @@ import org.junit.Test;
 import org.junit.Assert;
 
 /**
-	A manual test for {@link CHFPlainTxtWriteFormat} validating
+	A manual test for {@link CHFXMLWriteFormat} validating
 	produced content against well known and crafted code.
-	Validates what is not tested in {@link CPlainTxtWriteFormat}
+	Validates what is not tested in {@link CXMLWriteFormat}
 	
 */
-public class Test_CHFPlainTxtWriteFormat extends ATest
+public class Test_CHFXMLWriteFormat extends ATest
 {
 	@Test public void testIndentationFlat()throws IOException
 	{
 			enter();
 			StringWriter ow = new StringWriter();
-			CHFPlainTxtWriteFormat w = new CHFPlainTxtWriteFormat(ow,4);
+			CHFXMLWriteFormat w = new CHFXMLWriteFormat(ow,4);
 		
 			
 			w.open();
@@ -34,7 +34,16 @@ public class Test_CHFPlainTxtWriteFormat extends ATest
 			System.out.println(o);
 			
 				
-			final String expected="\n*A;\n*B;\n*C;";
+			final String expected=
+"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"+
+"<sztejkat.abstractfmt.txt.xml>\n\n"+
+"<A>\n"+
+"</A>\n"+
+"<B>\n"+
+"</B>\n"+
+"<C>\n"+
+"</C>\n"+
+"</sztejkat.abstractfmt.txt.xml>";
 			System.out.println(expected);
 			Assert.assertTrue(expected.equals(o));
 		
@@ -44,7 +53,7 @@ public class Test_CHFPlainTxtWriteFormat extends ATest
 	{
 			enter();
 			StringWriter ow = new StringWriter();
-			CHFPlainTxtWriteFormat w = new CHFPlainTxtWriteFormat(ow,4);
+			CHFXMLWriteFormat w = new CHFXMLWriteFormat(ow,4);
 		
 			
 			w.open();
@@ -64,11 +73,20 @@ public class Test_CHFPlainTxtWriteFormat extends ATest
 			System.out.println(o);
 			
 				
-			final String expected="\n*A"+
-								  "\n *B"+
-								  "\n  *C"+
-								  "\n   *D;;;"+
-								  "\n *Z;;";
+			final String expected=
+"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"+
+"<sztejkat.abstractfmt.txt.xml>\n\n"+
+"<A>\n"+
+" <B>\n"+
+"  <C>\n"+
+"   <D>\n"+
+"   </D>\n"+
+"  </C>\n"+
+" </B>\n"+
+" <Z>\n"+
+" </Z>\n"+
+"</A>\n"+
+"</sztejkat.abstractfmt.txt.xml>";			
 			System.out.println(expected);
 			Assert.assertTrue(expected.equals(o));
 		
@@ -79,7 +97,7 @@ public class Test_CHFPlainTxtWriteFormat extends ATest
 	{
 			enter();
 			StringWriter ow = new StringWriter();
-			CHFPlainTxtWriteFormat w = new CHFPlainTxtWriteFormat(ow,4);
+			CHFXMLWriteFormat w = new CHFXMLWriteFormat(ow,4);
 		
 			
 			w.open();
@@ -95,8 +113,14 @@ public class Test_CHFPlainTxtWriteFormat extends ATest
 			System.out.println(o);
 			
 				
-			final String expected="\n*A 3,2,1;"+
-			                      "\n*A 3,2,1;";
+			final String expected=
+"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"+
+"<sztejkat.abstractfmt.txt.xml>\n\n"+
+"<A>3,2,1\n"+
+"</A>\n"+
+"<A>3,2,1\n"+
+"</A>\n"+
+"</sztejkat.abstractfmt.txt.xml>";		
 			System.out.println(expected);
 			Assert.assertTrue(expected.equals(o));
 		
@@ -107,7 +131,7 @@ public class Test_CHFPlainTxtWriteFormat extends ATest
 	{
 			enter();
 			StringWriter ow = new StringWriter();
-			CHFPlainTxtWriteFormat w = new CHFPlainTxtWriteFormat(ow,4);
+			CHFXMLWriteFormat w = new CHFXMLWriteFormat(ow,4);
 		
 			
 			w.open();
@@ -126,10 +150,17 @@ public class Test_CHFPlainTxtWriteFormat extends ATest
 			System.out.println(o);
 			
 				
-			final String expected="\n*Z"+
-								  "\n *A 3,2,1"+
-								  "\n  *B 3,2,1;"+
-								  "\n  3,2,1;;";
+			final String expected=
+"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"+
+"<sztejkat.abstractfmt.txt.xml>\n\n"+
+"<Z>\n"+
+" <A>3,2,1\n"+
+"  <B>3,2,1\n"+
+"  </B>\n"+
+"  3,2,1\n"+
+" </A>\n"+
+"</Z>\n"+
+"</sztejkat.abstractfmt.txt.xml>";				
 			System.out.println(expected);
 			Assert.assertTrue(expected.equals(o));
 		
@@ -140,7 +171,7 @@ public class Test_CHFPlainTxtWriteFormat extends ATest
 	{
 			enter();
 			StringWriter ow = new StringWriter();
-			CHFPlainTxtWriteFormat w = new CHFPlainTxtWriteFormat(ow,2);
+			CHFXMLWriteFormat w = new CHFXMLWriteFormat(ow,2);
 		
 			
 			w.open();
@@ -160,11 +191,20 @@ public class Test_CHFPlainTxtWriteFormat extends ATest
 			System.out.println(o);
 			
 				
-			final String expected="\n*A"+
-								  "\n *B"+
-								  "\n  *C"+
-								  "\n  *D;;;"+ //D is not indented any more.
-								  "\n *Z;;";
+			final String expected=
+"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"+
+"<sztejkat.abstractfmt.txt.xml>\n\n"+
+"<A>\n"+
+" <B>\n"+
+"  <C>\n"+
+"  <D>\n"+
+"  </D>\n"+
+"  </C>\n"+
+" </B>\n"+
+" <Z>\n"+
+" </Z>\n"+
+"</A>\n"+
+"</sztejkat.abstractfmt.txt.xml>";				
 			System.out.println(expected);
 			Assert.assertTrue(expected.equals(o));
 		
