@@ -13,3 +13,6 @@ TEST-sztejkat.abstractfmt.*.txt
 # Test case dump folders
 **/*-temp/**
 /*-temp/**
+
+
+.githubtoken
