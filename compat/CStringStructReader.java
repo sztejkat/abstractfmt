@@ -1,6 +1,7 @@
 package sztejkat.abstractfmt.compat;
 import sztejkat.abstractfmt.IStructReadFormat;
 import sztejkat.abstractfmt.EClosed;
+import sztejkat.abstractfmt.EEof;
 import java.io.Reader;
 import java.io.IOException;
 
@@ -13,12 +14,8 @@ import java.io.IOException;
 	<u>NOT thread safe</u> and is using a common 
 	shared buffer to implement some operations.
 */
-public class CStringStructReader extends Reader
+public class CStringStructReader extends AStructReader
 {
-			/** Underlying format */
-			private final IStructReadFormat in;
-			/** State tracker */
-			private boolean is_closed;
 			/** buffer for implementing {@link #read} */
 			private StringBuilder temp = new StringBuilder(1);
 			
@@ -37,46 +34,28 @@ public class CStringStructReader extends Reader
 	*/
 	public CStringStructReader(IStructReadFormat in)
 	{
-		assert(in!=null);
-		this.in = in;
+		super(in);
 	};
-	/*  *****************************************************
-		
-			Support services
-		
-		
-	******************************************************/
-	/** State tracker.
-	@return true if {@link #close} was run at least once */
-	protected final boolean isClosed(){ return is_closed; };
-	/** State validator
-	@throws EClosed if {@link #isClosed} gives true. */
-	protected final void validateNotClosed()throws EClosed
-	{
-		if (is_closed) throw new EClosed();
-	};
+	
 	/*  *****************************************************
 		
 			Reader
 		
 			
 	******************************************************/
-	/**
-		Makes this object unusable. Doesn't do 
-		anything with an underlying format.
-	*/
-	@Override public void close()throws IOException
-	{
-		is_closed = true;
-	};
+	
 	/** Always false. */
 	@Override public final boolean markSupported(){ return false; };
 	
 	@Override public int read()throws IOException
 	{
          validateNotClosed();
-         int r = in.readString(temp,1);
-         return r==-1 ? -1 : temp.charAt(0);
+         temp.setLength(0);
+		 try{
+			int r = in.readString(temp,1);
+			return r==-1 ? -1 : temp.charAt(0);
+		 }catch(EEof ex){ return -1; } //since Reader should return -1 while we are allowed to
+									   		//throw on physical eof when we read zero data.
     };
 	@Override public int read(char[] buffer,
                          	 int offset,
@@ -90,7 +69,8 @@ public class CStringStructReader extends Reader
 		int readen = 0;
 		while(length-->0)
 		{
-			int r= read();
+			int r;
+			r = read();
 			if (r==-1) break;
 			buffer[offset++]=(char)r;
 			readen++;

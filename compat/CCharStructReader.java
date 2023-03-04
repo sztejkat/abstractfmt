@@ -1,6 +1,7 @@
 package sztejkat.abstractfmt.compat;
 import sztejkat.abstractfmt.IStructReadFormat;
 import sztejkat.abstractfmt.EClosed;
+import sztejkat.abstractfmt.EEof;
 import java.io.Reader;
 import java.io.IOException;
 
@@ -13,12 +14,9 @@ import java.io.IOException;
 	<u>NOT thread safe</u> and is using a common 
 	shared buffer to implement some operations.
 */
-public class CCharStructReader extends Reader
+public class CCharStructReader extends AStructReader
 {
-			/** Underlying format */
-			private final IStructReadFormat in;
-			/** State tracker */
-			private boolean is_closed;
+			
 			/** buffer for implementing {@link #read} */
 			private char [] temp = new char[1];
 			
@@ -37,53 +35,37 @@ public class CCharStructReader extends Reader
 	*/
 	public CCharStructReader(IStructReadFormat in)
 	{
-		assert(in!=null);
-		this.in = in;
+		super(in);
 	};
-	/*  *****************************************************
-		
-			Support services
-		
-		
-	******************************************************/
-	/** State tracker.
-	@return true if {@link #close} was run at least once */
-	protected final boolean isClosed(){ return is_closed; };
-	/** State validator
-	@throws EClosed if {@link #isClosed} gives true. */
-	protected final void validateNotClosed()throws EClosed
-	{
-		if (is_closed) throw new EClosed();
-	};
+	
 	/*  *****************************************************
 		
 			Reader
 		
 			
 	******************************************************/
-	/**
-		Makes this object unusable. Doesn't do 
-		anything with an underlying format.
-	*/
-	@Override public void close()throws IOException
-	{
-		is_closed = true;
-	};
+	
 	/** Always false. */
 	@Override public final boolean markSupported(){ return false; };
 	
 	@Override public int read()throws IOException
 	{
          validateNotClosed();
-         int r = in.readCharBlock(temp,0,1);
-         return r==-1 ? -1 : temp[0];
+         try{
+         	 int r = in.readCharBlock(temp,0,1);
+         	 return r==-1 ? -1 : temp[0];
+         }catch(EEof ex){ return -1; } //since Reader should return -1 while we are allowed to
+									   //throw on physical eof when we read zero data.
     };
 	@Override public int read(char[] buffer,
                          	 int offset,
                          	 int length)throws IOException
     {
     	validateNotClosed();
-		return in.readCharBlock(buffer,offset,length);
+    	try{
+			return in.readCharBlock(buffer,offset,length);
+		}catch(EEof ex){ return -1; } //since Reader should return -1 while we are allowed to
+									   //throw on physical eof when we read zero data.
     };
     /** Always false */
     @Override public boolean ready()throws IOException{ return false; };

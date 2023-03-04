@@ -1,6 +1,7 @@
 package sztejkat.abstractfmt.compat;
 import sztejkat.abstractfmt.IStructReadFormat;
 import sztejkat.abstractfmt.EClosed;
+import sztejkat.abstractfmt.EEof;
 import java.io.InputStream;
 import java.io.IOException;
 
@@ -16,7 +17,7 @@ import java.io.IOException;
 public class CStructInputStream extends InputStream
 {
 			/** Underlying format */
-			private final IStructReadFormat in;
+			protected final IStructReadFormat in;
 			/** State tracker */
 			private boolean is_closed;
 			/** buffer for implementing {@link #read} */
@@ -55,6 +56,14 @@ public class CStructInputStream extends InputStream
 	{
 		if (is_closed) throw new EClosed();
 	};
+	/** Invoked at first call to {@link #close}.
+	Subclasses may override it to perform additional
+	operations during close, like for an example
+	skipping remaning data.
+	@throws IOException if failed
+	@see #in
+	*/
+	protected void closeImpl()throws IOException{};
 	/*  *****************************************************
 		
 			InputStream
@@ -84,12 +93,17 @@ public class CStructInputStream extends InputStream
 		return 0;
 	};
 	/**
-		Makes this object unusable. Doesn't do 
-		anything with an underlying format.
+		Makes this object unusable.  
 	*/
 	@Override public void close()throws IOException
 	{
-		is_closed = true;
+		//Intentionally: no flushing!
+		if (!is_closed)
+		{
+			try{
+				closeImpl();
+			}finally{ is_closed = true; }
+		};
 	};
 	/** Always false. */
 	@Override public final boolean markSupported(){ return false; };
@@ -102,7 +116,10 @@ public class CStructInputStream extends InputStream
          						throws IOException
 	{
 		validateNotClosed();
-		return in.readByteBlock(b,off,len);
+		try{
+			return in.readByteBlock(b,off,len);
+		}catch(EEof ex){ return -1; } //since InputStream should return -1 while we are allowed to
+									   //throw on physical eof when we read zero data.
 	};
 	/** Redirects to {@link IStructReadFormat#readByteBlock(byte [],int,int)}
 	using a shared one byte long temporary array.
@@ -110,7 +127,10 @@ public class CStructInputStream extends InputStream
 	@Override public int read()throws IOException
 	{
 		validateNotClosed();
-		int r = in.readByteBlock(temp);
-		return r==-1  ? -1 : (temp[0] & 0xFF);
+		try{
+			int r = in.readByteBlock(temp);
+			return r==-1  ? -1 : (temp[0] & 0xFF);
+		}catch(EEof ex){ return -1; } //since InputStream should return -1 while we are allowed to
+									   //throw on physical eof when we read zero data.
 	};
 }

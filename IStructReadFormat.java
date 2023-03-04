@@ -94,7 +94,8 @@ import java.io.IOException;
 	an exception then it is an un-recoverable error and {@link EUnexpectedEof}
 	should be used.
 	<p>
-	If end-of-file is expected but non-recoverable the {@link EEof} should be thrown.
+	If end-of-file is expected but non-recoverable the {@link EEof} 
+	or {@link EUnexpectedEof} should be thrown.
 	<p>
 	If however the subclass decides that some end-of-file exceptions are 
 	recoverable it should throw {@link ETemporaryEndOfFile}. This contract does

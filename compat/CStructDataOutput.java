@@ -27,7 +27,7 @@ import java.io.UTFDataFormatException;
 public class CStructDataOutput implements DataOutput,Closeable,Flushable
 {
 			/** Where to write */
-			private final IStructWriteFormat out;
+			protected final IStructWriteFormat out;
 			/** State tracker */
 			private boolean is_closed;
 	/*  *****************************************************
@@ -40,9 +40,7 @@ public class CStructDataOutput implements DataOutput,Closeable,Flushable
 		Creates
 		@param out a struct format, non null.
 			   All operations will be directed 
-			   apropriate operations of {@link IStructWriteFormat}.
-			   Closing the stream will write the 
-			   "end signal" to a stream.
+			   apropriate operations of {@link IStructWriteFormat}
 	*/
 	public CStructDataOutput(IStructWriteFormat out)
 	{
@@ -64,6 +62,14 @@ public class CStructDataOutput implements DataOutput,Closeable,Flushable
 	{
 		if (is_closed) throw new EClosed();
 	};
+	/** Invoked at first call to {@link #close}.
+	Subclasses may override it to perform additional
+	operations during close, like for an example
+	writing "end" signal
+	@throws IOException if failed
+	@see #out
+	*/
+	protected void closeImpl()throws IOException{};
 	/* *****************************************************
 	
 			Closeable
@@ -71,16 +77,16 @@ public class CStructDataOutput implements DataOutput,Closeable,Flushable
 	
 	******************************************************/
 	/**
-		Makes this object unusable. If called for 
-		a first time writes "end signal". 
+		Makes this object unusable.  
 	*/
 	@Override public void close()throws IOException
 	{
+		//Intentionally: no flushing!
 		if (!is_closed)
 		{
-			//Intentionally: no flushing!
-			is_closed = true;
-			out.end();
+			try{
+				closeImpl();
+			}finally{ is_closed = true; }
 		};
 	};
 	/* *****************************************************
@@ -129,7 +135,7 @@ public class CStructDataOutput implements DataOutput,Closeable,Flushable
 		assert(length>=0):"length="+length;
 		assert(buffer.length>=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 		validateNotClosed();
-		while(--length>0)
+		while(length-->0)
 		{
 			out.writeByte(buffer[offset++]);
 		};
@@ -218,7 +224,7 @@ public class CStructDataOutput implements DataOutput,Closeable,Flushable
 	@Override public void writeUTF(String s)throws IOException
 	{
 		assert(s!=null);
-		if (s.length()>65536) throw new UTFDataFormatException("String too long");
+		if (s.length()>65536) throw new UTFDataFormatException("String longer than 64k characters");
 		validateNotClosed();
 		out.begin("");
 		out.writeString(s);

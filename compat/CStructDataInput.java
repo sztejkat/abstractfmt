@@ -2,6 +2,7 @@ package sztejkat.abstractfmt.compat;
 import sztejkat.abstractfmt.IStructReadFormat;
 import sztejkat.abstractfmt.EClosed;
 import sztejkat.abstractfmt.ENoMoreData;
+import sztejkat.abstractfmt.EBrokenFormat;
 import sztejkat.abstractfmt.EEof;
 import java.io.DataInput;
 import java.io.DataInput;
@@ -29,7 +30,7 @@ import java.io.EOFException;
 public class CStructDataInput implements DataInput,Closeable
 {
 			/** Where to write */
-			private final IStructReadFormat in;
+			protected final IStructReadFormat in;
 			/** State tracker */
 			private boolean is_closed;
 	/*  *****************************************************
@@ -64,6 +65,14 @@ public class CStructDataInput implements DataInput,Closeable
 	{
 		if (is_closed) throw new EClosed();
 	};
+	/** Invoked at first call to {@link #close}.
+	Subclasses may override it to perform additional
+	operations during close, like for an example
+	skipping remaning data.
+	@throws IOException if failed
+	@see #in
+	*/
+	protected void closeImpl()throws IOException{};
 	/* *****************************************************
 	
 			Closeable
@@ -71,11 +80,17 @@ public class CStructDataInput implements DataInput,Closeable
 	
 	******************************************************/
 	/**
-		Makes this object unusable. 
+		Makes this object unusable.  
 	*/
 	@Override public void close()throws IOException
 	{
-		is_closed = true;
+		//Intentionally: no flushing!
+		if (!is_closed)
+		{
+			try{
+				closeImpl();
+			}finally{ is_closed = true; }
+		};
 	};
 	/* *****************************************************
 	
@@ -90,7 +105,7 @@ public class CStructDataInput implements DataInput,Closeable
 		readFully(b,0,b.length);
 	}
 	/** Calls {@link IStructReadFormat#readByte}
-	@throws EOFException if reached signal boundary with {@link ENoMoreData} as a cause.
+	@throws EOFException if reached signal boundary, {@link EEof} if reached real end of file.
 	@throws EEof if reached true end of file. */
 	@Override public void readFully(byte[] buffer,int offset,int length)throws IOException
 	{
@@ -99,15 +114,17 @@ public class CStructDataInput implements DataInput,Closeable
 		assert(length>=0):"length="+length;
 		assert(buffer.length>=offset+length):"Out of buffer operation: buffer.length="+buffer.length+", offset="+offset+", length="+length;
 		validateNotClosed();
-		while(--length>0)
+		while(length-->0)
 		{
 			try{
 				byte b = in.readByte();
-			}catch(ENoMoreData ex){ throw new EEof(ex); };
+				buffer[offset++]=b;
+			}catch(ENoMoreData ex){ throw new EOFException(); };
+			
 		};
 	}
 	/** Calls {@link IStructReadFormat#readByte} specified number of
-	times or until the signal boundary is reached.
+	times or until end of file or the signal boundary is reached.
 	<p>
 	Note: An attempt to skip anything else than data written with
 	{@link java.io.DataOutput#write(byte[],int,int)} may result in fatal exceptions.
@@ -120,123 +137,123 @@ public class CStructDataInput implements DataInput,Closeable
 		{
 			try{
 				in.readByte();
-			}catch(ENoMoreData ex){ return skipped; }
+			}catch(ENoMoreData | EEof ex){ return skipped; }
 			skipped++;
 		};
 		return skipped;
 	};
 	/** Calls {@link IStructReadFormat#readBoolean} 
-	@throws EOFException if reached signal boundary with {@link ENoMoreData} as a cause.
+	@throws EOFException if reached signal boundary, {@link EEof} if reached real end of file.
 	*/
 	@Override public boolean readBoolean()throws IOException
 	{
 		validateNotClosed();
 		try{
 				return in.readBoolean();
-		}catch(ENoMoreData ex){ throw new EEof(ex); }
+		}catch(ENoMoreData ex){ throw new EOFException(); }
 	};
 	/** Calls {@link IStructReadFormat#readByte} 
-	@throws EOFException if reached signal boundary with {@link ENoMoreData} as a cause.
+	@throws EOFException if reached signal boundary, {@link EEof} if reached real end of file.
 	*/
 	@Override public byte readByte()throws IOException
 	{
 		validateNotClosed();
 		try{
 				return in.readByte();
-		}catch(ENoMoreData ex){ throw new EEof(ex); }
+		}catch(ENoMoreData ex){ throw new EOFException(); }
 	};
 	/** Calls {@link IStructReadFormat#readByte} 
-	@throws EOFException if reached signal boundary with {@link ENoMoreData} as a cause.
+	@throws EOFException if reached signal boundary, {@link EEof} if reached real end of file.
 	*/
 	@Override public int readUnsignedByte()throws IOException
 	{
 		validateNotClosed();
 		try{
 				return in.readByte() & 0xFF;
-		}catch(ENoMoreData ex){ throw new EEof(ex); }
+		}catch(ENoMoreData ex){ throw new EOFException(); }
 	};
 	
 	
 	/** Calls {@link IStructReadFormat#readShort} 
-	@throws EOFException if reached signal boundary with {@link ENoMoreData} as a cause.
+	@throws EOFException if reached signal boundary, {@link EEof} if reached real end of file.
 	*/
 	@Override public short readShort()throws IOException
 	{
 		validateNotClosed();
 		try{
 				return in.readShort();
-		}catch(ENoMoreData ex){ throw new EEof(ex); }
+		}catch(ENoMoreData ex){ throw new EOFException(); }
 	};
 	/** Calls {@link IStructReadFormat#readShort} 
-	@throws EOFException if reached signal boundary with {@link ENoMoreData} as a cause.
+	@throws EOFException if reached signal boundary, {@link EEof} if reached real end of file.
 	*/
 	@Override public int readUnsignedShort()throws IOException
 	{
 		validateNotClosed();
 		try{
-				return in.readShort() & 0xFF;
-		}catch(ENoMoreData ex){ throw new EEof(ex); }
+				return in.readShort() & 0xFFFF;
+		}catch(ENoMoreData ex){ throw new EOFException(); }
 	};
 	
 	
 	/** Calls {@link IStructReadFormat#readChar} 
-	@throws EOFException if reached signal boundary with {@link ENoMoreData} as a cause.
+	@throws EOFException if reached signal boundary, {@link EEof} if reached real end of file.
 	*/
 	@Override public char readChar()throws IOException
 	{
 		validateNotClosed();
 		try{
 				return in.readChar();
-		}catch(ENoMoreData ex){ throw new EEof(ex); }
+		}catch(ENoMoreData ex){ throw new EOFException(); }
 	};
 	
 	
 	/** Calls {@link IStructReadFormat#readInt} 
-	@throws EOFException if reached signal boundary with {@link ENoMoreData} as a cause.
+	@throws EOFException if reached signal boundary, {@link EEof} if reached real end of file.
 	*/
 	@Override public int readInt()throws IOException
 	{
 		validateNotClosed();
 		try{
 				return in.readInt();
-		}catch(ENoMoreData ex){ throw new EEof(ex); }
+		}catch(ENoMoreData ex){ throw new EOFException(); }
 	};
 	
 	
 	/** Calls {@link IStructReadFormat#readLong} 
-	@throws EOFException if reached signal boundary with {@link ENoMoreData} as a cause.
+	@throws EOFException if reached signal boundary, {@link EEof} if reached real end of file.
 	*/
 	@Override public long readLong()throws IOException
 	{
 		validateNotClosed();
 		try{
 				return in.readLong();
-		}catch(ENoMoreData ex){ throw new EEof(ex); }
+		}catch(ENoMoreData ex){ throw new EOFException(); }
 	};
 	
 	
 	/** Calls {@link IStructReadFormat#readFloat} 
-	@throws EOFException if reached signal boundary with {@link ENoMoreData} as a cause.
+	@throws EOFException if reached signal boundary, {@link EEof} if reached real end of file.
 	*/
 	@Override public float readFloat()throws IOException
 	{
 		validateNotClosed();
 		try{
 				return in.readFloat();
-		}catch(ENoMoreData ex){ throw new EEof(ex); }
+		}catch(ENoMoreData ex){ throw new EOFException(); }
 	};
 	
 	
 	
 	/** Calls {@link IStructReadFormat#readDouble} 
-	@throws EOFException if reached signal boundary with {@link ENoMoreData} as a cause.
+	@throws EOFException if reached signal boundary, {@link EEof} if reached real end of file.
 	*/
 	@Override public double readDouble()throws IOException
 	{
 		validateNotClosed();
 		try{
 				return in.readDouble();
-		}catch(ENoMoreData ex){ throw new EEof(ex); }
+		}catch(ENoMoreData ex){ throw new EOFException(); }
 	};
 	
 	/** Implemented over calls to {@link #readByte}
@@ -275,17 +292,17 @@ public class CStructDataInput implements DataInput,Closeable
 	}
 	/** Uses the string block operation {@link IStructReadFormat#readString(int)}
 	with 65536 limit to fetch data. Then skips touched "end" signal.
-	@throws IOException if not at anonymous "begin" signal, or string is longer than 64k or
+	@throws EBrokenFormat if not at anonymous "begin" signal, or string is longer than 64k or
 			next signal is not an "end" signal.
 	*/
 	@Override public String readUTF()throws IOException
 	{
 		validateNotClosed();
-		if (in.hasElementaryData()) throw new IOException("Can't do that, some non-utf data in stream at the cursor");
-		if (!"".equals(in.next()))throw new IOException("Some unexpected signal in stream");
+		if (in.hasElementaryData()) throw new EBrokenFormat("Can't do that, some non-utf data in stream at the cursor");
+		if (!"".equals(in.next()))throw new EBrokenFormat("Some unexpected signal in stream");
 		final String v = in.readString(65536);
-		if (in.hasElementaryData()) throw new IOException("String longer than 64k");
-		if (null!=in.next())throw new IOException("Expected end signal after utf, but begin found.");
+		if (in.hasElementaryData()) throw new EBrokenFormat("String longer than 64k");
+		if (null!=in.next())throw new EBrokenFormat("Expected end signal after utf, but begin found.");
 		return v;
 	};
 }

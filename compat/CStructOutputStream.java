@@ -14,8 +14,8 @@ import java.io.IOException;
 */
 public class CStructOutputStream extends OutputStream
 {
-			/** Where to write */
-			private final IStructWriteFormat out;
+			/** Where to write. */
+			protected final IStructWriteFormat out;
 			/** State tracker */
 			private boolean is_closed;
 	/*  *****************************************************
@@ -28,9 +28,7 @@ public class CStructOutputStream extends OutputStream
 		Creates
 		@param out a struct format, non null.
 			   All operations will be directed to
-			   {@link IStructWriteFormat#writeByteBlock}
-			   and closing the stream will write the 
-			   "end signal" to a stream.
+			   {@link IStructWriteFormat#writeByteBlock}.
 	*/
 	public CStructOutputStream(IStructWriteFormat out)
 	{
@@ -52,6 +50,14 @@ public class CStructOutputStream extends OutputStream
 	{
 		if (is_closed) throw new EClosed();
 	};
+	/** Invoked at first call to {@link #close}.
+	Subclasses may override it to perform additional
+	operations during close, like for an example
+	writing "end" signal
+	@throws IOException if failed
+	@see #out
+	*/
+	protected void closeImpl()throws IOException{};
 	/* *****************************************************
 	
 			OutputStream
@@ -59,16 +65,16 @@ public class CStructOutputStream extends OutputStream
 	
 	******************************************************/
 	/**
-		Makes this object unusable. If called for 
-		a first time writes "end signal". 
+		Makes this object unusable.  
 	*/
 	@Override public void close()throws IOException
 	{
+		//Intentionally: no flushing!
 		if (!is_closed)
 		{
-			//Intentionally: no flushing!
-			is_closed = true;
-			out.end();
+			try{
+				closeImpl();
+			}finally{ is_closed = true; }
 		};
 	};
 	@Override public void write(int b)throws IOException

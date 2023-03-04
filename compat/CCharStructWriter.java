@@ -19,7 +19,7 @@ public class CCharStructWriter extends Writer
 	*/
 	
 			/** Where to write */
-			private final IStructWriteFormat out;
+			protected final IStructWriteFormat out;
 			/** State tracker */
 			private boolean is_closed;
 	/* ********************************************************************
@@ -33,9 +33,7 @@ public class CCharStructWriter extends Writer
 		Creates. 
 		@param out a struct format, non null.
 			   All operations will be directed to
-			   {@link IStructWriteFormat#writeCharBlock}
-			   and closing the stream will write the 
-			   "end signal" to a stream.
+			   {@link IStructWriteFormat#writeCharBlock}.
 	*/
 	public CCharStructWriter(IStructWriteFormat out)
 	{
@@ -58,6 +56,14 @@ public class CCharStructWriter extends Writer
 	{
 		if (is_closed) throw new EClosed();
 	};
+	/** Invoked at first call to {@link #close}.
+	Subclasses may override it to perform additional
+	operations during close, like for an example
+	writing "end" signal
+	@throws IOException if failed
+	@see #out
+	*/
+	protected void closeImpl()throws IOException{};
 	/*  *****************************************************
 		
 			Writer
@@ -71,16 +77,16 @@ public class CCharStructWriter extends Writer
 		  
 	******************************************************/
 	/**
-		Makes this object unusable. If called for 
-		a first time writes "end signal". 
+		Makes this object unusable.  
 	*/
 	@Override public void close()throws IOException
 	{
+		//Intentionally: no flushing!
 		if (!is_closed)
 		{
-			//Intentionally: no flushing!
-			is_closed = true;
-			out.end();
+			try{
+				closeImpl();
+			}finally{ is_closed = true; }
 		};
 	};
 	/** Invokes the downstream flush.

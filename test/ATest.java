@@ -98,13 +98,13 @@ public abstract class ATest
 		<p>
 		The file name will be:
 		<pre>
-			<i>test_suite_class</i>.getSimpleName()+"-temp/"+<i>test_method_declaring_class.getSimpleName()+"/"+<i>test_method_name</i>
+			<i>test_suite_class</i>.getSimpleName()+"-temp/"+<i>test_method_declaring_class.getSimpleName()</i>+"/"+<i>test_method_name</i>
 		</pre>
 		
 		@param test_suite_provider either a class, null or object.
 				<ul>
 					<li>if it is a class, its outmost enclosing class is
-					used as <code>test_suite_class</code>;
+					used as <code>test_suite_class</code>;</li>
 					<li>if it is an object its class is used as above;</li>
 					<li>if it is null <code>ATest.class</code> is used;</li>
 				</ul>
@@ -138,7 +138,7 @@ public abstract class ATest
 		<p>
 		The file name will be:
 		<pre>
-			test_suite.getSimpleName()+"-temp/"+<i>test_method_declaring_class.getSimpleName()+"/"+<i>test_method_name</i>
+			test_suite.getSimpleName()+"-temp/"+<i>test_method_declaring_class.getSimpleName()</i>+"/"+<i>test_method_name</i>
 		</pre>
 		
 		@param test_suite a class which defines a test suite for which create the 

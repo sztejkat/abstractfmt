@@ -58,6 +58,7 @@ public interface IInteropTestDeviceFactory
 					<li>if it is null <code>ATest.class</code> is used;</li>
 				</ul>
 			@return as {@link #createTestDevice}
+			@throws IOException if creating temporary folder for a test failed.
 		*/
 		public default <R extends IStructReadFormat,
 			    W extends IStructWriteFormat>
@@ -80,6 +81,7 @@ public interface IInteropTestDeviceFactory
 					call will save on some manual checks.
 			@param <W>  contract
 			@return as {@link #createTestDevice}
+			@throws IOException if creating temporary folder for a test failed.
 		*/
 		public default <R extends IStructReadFormat,
 			    W extends IStructWriteFormat>
