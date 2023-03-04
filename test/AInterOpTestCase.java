@@ -142,44 +142,25 @@ public class AInterOpTestCase<R extends IStructReadFormat,
 			return factory; 
 		};
 		
-		/** Just calls <code>getFactory().createTestDevice(temp_folder)</code>
-		after ensuring that temp folder do exist.
-		<p>
-		Used to save on typing.
-		@param <R> see {@link IInteropTestDeviceFactory#createTestDevice}
-		@param <W> --//--
-		@param temp_folder --//--
-		@return --//--
-		@throws IOException --//--
-		*/
-		protected final <R extends IStructReadFormat,
-			    W extends IStructWriteFormat>
-			    CPair<R,W> createTestDevice(File temp_folder)throws IOException
-		{
-				assert(temp_folder!=null);
-				if (!temp_folder.exists()) temp_folder.mkdirs();
-				return getFactory().createTestDevice(temp_folder);
-		};
-					
 		
 					
-		/** Calls <code>getFactory().createTestDevice(temp_folder)</code>.
-		It is deducing a temp folder from current class simple name followed
-		by "-temp" postfix and a sub-folder made of a caller test method name.
+		/** Calls <code>getFactory().createTestDevice()</code>.
 		<p>
 		Will print on <code>System.out</code> the message indicating what file it is using.
 		@param <R> see {@link IInteropTestDeviceFactory#createTestDevice}
 		@param <W> --//--
 		@return --//--
 		@throws IOException --//--
+		@see IInteropTestDeviceFactory#createTestDevice
 		*/
 		protected final <R extends IStructReadFormat,
 			    W extends IStructWriteFormat>
 			    CPair<R,W> createTestDevice()throws IOException
 		{
-				final IInteropTestDeviceFactory f = getFactory();
-				final File temp_folder =  getTempFolder(this.getClass(), f);
-				System.out.println("test is using temp_folder \""+temp_folder.getCanonicalPath()+"\"");
-				return createTestDevice(temp_folder);
+				return getFactory().createTestDevice();
 		};
+		
+		
+		
+		
 };

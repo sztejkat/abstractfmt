@@ -90,43 +90,71 @@ public abstract class ATest
 	
 					/** Used to generate per-test folder names if we have a problem with stack */
 					private static int name_generator;
+					
 	/**
 		Computes temporary test folder for specified test case, currently run test.
-		Should be invoked from a method annotated with <code>#64;Test</code>.
+		Should be invoked from a method annotated with <code>#64;Test</code> which will
+		be indentified and used to produce the test name.
+		<p>
+		The file name will be:
+		<pre>
+			<i>test_suite_class</i>.getSimpleName()+"-temp/"+<i>test_method_declaring_class.getSimpleName()+"/"+<i>test_method_name</i>
+		</pre>
 		
-		@param test_case_class either a test case class which defines all test methods.
-		@param test_case_implementation a test case implementation which may be 
-				a subclass of {@link IInteropTestDeviceFactory} or null or just anything.
-				If this is an inner class the declaring class will be used instead.
-		@return a folder made of <code>test_case_class</code>/<code>test_case_implementation</code>/test method name.
-				This folder may exist or may not exist.
+		@param test_suite_provider either a class, null or object.
+				<ul>
+					<li>if it is a class, its outmost enclosing class is
+					used as <code>test_suite_class</code>;
+					<li>if it is an object its class is used as above;</li>
+					<li>if it is null <code>ATest.class</code> is used;</li>
+				</ul>
+		@return a folder. This folder may exist or may not exist.
 		@throws IOException if failed to create folder path.
 		*/
-	public static File getTempFolder(Class<?> test_case_class, Object test_case_implementation)throws IOException
+	public static File getTempFolder(Object test_suite_provider)throws IOException
 	{
-			//We take it from "test case style"
-			String base = test_case_class.getSimpleName();
-			//Now we take part from test case implementation, if any.
-			if (test_case_implementation!=null)
+		if (test_suite_provider==null)
+				return getTempFolder(ATest.class);
+			else
+		if (test_suite_provider instanceof Class)
+				return getTempFolder(extractEnclosingClass((Class<?>)test_suite_provider));
+			else
+				return getTempFolder(extractEnclosingClass(test_suite_provider.getClass()));
+	};
+	private static Class<?> extractEnclosingClass(Class<?> e)
+	{
+		Class<?> enclosing;
+		for(;;)
+		{	
+			enclosing = e.getEnclosingClass();
+			if (enclosing==null) return e;
+			e = enclosing;
+		}
+	};
+	/**
+		Computes temporary test folder for specified test case, currently run test.
+		Should be invoked from a method annotated with <code>#64;Test</code> which will
+		be indentified and used to produce the test name.
+		<p>
+		The file name will be:
+		<pre>
+			test_suite.getSimpleName()+"-temp/"+<i>test_method_declaring_class.getSimpleName()+"/"+<i>test_method_name</i>
+		</pre>
+		
+		@param test_suite a class which defines a test suite for which create the 
+				temporary file.
+		@return a folder. This folder may exist or may not exist.
+		@throws IOException if failed to create folder path.
+		*/
+	public static File getTempFolder(Class<?> test_suite)throws IOException
+	{
+			//Form a base name
+			String base = test_suite.getSimpleName()+"-temp/";
+			//Identify test method.
+			
+			Method test_method = null;
 			{
-				Class<?> p = test_case_implementation.getClass();
-				{
-					Class<?> c = p;
-					do
-					{
-						p = c;
-						c = p.getEnclosingClass(); //Note: getDeclaringClass works only for non-anonymous classes.							
-					}while(c!=null);
-				};
-				//we have it.
-					base = p.getSimpleName()+"-temp/"+base+"/";
-			}else
-			{
-					base = base + "-temp/";
-			};
-			//Now look up for nearest method annotated with @Test
-			String tail = null;
-			{
+				//Now look up for nearest method annotated with @Test
 				StackTraceElement [] stack = Thread.currentThread().getStackTrace();
 				if (stack!=null)
 				{
@@ -138,42 +166,39 @@ public abstract class ATest
 						{
 							String _c_name = e.getClassName();
 							String _m_name = e.getMethodName();
-							
 							try{
-								Class<?> _cc = Class.forName(_c_name);
-								Method [] ms = _cc.getDeclaredMethods();
-								Method identified_method = null;
+								Class<?> _cc = Class.forName(_c_name); //class which declares it
+								Method [] ms = _cc.getDeclaredMethods(); //look up by name for declared method
+								Method identified_method = null;	
 								for(Method m : ms)
 								{
 									if (_m_name.equals(m.getName()))
 									{
-										identified_method = m;
-										break;
+										//Check if annotated?
+										if (m.getDeclaredAnnotation(org.junit.Test.class)!=null)
+										{
+											test_method= m;
+											break loop;
+										}
 									};
 								};
-								if (identified_method!=null)
-								{
-									if (identified_method.getDeclaredAnnotation(org.junit.Test.class)!=null)
-									{
-										tail = _m_name;
-										break loop;
-									};
-								};
-
-							}catch(Exception ex)
-							{
-									//ignore it silently,
-							};
+							}catch(Exception ex){ }; //ignore all problems.
 						};
 					};
 				};
-				//check if method is found?
-				if (tail==null)
-				{
-					//no, randomize it.
-					tail = Integer.toString(name_generator++);
-				};
-			}
-			return new File(base+tail);
+			};
+			//check if method is found?
+			if (test_method==null)
+			{
+				//no, randomize it.
+				base = base +"unidentified_test_"+Integer.toString(name_generator++);
+			}else
+			{
+				//test method is known.
+				base = base + test_method.getDeclaringClass().getSimpleName()+"/"+test_method.getName();
+			};
+			return new File(base);
 	};
+	
+	
 };

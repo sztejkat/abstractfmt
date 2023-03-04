@@ -20,8 +20,7 @@ import java.io.IOException;
 	This strategy better reflects how streams will be used in a real life
 	and allows better testing of defensive functionality.
 	<p>
-	This stream has no support for temporary lack of data 
-	(<a href="../IStructReadFormat.html#TEMPEOF">"None"</a>). 
+	This stream has no support for temporary lack of data. 
 	
 	
 	@see CObjStructWriteFormat0
@@ -231,7 +230,7 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 				 return r==0 ? -1: r;
 			}else
 			{
-				buffer[offset++]= i.booleanValue();
+				buffer[offset++]= i.blockBooleanValue();
 				r++;
 			};
 		};
@@ -239,7 +238,7 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 	};
 	@Override protected boolean readBooleanBlockImpl()throws IOException
 	{
-		return nextValue().booleanValue();
+		return nextValue().blockBooleanValue();
 	};
 	@Override protected int readByteBlockImpl(byte [] buffer, int offset, int length)throws IOException
 	{
@@ -252,7 +251,7 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 				 return r==0 ? -1: r;
 			}else
 			{
-				buffer[offset++]= i.byteValue();
+				buffer[offset++]= i.blockByteValue();
 				r++;
 			};
 		};
@@ -260,7 +259,7 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 	};
 	@Override protected byte readByteBlockImpl()throws IOException
 	{
-		return nextValue().byteValue();
+		return nextValue().blockByteValue();
 	};
 	@Override protected int readCharBlockImpl(char [] buffer, int offset, int length)throws IOException
 	{
@@ -273,7 +272,7 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 				 return r==0 ? -1: r;
 			}else
 			{
-				buffer[offset++]= i.charValue();
+				buffer[offset++]= i.blockCharValue();
 				r++;
 			};
 		};
@@ -281,7 +280,7 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 	};
 	@Override protected char readCharBlockImpl()throws IOException
 	{
-		return nextValue().charValue();
+		return nextValue().blockCharValue();
 	};
 	@Override protected int readShortBlockImpl(short [] buffer, int offset, int length)throws IOException
 	{
@@ -294,7 +293,7 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 				 return r==0 ? -1: r;
 			}else
 			{
-				buffer[offset++]= i.shortValue();
+				buffer[offset++]= i.blockShortValue();
 				r++;
 			};
 		};
@@ -302,7 +301,7 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 	};
 	@Override protected short readShortBlockImpl()throws IOException
 	{
-		return nextValue().shortValue();
+		return nextValue().blockShortValue();
 	};
 	@Override protected int readIntBlockImpl(int [] buffer, int offset, int length)throws IOException
 	{
@@ -315,7 +314,7 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 				 return r==0 ? -1: r;
 			}else
 			{
-				buffer[offset++]= i.intValue();
+				buffer[offset++]= i.blockIntValue();
 				r++;
 			};
 		};
@@ -323,7 +322,7 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 	};
 	@Override protected int readIntBlockImpl()throws IOException
 	{
-		return nextValue().intValue();
+		return nextValue().blockIntValue();
 	};
 	@Override protected int readLongBlockImpl(long [] buffer, int offset, int length)throws IOException
 	{
@@ -336,7 +335,7 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 				 return r==0 ? -1: r;
 			}else
 			{
-				buffer[offset++]= i.longValue();
+				buffer[offset++]= i.blockLongValue();
 				r++;
 			};
 		};
@@ -344,7 +343,7 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 	};
 	@Override protected long readLongBlockImpl()throws IOException
 	{
-		return nextValue().longValue();
+		return nextValue().blockLongValue();
 	};
 	@Override protected int readFloatBlockImpl(float [] buffer, int offset, int length)throws IOException
 	{
@@ -357,7 +356,7 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 				 return r==0 ? -1: r;
 			}else
 			{
-				buffer[offset++]= i.floatValue();
+				buffer[offset++]= i.blockFloatValue();
 				r++;
 			};
 		};
@@ -365,7 +364,7 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 	};
 	@Override protected float readFloatBlockImpl()throws IOException
 	{
-		return nextValue().floatValue();
+		return nextValue().blockFloatValue();
 	};
 	@Override protected int readDoubleBlockImpl(double [] buffer, int offset, int length)throws IOException
 	{
@@ -378,7 +377,7 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 				 return r==0 ? -1: r;
 			}else
 			{
-				buffer[offset++]= i.doubleValue();
+				buffer[offset++]= i.blockDoubleValue();
 				r++;
 			};
 		};
@@ -386,7 +385,7 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 	};
 	@Override protected double readDoubleBlockImpl()throws IOException
 	{
-		return nextValue().doubleValue();
+		return nextValue().blockDoubleValue();
 	};
 	@Override protected int readStringImpl(Appendable characters, int length)throws IOException
 	{
@@ -399,7 +398,7 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 				 return r==0 ? -1: r;
 			}else
 			{
-				characters.append(i.stringValue());
+				characters.append(i.blockStringValue());
 				r++;
 			};
 		};
@@ -407,7 +406,7 @@ public class CObjStructReadFormat0 extends AStructReadFormatBase0
 	};
 	@Override protected char readStringImpl()throws IOException
 	{
-		return nextValue().stringValue();
+		return nextValue().blockStringValue();
 	};
 	/** Doesn't do anything */
 	@Override protected void openImpl()throws IOException{};

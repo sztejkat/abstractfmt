@@ -39,5 +39,52 @@ public interface IInteropTestDeviceFactory
 		public <R extends IStructReadFormat,
 			    W extends IStructWriteFormat>
 			    CPair<R,W> createTestDevice(File temp_folder)throws IOException;
-		  
+			    
+		/**
+			Method responsible for transparent creation of test pair
+			with an automatic temporary folder.
+			<p>
+			For how temporary folder is created see {@link ATest#getTempFolder}
+			
+			@param <R>  contract. This factory may be used for 
+					some specific contract extensions too and this typed
+					call will save on some manual checks.
+			@param <W>  contract
+			@param test_suite_provider either a class, null or object.
+				<ul>
+					<li>if it is a class, its outmost enclosing class is
+					used as <code>test_suite_class</code>;
+					<li>if it is an object its class is used as above;</li>
+					<li>if it is null <code>ATest.class</code> is used;</li>
+				</ul>
+			@return as {@link #createTestDevice}
+		*/
+		public default <R extends IStructReadFormat,
+			    W extends IStructWriteFormat>
+			    CPair<R,W> createTestDevice(Object test_suite_provider)throws IOException
+		{
+			final File temp_folder =  ATest.getTempFolder(test_suite_provider);
+			if (!temp_folder.exists()) temp_folder.mkdirs();
+			return createTestDevice(temp_folder);
+		};
+		/**
+			Method responsible for transparent creation of test pair
+			with an automatic temporary folder.
+			<p>
+			For how temporary folder is created see {@link ATest#getTempFolder}
+			<p>
+			Uses self as test provider.
+			
+			@param <R>  contract. This factory may be used for 
+					some specific contract extensions too and this typed
+					call will save on some manual checks.
+			@param <W>  contract
+			@return as {@link #createTestDevice}
+		*/
+		public default <R extends IStructReadFormat,
+			    W extends IStructWriteFormat>
+			    CPair<R,W> createTestDevice()throws IOException
+		{
+			return createTestDevice(this);
+		};
 };
