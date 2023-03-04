@@ -35,6 +35,7 @@ import java.io.IOException;
 			{@link #writeBoolean},
 			{@link #writeByte},
 			{@link #writeChar},
+			{@link #writeShort},
 			{@link #writeInt},
 			{@link #writeLong},
 			{@link #writeFloat},

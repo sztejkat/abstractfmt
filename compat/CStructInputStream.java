@@ -9,34 +9,58 @@ import java.io.IOException;
 	An {@link InputStream} laid over a byte sequence
 	of {@link IStructReadFormat}.
 	<p>
-	Opposite to superclass is strictly declared asn
+	Opposite to superclass is strictly declared as
 	<u>NOT thread safe</u>. 
 	Uses internal shared data to implement some methods.
 */
 public class CStructInputStream extends InputStream
 {
 			/** Underlying format */
-			private final IStructReadFormat fmt;
+			private final IStructReadFormat in;
 			/** State tracker */
 			private boolean is_closed;
 			/** buffer for implementing {@link #read} */
 			private byte [] temp = new byte[1];
+			
+	/*  *****************************************************
+		
+			Construction
+		
+		
+		******************************************************/
 	/** Creates
-	@param fmt non null format on which it will be laid over.
+	@param in non null format on which it will be laid over.
 		The cursor in format should be either in front of
 		or inside the byte sequence available through
 		{@link IStructReadFormat#readByteBlock} family of
 		methods.
 	*/
-	public CStructInputStream(IStructReadFormat fmt)
+	public CStructInputStream(IStructReadFormat in)
 	{
-		assert(fmt!=null);
-		this.fmt = fmt;
+		assert(in!=null);
+		this.in = in;
 	};
-	private void validateNotClosed()throws EClosed
+	/*  *****************************************************
+		
+			Support services
+		
+		
+	******************************************************/
+	/** State tracker.
+	@return true if {@link #close} was run at least once */
+	protected final boolean isClosed(){ return is_closed; };
+	/** State validator
+	@throws EClosed if {@link #isClosed} gives true. */
+	protected final void validateNotClosed()throws EClosed
 	{
 		if (is_closed) throw new EClosed();
 	};
+	/*  *****************************************************
+		
+			InputStream
+		
+			
+	******************************************************/
 	/**
 		Returns zero.
 		<p>
@@ -62,7 +86,6 @@ public class CStructInputStream extends InputStream
 	/**
 		Makes this object unusable. Doesn't do 
 		anything with an underlying format.
-		@throws EClosed if {@link #close} was called.
 	*/
 	@Override public void close()throws IOException
 	{
@@ -79,7 +102,7 @@ public class CStructInputStream extends InputStream
          						throws IOException
 	{
 		validateNotClosed();
-		return fmt.readByteBlock(b,off,len);
+		return in.readByteBlock(b,off,len);
 	};
 	/** Redirects to {@link IStructReadFormat#readByteBlock(byte [],int,int)}
 	using a shared one byte long temporary array.
@@ -87,7 +110,7 @@ public class CStructInputStream extends InputStream
 	@Override public int read()throws IOException
 	{
 		validateNotClosed();
-		int r = fmt.readByteBlock(temp);
+		int r = in.readByteBlock(temp);
 		return r==-1  ? -1 : (temp[0] & 0xFF);
 	};
 }

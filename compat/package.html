@@ -14,47 +14,44 @@
       <ul>
           <li>reading data:
           <ul>
-          <li><code>java.io.InputStream</code> implementation which can be used to
-          read <i>byte [] sequence</i>;</li>
-          <li><code>java.io.Reader</code> implementation which can be used to
-          read <i>char [] sequence</i> or <i>string sequence</i>;</li>
-          <li><code>java.io.DataInput</code> implementation which is tweaking the contract
-          to read <i>elementary primitives</i>, <i>byte [] sequence</i>
-          or <i>char [] / string sequence</i>;</li>
+			  <li><code><a href="CStructInputStream.html">java.io.InputStream</a></code> 
+			  implementation which can be used to  read <i>byte [] sequence</i>;</li>
+			  
+			  <li><code>java.io.Reader</code> implementation which can be used to
+			  read <a href="CCharStructReader.html"><i>char [] sequence</i></a> or <a href="CStringStructReader.html"><i>string sequence</i></a>;</li>
+			  
+			  <li><code><a href="CStructDataInput.html">java.io.DataInput</a></code> implementation which is tweaking the contract
+			  to read <i>elementary primitives</i> or <i>string sequence</i>;</li>
           </ul>
           </li>
           <li>writing data:
           <ul>
-          <li><code>java.io.OutputStream</code> implementation which can be used to
-          write <i>byte [] sequence</i>;</li>
-          <li><code>java.io.Writer</code> implementation which can be used to
-          write <i>char [] sequence</i> or <i>string sequence</i>;</li>
-          <li><code>java.io.DataOutput</code> implementation which is tweaking the contract
-          to write <i>elementary primitives</i>, <i>byte [] sequence</i>
-          or <i>char [] / string sequence</i>;</li>
-          </ul>
+			  <li><a href="CStructOutputStream.html"><code>java.io.OutputStream</code></a> implementation which can be used to
+			  write <i>byte [] sequence</i>;</li>
+			  
+			  <li><code>java.io.Writer</code> implementation which can be used to
+			  write <a href="CCharStructWriter.html"><i>char [] sequence</i></a> or 
+			  <a href="CStringStructWriter.html"><i>string sequence</i></a>;</li>
+			  
+			  <li><a href="CStructDataOutput.html"><code>java.io.DataOutput</code></a> implementation which is tweaking the contract
+			  to write <i>elementary primitives</i>, <i>byte [] sequence</i>
+			  or <i>char [] / string sequence</i>;</li>
+			  </ul>
           </li>
           <li>objects reading and writing:
           	<ul>
           		<li>object operation is strictly related to <i>serialization</i>.
           		The abstract format itself does <u>not</u> implement any specific serialization
           		method. However a standard Java serialization may be used to put
-          		objects into <i>byte [] sequence</i>.</li>
-          		<li>the <code>sztejkat.abstractser</code> library is a recommended
-          		method of serializing objects to an abstract format;</li>
+          		objects into <i>byte [] sequence</i> handled by 
+          		<code><a href="CStructOutputStream.html">OutputStream</a></code> implementation.</li>
           	</ul>
           </li>
       </ul>
 
       <h1>Java.nio support</h1>
-      Standard <code>java.nio</code> does not define other "typed" channels than <code>ByteBuffer</code>
-      channels even tough there is a plenty of "typed" buffers (<code>IntBuffer</code> and etc.).
-      <p>
-      This package does provide "typed" readable and writable channels which can
-      operate on <i>type [] sequences</i>.
-      <p>
-      Additionally the <code>ByteChannel</code> is supported indirectly via <code>InputStream</code>
-      and can be used to perform a binary mapping of othe types to <i>byte [] sequence</i>.
+      The <code>ByteChannel</code> is supported indirectly via <code>InputStream</code>/<code>OutputStream</cde>
+      implementations and can be used to perform a binary mapping of othe types to <i>byte [] sequence</i>.
       This is however not a recomended method since it makes abstract format to loose it's
       advantages over a binary format.
 

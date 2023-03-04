@@ -228,6 +228,13 @@
     <p>
     <i>Note: The same problem applies to any arrays, lists, sequences of data and etc. You may attempt
     to kill JSON with "value"="1.0000....and so on for 4GB"</i>
+    <p>
+    On the other end of the spectrum is:
+    <pre>
+    	String readLine()throws IException
+    </pre>
+    which is completely un-bound, but restricted to ASCII characters. Again, not much use of it and not
+    very safe.
 
     <h2>Serialization</h2>
     The serialization has own dangers. And in fact almost any un-bound generic format has such dangers.
