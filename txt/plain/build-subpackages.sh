@@ -1,4 +1,4 @@
 #!/bin/bash
-echo "Building bin package"
+echo "Building txt.plain package"
 ./build-package.sh
 

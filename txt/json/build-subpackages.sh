@@ -1,3 +1,3 @@
 #!/bin/bash
-echo "Building bin package"
+echo "Building txt.json package"
 ./build-package.sh

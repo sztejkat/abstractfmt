@@ -34,13 +34,21 @@
                                         sztejkat.abstractfmt.txt.json,
                                         sztejkat.abstractfmt.txt.plain
                                         "/>
+        <!-- define JAR file name and where to look for jar specs -->
+        <property name="jarname" value="abstractfmt" />
+	<!--
+             deduces source root from package name
+             where the build-common.xml is to be
+             located.
 
-	<!-- deduces source root from package name -->
+             Basically replaces all package portions with "go folder up"
+             and then add the proper sub-path below
+        -->
 	<propertyregex property="source_root"
               		input="${package}"
 			regexp="([^.]+)(\.)*"
 			replace="../"
 			casesensitive="false"
 			/>
-     <import file="${source_root}/build-common.xml"/>
+       <import file="${source_root}/sztejkat/abstractfmt/build-common.xml"/>
 </project>

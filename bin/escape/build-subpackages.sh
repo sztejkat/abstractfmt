@@ -1,3 +1,3 @@
 #!/bin/bash
-echo "Building bin.chunk package"
+echo "Building bin.escape package"
 ./build-package.sh

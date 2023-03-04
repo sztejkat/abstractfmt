@@ -1,0 +1,478 @@
+<!--
+	This is common ant build file invoked from package build files.
+	See package-build.xml for details.
+	
+	This file will compile package specified in "package" property, and only this
+	package (no subpackages recursion).
+	
+	Resources and data are copied to output folder. 
+	
+	NOTE:
+	
+		1.OS JAVA_HOME environment variable MUST point to JDK install directory!
+		2.All workstation defined settings are stored in "setup.xml" file.
+-->
+<!DOCTYPE project [
+       <!ENTITY setup SYSTEM "setup.xml">
+]>
+<project default="main">
+
+<!--  ******************************************************************************************
+
+			Setup section
+
+      **************************************************************************************** -->
+	
+	<taskdef resource="net/sf/antcontrib/antlib.xml"/>	<!-- depends on ant-contrib -->
+
+	<!--
+	
+		This property is supposed to be a package to process
+		
+		Must be set by calling process.
+
+	<property name="package" value="????" />
+	-->
+	<echo message="Script arguments:package:  ${package}"/>
+	<!-- 
+		Include a work-station specific settings.
+	-->
+	&setup;	
+	<!-- 
+		A temporary, used to do all trash
+	-->
+	<property name="temp"    value="${workdir}/tmp" />
+	<!--
+		class files and all data files will be put 
+		there after compilation or copying.
+	-->
+	<property name="output"  value="${workdir}/out" />
+	<!--
+		All source files, including images, resources, sounds, helps and 
+		etc should be located in there.        
+	-->
+	<property name="source"  value="${workdir}/src" />
+	
+	<!-- 
+		Package name replaced to form a package path.
+	-->
+	<propertyregex property="package_path"
+              		input="${package}"
+			regexp="([^.]+)(\.)*"
+			replace="\1/"
+			casesensitive="false" 
+			/>
+	<echo message="Script data:package_path:  ${package_path}"/>
+	<!-- 
+		Output for this package, absolute
+	-->
+	<property name="package_out" value="${output}/${package_path}"/>
+	<!-- 
+		Source for this package, absolute
+	-->
+	<property name="package_source" value="${source}/${package_path}"/>
+	<!-- 
+		Java-Doc output for this package 
+	-->
+	<property name="package_doc" value="${source}/${package_path}/package-doc" />
+	
+	
+	
+	
+	<!-- 
+		Java-Doc output for library whose root is this package. 
+	-->
+	<property name="lib_doc" value="${source}/${package_path}/lib-doc" />
+	
+	<!--   Where is Your JDK  -->
+	<property name="java.home" value="${javahome}"/>
+	<!-- 
+		Java-Doc executable 
+	-->	
+	<property name="javadoc" value="${javahome}/bin/javadoc"/>
+	
+	
+	<!-- 
+		Class-path settings. 
+	-->
+	<path id="default_classpath">
+		 <pathelement path="${user_class_path}"/> 
+		 <!-- a package may pass additional class-path by this property.
+		      If path element is used, a property needs to be set by "${toString:path}
+		 -->
+		 <pathelement path="${output}"/>
+		 <!-- common external dependencies for all standard projects -->
+		 <!-- A test routines used by "junit-test" target to support unit-tests -->
+                 <pathelement location="${source}/sztejkat/abstractfmt/junit.jar"/>
+                 <!-- used by more recent versions of junit -->
+                 <pathelement location="${source}/sztejkat/abstractfmt/hamcrest-core-1.3.jar"/>
+
+	</path>	
+	<echo message="ClassPath:  ${toString:default_classpath}"/>
+	
+
+<!--  ******************************************************************************************
+
+			Compilation
+
+      **************************************************************************************** -->	
+      <!-- 
+		This is main compile task. Please, list in order of execution all necessary tasks
+		in depends list.		
+       -->
+	<target name="main" 
+		depends="clean_package,compile,resources">
+		<echo message="Completed ${package}"/>
+	</target>
+       <!-- 
+		Sole compilation of all java files in current folder	
+       -->
+       <target name="compile">
+		<antcall target="compile-list">
+			<param name="sources_list" value="*.java"/>
+		</antcall>
+	</target>
+	<!-- 
+		Compilation of only listed sources. Usefull if a script is bound to
+		generate source based on some compiled classes while other classes do
+		depend on generated files.
+		
+		Usage: 
+		  call ant -f package-build.xml compile-list -Dsources_list="IMediumAccessConfiguration.java"
+		  
+		This task is producing "javac-errors-log.javaclog" listing all compilation messages so that
+		a deep-tree build can capture and propagate it up-wards.
+       -->
+	<target name="compile-list">
+		<echo message="Compling to :${package_out}"/>
+		<delete quiet="true">
+			<fileset file="javac-errors-log.javaclog"/>
+		</delete>
+		
+		<record name="javac-log.javaclog" loglevel="info" action="start"/>
+                   <trycatch>  
+                        <try>  
+                            <javac
+                                includeantruntime="false"
+			    	sourcepath="${source}"
+                                srcdir="${package_source}"
+                                destdir="${output}"
+                                includes="${sources_list}"
+                                debug="true"
+                                failonerror="yes"
+                                >
+                                <compilerarg value="-version"/>
+                                <compilerarg value="-Xlint"/>
+                                <compilerarg value="-encoding"/>				
+                                <compilerarg value="UTF-8"/>                                 
+                                <classpath>
+                                        <path refid="default_classpath"/>
+                                </classpath>
+                                </javac>
+                                
+                            <delete file="javac-errors-log.javaclog" verbose="true" failonerror="false"/>
+                       </try>  
+                 <catch>  
+                      <echo file="javac-errors-log.javaclog"
+                             message="Compiling ${package_source} FAILED. See javac-log.javaclog ${line.separator}"
+                                         />
+                </catch>  
+                </trycatch>  		
+		<record name="javac-log.javaclog" action="stop"/>
+               
+	</target>
+
+       	<!--
+		This target cleans a part of output file system
+		which is supposed to handle this package.
+
+		It does NOT clean subfolders to be found in it, so for true
+		"purge" it may be necessary to manually clean
+	-->
+	<target name="clean_package" >
+		<echo message="Cleaning..... ${package_out}"/>
+		<!-- this removes files in specified directory, without touching subdirectories. -->
+		<delete quiet="true">
+			<fileset dir="${package_out}" includes="*"/>
+		</delete>
+		<echo message="Cleaning..... ${output}/helpfiles/**/${package_path}/"/>
+		<delete quiet="true">
+			<fileset dir="${output}" includes="helpfiles/**/${package_path}/*"/>
+		</delete>
+		<echo message="Cleaning..... ${output}/settingsmanager/**/${package_path}/"/>
+		<delete quiet="true">
+			<fileset dir="${output}" includes="settingsmanager/**/${package_path}/*"/>
+		</delete>
+	</target>
+
+        <!--
+		Copies all *.properties files to the output directory.
+
+		All *.utf8.properties are converted to ascii (JDK version < 1.9) and renamed to *.propeties.
+	-->
+	<target name="resources">
+		<if>
+			<istrue value="${use_native2ascii}"/>
+			<then>
+				<!-- convert to ascii. Notice renaming from utf8.properties to .properties at this level don't work -->
+				<native2ascii
+					encoding="UTF-8"
+					src="${package_source}"
+					dest="${package_out}"
+					includes="*.utf8.properties"
+				/>
+				<!-- copy files which not need conversion -->
+				<copy todir="${package_out}">
+					<fileset dir="${package_source}" includes="*.properties" excludes="*.utf8.properties"/>
+				</copy>
+			</then>
+			<else>
+				<!-- copy all files without conversion -->
+				<copy todir="${package_out}">
+					<fileset dir="${package_source}" includes="*.properties" />
+				</copy>
+			</else>
+		</if>
+
+		<!-- strip utf8 from names -->
+		<move todir="${package_out}">
+			<fileset dir="${package_out}" includes="*.utf8.properties"/>
+			<mapper type="regexp" from="^(.*)\.utf8\.properties" to="\1\.properties"/>
+		</move>
+
+
+
+		<!--  Copy a standard file (ie. "unrecognized language" ) first from english then from Polish file if standard is not present. -->
+		<if>
+			<not>
+					<available file="${package_out}\RUI.properties"/>
+			</not>
+			<then>
+				<if>
+					<available file="${package_out}\RUI_en.properties"/>
+					<then>
+						<copy overwrite="false" file="${package_out}\RUI_en.properties" tofile="${package_out}\RUI.properties"/>
+					</then>
+					<else>
+						<if>
+							<available file="${package_out}\RUI_pl.properties"/>
+						<then>
+							<copy overwrite="false" file="${package_out}\RUI_pl.properties" tofile="${package_out}\RUI.properties"/>
+							</then>
+						</if>
+					</else>
+				</if>
+			</then>
+		</if>
+	</target>
+
+
+
+
+<!--  ******************************************************************************************
+
+			Testing
+
+      **************************************************************************************** -->      
+	
+
+        
+        <!-- JUnit base test, try test all classes xxx$Test*.class classes found in destination
+             folder. This means, that test class must be an inner class in a form:
+             {
+                ...
+                public static final Test
+                {
+                        public Test(){....};
+                        @org.junit.Test public void doTest1()
+                        {
+                                ...
+                                org.junit.Assert.fail("failed!");
+                        };
+                }
+              }  
+                Also any class of name TestXXXX which is not an inner class will be run.
+                -->
+        <target name="junit-test">    
+                 <echo message="Testing package: '${package}'"/>
+                 <echo message="Testing class folder: '${package_path}'"/>
+                 
+                <junit printsummary="yes" haltonfailure="no" maxmemory="256M" >
+                   <assertions>
+                        <enable/>
+                  </assertions>
+
+                  <classpath>
+                     <path refid="default_classpath"/>
+                  </classpath>
+                  
+                  
+                
+                  <formatter type="plain"/>
+                  <!-- Note: fork="yes" is necessary for java assertions to work!-->
+                  <batchtest fork="yes" todir="${package_source}">
+                    <fileset dir="${output}">
+		    	<exclude name="${package_path}/*$Test$*.class"/>
+                        <include name="${package_path}/*$Test.class"/>
+			<include name="${package_path}/*$Test*.class"/>
+                         <include name="${package_path}/Test*.class"/>
+                         <exclude name="${package_path}/Test*$*.class"/>
+                    </fileset>
+                  </batchtest>
+                </junit>
+        </target>
+        <!-- JUnit based test, specific for a single test class.
+	
+		Call ant from source folder with:
+		
+		ant -f package-build.xml -Dtest_class_file=xxx junit-test-single
+		
+		where xxx is a *.class file to test (without path) but with extension.
+		
+	!-->
+	<target name="junit-test-single">
+		 <echo message="Testing test class: '${test_class_file}'"/>
+		 <if>
+		 	<not>
+				<available file="${package_out}${test_class_file}"/>
+			</not>
+			<then>
+				<echo message="Warning: class file ${package_out}${test_class_file} not found, but may be on other class path"/>
+			</then>
+		 </if>
+		 <junit printsummary="yes" haltonfailure="no" maxmemory="256M">
+                   <assertions>
+                        <enable/>
+                  </assertions>
+
+                  <classpath>
+                     <path refid="default_classpath"/>
+                  </classpath>
+                  
+                  <formatter type="plain"/>
+                  <!-- Note: fork="yes" is necessary for java assertions to work!-->
+                  <batchtest fork="yes" todir="${package_source}">
+                    <filelist dir="${output}">
+		    	<file name="${package_path}${test_class_file}"/>
+                    </filelist>
+                  </batchtest>
+                </junit>
+	</target>
+	
+
+<!--  ******************************************************************************************
+
+			Documentation
+
+      **************************************************************************************** -->
+	
+
+	<!--
+		This targets build develpment documents in ${package_doc} subfolder of source files.
+		
+		To link to existing docs (ie. used packages) define
+		${javadoc-options} property with following content:
+		
+			"-link path -link path ..."
+		
+		where "path" is a relative path to a folder in which the "package-list" file
+		generated by "javadoc" is located. The base for those paths is
+		the folder in which java-doc is to be generated. The path must use / as 
+		folder separators. Sadly this works worse than expected.
+		
+		Usually this list will be the same as in .gitdepends plus additional
+		../ /package-doc.
+	-->
+	<target name="doc">                
+		<if>
+			<isset property="javadoc-options"/>
+			<then>
+				<property name="additional_param" value="${javadoc-options}"/>
+			</then>
+			<else>
+				<property name="additional_param" value=""/>
+			</else>
+		</if>
+		<javadoc
+                        maxmemory="480m"
+			executable="${javadoc}"		
+			sourcepath="${source}"
+			destdir="${package_doc}"
+			additionalparam=" -Xdoclint:all -version ${additional_param}"
+			linksource="yes"
+			includenosourcepackages="yes"
+			charset="UTF-8"
+			access="private"
+			encoding="UTF-8"	
+			packagenames="${package}"
+			Use="yes"
+			>
+                        <classpath>
+                                        <path refid="default_classpath"/>
+                        </classpath>
+			<link href="${jdk_doc}"/>			
+			<package name="${package}"/>
+			<arg value="-Xmaxwarns"/>
+			<arg value="400"/>
+		</javadoc>
+	</target>
+	
+	<!--
+		This targets build develpment documents in "lib_doc" folder, for packages specified
+		in ${lib_packages}.
+	-->
+	<target name="libdoc">
+		<javadoc
+                        maxmemory="512m"
+			executable="${javadoc}"
+			additionalparam=" -Xdoclint:all -version -overview overview.html"
+			sourcepath="${source}"
+			destdir="${lib_doc}"
+			linksource="yes"
+			includenosourcepackages="yes"
+			charset="UTF-8"
+			access="private"
+			Use="yes"
+			encoding="UTF-8"
+			packagenames="${lib_packages}"
+			>
+                        <classpath>
+                                        <path refid="default_classpath"/>
+                        </classpath>
+			<link href="${jdk_doc}"/>
+		</javadoc>
+	</target>
+        
+
+<!--  ******************************************************************************************
+
+			Deployment
+
+      **************************************************************************************** -->
+
+	<!-- 
+		Generates jar file, reading list of files from file ${jarname}.files file 
+		in ${basedir} folder. Output is put in ${jarname}.jar file.
+		Manifest is taken from ${jarname}.manifest.	
+		
+		All paths in ${jarname}.files are relative to ${output}	
+	-->
+	<target name="jar">
+		<if>
+			<not>
+			<available file="${jarname}.files"/>
+			</not>
+		<then><fail message="${jarname}.files is not present"/></then>
+		</if>
+		<delete file="${jarname}.jar"/>	
+		<jar
+			basedir="${output}"
+			includesfile="${jarname}.files"
+			manifest="${jarname}.manifest"
+			destfile="${jarname}.jar"
+			index="false"
+			update="true"			
+		/>
+	</target>
+
+</project>

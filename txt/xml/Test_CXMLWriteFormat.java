@@ -22,7 +22,7 @@ public class Test_CXMLWriteFormat extends sztejkat.abstractfmt.test.ATest
 	*/
 	static File getTempXMLFile()throws IOException
 	{
-		File folder = getTempFolder(Test_CXMLWriteFormat.class, null);
+		File folder = getTempFolder(Test_CXMLWriteFormat.class);
 		folder.mkdirs();
 		File f = new File(folder, "content.xml");
 		if (f.exists()) f.delete();

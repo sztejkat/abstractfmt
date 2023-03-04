@@ -28,5 +28,5 @@
 			replace="../"
 			casesensitive="false"
 			/>
-     <import file="${source_root}/build-common.xml"/>
+        <import file="${source_root}/sztejkat/abstractfmt/build-common.xml"/>
 </project>

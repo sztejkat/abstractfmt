@@ -1,0 +1,58 @@
+<!--
+	Workstation dependent ANT setup include in "build-common.xml"
+	
+	1.Property "workdir" must be set to absolute path to one folder above the
+	  location of this file so that /src and /out would be a subfolder of it, ie.:
+	   
+	  c:\w\uct\lib\java\src\build-common.xml
+	  
+	  requires:
+	  
+	  workdir = c:\w\uct\lib\java\
+
+        1.1 What is workdir?
+
+            A root of a source tree where You keep:
+
+               workdir\src\sztejkat\abstractmf\... java files and sources go here
+               workdir\out\sztejkat\abstractmt\...  class files and resources will be produced there.
+
+           If this does not suite Your needs check build-common.xml
+	  
+	2.Property jdk is the optional location of API folder of JAVADOC from JDK to which
+	JavaDoc should generate links when generating Your own JAVA-DOC.
+-->			
+	<!--
+		URL to jdk docs
+	-->
+	<property name="jdk_doc" value="" />
+	<!-- 
+		A directory, where all sources and outputs will be held
+	-->
+	<property name="workdir" value="/home/sztejkat/uct/lib/java" />
+	<!-- 
+		JDK Java home, the location where JDK is installed.
+		For best effects keep it without spaces.
+	-->	
+	<!-- <property name="javahome" value="c:\jdk1.7.0_02" />-->
+	 <property name="javahome" value="/usr/lib/jvm/java-8-openjdk-amd64" />
+	<!--
+		TLDR:
+			If (JDK version >= 1.9) and (ANT version < 1.9.8) and (when you not provide a substitute tool) set this property to false.
+		
+		Details:
+			native2ascii tool was removed with JDK version 9. All build tools should take into account that this tool isn't avaliable.
+			https://bugs.java.com/bugdatabase/view_bug.do?bug_id=JDK-8074431
+			
+			ANT with version < 1.9.8 will output error when using native2ascii task and this tool isn't availiable in system.
+			https://bz.apache.org/bugzilla/show_bug.cgi?id=59855
+			
+			Testing scrpitdef with option language="javascript" resulted with output: "Warning: Nashorn engine is planned to be removed from a future JDK release".
+			The conclusion is using scripting is very risky.
+			
+			Checking for tool existence by file is not portable between systems because of different filename extensions.
+			
+			There is no way to compare versions in ANT without scripting or extensions.
+			There is no legit way to check native2ascii for avaliability.
+	-->
+	<property name="use_native2ascii" value="true"/>

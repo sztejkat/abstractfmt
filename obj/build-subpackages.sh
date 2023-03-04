@@ -1,8 +1,3 @@
 #!/bin/bash
-echo "Building abstractfmt package"
+echo "Building obj package"
 ./build-package.sh
-
-echo "Building test subpackage"
-cd test
-./build-package.sh
-cd ..

@@ -1,12 +1,18 @@
 #Generated documentation package
 package-doc
 lib-doc
+
+#Generated jar files
+/*.jar
+
 #Backup files from JEDIT
 *.*~
+
 #Compilation logs
 *.javaclog
 #Junit test logs
 TEST-sztejkat.abstractfmt.*.txt
+
 # Temporary rejected/removed data.
 **/.rejected/**
 /.rejected/**
@@ -14,5 +20,5 @@ TEST-sztejkat.abstractfmt.*.txt
 **/*-temp/**
 /*-temp/**
 
-
+# Secret files You should not see
 .githubtoken
