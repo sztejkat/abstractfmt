@@ -29,6 +29,17 @@ public class CTypedStructReadFormat extends AReservedNameReadFormat implements I
 				*/
 				private boolean block_in_progress;
 				
+				/** A begin-end depth tracking.
+				<p>
+				Notice we can't use the adapter depth()
+				or skip() because we are injecting own signals to provide type
+				information. We do also peek() by moving forwards.
+				@see #skip()
+				@see #skip(int)
+				@see #next()
+				*/
+				private int depth;
+				
 				/** An immutable array indexed by <code>CTypedStructWriteFormat.XXX_idx</code> constants
 				used to recognize type names. */
 				private final String [] type_names;
@@ -140,8 +151,56 @@ public class CTypedStructReadFormat extends AReservedNameReadFormat implements I
 		
 				Signals
 		
-		----------------------------------------------------------------------*/	
+		----------------------------------------------------------------------*/
+		/** Restores default behavior instead of passing it down-stream */
+		@Override public void skip()throws IOException
+		{ 
+			skip(0);
+		};
+		/** Restores default behavior instead of passing it down-stream
+		because this class needs own depth accounting.
+		*/
+		@Override public void skip(int levels)throws IOException
+		{ 
+			IStructReadFormat.skip(this,levels);  
+		};
+		/** {@inheritDoc}
+		<p>
+		Uses own accounting instead of passing it down-stream.
+		@see #depth
+		@see #next()
+		@see #skip(int)
+		*/
+		@Override public final int depth()
+		{ 
+			return depth;
+		};
+		/** {@inheritDoc}
+		<p>
+		Adds begin-end balancing accounting for {@link #nextImpl}.
+		@see #depth
+		@see #skip(int)
+		*/
 		@Override public String next()throws IOException
+		{
+			final String s = nextImpl();
+			if (s==null)
+			{
+				assert(depth>0):"Missplace end? Downstream should capture it";
+				depth--;
+			}
+			else
+			{
+				depth++;
+				assert(depth>0):"too deep recursion? Downstream should capture it";
+			}
+			return s;
+		}
+		/** Performs {@link #next} but without {@link #depth} accounting 
+		@return as {@link #next}
+		@throws IOException --//--
+		*/
+		protected String nextImpl()throws IOException
 		{
 			if (TRACE) TOUT.println("next() ENTER");
 			//In loop go through all possible type information skipping it.

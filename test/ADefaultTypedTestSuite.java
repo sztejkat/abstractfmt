@@ -41,9 +41,11 @@ import org.junit.runners.Suite;
 					ATestCase_DoubleElementaryPrimitive.class,
 					ATestCase_DoubleBlockPrimitive.class,
 					ATestCase_StringBlockPrimitive.class,
+					ATestCase_SkipAndDepth.class,
                    //Typed test cases
 					ATestCase_PeekOperations.class,
-					ATestCase_TypeDefence.class
+					ATestCase_TypeDefence.class,
+					ATestCase_DepthAndSkipInPeekOperations.class
 					})
 public abstract class ADefaultTypedTestSuite extends ATest
 {

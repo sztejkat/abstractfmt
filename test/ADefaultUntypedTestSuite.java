@@ -35,7 +35,8 @@ import org.junit.runners.Suite;
 					ATestCase_FloatBlockPrimitive.class,
 					ATestCase_DoubleElementaryPrimitive.class,
 					ATestCase_DoubleBlockPrimitive.class,
-					ATestCase_StringBlockPrimitive.class
+					ATestCase_StringBlockPrimitive.class,
+					ATestCase_SkipAndDepth.class
 					})
 public abstract class ADefaultUntypedTestSuite extends ATest
 {

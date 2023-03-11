@@ -23,7 +23,8 @@ import java.io.IOException;
 			Structure traversing
 		</td>
 		<td>
-			{@link #next},{@link #hasElementaryData},{@link #skip},{@link #skip(int)}
+			{@link #next},{@link #hasElementaryData},{@link #skip},{@link #skip(int)},
+			{@link #depth}
 		</td>
 		</tr>
 		<tr>
@@ -206,10 +207,21 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
 		*/ 
 		public default void skip(int levels)throws IOException
 		{
+			skip(this,levels);
+		};
+		/** Utility static implementation of {@link #skip(int)}
+		for classes which like to re-use default method code, but
+		can't do it because of "not enclosing class" issue.
+		@param f on whom to skip calling {@link #next} only.
+		@param levels see {@link #skip(int)}
+		@throws IOException see {@link #skip(int)}
+		*/
+		public static void skip(IStructReadFormat f, int levels)throws IOException
+		{
 			int depth = levels+1;
 			String s;
 			do{
-				s=next();
+				s=f.next();
 				if (s!=null)
 				{
 					depth++;
@@ -218,7 +230,7 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
 					depth--;
 				};
 			}while(depth!=0);
-		};
+		}
 		
 		/** An equivalent of <code>skip(0)</code>.
 		@throws IOException if {@link #skip(int)} failed		
@@ -227,7 +239,18 @@ public interface IStructReadFormat extends Closeable, IFormatLimits
 		{
 			 skip(0);  
 		};
+		/** Returns the balance of {@link #next} returning non null (+1)
+		or null (-1).
+		<p>
+		This method can be used for assisting {@link #skip} in case if 
+		an in-depth structure is abandoned in a middle and needs to be skipped.
 		
+		@return balance, initially zero, incremented each time {@link #next}
+				returns non-null, decremented each time {@link #next}
+				returns null.
+		@throws IOException if stream is broken 
+		*/
+		public int depth()throws IOException;
 		
 	/* *************************************************************
 	

@@ -321,6 +321,11 @@ public abstract class AStructReadFormatBase0 extends AStructFormatBase implement
 				}
 			}
 		};
+		@Override public int depth()throws IOException
+		{
+			validateUsable();
+			return getCurrentStructRecursionDepth();
+		};
 		/* ----------------------------------------------------------
 				Signal operations
 		----------------------------------------------------------*/
