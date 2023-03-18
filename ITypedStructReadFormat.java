@@ -26,6 +26,139 @@ import java.io.IOException;
 		<li>the behavior of block end elementary primitive reads if 
 		the there is a signal at cursor is not affected;</li>
 	</ul>
+	
+	<h1>Extending type information</h1>
+	The future development of structured format may provide some additional
+	types which are not possible to express using the closed <code>enum</code>
+	list of types which are defined in this class.
+	<p>
+	For an example user may decide to provide <code>IBigStructReadFormat</code> which
+	will have dedicated API to handle big-decimals or big-integer types. That format
+	will extend the <code>IStructReadFormat</code> what is a natural decission
+	and will work superb.
+	<p>
+	The problem is how to efficiently extend the {@link ITypedStructReadFormat}? Especially
+	how to retain compatibility with it <u>and</u> open a path to provide a <u>more detailed</u>
+	information from {@link #peek}?
+	<p>
+	Using <code>enum</code> is very clear and nice solution, but the set of possible 
+	enum values is closed. We can't extend enum so a subclass of <code>ITypedStructReadFormat</code>
+	can't define own enum which extends <code>TElement</code>.
+	<p>
+	On the other end of a spectrum there is a plain list of named integer contants
+	like, for an example: <code> public static final int SIG = 0;</code>. This soultion is <u>not closed</u>
+	but can easily produce a "name clash" and user may easily mess up constants from different extended types.
+	
+	<h2>Using type information</h2>
+	The obvious positive attribute of <code>enum</code> it is that when You are returning it from a
+	function user clearly knows what to expect and how to react on it. Primarly because the set of returned
+	values <u>is closed</u>. Never less the Java do expect You to use the <code>default:</code> switch-case cause:
+	<pre>
+	String actOnEnum(enum)
+	{
+		switch(enum)
+		{
+		   case A: return "on A"
+		   ....
+		   <b>default:...</b> return "on default"
+		}
+		<i>whithout default Java will complain about missing return statement here</i> 
+	}
+	</pre>
+	From conceptual point of view it is pointless - enum set is closed, You can't have anything more than You 
+	listed to why the hell <code>default</code>? Because of two things:
+	<ul>
+		<li>first the actual switch-case is implemented by:
+		<pre>
+			switch(enum.ordinal())
+			{
+			....
+			}
+		</pre>
+		</li>
+		<li>and the second - that Java linking is dynamic and the at the runtime it may
+		happen that a class file where <code>enum</code> is declared might carry later or earlier
+		definitin of <code>enum</code> that the one which existed when <code>switch(...)</code>
+		was compiled.</li>
+	</ul>
+	This means that, conceptually speaking, every user of <code>enum type</code> <u>must be prepared</u>
+	to see some enum constant which he/she did <u>not know about</u>.
+	
+	<h2>Extending enums</h2>
+	There are three possible scenarios when You may wish to provide additional information 
+	with enums:
+	<ol>
+		<li>Your additional information can be used to compute base information.
+		For an example You may read Your detailed information two times and construct
+		from it the base information.</li>
+		<li>Your additional information is <u>more detailed</u> than base information.
+		In such case You can alaway map two ore more constants representing
+		Your new information to some constant from <code>enum</code> describing old information.
+		</li>
+		<li>And finally, when Your information is something totally new. It can't be 
+		mapped to old one and can't be used to compute old one. Like our example 
+		"next thing is a big decimal". There was no big decimals before and big decimal
+		is neither elementary primitive nor a sequence of it. We simply can't call it using 
+		old names.
+		</li>
+	</ol>
+	First two cases can be easily handled by:
+	<pre>
+	interface IMyExtendedTypedStructReadFormat extends ITypedStructReadFormat
+	{
+		public enum TExtendedElement{....}
+		
+		public TElement peek() // use transformatins to produce old type
+		public TExtendedElement extendedPeek() //just give extended type
+	}
+	</pre>
+	The third case is trickier.
+	
+	<h2 id="EXTENDED_TYPE">Opening the path for extending type information</h2>
+	This contract do open the path for the third case by making following steps:
+	<ul>
+		<li>the {@link #peek} is <u>allowed to</u> return <code>null</code> if it cannot express
+			the information about what is inside a stream with {@link TElement}.
+			Using null is a more clear signal that we have someting we don't 
+			stand a chance to understand than having a dedicated constant;</li>
+		<li>the extended type information is recommended to be declared like below:
+		<pre>
+			enum TExtendedElement
+			{
+				SIG(TElement.SIG),
+				....
+					//This can be null if mapping doesn't exist.
+					public final TElement asTElement;
+					
+				TExtendedElement(TElement asTElement){ this.asTElement=asTElement; };
+			}
+		</pre>
+		</li>
+		<li>there is an extended type information API:
+		<pre>
+			default TElement peek(){ return extendedPeek.asTElement; } 
+			TExtendedElement extendedPeek()
+		</pre>
+		which can be used in scenario:
+		<pre>
+			TExtendedElement e= extendedPeek();
+			if (e.asTElement!=null) handleBaseInformation(e.asTElement)
+			else
+									handleExtended(e)
+		</pre>
+		or 
+		<pre>
+			TElement e = peek();
+			if (e!=null)
+			{
+				switch(e)...
+			}else
+			{
+				switch(extendedPeek())...
+			}
+		</pre>
+		</li>
+	</ul>
 */
 public interface ITypedStructReadFormat extends IStructReadFormat
 {
@@ -209,9 +342,18 @@ public interface ITypedStructReadFormat extends IStructReadFormat
 			for(;;){ peek()==peek(); };
 		</pre>
 		must not throw ever.
-		@return what kind of operation on a stream is allowed. Non null.
-		@throws IOException if failed. Includes all {@link EEof}, but only
-				when encountered where it should not be expected , limits and broken
+		@return what kind of operation on a stream is allowed. 
+				Can return null if the information about what is next
+				in stream cannot be expressed by {@link TElement} enum.
+				<p>
+				Null can be returned only by those implementations which
+				do implement their own <a href="#EXTENDED_TYPE">extended type information.</a>.
+				<p>
+				Code which is not prepared for extended types is allowed to
+				either <code>assert(peek()!=null)</code> or don't check for null
+				at all.
+		@throws IOException if failed. Includes all {@link EEof} ( but only
+				when encountered where it should not be expected ), limits and broken
 				format exceptions.
 	*/
 	public TElement peek()throws IOException;
