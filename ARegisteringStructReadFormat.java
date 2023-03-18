@@ -31,7 +31,7 @@ public abstract class ARegisteringStructReadFormat extends AStructReadFormatBase
 				A a side effect the {@link #pickLastSignalRegName} should be set
 				to null and {@link #pickLastSignalIndex} should be set to index written to stream */
 				SIG_BEGIN_REGISTERED,
-				/** Alike {@link TSignal#SIG_END} */
+				/** Alike {@link AStructReadFormatBase0.TSignal#SIG_END} */
 				SIG_END,
 				/** To be returned by {@link #readSignalReg} when 
 				it reads what {@link ARegisteringStructWriteFormat#endBeginDirectImpl} wrote.
